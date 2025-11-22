@@ -17,10 +17,8 @@ async function deriveKeyFromToken(token) {
     const encoder = new TextEncoder();
     const keyMaterial = encoder.encode(token);
     
-    // Hash the token to get 32 bytes for AES-256
     const hashBuffer = await crypto.subtle.digest('SHA-256', keyMaterial);
     
-    // Import as CryptoKey
     const key = await crypto.subtle.importKey(
         'raw',
         hashBuffer,
@@ -43,18 +41,15 @@ async function decryptText(encryptedText, key) {
             throw new Error('Invalid encrypted format');
         }
         
-        // Convert hex to Uint8Array
         const iv = new Uint8Array(ivHex.match(/.{2}/g).map(byte => parseInt(byte, 16)));
         const encrypted = new Uint8Array(encryptedHex.match(/.{2}/g).map(byte => parseInt(byte, 16)));
         
-        // Decrypt
         const decrypted = await crypto.subtle.decrypt(
             { name: ENCRYPTION_ALGORITHM, iv: iv },
             key,
             encrypted
         );
         
-        // Convert to string
         const decoder = new TextDecoder();
         return decoder.decode(decrypted);
         
@@ -81,7 +76,6 @@ async function decryptManifest(manifest) {
         return null;
     }
     
-    // Check if encrypted
     const firstPage = manifest.pages[0] || '';
     if (!isEncrypted(firstPage)) {
         console.log('ℹ️  Manifest is not encrypted');
@@ -93,12 +87,10 @@ async function decryptManifest(manifest) {
     try {
         const key = await deriveKeyFromToken(SECRET_TOKEN);
         
-        // Decrypt all pages
         const decryptedPages = await Promise.all(
             manifest.pages.map(encryptedUrl => decryptText(encryptedUrl, key))
         );
         
-        // Check if all decryption successful
         if (decryptedPages.some(page => page === null)) {
             console.error('❌ Some pages failed to decrypt');
             return null;
@@ -106,7 +98,6 @@ async function decryptManifest(manifest) {
         
         console.log('✅ Manifest decrypted successfully');
         
-        // Return decrypted manifest
         return {
             ...manifest,
             pages: decryptedPages,
@@ -123,9 +114,6 @@ async function decryptManifest(manifest) {
 // UTILITY FUNCTIONS
 // ============================================
 
-/**
- * Pad number with leading zeros
- */
 function padNumber(num, length) {
     return String(num).padStart(length, '0');
 }
@@ -151,7 +139,6 @@ function convertToWIB(isoString) {
 // MANGA_REPOS sudah di-export dari manga-config.js
 // ============================================
 
-// Link Trakteer untuk chapter terkunci
 const TRAKTEER_LINK = 'https://trakteer.id/NuranantoScanlation';
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZ0-VeyloQxjvh-h65G0wtfAzxVq6VYzU5Bz9n1Rl0T4GAkGu9X7HmGh_3_0cJhCS1iA/exec';
 
@@ -159,9 +146,6 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZ0-VeyloQxj
 // SMART END CHAPTER LOGIC
 // ============================================
 
-/**
- * Predict next chapter number based on last 4 chapters pattern
- */
 function predictNextChapter(allChapters, currentChapterFolder) {
     const currentIndex = allChapters.findIndex(ch => ch.folder === currentChapterFolder);
     
@@ -179,9 +163,7 @@ function predictNextChapter(allChapters, currentChapterFolder) {
     
     const numbers = recentChapters.map(parseChapter).filter(n => n !== null);
     
-    if (numbers.length === 0) {
-        return null;
-    }
+    if (numbers.length === 0) return null;
     
     if (numbers.length === 1) {
         const current = numbers[0];
@@ -194,12 +176,7 @@ function predictNextChapter(allChapters, currentChapterFolder) {
     
     if (lastDiff <= 0.5) {
         const next = current + lastDiff;
-        
-        if (lastDiff < 1) {
-            return next.toFixed(1);
-        } else {
-            return Math.round(next);
-        }
+        return lastDiff < 1 ? next.toFixed(1) : Math.round(next);
     }
     
     const currentInt = Math.floor(current);
@@ -207,27 +184,19 @@ function predictNextChapter(allChapters, currentChapterFolder) {
     
     if (currentDec > 0) {
         const nextDec = parseFloat((currentDec + 0.1).toFixed(1));
-        
-        if (nextDec < 1) {
-            return parseFloat((currentInt + nextDec).toFixed(1));
-        } else {
-            return currentInt + 1;
-        }
+        return nextDec < 1 ? parseFloat((currentInt + nextDec).toFixed(1)) : currentInt + 1;
     } else {
         return currentInt + 1;
     }
 }
 
-/**
- * Check if chapter is oneshot
- */
 function isOneshotChapter(chapterFolder) {
     const lower = chapterFolder.toLowerCase();
     return lower.includes('oneshot') || lower.includes('one-shot') || lower === 'os';
 }
 
 /**
- * Show locked chapter modal
+ * Show locked chapter modal - FIXED
  */
 function showLockedChapterModal(chapterNumber = null) {
     console.log('🔒 showLockedChapterModal called with chapter:', chapterNumber);
@@ -248,11 +217,11 @@ function showLockedChapterModal(chapterNumber = null) {
         modalHeader.textContent = `🔒 Chapter Terkunci karena RAW Berbayar`;
     }
     
-    modal.classList.add('active');
+    // Force show modal
     modal.style.display = 'flex';
-    modal.style.opacity = '1';
-    modal.style.visibility = 'visible';
-    console.log('🔒 Modal shown with flex + opacity + visibility + active class');
+    modal.classList.add('active');
+    
+    console.log('🔒 Modal shown');
     
     const btnYes = document.getElementById('btnLockedYes');
     const btnNo = document.getElementById('btnLockedNo');
@@ -261,8 +230,7 @@ function showLockedChapterModal(chapterNumber = null) {
     
     const closeModal = () => {
         modal.classList.remove('active');
-        modal.style.opacity = '0';
-        modal.style.visibility = 'hidden';
+        
         setTimeout(() => {
             modal.style.display = 'none';
         }, 300);
@@ -282,9 +250,6 @@ function showLockedChapterModal(chapterNumber = null) {
     };
 }
 
-/**
- * Render end chapter buttons based on conditions
- */
 function renderEndChapterButtons() {
     const container = document.getElementById('endChapterContainer');
     if (!container) return;
@@ -361,11 +326,8 @@ function renderEndChapterButtons() {
     `;
 }
 
-
-// Debug mode - set to true to allow console access
 const DEBUG_MODE = false;
 
-// State management
 let mangaData = null;
 let currentChapterFolder = null;
 let currentChapter = null;
@@ -375,14 +337,12 @@ let readMode = 'webtoon';
 let currentPage = 1;
 let totalPages = 0;
 
-// DOM Elements
 const readerContainer = document.getElementById('readerContainer');
 const pageNav = document.getElementById('pageNav');
 const pageList = document.getElementById('pageList');
 const prevPageBtn = document.getElementById('prevPageBtn');
 const nextPageBtn = document.getElementById('nextPageBtn');
 
-// Load saat halaman dimuat
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         initProtection();
@@ -395,7 +355,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Global error handler
 window.addEventListener('error', (event) => {
     console.error('❌ Global error:', event.error);
 });
@@ -404,9 +363,6 @@ window.addEventListener('unhandledrejection', (event) => {
     console.error('❌ Unhandled promise rejection:', event.reason);
 });
 
-/**
- * Initialize reader
- */
 async function initializeReader() {
     try {
         showLoading();
@@ -473,9 +429,6 @@ async function initializeReader() {
     }
 }
 
-/**
- * Load manga.json dari repo
- */
 async function loadMangaData(repo) {
     try {
         const mangaConfig = MANGA_REPOS[repo];
@@ -518,27 +471,18 @@ async function loadMangaData(repo) {
     }
 }
 
-/**
- * Find chapter by folder name
- */
 function findChapterByFolder(folder) {
     if (!mangaData || !mangaData.chapters) return null;
     
     return Object.values(mangaData.chapters).find(ch => ch.folder === folder);
 }
 
-/**
- * Save current page to localStorage
- */
 function saveLastPage() {
     const storageKey = `lastPage_${repoParam}_${currentChapterFolder}`;
     localStorage.setItem(storageKey, currentPage);
     console.log(`💾 Saved page ${currentPage} for ${currentChapterFolder}`);
 }
 
-/**
- * Load last page from localStorage
- */
 function loadLastPage() {
     const storageKey = `lastPage_${repoParam}_${currentChapterFolder}`;
     const savedPage = localStorage.getItem(storageKey);
@@ -552,9 +496,6 @@ function loadLastPage() {
     return 1;
 }
 
-/**
- * Adjust chapter title font size to fit in button
- */
 function adjustChapterTitleFontSize(element) {
     const parentButton = element.closest('.chapter-btn');
     if (!parentButton) return;
@@ -572,12 +513,9 @@ function adjustChapterTitleFontSize(element) {
         element.style.fontSize = `${fontSize}px`;
     }
     
-    console.log(`🔍 Chapter title font adjusted to: ${fontSize}px`);
+    console.log(`📏 Chapter title font adjusted to: ${fontSize}px`);
 }
 
-/**
- * Setup UI elements
- */
 function setupUI() {
     const mangaTitleElement = document.getElementById('mangaTitle');
     mangaTitleElement.textContent = mangaData.manga.title;
@@ -616,9 +554,6 @@ function setupUI() {
     };
 }
 
-/**
- * Adjust title font size to fit in maximum 2 lines
- */
 function adjustTitleFontSize(element) {
     if (!element) return;
     
@@ -632,7 +567,7 @@ function adjustTitleFontSize(element) {
         const maxHeight = initialFontSize * lineHeight * maxLines;
         
         if (scrollHeight <= maxHeight) {
-            console.log(`🔍 Title fits: ${initialFontSize}px`);
+            console.log(`📏 Title fits: ${initialFontSize}px`);
             return;
         }
         
@@ -641,14 +576,11 @@ function adjustTitleFontSize(element) {
         
         requestAnimationFrame(() => {
             element.style.fontSize = `${newFontSize}px`;
-            console.log(`🔍 Title font adjusted: ${initialFontSize}px → ${newFontSize}px`);
+            console.log(`📏 Title font adjusted: ${initialFontSize}px → ${newFontSize}px`);
         });
     });
 }
 
-/**
- * Load chapter pages from manifest
- */
 async function loadChapterPages() {
     try {
         readerContainer.innerHTML = '';
@@ -656,14 +588,12 @@ async function loadChapterPages() {
         
         console.log('📄 Loading chapter pages from manifest...');
         
-        // Construct manifest URL
         let { repoUrl } = mangaData.manga;
         repoUrl = repoUrl.replace(/\/$/, '');
         
         const manifestUrl = `${repoUrl}/${currentChapterFolder}/manifest.json`;
         console.log('📄 Manifest URL:', manifestUrl);
         
-        // Fetch manifest
         const timestamp = new Date().getTime();
         const manifestResponse = await fetch(`${manifestUrl}?t=${timestamp}`);
         
@@ -674,9 +604,8 @@ async function loadChapterPages() {
         let manifest = await manifestResponse.json();
         console.log('📦 Manifest loaded:', manifest);
         
-        // Decrypt manifest if encrypted
         if (manifest.encrypted || isEncrypted(manifest.pages[0])) {
-            console.log('🔐 Manifest is encrypted, decrypting...');
+            console.log('🔒 Manifest is encrypted, decrypting...');
             manifest = await decryptManifest(manifest);
             
             if (!manifest) {
@@ -688,11 +617,9 @@ async function loadChapterPages() {
             console.log('ℹ️  Manifest is not encrypted');
         }
         
-        // Update total pages from manifest
         totalPages = manifest.pages.length;
         console.log(`📊 Total pages from manifest: ${totalPages}`);
         
-        // Load images from manifest URLs
         manifest.pages.forEach((imageUrl, index) => {
             const pageNum = index + 1;
             
@@ -740,7 +667,6 @@ async function loadChapterPages() {
         setupPageTracking();
         setupWebtoonScrollTracking();
         
-        // Preload first page
         if (manifest.pages[0]) {
             const preloadLink = document.createElement('link');
             preloadLink.rel = 'preload';
@@ -777,9 +703,6 @@ async function loadChapterPages() {
     }
 }
 
-/**
- * Setup page tracking with intersection observer
- */
 function setupPageTracking() {
     const options = {
         root: readMode === 'manga' ? readerContainer : null,
@@ -810,9 +733,6 @@ function setupWebtoonScrollTracking() {
     }
 }
 
-/**
- * Navigate to specific page
- */
 function goToPage(pageNum) {
     if (pageNum < 1 || pageNum > totalPages) return;
     
@@ -827,17 +747,11 @@ function goToPage(pageNum) {
     updatePageNavigation();
 }
 
-/**
- * Generate thumbnail URL using image proxy
- */
 function getThumbnailUrl(originalUrl) {
     const encodedUrl = originalUrl.replace('https://', '');
     return `https://images.weserv.nl/?url=${encodedUrl}&w=200&h=300&fit=cover&output=webp`;
 }
 
-/**
- * Render page thumbnails from manifest URLs
- */
 function renderPageThumbnails(pageUrls) {
     pageList.innerHTML = '';
     
@@ -886,9 +800,6 @@ function renderPageThumbnails(pageUrls) {
     console.log(`🖼️ Generated ${pageUrls.length} thumbnails using image proxy`);
 }
 
-/**
- * Update page navigation
- */
 function updatePageNavigation() {
     document.querySelectorAll('.page-thumb').forEach((thumb, index) => {
         thumb.classList.toggle('active', index === currentPage - 1);
@@ -902,9 +813,6 @@ function updatePageNavigation() {
     updateProgressBar();
 }
 
-/**
- * Update progress bar based on current page
- */
 function updateProgressBar() {
     const pageNavHandle = document.getElementById('pageNavHandle');
     if (!pageNavHandle) return;
@@ -914,16 +822,10 @@ function updateProgressBar() {
     pageNavHandle.setAttribute('data-progress', `${currentPage} / ${totalPages}`);
 }
 
-/**
- * Update navigation button states
- */
 function updateNavigationButtons() {
     renderEndChapterButtons();
 }
 
-/**
- * Navigate to prev/next chapter
- */
 function navigateChapter(direction) {
     const currentIndex = allChapters.findIndex(ch => ch.folder === currentChapterFolder);
     
@@ -950,11 +852,20 @@ function navigateChapter(direction) {
 }
 
 /**
- * Open chapter list modal
+ * Open chapter list modal - FIXED
  */
 function openChapterListModal() {
     const modal = document.getElementById('modalOverlay');
     const modalBody = document.getElementById('chapterListModal');
+    
+    console.log('📋 Opening chapter list modal...');
+    console.log('Modal element:', modal);
+    console.log('Modal body:', modalBody);
+    
+    if (!modal || !modalBody) {
+        console.error('❌ Modal elements not found!');
+        return;
+    }
     
     modalBody.innerHTML = '';
     
@@ -992,22 +903,33 @@ function openChapterListModal() {
         modalBody.appendChild(item);
     });
     
+    // Force show modal
+    modal.style.display = 'flex';
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    
+    console.log('✅ Chapter list modal opened');
 }
 
 /**
- * Close chapter list modal
+ * Close chapter list modal - FIXED
  */
 function closeChapterListModal() {
     const modal = document.getElementById('modalOverlay');
+    
+    console.log('❌ Closing chapter list modal...');
+    
     modal.classList.remove('active');
-    document.body.style.overflow = '';
+    
+    // Wait for transition then hide
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 300);
+    
+    console.log('✅ Chapter list modal closed');
 }
 
-/**
- * Track chapter view - increment pending views
- */
 async function trackChapterView() {
     try {
         const viewKey = `viewed_${repoParam}_${currentChapterFolder}`;
@@ -1049,20 +971,14 @@ async function trackChapterView() {
     }
 }
 
-/**
- * Show loading overlay
- */
 function showLoading() {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
         overlay.classList.add('active');
-        console.log('🔄 Loading overlay shown');
+        console.log('📄 Loading overlay shown');
     }
 }
 
-/**
- * Hide loading overlay
- */
 function hideLoading() {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
@@ -1074,9 +990,6 @@ function hideLoading() {
     }
 }
 
-/**
- * Protection against right-click and other methods
- */
 function initProtection() {
     if (DEBUG_MODE) {
         console.log('🔓 Debug mode enabled - protection disabled');
@@ -1121,9 +1034,6 @@ function initProtection() {
     });
 }
 
-/**
- * Setup enhanced event listeners
- */
 function setupEnhancedEventListeners() {
     const pageNavHandle = document.getElementById('pageNavHandle');
     
