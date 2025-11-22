@@ -1,0 +1,29 @@
+# Node modules (jika ada dependencies lokal)
+node_modules/
+
+# Backup files
+*.backup
+*.bak
+script.js.backup
+script_js.force-backup
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp

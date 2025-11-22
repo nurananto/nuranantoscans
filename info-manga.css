@@ -1,0 +1,1219 @@
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background-color: #0a0a0a;
+    color: #e4e6eb;
+    padding: 20px;
+    line-height: 1.6;
+    padding-bottom: 100px; /* Space for floating button */
+}
+
+/* Header dengan logo dan Facebook */
+header {
+    max-width: 1400px;
+    margin: 0 auto 1.5rem;
+    padding: 0 0;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.logo-link {
+    display: block;
+    text-decoration: none;
+}
+
+.site-logo {
+    height: 60px;
+    width: auto;
+    display: block;
+}
+
+/* GitHub Link di Header - Abu-abu Putih */
+/* GitHub Link - Solid Black Background */
+.github-link-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #24292e;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.github-link-header:hover {
+    background: #1b1f23;
+    transform: translateY(-2px);
+}
+
+.github-link-header .github-icon {
+    width: 24px;
+    height: 24px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.github-link-header:hover .github-icon {
+    color: #fff;
+}
+
+.github-link-header .github-text {
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.github-link-header:hover .github-text {
+    color: #fff;
+}
+
+/* Facebook Link - Solid Blue Background */
+.facebook-link-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #1877f2;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.facebook-link-header:hover {
+    background: #166fe5;
+    transform: translateY(-2px);
+}
+
+.facebook-link-header .facebook-icon {
+    width: 24px;
+    height: 24px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.facebook-link-header:hover .facebook-icon {
+    color: #fff;
+}
+
+.facebook-link-header .facebook-text {
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.facebook-link-header:hover .facebook-text {
+    color: #fff;
+}
+
+/* Main Container */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+}
+
+/* ==================== LEFT SECTION ==================== */
+
+.left-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Cover Container */
+.cover-container {
+    position: relative;
+    width: 100%;
+}
+
+.manga-cover {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+}
+
+/* Info Box - AREA PEMBATAS untuk Author, Artist, Genre */
+.info-box {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Sinopsis box in mobile details */
+.sinopsis-box-mobile {
+    display: none; /* Hidden by default on desktop */
+}
+
+.sinopsis-text {
+    line-height: 1.8;
+    text-align: justify;
+    white-space: pre-line;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.sinopsis-text::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sinopsis-text::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 3px;
+}
+
+.sinopsis-text::-webkit-scrollbar-thumb {
+    background: #555555;
+    border-radius: 3px;
+}
+
+.sinopsis-text::-webkit-scrollbar-thumb:hover {
+    background: #666666;
+}
+
+.info-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #999999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-label-center {
+    text-align: center;
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e4e6eb;
+}
+
+/* Genre Tags - bisa expand sesuai jumlah genre */
+.genre-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.genre-tag {
+    background-color: #333333;
+    border: 1px solid #444444;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #e4e6eb;
+    text-transform: capitalize;
+}
+
+/* External Links Container - Side by Side Layout */
+.external-links-container {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Sidebar Buttons - TOMBOL hanya untuk link eksternal */
+.sidebar-btn {
+    background-color: #2a2a2a;
+    color: #e4e6eb;
+    border: 1px solid #3a3a3a;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.sidebar-btn:hover {
+    background-color: #333333;
+    border-color: #444444;
+    transform: translateY(-2px);
+}
+
+.sidebar-btn.half-width {
+    flex: 1;
+}
+
+/* Mangadex Button - Orange khas Mangadex */
+#btnMangadex {
+    background-color: #ff6740;
+    color: #ffffff;
+    border: 1px solid #ff6740;
+}
+
+#btnMangadex:hover {
+    background-color: #ff5530;
+    border-color: #ff5530;
+}
+
+/* Raw Button - Biru Muda */
+#btnRaw {
+    background-color: #5dade2;
+    color: #ffffff;
+    border: 1px solid #5dade2;
+}
+
+#btnRaw:hover {
+    background-color: #4a9fd5;
+    border-color: #4a9fd5;
+}
+
+/* ==================== RIGHT SECTION ==================== */
+
+.right-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Title Section */
+.title-section-desktop {
+    margin-bottom: 0;
+}
+
+.title-section-mobile {
+    display: none;
+    margin-bottom: 0;
+}
+
+/* Show Details Button (Mobile Only) */
+.btn-show-details {
+    width: 100%;
+    background-color: #5865F2;
+    color: #ffffff;
+    border: none;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+
+.btn-show-details:hover {
+    background-color: #4752C4;
+}
+
+.btn-show-details .info-icon {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Details Container */
+.details-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* UPDATED: Dynamic font sizes for titles */
+.main-title {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 10px;
+    line-height: 1.2;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.subtitle {
+    font-size: clamp(16px, 3vw, 20px);
+    font-weight: 300;
+    color: #b0b0b0;
+    line-height: 1.4;
+    margin-bottom: 15px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Auto-adjust untuk judul yang sangat panjang */
+.main-title.long-title {
+    font-size: clamp(24px, 4vw, 32px);
+}
+
+.subtitle.long-subtitle {
+    font-size: clamp(14px, 2.5vw, 18px);
+}
+
+/* Content Boxes - AREA PEMBATAS */
+.description-box {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 30px;
+    min-height: 250px;
+    max-height: 400px;
+    margin-top: 10px;
+}
+
+.chapters-box {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 30px;
+    margin-top: 10px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e4e6eb;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+/* Content Text - BISA SCROLL */
+.content-text {
+    color: #b0b0b0;
+    line-height: 1.8;
+    font-size: 15px;
+    white-space: pre-line;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+    text-align: justify;
+}
+
+/* Custom Scrollbar untuk deskripsi */
+.content-text::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content-text::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+}
+
+.content-text::-webkit-scrollbar-thumb {
+    background: #555555;
+    border-radius: 4px;
+}
+
+.content-text::-webkit-scrollbar-thumb:hover {
+    background: #666666;
+}
+
+/* ==================== CHAPTER LIST ==================== */
+
+/* Chapter List Container - AREA saja */
+.chapter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Chapter Item - TOMBOL */
+.chapter-item {
+    background-color: #333333;
+    border: 1px solid #444444;
+    border-radius: 4px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chapter-item:hover {
+    background-color: #3a3a3a;
+    border-color: #555555;
+    transform: translateX(5px);
+}
+
+.chapter-item:active {
+    transform: translateX(3px);
+}
+
+/* Locked Chapter - UPDATED: Tambah visual yang lebih jelas */
+.chapter-locked {
+    background-color: #2a2a2a;
+    border-color: #dc143c;
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.chapter-locked:hover {
+    background-color: #2f2f2f;
+    border-color: #ff1744;
+    opacity: 0.85;
+    transform: translateX(5px);
+}
+
+/* Hidden chapters */
+.chapter-hidden {
+    display: none;
+}
+
+.chapter-show {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Show More Button */
+.btn-show-more {
+    width: 100%;
+    background-color: #2a2a2a;
+    color: #e4e6eb;
+    border: 1px solid #3a3a3a;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    margin-top: 12px;
+}
+
+.btn-show-more:hover {
+    background-color: #333333;
+    border-color: #444444;
+}
+
+.chapter-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.chapter-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chapter-title-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e4e6eb;
+    display: inline;
+}
+
+.chapter-updated-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(24, 119, 242, 0.3);
+    vertical-align: middle;
+}
+
+.chapter-upload-date {
+    font-size: 12px;
+    color: #888888;
+    margin-top: 2px;
+    font-weight: 400;
+}
+
+.chapter-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 13px;
+    color: #888888;
+}
+
+.chapter-views {
+    font-size: 13px;
+    color: #888888;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.chapter-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 13px;
+    color: #888888;
+}
+
+/* Icon dalam button - Responsive & Aligned */
+.btn-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+    display: block;
+}
+
+/* Baca dari Awal Button - Purple gradient */
+.btn-read-first {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    border: none;
+    padding: 14px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-read-first:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.btn-read-first:active {
+    transform: translateY(0);
+}
+
+.btn-read-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Button outside details - visible by default on mobile, hidden on desktop */
+.btn-read-outside {
+    display: none;
+    margin-top: 5px;
+}
+
+/* Button inside details - always in details container */
+.btn-read-inside {
+    /* No special styling needed, inherits from .btn-read-first */
+}
+
+
+/* ============================================
+   BADGES - DESKTOP & MOBILE
+   ============================================ */
+
+/* Desktop - Horizontal side by side */
+.badges-container {
+    display: inline-flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.views-badge,
+.rating-badge {
+    height: 46px;
+    border: none;
+    border-radius: 6px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    min-width: 140px;
+    width: fit-content;
+}
+
+.views-badge {
+    background-color: #dc143c;
+}
+
+.rating-badge {
+    background-color: #1877f2;
+}
+
+.views-number,
+.views-text,
+.rating-number,
+.rating-text {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #ffffff;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+.star-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+    display: block;
+}
+
+/* ============================================
+   TRAKTEER DONATION BUTTON
+   ============================================ */
+.trakteer-button {
+    position: fixed;
+    bottom: 30px;
+    left: 1.5rem;
+    right: 1.5rem;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #be1e2d 0%, #d32f2f 100%);
+    padding: 0.75rem 1.25rem;
+    border-radius: 16px;
+    text-decoration: none;
+    color: white;
+    font-weight: 700;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 15px rgba(190, 30, 45, 0.4);
+    transition: all 0.3s ease;
+    max-width: calc(1400px - 3rem);
+    margin: 0 auto;
+}
+
+.trakteer-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(190, 30, 45, 0.6);
+    background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%);
+}
+
+.trakteer-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .site-logo {
+        height: 50px;
+    }
+    
+    .header-buttons {
+        gap: 8px;
+    }
+    
+    .github-link-header,
+    .facebook-link-header {
+        height: auto;
+        padding: 0.45rem 0.85rem;
+        gap: 0.5rem;
+        border-radius: 10px;
+    }
+    
+    .github-link-header .github-icon,
+    .facebook-link-header .facebook-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .github-link-header .github-text,
+    .facebook-link-header .facebook-text {
+        font-size: 0.9rem;
+    }
+
+    /* Trakteer button - tablet */
+    .trakteer-button {
+        left: 1rem;
+        right: 1rem;
+        max-width: calc(1400px - 2rem);
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 110px; /* Extra space for button on mobile */
+    }
+
+    .container {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+
+    /* Header responsive */
+    header {
+        margin-bottom: 1rem;
+    }
+
+    .site-logo {
+        height: 45px;
+    }
+
+    /* GitHub & Facebook - Hanya icon pada mobile */
+    .header-buttons {
+        gap: 8px;
+    }
+
+    .github-link-header,
+    .facebook-link-header {
+        height: 45px;
+        width: 45px;
+        min-width: 45px;
+        min-height: 45px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+    }
+
+    .github-link-header .github-icon,
+    .facebook-link-header .facebook-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .github-link-header .github-text,
+    .facebook-link-header .facebook-text {
+        display: none;
+    }
+
+    /* Hide desktop title, show mobile title */
+    .title-section-desktop {
+        display: none;
+    }
+
+    .title-section-mobile {
+        display: block;
+        text-align: center;
+    }
+
+    /* Show Details Button visible on mobile */
+    .btn-show-details {
+        display: flex;
+    }
+
+    /* Show outside button on mobile by default */
+    .btn-read-outside {
+        display: flex;
+    }
+
+    /* Hide inside button by default */
+    .btn-read-inside {
+        display: none;
+    }
+
+    /* When details are open, swap visibility */
+    .details-container.show .btn-read-inside {
+        display: flex;
+    }
+
+    /* Hide outside button when details are open */
+    .left-section:has(.details-container.show) .btn-read-outside {
+        display: none;
+    }
+
+    /* Show sinopsis in mobile details container */
+    .sinopsis-box-mobile {
+        display: flex !important;
+    }
+
+    /* Hide desktop description box on mobile */
+    .description-box {
+        display: none;
+    }
+
+    /* Details Container hidden by default on mobile */
+    .details-container {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .details-container.show {
+        max-height: 2000px;
+        margin-top: 15px;
+        margin-bottom: 0;
+    }
+
+    .left-section {
+        margin-bottom: 0;
+    }
+
+    .right-section {
+        margin-top: 5px;
+    }
+
+    /* Mobile font sizes */
+    .main-title {
+        font-size: clamp(22px, 6vw, 28px);
+    }
+
+    .subtitle {
+        font-size: clamp(14px, 4vw, 16px);
+    }
+
+    .main-title.long-title {
+        font-size: clamp(18px, 5vw, 24px);
+    }
+
+    .subtitle.long-subtitle {
+        font-size: clamp(12px, 3.5vw, 14px);
+    }
+    
+    /* UPDATED: Keep chapter items in row layout on mobile */
+    .chapter-item {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 15px;
+    }
+    
+    .chapter-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .chapter-title-row {
+        gap: 6px;
+    }
+    
+    .chapter-title-text {
+        font-size: 15px;
+        word-wrap: break-word;
+    }
+    
+    .chapter-updated-badge {
+        font-size: 8px;
+        padding: 2px 5px;
+        letter-spacing: 0.3px;
+    }
+    
+    .chapter-upload-date {
+        font-size: 11px;
+    }
+    
+    .chapter-views {
+        flex-shrink: 0;
+    }
+
+    .chapters-box {
+        padding: 20px;
+    }
+
+    /* Mobile - Grid 2 columns, FORCED same height */
+    .title-section-mobile .badges-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-auto-rows: 46px;
+        gap: 10px;
+        width: 100%;
+        margin: 15px 0 10px 0;
+    }
+    
+    .title-section-mobile .views-badge,
+    .title-section-mobile .rating-badge {
+        width: 100%;
+        height: 46px;
+        margin: 0;
+        min-width: auto;
+    }
+
+    /* Trakteer button - mobile (TIDAK DIUBAH, sudah benar) */
+    .trakteer-button {
+        left: 0.625rem;
+        right: 0.625rem;
+        padding: 0.65rem 1rem;
+        font-size: 0.85rem;
+        max-width: none;
+    }
+    
+    .trakteer-icon {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding-bottom: 105px;
+    }
+
+    .site-logo {
+        height: 40px;
+    }
+    
+    .header-buttons {
+        gap: 6px;
+    }
+    
+    .github-link-header,
+    .facebook-link-header {
+        height: 40px;
+        width: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+    
+    .github-link-header .github-icon,
+    .facebook-link-header .facebook-icon {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .github-link-header .github-text,
+    .facebook-link-header .facebook-text {
+        display: none;
+    }
+
+    /* Trakteer button - small mobile (TIDAK DIUBAH) */
+    .trakteer-button {
+        left: 0.5rem;
+        right: 0.5rem;
+        font-size: 0.8rem;
+        padding: 0.6rem 0.9rem;
+    }
+    
+    .trakteer-icon {
+        width: 22px;
+        height: 22px;
+    }
+}
+/* ============================================
+   LOCKED CHAPTER MODAL
+   ============================================ */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.locked-modal-content {
+    background: #1a1a1a;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.locked-modal-header {
+    background: linear-gradient(135deg, #be1e2d 0%, #d32f2f 100%);
+    border-bottom: 2px solid #e53935;
+    padding: 20px 25px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.locked-modal-header h2 {
+    font-size: 1.1rem;
+    color: white;
+    margin: 0;
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-close-modal:hover {
+    transform: rotate(90deg);
+    opacity: 0.7;
+}
+
+.locked-modal-body {
+    padding: 30px 25px;
+    text-align: center;
+}
+
+.locked-explanation {
+    font-size: 1rem;
+    color: #e4e6eb;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.locked-benefit {
+    font-size: 0.95rem;
+    color: #4caf50;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.locked-question {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #e4e6eb;
+    margin-bottom: 25px;
+}
+
+.locked-modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.locked-btn {
+    flex: 1;
+    max-width: 200px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.locked-btn-no {
+    background: #424242;
+    color: white;
+}
+
+.locked-btn-no:hover {
+    background: #616161;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 66, 66, 0.4);
+}
+
+.locked-btn-yes {
+    background: linear-gradient(135deg, #be1e2d 0%, #d32f2f 100%);
+    color: white;
+}
+
+.locked-btn-yes:hover {
+    background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(190, 30, 45, 0.5);
+}
+
+@media (max-width: 768px) {
+    .locked-modal-content {
+        max-width: 90%;
+    }
+    
+    .locked-modal-body {
+        padding: 25px 20px;
+    }
+    
+    .locked-modal-buttons {
+        flex-direction: column;
+    }
+    
+    .locked-btn {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .locked-modal-header h2 {
+        font-size: 1rem;
+    }
+    
+    .locked-explanation {
+        font-size: 0.9rem;
+    }
+    
+    .locked-benefit {
+        font-size: 0.85rem;
+        padding: 10px 12px;
+    }
+    
+    .locked-question {
+        font-size: 0.95rem;
+    }
+    
+    .locked-btn {
+        font-size: 0.9rem;
+        padding: 12px 18px;
+    }
+}
+
+/* Center locked modal header */
+.locked-modal-header {
+    text-align: center;
+    justify-content: center !important;
+}
+
+.locked-modal-header h2 {
+    margin: 0 auto;
+    text-align: center;
+}

@@ -1,0 +1,168 @@
+// Service Worker for Nurananto Scanlation v2.0
+// Optimized cache strategy for faster loading
+
+const CACHE_NAME = 'nurananto-v2';
+const STATIC_CACHE = 'static-v2';
+const IMAGE_CACHE = 'images-v2';
+const DYNAMIC_CACHE = 'dynamic-v2';
+
+// Static assets (HTML, CSS, JS)
+const STATIC_ASSETS = [
+    './',
+    './index.html',
+    './info-manga.html',
+    './reader.html',
+    './style.css',
+    './info-manga.css',
+    './reader.css',
+    './script.js',
+    './info-manga.js',
+    './reader.js',
+    './manga-config.js',
+    './assets/logo.png',
+    './assets/Logo 2.png',
+    './assets/star.png',
+    './assets/mangadex-logo.png',
+    './assets/book.png',
+    './assets/trakteer-icon.png'
+];
+
+// Install - cache static assets
+self.addEventListener('install', (event) => {
+    console.log('🔧 SW: Installing v2.0...');
+    event.waitUntil(
+        caches.open(STATIC_CACHE).then((cache) => {
+            console.log('📦 SW: Caching static assets');
+            return cache.addAll(STATIC_ASSETS).catch(err => {
+                console.warn('⚠️ Some assets failed:', err);
+            });
+        })
+    );
+    self.skipWaiting();
+});
+
+// Activate - clean old caches
+self.addEventListener('activate', (event) => {
+    console.log('✅ SW: Activated v2.0');
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (!cacheName.includes('v2')) {
+                        console.log('🗑️ SW: Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+    return self.clients.claim();
+});
+
+// Fetch - smart caching strategy
+self.addEventListener('fetch', (event) => {
+    const { request } = event;
+    const url = new URL(request.url);
+    
+    // Skip cross-origin requests
+    if (url.origin !== location.origin) {
+        // Cache GitHub raw content (covers & manga.json)
+        if (url.hostname === 'raw.githubusercontent.com') {
+            event.respondWith(
+                caches.open(IMAGE_CACHE).then(cache => {
+                    return cache.match(request).then(cached => {
+                        const fetchPromise = fetch(request).then(response => {
+                            // Cache for 7 days
+                            if (response.status === 200) {
+                                cache.put(request, response.clone());
+                            }
+                            return response;
+                        });
+                        return cached || fetchPromise;
+                    });
+                })
+            );
+            return;
+        }
+        
+        // Don't cache other external requests
+        event.respondWith(fetch(request));
+        return;
+    }
+    
+    // Cache strategy for local files
+    if (url.pathname.startsWith('/covers/')) {
+        // Images: Cache first, update in background
+        event.respondWith(
+            caches.open(IMAGE_CACHE).then(cache => {
+                return cache.match(request).then(cached => {
+                    const fetchPromise = fetch(request).then(response => {
+                        if (response.status === 200) {
+                            cache.put(request, response.clone());
+                        }
+                        return response;
+                    });
+                    return cached || fetchPromise;
+                });
+            })
+        );
+        return;
+    }
+    
+    // Static assets: Cache first
+    if (STATIC_ASSETS.some(asset => url.pathname.includes(asset.replace('./', '')))) {
+        event.respondWith(
+            caches.match(request).then(cached => {
+                return cached || fetch(request).then(response => {
+                    if (response.status === 200) {
+                        caches.open(STATIC_CACHE).then(cache => {
+                            cache.put(request, response.clone());
+                        });
+                    }
+                    return response;
+                });
+            })
+        );
+        return;
+    }
+    
+    // Dynamic content: Network first, fallback to cache
+    event.respondWith(
+        fetch(request)
+            .then(response => {
+                if (response.status === 200 && !url.pathname.includes('manga.json')) {
+                    caches.open(DYNAMIC_CACHE).then(cache => {
+                        cache.put(request, response.clone());
+                    });
+                }
+                return response;
+            })
+            .catch(() => {
+                return caches.match(request).then(cached => {
+                    return cached || caches.match('./index.html');
+                });
+            })
+    );
+});
+
+// Message - manual cache control
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    
+    if (event.data && event.data.type === 'CLEAR_CACHE') {
+        event.waitUntil(
+            caches.keys().then((cacheNames) => {
+                return Promise.all(
+                    cacheNames.map((cacheName) => caches.delete(cacheName))
+                );
+            }).then(() => {
+                console.log('🗑️ All caches cleared');
+                self.clients.matchAll().then(clients => {
+                    clients.forEach(client => client.postMessage({ type: 'CACHE_CLEARED' }));
+                });
+            })
+        );
+    }
+});
