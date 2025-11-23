@@ -2,10 +2,10 @@
 // ✅ Auto-version system enabled
 // ✅ Fixed response clone error
 
-const CACHE_NAME = 'nurananto-v19bb1ad';  // ← Ubah ini
-const STATIC_CACHE = 'static-v19bb1ad';
-const IMAGE_CACHE = 'images-v19bb1ad';
-const DYNAMIC_CACHE = 'dynamic-v19bb1ad';
+const CACHE_NAME = 'nurananto-v4b51f1b';  // ← Ubah ini
+const STATIC_CACHE = 'static-v4b51f1b';
+const IMAGE_CACHE = 'images-v4b51f1b';
+const DYNAMIC_CACHE = 'dynamic-v4b51f1b';
 
 // Static assets (HTML, CSS, JS)
 const STATIC_ASSETS = [
