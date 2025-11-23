@@ -24,6 +24,12 @@ MANGA_LIST = [
     cover: 'covers/aiwooshiete-e56a300a-60aa-433e-8589-c8a963f188f8.webp',
     repo: 'AiwoOshiete'
   },
+  {
+    id: 'madogiwa',
+    title: 'Madogiwa Henshuu to Baka ni Sareta Ore ga, Futago JK to Doukyo suru Koto ni Natta',
+    cover: 'covers/madogiwa-ce74d132-81f0-491a-bb19-83de73746c8e.webp',
+    repo: 'MadogiwaHenshuu'
+  },
   ];
 
 // ============================================
