@@ -128,7 +128,7 @@ img {
     z-index: 999;
     flex-wrap: nowrap;
     transition: transform 0.3s ease, opacity 0.3s ease;
-    margin-top: -1rem;
+    margin-top: 0rem;
 }
 
 .nav-btn {

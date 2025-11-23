@@ -1,7 +1,8 @@
-// Service Worker for Nurananto Scanlation v2.1
-// Fixed: Response clone error
+// Service Worker for Nurananto Scanlation v3.0
+// ✅ Auto-version system enabled
+// ✅ Fixed response clone error
 
-const CACHE_NAME = 'nurananto-v2';
+const CACHE_NAME = 'nurananto-v2';  // ← Ubah ini
 const STATIC_CACHE = 'static-v2';
 const IMAGE_CACHE = 'images-v2';
 const DYNAMIC_CACHE = 'dynamic-v2';
@@ -29,7 +30,7 @@ const STATIC_ASSETS = [
 
 // Install - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('🔧 SW: Installing v2.1...');
+    console.log('🔧 SW: Installing new version...');
     event.waitUntil(
         caches.open(STATIC_CACHE).then((cache) => {
             console.log('📦 SW: Caching static assets');
@@ -38,17 +39,21 @@ self.addEventListener('install', (event) => {
             });
         })
     );
-    self.skipWaiting();
+    self.skipWaiting(); // Force activate immediately
 });
 
 // Activate - clean old caches
 self.addEventListener('activate', (event) => {
-    console.log('✅ SW: Activated v2.1');
+    console.log('✅ SW: Activated new version');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (!cacheName.includes('v2')) {
+                    // Delete all caches that don't match current version
+                    if (cacheName !== CACHE_NAME && 
+                        cacheName !== STATIC_CACHE && 
+                        cacheName !== IMAGE_CACHE && 
+                        cacheName !== DYNAMIC_CACHE) {
                         console.log('🗑️ SW: Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
@@ -56,7 +61,7 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
-    return self.clients.claim();
+    return self.clients.claim(); // Take control immediately
 });
 
 // Fetch - smart caching strategy with fixed clone
@@ -64,7 +69,7 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
     
-    // Skip cross-origin requests
+    // Skip cross-origin requests except GitHub raw content
     if (url.origin !== location.origin) {
         // Cache GitHub raw content (covers & manga.json)
         if (url.hostname === 'raw.githubusercontent.com') {
@@ -123,7 +128,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     
-    // Static assets: Cache first
+    // Static assets: Cache first, fallback to network
     if (STATIC_ASSETS.some(asset => url.pathname.includes(asset.replace('./', '')))) {
         event.respondWith(
             caches.match(request).then(cached => {
@@ -170,7 +175,7 @@ self.addEventListener('fetch', (event) => {
     );
 });
 
-// Message - manual cache control
+// Message - manual cache control & update notification
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
@@ -190,4 +195,9 @@ self.addEventListener('message', (event) => {
             })
         );
     }
+});
+
+// Update notification for users
+self.addEventListener('controllerchange', () => {
+    console.log('🔄 New Service Worker took control');
 });

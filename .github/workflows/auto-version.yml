@@ -1,0 +1,115 @@
+name: Auto Version & Cache Bust
+
+on:
+  push:
+    branches: 
+      - main
+    paths:
+      - '**.css'
+      - '**.js'
+      - '**.html'
+      # covers/** removed - handled by update-covers.yml
+
+permissions:
+  contents: write
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔧 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 📢 Generate Version from Commit Hash
+        id: version
+        run: |
+          VERSION=$(git rev-parse --short HEAD)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 New version: $VERSION"
+      
+      - name: 📝 Update Version File
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          
+          # Create/Update version.txt with new version
+          echo "$VERSION" > version.txt
+          
+          echo "✅ Version file updated: $VERSION"
+      
+      - name: 🔄 Update Service Worker Cache Version
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          
+          # Update sw.js - ganti CACHE_NAME dengan version baru
+          sed -i "s/const CACHE_NAME = 'nurananto-v[0-9a-f]*'/const CACHE_NAME = 'nurananto-v$VERSION'/g" sw.js
+          sed -i "s/const STATIC_CACHE = 'static-v[0-9a-f]*'/const STATIC_CACHE = 'static-v$VERSION'/g" sw.js
+          sed -i "s/const IMAGE_CACHE = 'images-v[0-9a-f]*'/const IMAGE_CACHE = 'images-v$VERSION'/g" sw.js
+          sed -i "s/const DYNAMIC_CACHE = 'dynamic-v[0-9a-f]*'/const DYNAMIC_CACHE = 'dynamic-v$VERSION'/g" sw.js
+          
+          echo "✅ Service Worker updated to version: $VERSION"
+      
+      - name: 🎨 Add Cache Busting to HTML Files
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          
+          # Update semua HTML files dengan query string version
+          for file in index.html info-manga.html reader.html; do
+            if [ -f "$file" ]; then
+              # CSS files
+              sed -i "s|style\.css\(\?v=[^\"']*\)\?|style.css?v=$VERSION|g" $file
+              sed -i "s|info-manga\.css\(\?v=[^\"']*\)\?|info-manga.css?v=$VERSION|g" $file
+              sed -i "s|reader\.css\(\?v=[^\"']*\)\?|reader.css?v=$VERSION|g" $file
+              
+              # JS files
+              sed -i "s|script\.js\(\?v=[^\"']*\)\?|script.js?v=$VERSION|g" $file
+              sed -i "s|info-manga\.js\(\?v=[^\"']*\)\?|info-manga.js?v=$VERSION|g" $file
+              sed -i "s|reader\.js\(\?v=[^\"']*\)\?|reader.js?v=$VERSION|g" $file
+              sed -i "s|manga-config\.js\(\?v=[^\"']*\)\?|manga-config.js?v=$VERSION|g" $file
+              sed -i "s|auto-reload\.js\(\?v=[^\"']*\)\?|auto-reload.js?v=$VERSION|g" $file
+              
+              # SW registration
+              sed -i "s|sw\.js\(\?v=[^\"']*\)\?|sw.js?v=$VERSION|g" $file
+              
+              # HTML files (navigasi antar halaman)
+              sed -i "s|index\.html\(\?v=[^\"']*\)\?|index.html?v=$VERSION|g" $file
+              sed -i "s|info-manga\.html\(\?v=[^\"']*\)\?|info-manga.html?v=$VERSION|g" $file
+              sed -i "s|reader\.html\(\?v=[^\"']*\)\?|reader.html?v=$VERSION|g" $file
+              
+              echo "✅ Updated: $file"
+            fi
+          done
+      
+      - name: 🔍 Check for Changes
+        id: check_changes
+        run: |
+          git diff --quiet || echo "has_changes=true" >> $GITHUB_OUTPUT
+      
+      - name: 💾 Commit Version Update
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add version.txt sw.js index.html info-manga.html reader.html
+          git commit -m "🔄 Auto-version: v${{ steps.version.outputs.version }} [skip ci]"
+          git push
+          
+          echo "✅ Version bump committed!"
+      
+      - name: ⏳ Wait for GitHub Pages Deploy
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: sleep 120
+      
+      - name: 🗑️ Purge Cloudflare Cache
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          response=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}')
+          
+          echo "🌐 Cloudflare Response: $response"
+          echo "✅ Cache purged!"

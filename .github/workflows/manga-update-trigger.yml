@@ -1,0 +1,72 @@
+name: Manga Update Trigger
+
+# ============================================
+# WORKFLOW INI UNTUK REPO WEBSITE
+# (nuranantoscans)
+# Akan triggered otomatis dari repo manga
+# ============================================
+
+on:
+  repository_dispatch:
+    types: 
+      - manga-updated
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild-website:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔧 Checkout Website Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 📢 Log Update Notification
+        run: |
+          MANGA_REPO="${{ github.event.client_payload.repo }}"
+          echo "🔔 Update received from manga repo: $MANGA_REPO"
+          echo "⏰ Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
+          echo "📦 Triggering cache refresh..."
+      
+      - name: 🔄 Trigger Auto-Version Workflow
+        run: |
+          # Create dummy commit to trigger auto-version workflow
+          echo "# Last updated: $(date)" >> .update-log
+          
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add .update-log
+          git commit -m "🔄 Trigger rebuild from ${{ github.event.client_payload.repo }}"
+          git push
+          
+          echo "✅ Auto-version workflow will run automatically"
+      
+      - name: ⏳ Wait for Pages Deploy
+        run: sleep 120
+      
+      - name: 🗑️ Purge Cloudflare Cache
+        run: |
+          if [ -n "${{ secrets.CF_ZONE_ID }}" ] && [ -n "${{ secrets.CF_API_TOKEN }}" ]; then
+            echo "🌐 Purging Cloudflare cache..."
+            
+            response=$(curl -s -X POST \
+              "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+              -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data '{"purge_everything":true}')
+            
+            echo "Response: $response"
+            echo "✅ Cache purged successfully!"
+          else
+            echo "⚠️ Cloudflare credentials not found, skipping purge"
+          fi
+      
+      - name: ✅ Update Complete
+        run: |
+          echo "🎉 Website update complete!"
+          echo "📱 Changes will be visible after cache refresh"
+          echo "🔗 Website: https://nuranantoscans.my.id"
