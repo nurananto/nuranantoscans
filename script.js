@@ -8,11 +8,10 @@ async function fetchMangaData(repo) {
     if (!response.ok) throw new Error('Failed to fetch manga data');
     const data = await response.json();
     
-    // Get latest unlocked chapter
+    // ✅ FIXED: Get LATEST chapter (highest number) for both locked & unlocked
     let latestUnlockedChapter = null;
     let latestUnlockedDate = null;
     
-    // Get latest locked chapter
     let latestLockedChapter = null;
     let latestLockedDate = null;
     
@@ -22,8 +21,13 @@ async function fetchMangaData(repo) {
       // Filter unlocked chapters
       const unlockedChapters = chaptersArray.filter(ch => !ch.locked);
       if (unlockedChapters.length > 0) {
-        // Sort by uploadDate (newest first)
-        unlockedChapters.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+        // ✅ Sort by chapter NUMBER descending (highest = latest)
+        unlockedChapters.sort((a, b) => {
+          const numA = parseFloat(a.folder);
+          const numB = parseFloat(b.folder);
+          return numB - numA; // Descending
+        });
+        
         latestUnlockedChapter = unlockedChapters[0].folder;
         latestUnlockedDate = unlockedChapters[0].uploadDate;
       }
@@ -31,8 +35,13 @@ async function fetchMangaData(repo) {
       // Filter locked chapters
       const lockedChapters = chaptersArray.filter(ch => ch.locked);
       if (lockedChapters.length > 0) {
-        // Sort by uploadDate (newest first)
-        lockedChapters.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+        // ✅ Sort by chapter NUMBER descending (highest = latest)
+        lockedChapters.sort((a, b) => {
+          const numA = parseFloat(a.folder);
+          const numB = parseFloat(b.folder);
+          return numB - numA; // Descending
+        });
+        
         latestLockedChapter = lockedChapters[0].folder;
         latestLockedDate = lockedChapters[0].uploadDate;
       }
@@ -134,28 +143,28 @@ function createCard(manga, mangaData, index = 0) {
     return num % 1 === 0 ? num.toString() : num.toFixed(1);
   };
   
-  // Determine which chapter to show (newest one)
+  // ✅ FIXED: Determine which chapter to show (HIGHEST chapter number)
   let chapterText = '';
   
-  if (mangaData.latestUnlockedDate && mangaData.latestLockedDate) {
-    // Both exist - compare dates
-    const unlockedDate = new Date(mangaData.latestUnlockedDate);
-    const lockedDate = new Date(mangaData.latestLockedDate);
+  if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
+    // Both exist - compare CHAPTER NUMBERS (not dates)
+    const unlockedNum = parseFloat(mangaData.latestUnlockedChapter);
+    const lockedNum = parseFloat(mangaData.latestLockedChapter);
     
-    if (lockedDate > unlockedDate) {
-      // Locked is newer
+    if (lockedNum > unlockedNum) {
+      // Locked has higher chapter number
       const lockedTime = getRelativeTime(mangaData.latestLockedDate);
       chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
     } else {
-      // Unlocked is newer (or same date)
+      // Unlocked has higher (or equal) chapter number
       const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
       chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
     }
-  } else if (mangaData.latestUnlockedDate) {
+  } else if (mangaData.latestUnlockedChapter) {
     // Only unlocked exists
     const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
     chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
-  } else if (mangaData.latestLockedDate) {
+  } else if (mangaData.latestLockedChapter) {
     // Only locked exists
     const lockedTime = getRelativeTime(mangaData.latestLockedDate);
     chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
@@ -231,6 +240,7 @@ async function renderManga(filteredList) {
   ).join("");
   
   console.log('✅ Manga sorted by lastChapterUpdate (newest first)');
+  console.log('✅ Badge shows HIGHEST chapter number (not earliest)');
 }
 
 let searchTimeout;

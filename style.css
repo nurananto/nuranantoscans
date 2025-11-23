@@ -27,17 +27,17 @@ body {
 }
 
 /* ============================================
-   HEADER STYLES (From New Version)
+   HEADER STYLES - ✅ FIXED: SAMA dengan info-manga.css
    ============================================ */
 header {
-  background-color: #18191a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  padding: 15px 20px;
-  position: sticky;
-  top: 0;
+  background-color: #0a0a0a; /* ✅ Same as body background */
+  box-shadow: none; /* ✅ No shadow */
+  padding: 0; /* ✅ No padding */
+  position: static; /* ✅ Not sticky */
   z-index: 1000;
-  border-bottom: 1px solid #2f3336;
-  margin: -1.25rem -1.25rem 1rem;
+  border-bottom: none;
+  margin: 0 auto 1.5rem; /* ✅ Same margin as info-manga */
+  max-width: 1400px; /* ✅ Centered like info-manga */
 }
 
 .header-content {
@@ -128,7 +128,7 @@ header {
 .search-section {
   max-width: 1400px;
   margin: 0 auto 2.5rem;
-  padding: 0 1.5rem;
+  padding: 0 0; /* ✅ No side padding on desktop */
   display: flex;
   align-items: center;
 }
@@ -137,7 +137,7 @@ header {
   width: 100%;
   padding: 0.75rem 1.25rem;
   font-size: 1rem;
-  border-radius: 12px; /* Squircle instead of 50px oval */
+  border-radius: 12px;
   border: 2px solid var(--border-color);
   outline: none;
   background: #222;
@@ -190,7 +190,7 @@ header {
   display: grid;
   gap: 1.25rem;
   justify-content: center;
-  padding: 0 1.5rem;
+  padding: 0 0; /* ✅ No side padding on desktop */
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -205,7 +205,7 @@ header {
 @media (min-width: 768px) and (max-width: 1023px) {
   .grid-container {
     grid-template-columns: repeat(3, 1fr);
-    padding: 0 1rem;
+    padding: 0 0;
     gap: 1rem;
   }
 }
@@ -213,7 +213,7 @@ header {
 @media (max-width: 767px) {
   .grid-container {
     grid-template-columns: repeat(2, 1fr);
-    padding: 0 0.5rem;
+    padding: 0 0;
     gap: 0.875rem;
   }
   
@@ -227,7 +227,7 @@ header {
    ============================================ */
 .manga-card {
   position: relative;
-  overflow: visible; /* Changed from hidden to visible for badge overflow */
+  overflow: visible;
   background-color: var(--bg-card);
   border-radius: 0.6rem;
   box-shadow: 0 0.25rem 0.625rem rgba(0, 0, 0, 0.4);
@@ -314,7 +314,7 @@ header {
    ============================================ */
 .manga-title {
   color: var(--text-primary);
-  padding: 0.6rem 0.5rem 1.2rem; /* Padding bottom untuk descender */
+  padding: 0.6rem 0.5rem 1.2rem;
   text-align: center;
   background: transparent;
   display: -webkit-box;
@@ -325,13 +325,11 @@ header {
   word-break: break-word;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  /* Padding sama untuk semua, TIDAK berubah dengan badge */
   padding-top: 0.6rem;
 }
 
-/* HAPUS extra padding - badge tidak mendorong judul */
 .manga-card.recently-updated .manga-title {
-  padding-top: 0.6rem;  /* Sama seperti normal, TIDAK ada extra padding */
+  padding-top: 0.6rem;
 }
 
 /* Desktop - Font lebih besar */
@@ -340,7 +338,6 @@ header {
     font-size: 0.95rem;
     font-weight: 600;
     line-height: 1.65;
-    /* max-height = (font-size × line-height × 2 baris) + buffer besar untuk descender */
     max-height: calc(0.95rem * 1.65 * 2 + 0.7rem);
   }
 }
@@ -355,33 +352,35 @@ header {
   }
 }
 
-/* Mobile - Font lebih kecil */
+/* Mobile - Font lebih kecil - ✅ FIXED: Extra padding untuk descender */
 @media (max-width: 767px) {
   .manga-title {
     font-size: 0.8rem;
     font-weight: 600;
-    padding: 0.5rem 0.4rem 1.1rem;
-    line-height: 1.55;
-    max-height: calc(0.8rem * 1.55 * 2 + 0.5rem);
+    padding: 0.5rem 0.4rem 1.3rem;
+    line-height: 1.65;
+    max-height: calc(0.8rem * 1.65 * 2 + 0.7rem);
   }
   
   .manga-card.recently-updated .manga-title {
-    padding-top: 0.5rem;  /* Sama dengan normal - TIDAK ada extra */
+    padding-top: 0.5rem;
+    padding-bottom: 1.3rem;
   }
 }
 
-/* Small Mobile - Font paling kecil */
+/* Small Mobile - Font paling kecil - ✅ FIXED: Extra padding untuk descender */
 @media (max-width: 480px) {
   .manga-title {
     font-size: 0.75rem;
     font-weight: 500;
-    padding: 0.45rem 0.35rem 1rem;
-    line-height: 1.55;
-    max-height: calc(0.75rem * 1.55 * 2 + 0.45rem);
+    padding: 0.45rem 0.35rem 1.2rem;
+    line-height: 1.65;
+    max-height: calc(0.75rem * 1.65 * 2 + 0.65rem);
   }
   
   .manga-card.recently-updated .manga-title {
-    padding-top: 0.45rem;  /* Sama dengan normal - TIDAK ada extra */
+    padding-top: 0.45rem;
+    padding-bottom: 1.2rem;
   }
 }
 
@@ -390,7 +389,6 @@ header {
 .title-medium,
 .title-small,
 .title-xsmall {
-  /* Override: semua ukuran sama, responsive by device */
   font-size: inherit !important;
   font-weight: inherit !important;
   line-height: inherit !important;
@@ -411,7 +409,7 @@ header {
   gap: 0.5rem;
   background: linear-gradient(135deg, #be1e2d 0%, #d32f2f 100%);
   padding: 0.75rem 1.25rem;
-  border-radius: 16px; /* Squircle instead of 50px oval */
+  border-radius: 16px;
   text-decoration: none;
   color: white;
   font-weight: 700;
@@ -456,11 +454,11 @@ header {
    ============================================ */
 @media (min-width: 768px) and (max-width: 1023px) {
   header {
-    padding: 12px 15px;
+    margin-bottom: 1.5rem;
   }
   
   .search-section {
-    padding: 0 1rem;
+    padding: 0 0;
   }
   
   .trakteer-button {
@@ -478,34 +476,36 @@ header {
   
   .github-link-header,
   .facebook-link-header {
-    padding: 0.45rem 0.85rem;
+    padding: 8px 16px; /* ✅ Keep full button on tablet */
+    gap: 8px;
+    border-radius: 8px;
   }
   
   .github-icon,
   .facebook-icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
   
   .github-text,
   .facebook-text {
-    font-size: 0.9rem;
+    font-size: 14px;
+    display: inline; /* ✅ Show text on tablet */
   }
 }
 
 @media (max-width: 767px) {
   body {
-    padding: 0.625rem;
+    padding: 20px;
     padding-bottom: 110px;
   }
   
   header {
-    padding: 10px 12px;
-    margin: -0.625rem -0.625rem 0.75rem;
+    margin-bottom: 1rem;
   }
   
   .search-section {
-    padding: 0 0.5rem;
+    padding: 0 0;
     margin-bottom: 2rem;
   }
   
@@ -515,8 +515,8 @@ header {
   }
   
   .trakteer-button {
-    left: 0.5rem;
-    right: 0.5rem;
+    left: 0.625rem;
+    right: 0.625rem;
     padding: 0.65rem 1rem;
     font-size: 0.85rem;
   }
@@ -530,19 +530,22 @@ header {
     height: 45px;
   }
   
-  /* GitHub & Facebook - Icon only on mobile */
+  /* ✅ GitHub & Facebook - Icon only on mobile */
   .github-link-header,
   .facebook-link-header {
-    min-width: 40px;
-    min-height: 40px;
-    padding: 0.5rem;
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+    min-height: 45px;
+    padding: 0;
     justify-content: center;
+    border-radius: 10px;
   }
   
   .github-icon,
   .facebook-icon {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
   }
   
   .github-text,
@@ -553,22 +556,21 @@ header {
 
 @media (max-width: 480px) {
   body {
-    padding: 0.75rem;
+    padding: 20px;
     padding-bottom: 105px;
   }
   
   header {
-    padding: 8px 10px;
-    margin: -0.75rem -0.75rem 0.5rem;
+    margin-bottom: 1rem;
   }
   
   .grid-container {
-    padding: 0 0.5rem;
+    padding: 0 0;
     gap: 0.75rem;
   }
   
   .search-section {
-    padding: 0 0.5rem;
+    padding: 0 0;
   }
   
   .trakteer-button {
@@ -589,15 +591,18 @@ header {
   
   .github-link-header,
   .facebook-link-header {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 0.4rem;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-radius: 8px;
   }
   
   .github-icon,
   .facebook-icon {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
   
   #searchInput {

@@ -18,6 +18,12 @@ MANGA_LIST = [
     cover: 'covers/wakachan-c15f762d-5437-4f73-aa85-64a7b686ddba.webp',
     repo: 'Waka-chan'
   },
+  {
+    id: 'aiwooshiete',
+    title: 'Watashi ni Ai wo Oshiete',
+    cover: 'covers/aiwooshiete-e56a300a-60aa-433e-8589-c8a963f188f8.webp',
+    repo: 'AiwoOshiete'
+  },
   ];
 
 // ============================================

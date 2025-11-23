@@ -1,5 +1,5 @@
-// Service Worker for Nurananto Scanlation v2.0
-// Optimized cache strategy for faster loading
+// Service Worker for Nurananto Scanlation v2.1
+// Fixed: Response clone error
 
 const CACHE_NAME = 'nurananto-v2';
 const STATIC_CACHE = 'static-v2';
@@ -29,7 +29,7 @@ const STATIC_ASSETS = [
 
 // Install - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('🔧 SW: Installing v2.0...');
+    console.log('🔧 SW: Installing v2.1...');
     event.waitUntil(
         caches.open(STATIC_CACHE).then((cache) => {
             console.log('📦 SW: Caching static assets');
@@ -43,7 +43,7 @@ self.addEventListener('install', (event) => {
 
 // Activate - clean old caches
 self.addEventListener('activate', (event) => {
-    console.log('✅ SW: Activated v2.0');
+    console.log('✅ SW: Activated v2.1');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
@@ -59,7 +59,7 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
-// Fetch - smart caching strategy
+// Fetch - smart caching strategy with fixed clone
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
@@ -72,11 +72,20 @@ self.addEventListener('fetch', (event) => {
                 caches.open(IMAGE_CACHE).then(cache => {
                     return cache.match(request).then(cached => {
                         const fetchPromise = fetch(request).then(response => {
-                            // Cache for 7 days
-                            if (response.status === 200) {
-                                cache.put(request, response.clone());
+                            // ✅ FIX: Validate and clone properly
+                            if (response && response.ok && response.status === 200) {
+                                const responseToCache = response.clone();
+                                cache.put(request, responseToCache).catch(err => {
+                                    console.warn('Cache put failed:', err);
+                                });
                             }
                             return response;
+                        }).catch(err => {
+                            console.warn('GitHub fetch failed:', err);
+                            return cached || new Response('Network error', { 
+                                status: 408,
+                                statusText: 'Request Timeout'
+                            });
                         });
                         return cached || fetchPromise;
                     });
@@ -92,15 +101,20 @@ self.addEventListener('fetch', (event) => {
     
     // Cache strategy for local files
     if (url.pathname.startsWith('/covers/')) {
-        // Images: Cache first, update in background
         event.respondWith(
             caches.open(IMAGE_CACHE).then(cache => {
                 return cache.match(request).then(cached => {
                     const fetchPromise = fetch(request).then(response => {
-                        if (response.status === 200) {
-                            cache.put(request, response.clone());
+                        // ✅ FIX: Clone before caching
+                        if (response && response.ok && response.status === 200) {
+                            cache.put(request, response.clone()).catch(err => {
+                                console.warn('Cache put failed:', err);
+                            });
                         }
                         return response;
+                    }).catch(err => {
+                        console.warn('Cover fetch failed:', err);
+                        return cached;
                     });
                     return cached || fetchPromise;
                 });
@@ -114,12 +128,18 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             caches.match(request).then(cached => {
                 return cached || fetch(request).then(response => {
-                    if (response.status === 200) {
+                    // ✅ FIX: Validate before cloning
+                    if (response && response.ok && response.status === 200) {
                         caches.open(STATIC_CACHE).then(cache => {
-                            cache.put(request, response.clone());
+                            cache.put(request, response.clone()).catch(err => {
+                                console.warn('Cache put failed:', err);
+                            });
                         });
                     }
                     return response;
+                }).catch(err => {
+                    console.warn('Static fetch failed:', err);
+                    return cached;
                 });
             })
         );
@@ -130,14 +150,19 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(request)
             .then(response => {
-                if (response.status === 200 && !url.pathname.includes('manga.json')) {
+                // ✅ FIX: Validate and handle opaque responses
+                if (response && response.ok && response.status === 200 && 
+                    !url.pathname.includes('manga.json')) {
                     caches.open(DYNAMIC_CACHE).then(cache => {
-                        cache.put(request, response.clone());
+                        cache.put(request, response.clone()).catch(err => {
+                            console.warn('Cache put failed:', err);
+                        });
                     });
                 }
                 return response;
             })
-            .catch(() => {
+            .catch(err => {
+                console.warn('Dynamic fetch failed:', err);
                 return caches.match(request).then(cached => {
                     return cached || caches.match('./index.html');
                 });

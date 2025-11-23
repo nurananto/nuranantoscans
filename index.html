@@ -22,8 +22,8 @@
   <!-- Critical CSS inline -->
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{margin:0;padding:1.25rem 1.25rem 100px;background:#111;color:#fff;font-family:"Rounded Mplus 1c","M PLUS Rounded 1c","Varela Round","Nunito","Comfortaa","Quicksand","Segoe UI",sans-serif}
-    header{background:#18191a;box-shadow:0 2px 8px rgba(0,0,0,.5);padding:15px 20px;position:sticky;top:0;z-index:1000;border-bottom:1px solid #2f3336;margin:-1.25rem -1.25rem 1rem}
+    body{margin:0;padding:1.25rem;padding-bottom:100px;background:#0a0a0a;color:#fff;font-family:"Rounded Mplus 1c","M PLUS Rounded 1c","Varela Round","Nunito","Comfortaa","Quicksand","Segoe UI",sans-serif}
+    header{max-width:1400px;margin:0 auto 1.5rem;padding:0;background:#0a0a0a;box-shadow:none;border-bottom:none}
     .header-content{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
     .site-logo{height:60px;width:auto;display:block}
     .header-buttons{display:flex;gap:12px;align-items:center}
@@ -32,20 +32,21 @@
     .facebook-link-header{background:#1877f2}
     .github-icon,.facebook-icon{width:24px;height:24px}
     .github-text,.facebook-text{color:#fff;font-weight:600;font-size:14px}
-    .search-section{max-width:1400px;margin:0 auto 2.5rem;padding:0 1.5rem}
+    .search-section{max-width:1400px;margin:0 auto 2.5rem;padding:0}
     #searchInput{width:100%;padding:.75rem 1.25rem;font-size:1rem;border-radius:12px;border:2px solid rgba(255,255,255,.1);outline:none;background:#222;color:#fff}
     #searchInput::placeholder{color:#888}
     .trakteer-button{position:fixed;bottom:30px;left:1.5rem;right:1.5rem;z-index:1000;display:flex;align-items:center;justify-content:center;gap:.5rem;background:linear-gradient(135deg,#be1e2d 0%,#d32f2f 100%);padding:.75rem 1.25rem;border-radius:16px;text-decoration:none;color:#fff;font-weight:700;font-size:.95rem;box-shadow:0 4px 15px rgba(190,30,45,.4);max-width:calc(1400px - 3rem);margin:0 auto}
     .trakteer-icon{width:28px;height:28px}
-    .grid-container{display:grid;gap:1.25rem;padding:0 1.5rem;max-width:1400px;margin:0 auto}
+    .grid-container{display:grid;gap:1.25rem;padding:0;max-width:1400px;margin:0 auto}
     .manga-card{position:relative;overflow:visible;background:#1a1a1a;border-radius:.6rem;box-shadow:0 .25rem .625rem rgba(0,0,0,.4);cursor:pointer;transition:transform .3s ease,box-shadow .3s ease}
     .manga-card:hover{transform:scale(1.03);box-shadow:0 8px 25px rgba(24,119,242,.3)}
     .manga-card img{width:100%;aspect-ratio:3/4.2;object-fit:cover;border-radius:.6rem .6rem 0 0;display:block;background:#1a1a1a}
     .manga-title{color:#fff;padding:.6rem .5rem 1.2rem;text-align:center;font-size:.95rem;font-weight:600;line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;word-break:break-word}
     .updated-badge{position:absolute;top:0;left:0;right:0;background:linear-gradient(135deg,rgba(24,119,242,.75) 0%,rgba(10,91,214,.75) 100%);backdrop-filter:blur(10px) saturate(180%);-webkit-backdrop-filter:blur(10px) saturate(180%);border:1px solid rgba(255,255,255,.18);color:#fff;padding:6px 8px;border-radius:.6rem .6rem 0 0;font-weight:700;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 4px 15px rgba(24,119,242,.4);z-index:10;text-align:center;pointer-events:none;display:flex;flex-direction:column;gap:2px;line-height:1.2}
     @media(min-width:1024px){.grid-container{grid-template-columns:repeat(5,1fr)}}
-    @media(min-width:768px) and (max-width:1023px){.grid-container{grid-template-columns:repeat(3,1fr)}.search-section{padding:0 1rem}.trakteer-button{left:1rem;right:1rem}}
-    @media(max-width:767px){body{padding:0.625rem 0.625rem 110px}header{padding:10px 12px;margin:-0.625rem -0.625rem .75rem}.site-logo{height:45px}.grid-container{grid-template-columns:repeat(2,1fr);padding:0 .5rem;gap:.875rem}.search-section{padding:0 .5rem}#searchInput{padding:.65rem 1rem;font-size:.95rem}.trakteer-button{left:.5rem;right:.5rem;padding:.65rem 1rem;font-size:.85rem}.trakteer-icon{width:24px;height:24px}.github-link-header,.facebook-link-header{min-width:40px;padding:.5rem}.github-icon,.facebook-icon{width:22px;height:22px}.github-text,.facebook-text{display:none}.manga-title{font-size:.8rem;padding:.5rem .4rem 1.1rem}}
+    @media(min-width:768px) and (max-width:1023px){.grid-container{grid-template-columns:repeat(3,1fr)}.site-logo{height:50px}.header-buttons{gap:8px}.github-link-header,.facebook-link-header{padding:8px 16px}.github-icon,.facebook-icon{width:24px;height:24px}.github-text,.facebook-text{font-size:14px}}
+    @media(max-width:767px){body{padding:20px;padding-bottom:110px}header{margin-bottom:1rem}.site-logo{height:45px}.grid-container{grid-template-columns:repeat(2,1fr);gap:.875rem}.search-section{padding:0}#searchInput{padding:.65rem 1rem;font-size:.95rem}.trakteer-button{left:.625rem;right:.625rem;padding:.65rem 1rem;font-size:.85rem}.trakteer-icon{width:24px;height:24px}.github-link-header,.facebook-link-header{width:45px;height:45px;min-width:45px;min-height:45px;padding:0;justify-content:center;border-radius:10px}.github-icon,.facebook-icon{width:24px;height:24px}.github-text,.facebook-text{display:none}.manga-title{font-size:.8rem;padding:.5rem .4rem 1.3rem;line-height:1.65}}
+    @media(max-width:480px){body{padding:20px;padding-bottom:105px}.site-logo{height:40px}.github-link-header,.facebook-link-header{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:8px}.github-icon,.facebook-icon{width:22px;height:22px}.manga-title{font-size:.75rem;padding:.45rem .35rem 1.2rem}}
     .loading-indicator{text-align:center;padding:40px 20px;display:none}.loading-indicator.show{display:block}
     .spinner{width:50px;height:50px;border:4px solid #f3f3f3;border-top:4px solid #1877f2;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 15px}
     @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
@@ -54,7 +55,7 @@
 <body>
   <header>
     <div class="header-content">
-      <img src="assets/logo.png" alt="Nurananto Scanlation" class="site-logo" width="200" height="60" style="max-width:200px;height:auto">
+      <img src="assets/logo.png" alt="Nurananto Scanlation" class="site-logo" width="200" height="60">
       
       <div class="header-buttons">
         <!-- Tombol GitHub Source Code -->
