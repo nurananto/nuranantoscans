@@ -13,12 +13,6 @@
 
 MANGA_LIST = [
   {
-    id: 'aotosakura',
-    title: 'Ao to Sakura',
-    cover: 'covers/aotosakura-8f1fc328-3eaf-4bd9-8631-c5c9f8029ed5.webp',
-    repo: 'AotoSakura'
-  },
-  {
     id: 'waka-chan',
     title: 'Waka-chan wa Kyou mo Azatoi',
     cover: 'covers/wakachan-c15f762d-5437-4f73-aa85-64a7b686ddba.webp',
