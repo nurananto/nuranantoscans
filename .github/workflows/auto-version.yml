@@ -58,25 +58,26 @@ jobs:
           # Update semua HTML files dengan query string version
           for file in index.html info-manga.html reader.html; do
             if [ -f "$file" ]; then
-              # CSS files
-              sed -i "s|style\.css\(\?v=[^\"']*\)\?|style.css?v=$VERSION|g" $file
-              sed -i "s|info-manga\.css\(\?v=[^\"']*\)\?|info-manga.css?v=$VERSION|g" $file
-              sed -i "s|reader\.css\(\?v=[^\"']*\)\?|reader.css?v=$VERSION|g" $file
+              # CSS files - gunakan positive lookbehind yang lebih spesifik
+              sed -i "s|\([\"']\)style\.css\?v=[^\"']*|\1style.css?v=$VERSION|g" $file
+              sed -i "s|\([\"']\)info-manga\.css\?v=[^\"']*|\1info-manga.css?v=$VERSION|g" $file
+              sed -i "s|\([\"']\)reader\.css\?v=[^\"']*|\1reader.css?v=$VERSION|g" $file
               
-              # JS files
-              sed -i "s|script\.js\(\?v=[^\"']*\)\?|script.js?v=$VERSION|g" $file
-              sed -i "s|info-manga\.js\(\?v=[^\"']*\)\?|info-manga.js?v=$VERSION|g" $file
-              sed -i "s|reader\.js\(\?v=[^\"']*\)\?|reader.js?v=$VERSION|g" $file
-              sed -i "s|manga-config\.js\(\?v=[^\"']*\)\?|manga-config.js?v=$VERSION|g" $file
-              sed -i "s|auto-reload\.js\(\?v=[^\"']*\)\?|auto-reload.js?v=$VERSION|g" $file
+              # ✅ FIX: JS files - hanya update yang ada attribute src=
+              # Tidak akan touch baris yang di-comment
+              sed -i "s|src=\"script\.js\?v=[^\"]*\"|src=\"script.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"info-manga\.js\?v=[^\"]*\"|src=\"info-manga.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"reader\.js\?v=[^\"]*\"|src=\"reader.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"manga-config\.js\?v=[^\"]*\"|src=\"manga-config.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"auto-reload\.js\?v=[^\"]*\"|src=\"auto-reload.js?v=$VERSION\"|g" $file
               
               # SW registration
-              sed -i "s|sw\.js\(\?v=[^\"']*\)\?|sw.js?v=$VERSION|g" $file
+              sed -i "s|sw\.js\?v=[^\"']*|sw.js?v=$VERSION|g" $file
               
               # HTML files (navigasi antar halaman)
-              sed -i "s|index\.html\(\?v=[^\"']*\)\?|index.html?v=$VERSION|g" $file
-              sed -i "s|info-manga\.html\(\?v=[^\"']*\)\?|info-manga.html?v=$VERSION|g" $file
-              sed -i "s|reader\.html\(\?v=[^\"']*\)\?|reader.html?v=$VERSION|g" $file
+              sed -i "s|index\.html\?v=[^\"']*|index.html?v=$VERSION|g" $file
+              sed -i "s|info-manga\.html\?v=[^\"']*|info-manga.html?v=$VERSION|g" $file
+              sed -i "s|reader\.html\?v=[^\"']*|reader.html?v=$VERSION|g" $file
               
               echo "✅ Updated: $file"
             fi

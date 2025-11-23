@@ -1,8 +1,8 @@
-// Service Worker for Nurananto Scanlation v3.0
-// ✅ Auto-version system enabled
-// ✅ Fixed response clone error
+// Service Worker for Nurananto Scanlation v3.1
+// ✅ FIXED: Response clone error
+// ✅ FIXED: Proper error handling
 
-const CACHE_NAME = 'nurananto-v4b51f1b';  // ← Ubah ini
+const CACHE_NAME = 'nurananto-v4b51f1b';
 const STATIC_CACHE = 'static-v4b51f1b';
 const IMAGE_CACHE = 'images-v4b51f1b';
 const DYNAMIC_CACHE = 'dynamic-v4b51f1b';
@@ -39,7 +39,7 @@ self.addEventListener('install', (event) => {
             });
         })
     );
-    self.skipWaiting(); // Force activate immediately
+    self.skipWaiting();
 });
 
 // Activate - clean old caches
@@ -49,7 +49,6 @@ self.addEventListener('activate', (event) => {
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    // Delete all caches that don't match current version
                     if (cacheName !== CACHE_NAME && 
                         cacheName !== STATIC_CACHE && 
                         cacheName !== IMAGE_CACHE && 
@@ -61,10 +60,10 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
-    return self.clients.claim(); // Take control immediately
+    return self.clients.claim();
 });
 
-// Fetch - smart caching strategy with fixed clone
+// ✅ FIXED: Fetch handler dengan proper clone
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
@@ -77,10 +76,9 @@ self.addEventListener('fetch', (event) => {
                 caches.open(IMAGE_CACHE).then(cache => {
                     return cache.match(request).then(cached => {
                         const fetchPromise = fetch(request).then(response => {
-                            // ✅ FIX: Validate and clone properly
+                            // ✅ FIX: Clone immediately before any operation
                             if (response && response.ok && response.status === 200) {
-                                const responseToCache = response.clone();
-                                cache.put(request, responseToCache).catch(err => {
+                                cache.put(request, response.clone()).catch(err => {
                                     console.warn('Cache put failed:', err);
                                 });
                             }
@@ -110,7 +108,7 @@ self.addEventListener('fetch', (event) => {
             caches.open(IMAGE_CACHE).then(cache => {
                 return cache.match(request).then(cached => {
                     const fetchPromise = fetch(request).then(response => {
-                        // ✅ FIX: Clone before caching
+                        // ✅ FIX: Clone immediately
                         if (response && response.ok && response.status === 200) {
                             cache.put(request, response.clone()).catch(err => {
                                 console.warn('Cache put failed:', err);
@@ -133,7 +131,7 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             caches.match(request).then(cached => {
                 return cached || fetch(request).then(response => {
-                    // ✅ FIX: Validate before cloning
+                    // ✅ FIX: Clone immediately
                     if (response && response.ok && response.status === 200) {
                         caches.open(STATIC_CACHE).then(cache => {
                             cache.put(request, response.clone()).catch(err => {
@@ -155,7 +153,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(request)
             .then(response => {
-                // ✅ FIX: Validate and handle opaque responses
+                // ✅ FIX: Clone immediately and validate
                 if (response && response.ok && response.status === 200 && 
                     !url.pathname.includes('manga.json')) {
                     caches.open(DYNAMIC_CACHE).then(cache => {
@@ -175,7 +173,7 @@ self.addEventListener('fetch', (event) => {
     );
 });
 
-// Message - manual cache control & update notification
+// Message - manual cache control
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
@@ -197,7 +195,7 @@ self.addEventListener('message', (event) => {
     }
 });
 
-// Update notification for users
+// Update notification
 self.addEventListener('controllerchange', () => {
     console.log('🔄 New Service Worker took control');
 });

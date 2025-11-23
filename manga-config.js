@@ -30,6 +30,30 @@ MANGA_LIST = [
     cover: 'covers/madogiwa-ce74d132-81f0-491a-bb19-83de73746c8e.webp',
     repo: 'MadogiwaHenshuu'
   },
+  {
+    id: 'aotosakura',
+    title: 'Ao to Sakura',
+    cover: 'covers/aotosakura-8f1fc328-3eaf-4bd9-8631-c5c9f8029ed5.webp',
+    repo: 'AotoSakura'
+  },
+  {
+    id: 'yarikonda',
+    title: 'Yarikonda Renai Game no Akuyaku ni Tensei shitanode, Gensaku Chishiki de Heroine wo Kouryaku shimasu',
+    cover: 'covers/yarikonda-eaecd9b5-0510-46aa-b65c-a09611fa912b.webp',
+    repo: 'YarikondaRenaiGame'
+  },
+  {
+    id: 'negatte',
+    title: 'Negatte mo Nai Tsuihou Go kara no Slow Life? ~Intai Shita Hazu ga Nariyuki de Bishoujo Gal no Shishou ni Nattara Naze ka Mechakucha Natsukareta~',
+    cover: 'covers/negatte-dee7c542-0efd-4e72-8df1-5d71a2b08c6d.webp',
+    repo: 'NegattemoNai'
+  },
+  {
+    id: 'vtuber',
+    title: 'Yuumei VTuber no Ani Dakedo, Nazeka Ore ga Yuumei ni Natteita',
+    cover: 'covers/vtuber-493c315e-5492-4d76-80e9-1f55f9e5849e.webp',
+    repo: 'YuumeiVTuber'
+  },
   ];
 
 // ============================================
