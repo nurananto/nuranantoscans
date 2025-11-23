@@ -16,8 +16,8 @@
   <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
   
   <!-- Preload CSS (non-blocking) -->
-  <link rel="preload" href="style.css?v=8b89dde" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="style.css?v=8b89dde"></noscript>
+  <link rel="preload" href="style.css?v=19bb1ad" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="style.css?v=19bb1ad"></noscript>
   
   <!-- Critical CSS inline -->
   <style>
@@ -98,17 +98,17 @@
   </a>
 
   <!-- ✅ AUTO-RELOAD SCRIPT - Load FIRST -->
-  <script defer src="auto-reload.js?v=8b89dde"></script>
+  <script defer src="auto-reload.js?v=19bb1ad"></script>
   
-  <!-- IMPORT manga-config.js?v=8b89dde DULU sebelum script.js?v=8b89dde -->
-  <script defer src="manga-config.js?v=8b89dde"></script>
-  <script defer src="script.js?v=8b89dde"></script>
+  <!-- IMPORT manga-config.js?v=19bb1ad
+  <script defer src="manga-config.js?v=19bb1ad"></script>
+  <script defer src="script.js?v=19bb1ad"></script>
   
   <!-- Service Worker Registration -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=8b89dde')
+        navigator.serviceWorker.register('./sw.js?v=19bb1ad')
           .then(reg => console.log('✅ SW registered'))
           .catch(err => console.error('❌ SW failed:', err));
       });
