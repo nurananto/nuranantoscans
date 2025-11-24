@@ -1174,3 +1174,36 @@ header {
         padding: 12px 18px;
     }
 }
+
+/* ==================== GISCUS SECTION ==================== */
+
+.giscus-box {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 30px;
+    margin-top: 10px;
+}
+
+#giscus-container {
+    width: 100%;
+    min-height: 200px;
+}
+
+/* Mobile responsive untuk Giscus */
+@media (max-width: 768px) {
+    .giscus-box {
+        padding: 20px;
+        margin-top: 10px;
+    }
+    
+    #giscus-container {
+        min-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .giscus-box {
+        padding: 15px;
+    }
+}
