@@ -54,6 +54,12 @@ MANGA_LIST = [
     cover: 'covers/vtuber-493c315e-5492-4d76-80e9-1f55f9e5849e.webp',
     repo: 'YuumeiVTuber'
   },
+  {
+    id: '10nenburi',
+    title: '10-Nen Buri ni Saikai shita Kusogaki wa Seijun Bishoujo JK ni Seichou shiteita',
+    cover: 'covers/10nenburi-254730e0-71bd-4008-9c08-e9d9d1d0989e.webp',
+    repo: '10nenburi'
+  },
   ];
 
 // ============================================
