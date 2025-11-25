@@ -63,7 +63,7 @@ MANGA_LIST = [
   {
     id: 'suufungo',
     title: 'Suufungo no Mirai ga Wakaru You ni Natta kedo, Onnagokoro wa Wakaranai.',
-    cover: 'covers/suufungo-b681b78e-75ce-4464-8089-50f37f00e0e9.jpg',
+    cover: 'covers/suufungo-b681b78e-75ce-4464-8089-50f37f00e0e9.webp',
     repo: 'SuufungonoMirai'
   },
   ];
