@@ -60,6 +60,12 @@ MANGA_LIST = [
     cover: 'covers/10nenburi-254730e0-71bd-4008-9c08-e9d9d1d0989e.webp',
     repo: '10nenburi'
   },
+  {
+    id: 'suufungo',
+    title: 'Suufungo no Mirai ga Wakaru You ni Natta kedo, Onnagokoro wa Wakaranai.',
+    cover: 'covers/suufungo-b681b78e-75ce-4464-8089-50f37f00e0e9.jpg',
+    repo: 'SuufungonoMirai'
+  },
   ];
 
 // ============================================
