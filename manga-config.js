@@ -15,7 +15,7 @@ MANGA_LIST = [
   {
     id: 'waka-chan',
     title: 'Waka-chan wa Kyou mo Azatoi',
-    cover: 'covers/wakachan-c15f762d-5437-4f73-aa85-64a7b686ddba.webp',
+    cover: 'covers/waka-chan-c15f762d-5437-4f73-aa85-64a7b686ddba.webp',
     repo: 'Waka-chan'
   },
   {
@@ -66,13 +66,13 @@ MANGA_LIST = [
     cover: 'covers/suufungo-b681b78e-75ce-4464-8089-50f37f00e0e9.webp',
     repo: 'SuufungonoMirai'
   },
-    {
+  {
     id: 'mememenomememe',
     title: 'Mememe no Mememe',
-    cover: '',
+    cover: 'covers/mememenomememe-1a442277-f099-4ebb-8ea2-6d7e55002838.webp',
     repo: 'MememenoMememe'
-  },
-  ];
+  }
+];
 
 // ============================================
 // HELPER FUNCTIONS
