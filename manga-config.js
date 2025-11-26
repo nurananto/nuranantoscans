@@ -66,6 +66,12 @@ MANGA_LIST = [
     cover: 'covers/suufungo-b681b78e-75ce-4464-8089-50f37f00e0e9.webp',
     repo: 'SuufungonoMirai'
   },
+    {
+    id: 'mememenomememe',
+    title: 'Mememe no Mememe',
+    cover: '',
+    repo: 'MememenoMememe'
+  },
   ];
 
 // ============================================
