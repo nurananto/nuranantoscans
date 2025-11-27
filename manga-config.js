@@ -15,49 +15,49 @@ MANGA_LIST = [
   {
     id: 'youkyaninatta',
     title: 'Youkya ni Natta Ore no Seishun Shijou Shugi',
-    cover: 'covers/youkyaninatta-3eaf02cf-980c-44af-9ab9-2032f7458fb8.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/youkyaninatta-3eaf02cf-980c-44af-9ab9-2032f7458fb8.webp',
     repo: 'YoukyaniNatta'
   },
   {
     id: 'kawaiigal',
     title: 'Class de Ichiban Kawaii Gal o Ezuke Shiteiru Hanashi',
-    cover: 'covers/kawaiigal-057c4259-5fef-4db3-aef5-a805c7f096c2.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/kawaiigal-057c4259-5fef-4db3-aef5-a805c7f096c2.webp',
     repo: 'KawaiiGal'
   },
   {
     id: 'amarichan',
     title: 'Kanojo ni Shitai Joshi Ichii, no Tonari de Mitsuketa Amari-chan',
-    cover: 'covers/amarichan-6ffed041-aa59-49e2-b79f-dac40ac0ef53.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/amarichan-6ffed041-aa59-49e2-b79f-dac40ac0ef53.webp',
     repo: 'Amarichan'
   },
   {
     id: 'sankakukei',
     title: 'Seishun wa Sankakukei no Loop',
-    cover: 'covers/sankakukei-4cf5a0cc-9123-43bd-bf54-c5f8c0aa9e16.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/sankakukei-4cf5a0cc-9123-43bd-bf54-c5f8c0aa9e16.webp',
     repo: 'SankakukeinoLoop'
   },
   {
     id: 'tensai',
     title: 'Tensai Bishoujo Sanshimai wa Isourou ni Dake Choro Kawaii',
-    cover: 'covers/tensai-3964fb0f-aa43-492f-a693-a83b70e35371.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/tensai-3964fb0f-aa43-492f-a693-a83b70e35371.webp',
     repo: 'TensaiBishoujo'
   },
   {
     id: 'midari',
     title: 'Midari ni Tsukasete wa Narimasen',
-    cover: 'covers/midari-d86648a6-77d3-4a95-a8d2-b296da206065.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/midari-d86648a6-77d3-4a95-a8d2-b296da206065.webp',
     repo: 'Midari'
   },
   {
     id: 'kiminonegai',
     title: 'Kimi no Negai ga Kanau Made',
-    cover: 'covers/kiminonegai-5c6872ff-e467-44e1-b190-b01c0c1d8857.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/kiminonegai-5c6872ff-e467-44e1-b190-b01c0c1d8857.webp',
     repo: 'KiminoNegai'
   },
   {
     id: 'uchi',
     title: 'Uchi no Seiso-kei Iinchou ga Katsute Chuunibyou Idol datta Koto o Ore Dake ga Shitteiru.',
-    cover: 'covers/uchi-10d163e1-853d-4bbb-9131-b99534a1836b.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/uchi-10d163e1-853d-4bbb-9131-b99534a1836b.webp',
     repo: 'UchinoSeiso-kei'
   },
   {
