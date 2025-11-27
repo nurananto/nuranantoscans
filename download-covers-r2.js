@@ -119,6 +119,18 @@ function isR2Url(coverPath) {
           coverPath.includes('cdn.nuranantoscans.my.id'));
 }
 
+// Helper: Check if cover URL is using OLD format (with /manga-list/)
+function hasOldUrlFormat(coverPath) {
+  if (!coverPath) return false;
+  return coverPath.includes('/manga-list/covers/');
+}
+
+// Helper: Fix old URL format
+function fixOldUrlFormat(coverPath) {
+  if (!coverPath) return coverPath;
+  return coverPath.replace('/manga-list/covers/', '/covers/');
+}
+
 // R2 Functions
 async function listR2Objects(prefix) {
   try {
@@ -346,6 +358,17 @@ async function processAllManga() {
       
       // Check if cover already R2 URL
       if (isR2Url(manga.cover)) {
+        // Check if it's using old URL format
+        if (hasOldUrlFormat(manga.cover)) {
+          console.log(`  [FIX] Old URL format detected, updating...`);
+          console.log(`    Old: ${manga.cover}`);
+          manga.cover = fixOldUrlFormat(manga.cover);
+          console.log(`    New: ${manga.cover}`);
+          updatedMangaList.push(manga);
+          migratedCount++;
+          continue;
+        }
+        
         console.log(`  [SKIP] Cover sudah di R2: ${manga.cover}`);
         updatedMangaList.push(manga);
         skipCount++;
