@@ -73,7 +73,7 @@ jobs:
           echo "[INFO] Reading repo list from repo-list.txt..."
           
           if [ ! -f "repo-list.txt" ]; then
-            echo "[ERROR] repo-list.txt not found!"
+            echo "[FAILED] repo-list.txt not found!"
             exit 1
           fi
           
@@ -106,10 +106,10 @@ jobs:
               echo "        Make sure sync-cover.yml is uploaded to this repo"
               ((skipped++))
             elif [ "$http_code" = "000" ]; then
-              echo "  [ERROR] $repo failed (network error)"
+              echo "  [FAILED] $repo network error"
               ((failed++))
             else
-              echo "  [ERROR] $repo failed (HTTP $http_code)"
+              echo "  [FAILED] $repo (HTTP $http_code)"
               ((failed++))
             fi
             
@@ -137,7 +137,7 @@ jobs:
             exit 0
           else
             echo ""
-            echo "[ERROR] All trigger attempts failed"
+            echo "[FAILED] All trigger attempts failed"
             exit 1
           fi
       

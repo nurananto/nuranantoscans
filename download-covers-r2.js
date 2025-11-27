@@ -498,7 +498,7 @@ async function processAllManga() {
       }
       
     } catch (error) {
-      console.log(`  [ERROR] ${error.message}`);
+      console.log(`  [FAILED] ${error.message}`);
       
       if (error.message.includes('Rate limit')) {
         console.log('  [WAIT] Tunggu 30 detik...');
@@ -571,7 +571,7 @@ function exportRepoList() {
     console.log(`  [MIGRATE] URL updated: ${migratedCount}`);
     console.log(`  [DELETE] Old covers deleted: ${deletedCount}`);
     console.log(`  [SKIP] Already in R2: ${skipCount}`);
-    console.log(`  [ERROR] Failed: ${errorCount}`);
+    console.log(`  [FAILED] Failed: ${errorCount}`);
     console.log(`  [TOTAL] ${MANGA_LIST.length} manga`);
     console.log('========================================\n');
     
@@ -606,7 +606,7 @@ function exportRepoList() {
     }
     
   } catch (error) {
-    console.error('\n[FATAL ERROR]', error.message);
+    console.error('\n[FATAL] Script error:', error.message);
     process.exit(1);
   }
 })();
