@@ -1,4 +1,4 @@
-name: Auto Update Manga Covers
+name: Auto Update Manga Covers (R2)
 
 on:
   schedule:
@@ -24,26 +24,32 @@ jobs:
         with:
           node-version: '18'
       
-      - name: 📥 Install Dependencies (Sharp for WebP)
+      - name: 📥 Install Dependencies
         run: |
-          echo "📦 Installing sharp for WebP conversion..."
-          npm install sharp
+          echo "[INFO] Installing sharp & AWS SDK for R2..."
+          npm install sharp @aws-sdk/client-s3
       
-      - name: 📥 Download Latest Covers & Convert to WebP
+      - name: ☁️ Download & Upload Covers to R2
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ACCESS_KEY_ID: ${{ secrets.CF_ACCESS_KEY_ID }}
+          CF_SECRET_ACCESS_KEY: ${{ secrets.CF_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_DOMAIN: ${{ secrets.R2_PUBLIC_DOMAIN }}
         run: |
-          echo "🚀 Starting cover update process (with WebP conversion)..."
-          node download-covers.js
+          echo "[START] Starting cover update process (with R2 upload)..."
+          node download-covers-r2.js
         continue-on-error: false
       
-      - name: 🔍 Check for Changes
+      - name: 📝 Check for Changes
         id: check_changes
         run: |
-          if [[ -n $(git status -s) ]]; then
+          if [[ -n $(git status -s manga-config.js repo-list.txt) ]]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "✅ Ada perubahan cover terdeteksi"
+            echo "[SUCCESS] Ada perubahan cover terdeteksi"
+            git status -s
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ Tidak ada perubahan cover"
+            echo "[INFO] Tidak ada perubahan cover"
           fi
       
       - name: 💾 Commit and Push Changes
@@ -52,29 +58,79 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          git add covers/ manga-config.js
+          git add manga-config.js repo-list.txt
           
-          COMMIT_MSG="🤖 Auto-update covers (WebP) - $(date +'%Y-%m-%d')"
+          COMMIT_MSG="🤖 Auto-update covers (R2) - $(date +'%Y-%m-%d')"
           git commit -m "$COMMIT_MSG" || exit 0
           
           git push
       
-      - name: 📤 Trigger Sync to Manga Repos
+      - name: 📤 Trigger Sync to Manga Repos (Auto-detect)
+        if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          repos=("10nenburi" "AotoSakura" "wakachan" "KawaiiGal" "AiwoOshiete" "YarikondaRenaiGame" "Amarichan" "SankakukeinoLoop" "MadogiwaHenshuu" "TensaiBishoujo" "SuufungonoMirai" "NegattemoNai" "Midari" "KiminoNegai" "YuumeiVTuber" "UchinoSeiso-kei" "YoukyaniNatta")
+          echo "[INFO] Reading repo list from repo-list.txt..."
           
-          for repo in "${repos[@]}"; do
-            echo "📤 Triggering $repo..."
-            curl -X POST \
+          if [ ! -f "repo-list.txt" ]; then
+            echo "[ERROR] repo-list.txt not found!"
+            exit 1
+          fi
+          
+          repo_count=$(wc -l < repo-list.txt)
+          echo "[INFO] Found $repo_count repos"
+          
+          success=0
+          failed=0
+          
+          while IFS= read -r repo; do
+            if [ -z "$repo" ]; then
+              continue
+            fi
+            
+            echo "[TRIGGER] Triggering $repo..."
+            
+            response=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
               https://api.github.com/repos/nurananto/$repo/dispatches \
-              -d '{"event_type":"sync-covers"}'
+              -d '{"event_type":"sync-covers"}')
+            
+            if [ "$response" = "204" ]; then
+              echo "  [SUCCESS] $repo triggered"
+              ((success++))
+            else
+              echo "  [ERROR] $repo failed (HTTP $response)"
+              ((failed++))
+            fi
+            
             sleep 1
-          done
+          done < repo-list.txt
+          
+          echo ""
+          echo "========================================"
+          echo "[TRIGGER SUMMARY]"
+          echo "  [SUCCESS] $success repos"
+          echo "  [FAILED] $failed repos"
+          echo "  [TOTAL] $repo_count repos"
+          echo "========================================"
       
       - name: ✅ Success Notification
+        if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          echo "🎉 Cover check complete!"
-          echo "🔄 All covers converted to WebP format"
-          echo "📤 Sync trigger sent to 17 manga repos"
+          echo ""
+          echo "========================================"
+          echo "[COMPLETE] Cover update process finished!"
+          echo "  ☁️  Covers uploaded to Cloudflare R2"
+          echo "  🗑️  Old covers auto-deleted from R2"
+          echo "  📤 Sync triggers sent to all manga repos"
+          echo "========================================"
+          echo ""
+      
+      - name: ℹ️ No Changes Notification
+        if: steps.check_changes.outputs.has_changes == 'false'
+        run: |
+          echo ""
+          echo "========================================"
+          echo "[INFO] All covers are already up-to-date!"
+          echo "  ℹ️  No changes made"
+          echo "========================================"
+          echo ""

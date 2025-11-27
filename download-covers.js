@@ -1,14 +1,18 @@
 /**
- * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v6.0
- * FITUR: Auto-ambil cover TERBARU & Auto-convert JPG → WebP
+ * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v7.3
+ * FITUR: Auto-upload ke Cloudflare R2 + Auto-delete old covers
  * 
- * Update v6.0:
- * - Smart detection: auto-convert existing JPG to WebP
- * - Single script untuk semua kebutuhan
+ * Update v7.3:
+ * - Clean encoding (no emoji corruption)
+ * - Handle existing local cover paths
+ * - Preserve hash from old covers
+ * - Smart migration from GitHub to R2
+ * - Auto-fill empty covers
  * 
  * Cara Pakai:
- * 1. npm install sharp
- * 2. node download-covers.js
+ * 1. npm install sharp @aws-sdk/client-s3
+ * 2. Set env: CF_ACCOUNT_ID, CF_ACCESS_KEY_ID, CF_SECRET_ACCESS_KEY, R2_PUBLIC_DOMAIN
+ * 3. node download-covers-r2.js
  */
 
 const fs = require('fs');
@@ -16,12 +20,37 @@ const path = require('path');
 const https = require('https');
 const vm = require('vm');
 const sharp = require('sharp');
+const { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 // Config
 const DELAY_MS = 1500;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-const FORCE_UPDATE = false;
 const WEBP_QUALITY = 85;
+
+// R2 Configuration
+const R2_CONFIG = {
+  accountId: process.env.CF_ACCOUNT_ID,
+  accessKeyId: process.env.CF_ACCESS_KEY_ID,
+  secretAccessKey: process.env.CF_SECRET_ACCESS_KEY,
+  bucketName: 'manga-list',
+  publicDomain: process.env.R2_PUBLIC_DOMAIN || 'cdn.nuranantoscans.my.id'
+};
+
+// Validate R2 Config
+if (!R2_CONFIG.accountId || !R2_CONFIG.accessKeyId || !R2_CONFIG.secretAccessKey) {
+  console.error('[ERROR] Missing R2 credentials! Set CF_ACCOUNT_ID, CF_ACCESS_KEY_ID, CF_SECRET_ACCESS_KEY');
+  process.exit(1);
+}
+
+// Initialize R2 Client
+const r2Client = new S3Client({
+  region: 'auto',
+  endpoint: `https://${R2_CONFIG.accountId}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: R2_CONFIG.accessKeyId,
+    secretAccessKey: R2_CONFIG.secretAccessKey
+  }
+});
 
 // Load manga-config.js
 const MANGA_CONFIG_PATH = path.join(__dirname, 'manga-config.js');
@@ -29,7 +58,7 @@ let MANGA_LIST = [];
 let MANGA_REPOS = {};
 
 try {
-  console.log('📋 Loading manga-config.js...');
+  console.log('[INFO] Loading manga-config.js...');
   
   const configContent = fs.readFileSync(MANGA_CONFIG_PATH, 'utf-8');
   
@@ -53,24 +82,100 @@ try {
     throw new Error('MANGA_REPOS is empty or undefined');
   }
   
-  console.log(`✅ Loaded ${MANGA_LIST.length} manga from manga-config.js`);
-  console.log(`✅ Generated ${Object.keys(MANGA_REPOS).length} repo mappings\n`);
+  console.log(`[SUCCESS] Loaded ${MANGA_LIST.length} manga from manga-config.js`);
+  console.log(`[SUCCESS] Generated ${Object.keys(MANGA_REPOS).length} repo mappings\n`);
   
 } catch (error) {
-  console.error('❌ Error loading manga-config.js:', error.message);
-  console.error('\n💡 Pastikan manga-config.js ada dan format nya benar');
+  console.error('[ERROR] Error loading manga-config.js:', error.message);
+  console.error('\n[TIP] Pastikan manga-config.js ada dan format nya benar');
   process.exit(1);
 }
 
-console.log('🔍 Mode: Smart cover management');
-console.log('   - Detect existing JPG → auto-convert to WebP');
-console.log('   - Download new covers → convert to WebP');
-console.log('   - Skip covers that are already WebP\n');
+console.log('[MODE] Upload covers to Cloudflare R2');
+console.log(`[BUCKET] ${R2_CONFIG.bucketName}`);
+console.log(`[PUBLIC URL] https://${R2_CONFIG.publicDomain}/${R2_CONFIG.bucketName}/\n`);
 
-// Buat folder covers
-const coversDir = path.join(__dirname, 'covers');
+// Buat folder covers temporary
+const coversDir = path.join(__dirname, 'covers-temp');
 if (!fs.existsSync(coversDir)) {
   fs.mkdirSync(coversDir);
+}
+
+// Helper: Extract hash from existing cover path
+function extractHashFromCover(coverPath) {
+  if (!coverPath) return null;
+  
+  // Match pattern: covers/manga-id-{hash}.webp or full URL with hash
+  const match = coverPath.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.webp$/i);
+  return match ? match[1] : null;
+}
+
+// Helper: Check if cover is already R2 URL
+function isR2Url(coverPath) {
+  if (!coverPath) return false;
+  return coverPath.startsWith('https://') && 
+         (coverPath.includes('r2.cloudflarestorage.com') || 
+          coverPath.includes('.r2.dev') ||
+          coverPath.includes('cdn.nuranantoscans.my.id'));
+}
+
+// R2 Functions
+async function listR2Objects(prefix) {
+  try {
+    const command = new ListObjectsV2Command({
+      Bucket: R2_CONFIG.bucketName,
+      Prefix: prefix
+    });
+    const response = await r2Client.send(command);
+    return response.Contents || [];
+  } catch (error) {
+    throw new Error(`R2 list failed: ${error.message}`);
+  }
+}
+
+async function deleteR2Object(key) {
+  try {
+    await r2Client.send(new DeleteObjectCommand({
+      Bucket: R2_CONFIG.bucketName,
+      Key: key
+    }));
+  } catch (error) {
+    throw new Error(`R2 delete failed: ${error.message}`);
+  }
+}
+
+async function checkR2ObjectExists(key) {
+  try {
+    await r2Client.send(new HeadObjectCommand({
+      Bucket: R2_CONFIG.bucketName,
+      Key: key
+    }));
+    return true;
+  } catch (error) {
+    if (error.name === 'NotFound') {
+      return false;
+    }
+    throw error;
+  }
+}
+
+async function uploadToR2(filePath, key) {
+  try {
+    const fileContent = fs.readFileSync(filePath);
+    const contentType = 'image/webp';
+    
+    await r2Client.send(new PutObjectCommand({
+      Bucket: R2_CONFIG.bucketName,
+      Key: key,
+      Body: fileContent,
+      ContentType: contentType,
+      CacheControl: 'public, max-age=31536000'
+    }));
+    
+    return `https://${R2_CONFIG.publicDomain}/${R2_CONFIG.bucketName}/${key}`;
+  } catch (error) {
+    throw new Error(`R2 upload failed: ${error.message}`);
+  }
 }
 
 // Fetch manga.json dari URL
@@ -220,7 +325,8 @@ async function processAllManga() {
   let successCount = 0;
   let skipCount = 0;
   let errorCount = 0;
-  let convertedCount = 0; // JPG → WebP conversion count
+  let deletedCount = 0;
+  let migratedCount = 0;
 
   for (let i = 0; i < MANGA_LIST.length; i++) {
     const manga = MANGA_LIST[i];
@@ -231,15 +337,44 @@ async function processAllManga() {
       const mangaConfig = MANGA_REPOS[manga.id];
       
       if (!mangaConfig) {
-        console.log(`  ⚠️  Tidak ada config untuk: ${manga.id}`);
+        console.log(`  [WARN] Tidak ada config untuk: ${manga.id}`);
         updatedMangaList.push(manga);
         errorCount++;
         continue;
       }
       
+      // Check if cover already R2 URL
+      if (isR2Url(manga.cover)) {
+        console.log(`  [SKIP] Cover sudah di R2: ${manga.cover}`);
+        updatedMangaList.push(manga);
+        skipCount++;
+        continue;
+      }
+      
+      // Try to extract hash from existing cover path
+      let existingHash = extractHashFromCover(manga.cover);
+      
+      if (existingHash) {
+        console.log(`  [FOUND] Existing hash: ${existingHash}`);
+        
+        // Check if already uploaded to R2
+        const r2Key = `covers/${manga.id}-${existingHash}.webp`;
+        const existsInR2 = await checkR2ObjectExists(r2Key);
+        
+        if (existsInR2) {
+          console.log(`  [MIGRATE] Cover already in R2, updating URL...`);
+          const r2Url = `https://${R2_CONFIG.publicDomain}/${R2_CONFIG.bucketName}/${r2Key}`;
+          manga.cover = r2Url;
+          updatedMangaList.push(manga);
+          migratedCount++;
+          continue;
+        }
+      }
+      
+      // Fetch manga.json to get MangaDex URL
       const mangaJsonUrl = typeof mangaConfig === 'string' ? mangaConfig : mangaConfig.url;
       
-      console.log(`  🔍 Fetch manga.json...`);
+      console.log(`  [FETCH] Getting manga.json...`);
       const mangaJson = await fetchMangaJson(mangaJsonUrl);
       
       let mangadexUrl = null;
@@ -253,7 +388,13 @@ async function processAllManga() {
       }
       
       if (!mangadexUrl) {
-        console.log('  ⚠️  Tidak ada MangaDex URL di manga.json');
+        console.log('  [WARN] Tidak ada MangaDex URL di manga.json');
+        
+        // If has existing cover, keep it
+        if (manga.cover) {
+          console.log('  [INFO] Pakai cover lama');
+        }
+        
         updatedMangaList.push(manga);
         skipCount++;
         continue;
@@ -261,99 +402,70 @@ async function processAllManga() {
       
       const mangaId = getMangaIdFromUrl(mangadexUrl);
       if (!mangaId) {
-        console.log('  ⚠️  MangaDex URL tidak valid');
+        console.log('  [WARN] MangaDex URL tidak valid');
         updatedMangaList.push(manga);
         skipCount++;
         continue;
       }
 
-      console.log('  🔍 Cek cover terbaru dari MangaDex...');
+      console.log('  [CHECK] Cek cover terbaru dari MangaDex...');
       const latestCover = await fetchLatestCover(mangaId);
 
       const coverHash = latestCover.filename.split('.')[0];
+      const r2Key = `covers/${manga.id}-${coverHash}.webp`;
       
-      // Target WebP filename
-      const newCoverFilename = `${manga.id}-${coverHash}.webp`;
-      const newCoverPath = path.join(coversDir, newCoverFilename);
+      // Check if already exists in R2
+      const existsInR2 = await checkR2ObjectExists(r2Key);
       
-      // Check existing covers (JPG, JPEG, WebP)
-      const existingCovers = fs.readdirSync(coversDir)
-        .filter(f => f.startsWith(manga.id + '-'));
-      
-      // Check if already has WebP with latest hash
-      const alreadyHasWebP = existingCovers.some(f => f === newCoverFilename);
-      
-      // Check if has JPG version (same hash or different)
-      const jpgVersions = existingCovers.filter(f => 
-        (f.endsWith('.jpg') || f.endsWith('.jpeg'))
-      );
-      
-      // SCENARIO 1: Already has WebP with latest hash → Skip
-      if (alreadyHasWebP && jpgVersions.length === 0 && !FORCE_UPDATE) {
-        console.log(`  ✅ Sudah punya cover terbaru (WebP)`);
-        manga.cover = `covers/${newCoverFilename}`;
+      if (existsInR2) {
+        console.log(`  [SKIP] Cover sudah ada di R2`);
+        const r2Url = `https://${R2_CONFIG.publicDomain}/${R2_CONFIG.bucketName}/${r2Key}`;
+        manga.cover = r2Url;
         updatedMangaList.push(manga);
         skipCount++;
         continue;
       }
       
-      // SCENARIO 2: Has JPG version (same hash) → Convert to WebP
-      const jpgSameHash = jpgVersions.find(f => f.includes(coverHash));
-      if (jpgSameHash && !alreadyHasWebP) {
-        console.log(`  🔄 Converting existing JPG to WebP...`);
-        const jpgPath = path.join(coversDir, jpgSameHash);
-        const jpgSize = fs.statSync(jpgPath).size;
-        
-        const info = await convertToWebP(jpgPath, newCoverPath);
-        const webpSize = info.size;
-        const reduction = ((1 - webpSize / jpgSize) * 100).toFixed(1);
-        
-        console.log(`  ✅ ${(jpgSize / 1024).toFixed(1)} KB → ${(webpSize / 1024).toFixed(1)} KB (${reduction}% smaller)`);
-        
-        // Delete old JPG
-        fs.unlinkSync(jpgPath);
-        console.log(`  🗑️  Deleted: ${jpgSameHash}`);
-        
-        manga.cover = `covers/${newCoverFilename}`;
-        updatedMangaList.push(manga);
-        convertedCount++;
-        successCount++;
-        continue;
-      }
-      
-      // SCENARIO 3: Has old JPG (different hash) → Download new & convert
-      // SCENARIO 4: No cover at all → Download & convert
-      console.log('  📥 Downloading cover...');
+      // Download & convert to WebP
+      console.log('  [DOWNLOAD] Downloading cover...');
       const tempJpgPath = path.join(coversDir, `temp-${manga.id}.jpg`);
       await downloadFile(latestCover.url, tempJpgPath);
       
-      console.log('  🔄 Converting to WebP...');
+      console.log('  [CONVERT] Converting to WebP...');
+      const tempWebpPath = path.join(coversDir, `${manga.id}-${coverHash}.webp`);
       const tempJpgSize = fs.statSync(tempJpgPath).size;
-      const info = await convertToWebP(tempJpgPath, newCoverPath);
+      const info = await convertToWebP(tempJpgPath, tempWebpPath);
       const webpSize = info.size;
       const reduction = ((1 - webpSize / tempJpgSize) * 100).toFixed(1);
       
-      console.log(`  ✅ WebP created: ${(webpSize / 1024).toFixed(1)} KB (${reduction}% smaller)`);
+      console.log(`  [SUCCESS] WebP created: ${(webpSize / 1024).toFixed(1)} KB (${reduction}% smaller)`);
       
-      // Delete temp JPG
-      fs.unlinkSync(tempJpgPath);
+      // Delete old covers from R2 (if any)
+      console.log('  [CHECK] Checking for old covers in R2...');
+      const existingCovers = await listR2Objects(`covers/${manga.id}-`);
       
-      // Delete ALL old covers (JPG and old WebP)
       if (existingCovers.length > 0) {
-        console.log('  🔄 Mengganti cover lama...');
-        existingCovers.forEach(oldCover => {
-          const oldCoverPath = path.join(coversDir, oldCover);
-          if (oldCoverPath !== newCoverPath && fs.existsSync(oldCoverPath)) {
-            fs.unlinkSync(oldCoverPath);
-            console.log(`  🗑️  Deleted: ${oldCover}`);
+        console.log(`  [DELETE] Found ${existingCovers.length} old cover(s), deleting...`);
+        for (const oldCover of existingCovers) {
+          if (oldCover.Key !== r2Key) {
+            await deleteR2Object(oldCover.Key);
+            console.log(`  [DELETED] ${oldCover.Key}`);
+            deletedCount++;
           }
-        });
+        }
       }
       
-      console.log(`  ✅ Berhasil: covers/${newCoverFilename}`);
-      console.log(`  📅 Upload: ${new Date(latestCover.createdAt).toLocaleDateString()}`);
+      // Upload to R2
+      console.log('  [UPLOAD] Uploading to R2...');
+      const r2Url = await uploadToR2(tempWebpPath, r2Key);
+      console.log(`  [SUCCESS] Uploaded: ${r2Url}`);
+      console.log(`  [INFO] MangaDex Upload: ${new Date(latestCover.createdAt).toLocaleDateString()}`);
       
-      manga.cover = `covers/${newCoverFilename}`;
+      // Cleanup temp files
+      fs.unlinkSync(tempJpgPath);
+      fs.unlinkSync(tempWebpPath);
+      
+      manga.cover = r2Url;
       updatedMangaList.push(manga);
       successCount++;
       
@@ -362,17 +474,17 @@ async function processAllManga() {
       }
       
     } catch (error) {
-      console.log(`  ❌ Error: ${error.message}`);
+      console.log(`  [ERROR] ${error.message}`);
       
       if (error.message.includes('Rate limit')) {
-        console.log('  ⏸️  Tunggu 30 detik...');
+        console.log('  [WAIT] Tunggu 30 detik...');
         await delay(30000);
         i--;
         continue;
       }
       
       if (manga.cover) {
-        console.log('  ℹ️  Pakai cover lama');
+        console.log('  [INFO] Pakai cover lama');
       }
       
       updatedMangaList.push(manga);
@@ -380,62 +492,7 @@ async function processAllManga() {
     }
   }
 
-  return { updatedMangaList, successCount, skipCount, errorCount, convertedCount };
-}
-
-async function syncCoverToRepos(updatedMangaList) {
-  console.log('\n📤 Syncing covers to manga repos...\n');
-  
-  let syncSuccess = 0;
-  let syncFailed = 0;
-  
-  for (const manga of updatedMangaList) {
-    if (!manga.cover) {
-      console.log(`  ⏭️  Skip ${manga.id} (no cover)`);
-      continue;
-    }
-    
-    try {
-      const coverUrl = `https://raw.githubusercontent.com/nurananto/NuranantoScanlation/refs/heads/main/${manga.cover}`;
-      const configUrl = `https://raw.githubusercontent.com/nurananto/${manga.repo}/main/manga-config.json`;
-      
-      console.log(`  📝 ${manga.id}...`);
-      
-      const response = await new Promise((resolve, reject) => {
-        https.get(configUrl, { headers: { 'User-Agent': USER_AGENT } }, resolve).on('error', reject);
-      });
-      
-      if (response.statusCode !== 200) {
-        throw new Error(`HTTP ${response.statusCode}`);
-      }
-      
-      let data = '';
-      for await (const chunk of response) {
-        data += chunk;
-      }
-      
-      const config = JSON.parse(data);
-      config.cover = coverUrl;
-      
-      const repoPath = path.join(__dirname, '..', manga.repo);
-      if (fs.existsSync(repoPath)) {
-        const configPath = path.join(repoPath, 'manga-config.json');
-        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-        console.log(`  ✅ Updated ${manga.id}`);
-        syncSuccess++;
-      } else {
-        console.log(`  ⚠️  Repo ${manga.repo} not found locally (will sync via workflow)`);
-      }
-      
-      await delay(500);
-      
-    } catch (error) {
-      console.log(`  ❌ ${manga.id}: ${error.message}`);
-      syncFailed++;
-    }
-  }
-  
-  console.log(`\n✅ Sync complete: ${syncSuccess} success, ${syncFailed} failed\n`);
+  return { updatedMangaList, successCount, skipCount, errorCount, deletedCount, migratedCount };
 }
 
 function updateMangaConfigJs(updatedMangaList) {
@@ -467,47 +524,65 @@ function updateMangaConfigJs(updatedMangaList) {
   fs.copyFileSync(MANGA_CONFIG_PATH, backupPath);
   
   fs.writeFileSync(MANGA_CONFIG_PATH, newContent, 'utf-8');
-  console.log('\n💾 manga-config.js diupdate!');
-  console.log('📦 Backup disimpan: manga-config.js.backup');
+  console.log('\n[SAVED] manga-config.js updated with R2 URLs!');
+  console.log('[BACKUP] Backup saved: manga-config.js.backup');
+}
+
+function exportRepoList() {
+  const repos = MANGA_LIST.map(m => m.repo).filter(Boolean);
+  const repoListPath = path.join(__dirname, 'repo-list.txt');
+  fs.writeFileSync(repoListPath, repos.join('\n'));
+  console.log(`\n[EXPORT] Exported ${repos.length} repos to repo-list.txt`);
+  return repos;
 }
 
 // Main
 (async () => {
   try {
-    const { updatedMangaList, successCount, skipCount, errorCount, convertedCount } = await processAllManga();
+    const { updatedMangaList, successCount, skipCount, errorCount, deletedCount, migratedCount } = await processAllManga();
     
-    console.log('\n╔════════════════════════════════════╗');
-    console.log('📊 HASIL:');
-    console.log(`  ✅ Berhasil download/update: ${successCount}`);
-    console.log(`  🔄 JPG → WebP converted: ${convertedCount}`);
-    console.log(`  ⭐ Sudah terbaru (skip): ${skipCount}`);
-    console.log(`  ❌ Error: ${errorCount}`);
-    console.log(`  📚 Total: ${MANGA_LIST.length}`);
-    console.log('╚════════════════════════════════════╝\n');
+    console.log('\n========================================');
+    console.log('[RESULTS]');
+    console.log(`  [SUCCESS] Uploaded to R2: ${successCount}`);
+    console.log(`  [MIGRATE] URL updated: ${migratedCount}`);
+    console.log(`  [DELETE] Old covers deleted: ${deletedCount}`);
+    console.log(`  [SKIP] Already in R2: ${skipCount}`);
+    console.log(`  [ERROR] Failed: ${errorCount}`);
+    console.log(`  [TOTAL] ${MANGA_LIST.length} manga`);
+    console.log('========================================\n');
     
     updateMangaConfigJs(updatedMangaList);
     
-    if (successCount > 0 || convertedCount > 0) {
-      await syncCoverToRepos(updatedMangaList);
-      
-      console.log('🎉 Selesai!');
-      if (convertedCount > 0) {
-        console.log(`   ${convertedCount} cover JPG diconvert ke WebP`);
-      }
+    // Export repo list for GitHub Actions
+    const repos = exportRepoList();
+    
+    if (successCount > 0 || migratedCount > 0) {
+      console.log('[COMPLETE] Process finished!');
       if (successCount > 0) {
-        console.log(`   ${successCount} cover di-download & converted to WebP`);
+        console.log(`  - ${successCount} covers uploaded to R2`);
+      }
+      if (migratedCount > 0) {
+        console.log(`  - ${migratedCount} cover URLs migrated to R2`);
+      }
+      if (deletedCount > 0) {
+        console.log(`  - ${deletedCount} old covers deleted from R2`);
       }
       
-      console.log('\n📝 Push ke GitHub:');
-      console.log('   git add covers/ manga-config.js');
-      console.log('   git commit -m "Auto-convert covers to WebP"');
-      console.log('   git push\n');
+      console.log('\n[NEXT STEP] Push to GitHub:');
+      console.log('  git add manga-config.js repo-list.txt');
+      console.log('  git commit -m "Auto-update covers (R2)"');
+      console.log('  git push\n');
     } else {
-      console.log('✨ Semua cover sudah up-to-date (WebP)!');
+      console.log('[INFO] All covers are already up-to-date in R2!');
+    }
+    
+    // Cleanup temp folder
+    if (fs.existsSync(coversDir)) {
+      fs.rmSync(coversDir, { recursive: true });
     }
     
   } catch (error) {
-    console.error('\n❌ Error:', error.message);
+    console.error('\n[FATAL ERROR]', error.message);
     process.exit(1);
   }
 })();
