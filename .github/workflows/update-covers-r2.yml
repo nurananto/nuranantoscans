@@ -67,8 +67,9 @@ jobs:
       
       - name: 📤 Trigger Sync to Manga Repos (Auto-detect)
         if: steps.check_changes.outputs.has_changes == 'true'
-        continue-on-error: true
         run: |
+          set +e  # Don't exit on error
+          
           echo "[INFO] Reading repo list from repo-list.txt..."
           
           if [ ! -f "repo-list.txt" ]; then
@@ -90,13 +91,12 @@ jobs:
             
             echo "[TRIGGER] Triggering $repo..."
             
-            response=$(curl -s -w "\n%{http_code}" -X POST \
+            # Use separate variable for HTTP code to avoid pipeline issues
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
               https://api.github.com/repos/nurananto/$repo/dispatches \
-              -d '{"event_type":"sync-covers"}')
-            
-            http_code=$(echo "$response" | tail -n 1)
+              -d '{"event_type":"sync-covers"}' 2>&1 || echo "000")
             
             if [ "$http_code" = "204" ]; then
               echo "  [SUCCESS] $repo triggered"
@@ -105,6 +105,9 @@ jobs:
               echo "  [WARN] $repo not found or workflow missing (HTTP 404)"
               echo "        Make sure sync-cover.yml is uploaded to this repo"
               ((skipped++))
+            elif [ "$http_code" = "000" ]; then
+              echo "  [ERROR] $repo failed (network error)"
+              ((failed++))
             else
               echo "  [ERROR] $repo failed (HTTP $http_code)"
               ((failed++))
