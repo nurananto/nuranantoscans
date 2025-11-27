@@ -93,7 +93,7 @@ try {
 
 console.log('[MODE] Upload covers to Cloudflare R2');
 console.log(`[BUCKET] ${R2_CONFIG.bucketName}`);
-console.log(`[PUBLIC URL] https://${R2_CONFIG.publicDomain}/${R2_CONFIG.bucketName}/\n`);
+console.log(`[PUBLIC URL] https://${R2_CONFIG.publicDomain}/\n`);
 
 // Buat folder covers temporary
 const coversDir = path.join(__dirname, 'covers-temp');
@@ -172,7 +172,8 @@ async function uploadToR2(filePath, key) {
       CacheControl: 'public, max-age=31536000'
     }));
     
-    return `https://${R2_CONFIG.publicDomain}/${R2_CONFIG.bucketName}/${key}`;
+    // FIXED: Don't include bucket name in public URL for custom domain
+    return `https://${R2_CONFIG.publicDomain}/${key}`;
   } catch (error) {
     throw new Error(`R2 upload failed: ${error.message}`);
   }
@@ -363,7 +364,7 @@ async function processAllManga() {
         
         if (existsInR2) {
           console.log(`  [MIGRATE] Cover already in R2, updating URL...`);
-          const r2Url = `https://${R2_CONFIG.publicDomain}/${R2_CONFIG.bucketName}/${r2Key}`;
+          const r2Url = `https://${R2_CONFIG.publicDomain}/${r2Key}`;
           manga.cover = r2Url;
           updatedMangaList.push(manga);
           migratedCount++;
@@ -419,7 +420,7 @@ async function processAllManga() {
       
       if (existsInR2) {
         console.log(`  [SKIP] Cover sudah ada di R2`);
-        const r2Url = `https://${R2_CONFIG.publicDomain}/${R2_CONFIG.bucketName}/${r2Key}`;
+        const r2Url = `https://${R2_CONFIG.publicDomain}/${r2Key}`;
         manga.cover = r2Url;
         updatedMangaList.push(manga);
         skipCount++;
