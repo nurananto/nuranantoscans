@@ -14,6 +14,8 @@
   <!-- Preconnect -->
   <link rel="preconnect" href="https://raw.githubusercontent.com">
   <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
+  <link rel="preconnect" href="https://images.weserv.nl">
+  <link rel="dns-prefetch" href="https://images.weserv.nl">
   
   <!-- Preload CSS (non-blocking) -->
   <link rel="preload" href="style.css?v=4b51f1b" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -40,12 +42,15 @@
     .grid-container{display:grid;gap:1.25rem;padding:0;max-width:1400px;margin:0 auto}
     .manga-card{position:relative;overflow:visible;background:#1a1a1a;border-radius:.6rem;box-shadow:0 .25rem .625rem rgba(0,0,0,.4);cursor:pointer;transition:transform .3s ease,box-shadow .3s ease}
     .manga-card:hover{transform:scale(1.03);box-shadow:0 8px 25px rgba(24,119,242,.3)}
-    .manga-card img{width:100%;aspect-ratio:3/4.2;object-fit:cover;border-radius:.6rem .6rem 0 0;display:block;background:#1a1a1a}
+    .manga-card img{width:100%;aspect-ratio:3/4.2;object-fit:cover;border-radius:.6rem .6rem 0 0;display:block;background:#1a1a1a;contain-intrinsic-size:300px 420px}
     .manga-title{color:#fff;padding:.6rem .5rem 1.2rem;text-align:center;font-size:.95rem;font-weight:600;line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;word-break:break-word}
     .updated-badge{position:absolute;top:0;left:0;right:0;background:linear-gradient(135deg,rgba(24,119,242,.75) 0%,rgba(10,91,214,.75) 100%);backdrop-filter:blur(10px) saturate(180%);-webkit-backdrop-filter:blur(10px) saturate(180%);border:1px solid rgba(255,255,255,.18);color:#fff;padding:6px 8px;border-radius:.6rem .6rem 0 0;font-weight:700;text-transform:uppercase;letter-spacing:.5px;box-shadow:0 4px 15px rgba(24,119,242,.4);z-index:10;text-align:center;pointer-events:none;display:flex;flex-direction:column;gap:2px;line-height:1.2}
+    .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+    .skip-link{position:absolute;top:-40px;left:0;background:#1877f2;color:#fff;padding:8px 16px;text-decoration:none;z-index:100;border-radius:0 0 4px 0}
+    .skip-link:focus{top:0}
     @media(min-width:1024px){.grid-container{grid-template-columns:repeat(5,1fr)}}
     @media(min-width:768px) and (max-width:1023px){.grid-container{grid-template-columns:repeat(3,1fr)}.site-logo{height:50px}.header-buttons{gap:8px}.github-link-header,.facebook-link-header{padding:8px 16px}.github-icon,.facebook-icon{width:24px;height:24px}.github-text,.facebook-text{font-size:14px}}
-    @media(max-width:767px){body{padding:20px;padding-bottom:110px}header{margin-bottom:1rem}.site-logo{height:45px}.grid-container{grid-template-columns:repeat(2,1fr);gap:.875rem}.search-section{padding:0}#searchInput{padding:.65rem 1rem;font-size:.95rem}.trakteer-button{left:.625rem;right:.625rem;padding:.65rem 1rem;font-size:.85rem}.trakteer-icon{width:24px;height:24px}.github-link-header,.facebook-link-header{width:45px;height:45px;min-width:45px;min-height:45px;padding:0;justify-content:center;border-radius:10px}.github-icon,.facebook-icon{width:24px;height:24px}.github-text,.facebook-text{display:none}.manga-title{font-size:.8rem;padding:.5rem .4rem 1.3rem;line-height:1.65}}
+    @media(max-width:767px){body{padding:20px;padding-bottom:110px}header{margin-bottom:1rem}.site-logo{height:45px}.grid-container{grid-template-columns:repeat(2,1fr);gap:.875rem}.search-section{padding:0}#searchInput{padding:.65rem 1rem;font-size:.95rem}.trakteer-button{left:.625rem;right:.625rem;padding:.65rem 1rem;font-size:.85rem}.trakteer-icon{width:24px;height:24px}.github-link-header,.facebook-link-header{width:45px;height:45px;min-width:45px;min-height:45px;padding:0;justify-content:center;border-radius:10px}.github-icon,.facebook-icon{width:24px;height:24px}.github-text,.facebook-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}.manga-title{font-size:.8rem;padding:.5rem .4rem 1.3rem;line-height:1.65}}
     @media(max-width:480px){body{padding:20px;padding-bottom:105px}.site-logo{height:40px}.github-link-header,.facebook-link-header{width:40px;height:40px;min-width:40px;min-height:40px;border-radius:8px}.github-icon,.facebook-icon{width:22px;height:22px}.manga-title{font-size:.75rem;padding:.45rem .35rem 1.2rem}}
     .loading-indicator{text-align:center;padding:40px 20px;display:none}.loading-indicator.show{display:block}
     .spinner{width:50px;height:50px;border:4px solid #f3f3f3;border-top:4px solid #1877f2;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 15px}
@@ -53,51 +58,87 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-content">
-      <img src="assets/logo.png" alt="Nurananto Scanlation" class="site-logo" width="200" height="60">
-      
-      <div class="header-buttons">
-        <!-- Tombol GitHub Source Code -->
-        <a href="https://github.com/nurananto/NuranantoScanlation" target="_blank" class="github-link-header">
-          <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-          </svg>
-          <span class="github-text">Source Code</span>
-        </a>
+  <!-- ✅ Skip to main content link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
-        <!-- Tombol Facebook -->
-        <a href="https://web.facebook.com/profile.php?id=61556658895013" target="_blank" class="facebook-link-header">
-          <svg class="facebook-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-          </svg>
-          <span class="facebook-text">Nurananto Scanlation</span>
-        </a>
-      </div>
+  <!-- ✅ HEADER with proper landmark -->
+  <header role="banner">
+    <div class="header-content">
+      <a href="https://www.nuranantoscans.my.id" class="logo-link" aria-label="Nurananto Scanlation Home">
+        <img src="assets/logo.png" alt="Nurananto Scanlation Logo" class="site-logo" width="200" height="60">
+      </a>
+      
+      <nav aria-label="Social media links">
+        <div class="header-buttons">
+          <!-- GitHub Link -->
+          <a href="https://github.com/nurananto/NuranantoScanlation" 
+             target="_blank" 
+             rel="noopener noreferrer"
+             class="github-link-header"
+             aria-label="View source code on GitHub (opens in new tab)">
+            <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            <span class="github-text">Source Code</span>
+          </a>
+
+          <!-- Facebook Link -->
+          <a href="https://web.facebook.com/profile.php?id=61556658895013" 
+             target="_blank" 
+             rel="noopener noreferrer"
+             class="facebook-link-header"
+             aria-label="Follow Nurananto Scanlation on Facebook (opens in new tab)">
+            <svg class="facebook-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            <span class="facebook-text">Nurananto Scanlation</span>
+          </a>
+        </div>
+      </nav>
     </div>
   </header>
 
-  <!-- Search Bar di bawah header, melintang penuh -->
-  <div class="search-section">
-    <input type="text" id="searchInput" placeholder="Cari judul manga...">
-  </div>
+  <!-- ✅ MAIN content with proper landmark -->
+  <main role="main" id="main-content">
+    <!-- Search Section -->
+    <section aria-labelledby="search-heading">
+      <h2 id="search-heading" class="visually-hidden">Search manga</h2>
+      <div class="search-section">
+        <label for="searchInput" class="visually-hidden">Search manga by title</label>
+        <input type="text" 
+               id="searchInput" 
+               placeholder="Cari judul manga..."
+               aria-label="Search manga by title"
+               autocomplete="off">
+      </div>
+    </section>
 
-  <!-- Loading indicator -->
-  <div id="loadingIndicator" class="loading-indicator">
-    <div class="spinner"></div>
-    <p>Memuat daftar manga...</p>
-  </div>
+    <!-- Loading indicator -->
+    <div id="loadingIndicator" class="loading-indicator" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>Memuat daftar manga...</p>
+    </div>
 
-  <!-- Grid container untuk manga cards -->
-  <div class="grid-container" id="mangaGrid"></div>
+    <!-- Manga Grid -->
+    <section aria-labelledby="manga-list-heading">
+      <h2 id="manga-list-heading" class="visually-hidden">Available manga</h2>
+      <div class="grid-container" id="mangaGrid" role="list"></div>
+    </section>
+  </main>
 
-  <!-- Donation Box Trakteer - Floating di bawah -->
-  <a href="https://trakteer.id/NuranantoScanlation" target="_blank" class="trakteer-button">
-    <img src="assets/trakteer-icon.png" alt="Trakteer" class="trakteer-icon">
-    <span>Donasi untuk Beli RAW Chapter</span>
-  </a>
+  <!-- ✅ FOOTER with proper landmark -->
+  <footer role="contentinfo">
+    <a href="https://trakteer.id/NuranantoScanlation" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       class="trakteer-button"
+       aria-label="Support us on Trakteer - Donate to buy RAW chapters (opens in new tab)">
+      <img src="assets/trakteer-icon.png" alt="" class="trakteer-icon" aria-hidden="true">
+      <span>Donasi untuk Beli RAW Chapter</span>
+    </a>
+  </footer>
 
-  <!-- ✅ AUTO-RELOAD SCRIPT - Load FIRST -->
+  <!-- ✅ Scripts -->
   <script defer src="auto-reload.js?v=4b51f1b"></script>
   <script defer src="manga-config.js?v=4b51f1b"></script>
   <script defer src="script.js?v=4b51f1b"></script>
