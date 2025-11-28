@@ -632,25 +632,27 @@ header {
   border-width: 0 !important;
 }
 
-/* Skip to main content link */
 .skip-link {
   position: absolute;
-  top: -40px;
-  left: 0;
+  top: -200px; /* ← UBAH dari -40px */
+  left: 50%;
+  transform: translateX(-50%);
   background: #1877f2;
   color: white;
   padding: 8px 16px;
   text-decoration: none;
   z-index: 10000;
-  border-radius: 0 0 4px 0;
-  font-weight: 600;
-  transition: top 0.2s ease;
+  border-radius: 8px;
+  pointer-events: none; /* ← TAMBAHKAN */
+  opacity: 0; /* ← TAMBAHKAN */
+  visibility: hidden; /* ← TAMBAHKAN */
 }
 
 .skip-link:focus {
-  top: 0;
-  outline: 3px solid #ffffff;
-  outline-offset: 2px;
+  top: 20px;
+  pointer-events: auto; /* ← TAMBAHKAN */
+  opacity: 1; /* ← TAMBAHKAN */
+  visibility: visible; /* ← TAMBAHKAN */
 }
 
 /* Logo link focus state */
