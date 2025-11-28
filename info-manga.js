@@ -27,11 +27,10 @@ function getResponsiveCDN(originalUrl) {
 }
 
 // ============================================
-// EARLY COVER PRELOAD - Run immediately
+// EARLY COVER PRELOAD - Optimized Version
 // ============================================
 
 (function() {
-    // Get repo from URL
     const urlParams = new URLSearchParams(window.location.search);
     const repoId = urlParams.get('repo');
     
@@ -39,22 +38,37 @@ function getResponsiveCDN(originalUrl) {
         const mangaConfig = MANGA_REPOS[repoId];
         const mangaJsonUrl = typeof mangaConfig === 'string' ? mangaConfig : mangaConfig.url;
         
-        // Fetch manga.json ASAP untuk dapat cover URL
+        // ✅ Use immediate preload (no delay)
         fetch(mangaJsonUrl + '?t=' + Date.now())
             .then(res => res.json())
             .then(data => {
                 if (data.manga && data.manga.cover) {
-                    // ✅ Preload optimized medium size cover
                     const cdnUrls = getResponsiveCDN(data.manga.cover);
                     
                     const preloadLink = document.createElement('link');
                     preloadLink.rel = 'preload';
                     preloadLink.as = 'image';
-                    preloadLink.href = cdnUrls.medium; // Preload medium size
+                    preloadLink.href = cdnUrls.medium;
                     preloadLink.fetchpriority = 'high';
+                    
+                    // ✅ Add responsive preload
+                    preloadLink.imagesrcset = `
+                        ${cdnUrls.small} 400w,
+                        ${cdnUrls.medium} 600w,
+                        ${cdnUrls.large} 800w
+                    `.trim();
+                    preloadLink.imagesizes = '(max-width: 768px) 100vw, 320px';
+                    
+                    // ✅ CRITICAL: Add onload handler to mark as used
+                    preloadLink.onload = () => {
+                        console.log('✅ Cover preloaded successfully');
+                        // Mark as used to prevent warning
+                        preloadLink.dataset.loaded = 'true';
+                    };
+                    
                     document.head.appendChild(preloadLink);
                     
-                    console.log('🚀 Cover preloaded (optimized):', cdnUrls.medium);
+                    console.log('🚀 Cover preload initiated');
                 }
             })
             .catch(err => console.warn('⚠️ Preload failed:', err));
