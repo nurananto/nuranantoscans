@@ -1192,26 +1192,132 @@ header {
   border-width: 0 !important;
 }
 
-/* Skip to main content link */
+/* ============================================
+   SKIP LINK - KEYBOARD ONLY (NO TOUCH)
+   - 100% tersembunyi di mobile/tablet
+   - Hanya muncul saat Tab (keyboard)
+   - Tidak muncul saat hover/click
+   ============================================ */
+
 .skip-link {
   position: absolute;
-  top: -40px;
-  left: 0;
+  top: -200px; /* ✅ Benar-benar di luar viewport */
+  left: 50%;
+  transform: translateX(-50%);
   background: #1877f2;
   color: white;
-  padding: 8px 16px;
+  padding: 12px 24px;
   text-decoration: none;
   z-index: 10000;
-  border-radius: 0 0 4px 0;
-  font-weight: 600;
-  transition: top 0.2s ease;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 4px 20px rgba(24, 119, 242, 0.6);
+  white-space: nowrap;
+  
+  /* ✅ CRITICAL: Prevent any interaction when hidden */
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  
+  /* ✅ Smooth animation only for keyboard */
+  transition: top 0.3s ease, opacity 0.2s ease;
 }
 
+/* ✅ ONLY show on keyboard focus (Tab key) */
 .skip-link:focus {
-  top: 0;
+  top: 20px; /* Muncul di atas konten */
+  pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
   outline: 3px solid #ffffff;
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
+
+/* ✅ IMPORTANT: Prevent showing on hover */
+.skip-link:hover {
+  top: -200px; /* Tetap tersembunyi */
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ============================================
+   RESPONSIVE: HIDE on MOBILE/TABLET (Touch Devices)
+   ============================================ */
+
+/* ✅ Hide completely on mobile (< 768px) */
+@media (max-width: 767px) {
+  .skip-link {
+    display: none !important; /* Force hide */
+  }
+}
+
+/* ✅ Hide on tablet portrait (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) and (hover: none) {
+  .skip-link {
+    display: none !important; /* Force hide on touch tablets */
+  }
+}
+
+/* ✅ Show only on desktop with keyboard (> 1024px) */
+@media (min-width: 1024px) {
+  .skip-link:focus {
+    top: 30px; /* Desktop position */
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* ============================================
+   ALTERNATIVE: Show ONLY when keyboard detected
+   ============================================ */
+
+/* ✅ Hide by default for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .skip-link {
+    display: none !important;
+  }
+}
+
+/* ✅ Show only for devices with hover capability (mouse/trackpad) */
+@media (hover: hover) and (pointer: fine) {
+  .skip-link {
+    display: block;
+  }
+}
+
+/* ============================================
+   HIGH CONTRAST MODE SUPPORT
+   ============================================ */
+@media (prefers-contrast: high) {
+  .skip-link:focus {
+    outline: 4px solid #ffffff;
+    outline-offset: 4px;
+    background: #0066cc;
+  }
+}
+
+/* ============================================
+   REDUCED MOTION SUPPORT (Skip Link)
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .skip-link {
+    transition: none;
+  }
+}
+
+/* ============================================
+   PRINT: Hide completely
+   ============================================ */
+@media print {
+  .skip-link {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   OTHER ACCESSIBILITY - Focus States
+   ============================================ */
 
 /* Logo link focus state */
 .logo-link {
@@ -1239,14 +1345,8 @@ header {
   outline-offset: 4px;
 }
 
-/* Manga card focus (keyboard navigation) */
-.manga-card:focus {
-  outline: 3px solid #1877f2;
-  outline-offset: 4px;
-  transform: scale(1.03);
-}
-
-.manga-card:focus-visible {
+/* Chapter item focus (keyboard navigation) */
+.chapter-item:focus-visible {
   outline: 3px solid #1877f2;
   outline-offset: 4px;
 }
@@ -1261,17 +1361,13 @@ header {
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .manga-card:focus,
+  .chapter-item:focus,
   .github-link-header:focus,
   .facebook-link-header:focus,
   .trakteer-button:focus,
   .logo-link:focus {
     outline-width: 4px;
     outline-offset: 4px;
-  }
-  
-  #searchInput:focus {
-    border-width: 3px;
   }
 }
 
@@ -1284,7 +1380,7 @@ header {
   }
   
   .skip-link,
-  .manga-card,
+  .chapter-item,
   .github-link-header,
   .facebook-link-header,
   .trakteer-button {
@@ -1296,8 +1392,7 @@ header {
 @media print {
   .skip-link,
   .header-buttons,
-  .trakteer-button,
-  .loading-indicator {
+  .trakteer-button {
     display: none !important;
   }
   
@@ -1307,7 +1402,7 @@ header {
     padding: 0;
   }
   
-  .manga-card {
+  .chapter-item {
     page-break-inside: avoid;
   }
 }
@@ -1336,12 +1431,8 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* LCP optimization - force immediate render for first 10 images */
-.manga-card:nth-child(-n+10) img {
+/* LCP optimization - Cover image */
+.manga-cover {
   content-visibility: visible;
-}
-
-/* Prevent layout shift */
-.manga-card img {
-  contain-intrinsic-size: 300px 420px;
+  contain-intrinsic-size: 320px 453px;
 }
