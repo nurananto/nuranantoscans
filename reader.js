@@ -258,6 +258,7 @@ function renderEndChapterButtons() {
     const isLastChapter = currentIndex === 0;
     const isOneshot = isOneshotChapter(currentChapterFolder);
     
+    // Jika BUKAN chapter terakhir, tampilkan tombol Next Chapter saja
     if (!isLastChapter) {
         container.innerHTML = `
             <button class="next-chapter-btn" id="btnNextChapterDynamic">
@@ -273,9 +274,11 @@ function renderEndChapterButtons() {
         return;
     }
     
+    // Cek apakah chapter berikutnya locked
     const nextChapter = allChapters[currentIndex - 1];
     const nextIsLocked = nextChapter && nextChapter.locked;
     
+    // Jika chapter berikutnya locked, tampilkan tombol Next Chapter yang mengarah ke modal
     if (nextIsLocked) {
         container.innerHTML = `
             <button class="next-chapter-btn" id="btnNextChapterLocked">
@@ -294,6 +297,7 @@ function renderEndChapterButtons() {
         return;
     }
     
+    // Jika oneshot, tampilkan tombol Back to Info saja (ukuran penuh)
     if (isOneshot) {
         container.innerHTML = `
             <button class="back-to-info-btn-large" onclick="window.location.href='info-manga.html?repo=${repoParam}'">
@@ -307,6 +311,7 @@ function renderEndChapterButtons() {
         return;
     }
     
+    // Jika chapter terakhir dan bukan oneshot, tampilkan 2 tombol BERSEBELAHAN
     const predictedNext = predictNextChapter(allChapters, currentChapterFolder);
     
     container.innerHTML = `
