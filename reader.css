@@ -643,6 +643,8 @@ body.show-page-nav .page-thumb {
     max-width: 800px;
     margin: 15px auto;
     padding: 0 20px;
+    position: relative;  /* ← TAMBAHKAN */
+    z-index: 10;  /* ← TAMBAHKAN (lebih tinggi dari giscus) */
 }
 
 .next-chapter-btn {
@@ -1169,6 +1171,8 @@ body.show-page-nav .page-thumb {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
+    position: relative;  /* ← TAMBAHKAN */
+    z-index: 10;  /* ← TAMBAHKAN (lebih tinggi dari giscus) */
 }
 
 .comments-button-container.visible {
@@ -1240,11 +1244,15 @@ body.show-page-nav .page-thumb {
     padding: 0 1rem;
     box-sizing: border-box;
     display: none;
+    position: relative;  /* ← TAMBAHKAN */
+    z-index: 1;  /* ← TAMBAHKAN (lebih rendah dari tombol) */
 }
 
 /* Fix untuk mencegah glitch saat scroll */
 .giscus-container iframe {
     pointer-events: auto;
+    position: relative;  /* ← TAMBAHKAN */
+    z-index: 1;  /* ← TAMBAHKAN */
 }
 
 /* Responsive untuk Comments Button & Giscus */
