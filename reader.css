@@ -1157,3 +1157,26 @@ body.show-page-nav .page-thumb {
     background-size: 1000px 100%;
     animation: shimmer 2s infinite;
 }
+
+/* Giscus Comments Container */
+.giscus-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+/* Responsive untuk Giscus */
+@media (max-width: 768px) {
+    .giscus-container {
+        margin: 1.5rem auto;
+        padding: 0 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .giscus-container {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+}
