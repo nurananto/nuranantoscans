@@ -1274,20 +1274,41 @@ window.addEventListener('scroll', () => {
         navbar.style.opacity = '1';
     }
     
-    if (readMode === 'webtoon') {
-        const endChapterContainer = document.getElementById('endChapterContainer');
-        if (endChapterContainer) {
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
-            const scrollBottom = scrollTop + windowHeight;
-            
-            if (scrollBottom >= documentHeight - 200) {
-                endChapterContainer.style.display = 'block';
+if (readMode === 'webtoon') {
+    const endChapterContainer = document.getElementById('endChapterContainer');
+    const commentsButtonContainer = document.getElementById('commentsButtonContainer');
+    const giscusContainer = document.getElementById('giscusContainer');
+    
+    if (endChapterContainer) {
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        const scrollBottom = scrollTop + windowHeight;
+        
+        // Cek apakah Giscus sedang terbuka
+        const isGiscusOpen = giscusContainer && giscusContainer.style.display === 'block';
+        
+        if (scrollBottom >= documentHeight - 200) {
+            endChapterContainer.style.display = 'block';
+            if (commentsButtonContainer) {
+                commentsButtonContainer.style.display = 'block';
+            }
+        } else {
+            // Jika Giscus terbuka, TETAP TAMPILKAN semua tombol
+            if (isGiscusOpen) {
+                endChapterContainer.style.display = 'block';  // ← TAMBAHKAN INI
+                if (commentsButtonContainer) {
+                    commentsButtonContainer.style.display = 'block';
+                }
             } else {
+                // Jika Giscus tertutup, hide seperti biasa
                 endChapterContainer.style.display = 'none';
+                if (commentsButtonContainer) {
+                    commentsButtonContainer.style.display = 'none';
+                }
             }
         }
     }
+}
     
     lastScrollTop = scrollTop;
 });
