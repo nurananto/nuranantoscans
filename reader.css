@@ -1259,7 +1259,7 @@ body.show-page-nav .page-thumb {
 @media (max-width: 768px) {
     .comments-button-container {
         margin: 10px auto;
-        padding: 0 10px;
+        padding: 0 20px;
     }
     
     .comments-toggle-btn {
@@ -1282,7 +1282,7 @@ body.show-page-nav .page-thumb {
 @media (max-width: 480px) {
     .comments-button-container {
         margin: 8px auto;
-        padding: 0 8px;
+        padding: 0 20px;
     }
     
     .comments-toggle-btn {
@@ -1304,7 +1304,7 @@ body.show-page-nav .page-thumb {
 
 @media (max-width: 360px) {
     .comments-button-container {
-        padding: 0 6px;
+        padding: 0 20px;
     }
     
     .comments-toggle-btn-half {
