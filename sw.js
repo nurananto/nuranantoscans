@@ -2,10 +2,10 @@
 // ✅ FIXED: Response clone error
 // ✅ FIXED: Proper error handling
 
-const CACHE_NAME = 'nurananto-v5c8ab2e';
-const STATIC_CACHE = 'static-v5c8ab2e';
-const IMAGE_CACHE = 'images-v5c8ab2e';
-const DYNAMIC_CACHE = 'dynamic-v5c8ab2e';
+const CACHE_NAME = 'nurananto-vcd9b106';
+const STATIC_CACHE = 'static-vcd9b106';
+const IMAGE_CACHE = 'images-vcd9b106';
+const DYNAMIC_CACHE = 'dynamic-vcd9b106';
 
 // Static assets (HTML, CSS, JS)
 const STATIC_ASSETS = [
