@@ -250,15 +250,19 @@ function showLockedChapterModal(chapterNumber = null) {
     };
 }
 
+// Ganti fungsi renderEndChapterButtons() yang lama dengan yang ini:
+
 function renderEndChapterButtons() {
     const container = document.getElementById('endChapterContainer');
+    const commentsButtonContainer = document.getElementById('commentsButtonContainer');
+    
     if (!container) return;
     
     const currentIndex = allChapters.findIndex(ch => ch.folder === currentChapterFolder);
     const isLastChapter = currentIndex === 0;
     const isOneshot = isOneshotChapter(currentChapterFolder);
     
-    // Jika BUKAN chapter terakhir, tampilkan tombol Next Chapter saja
+    // Jika BUKAN chapter terakhir, tampilkan tombol Next Chapter + Komentar di bawahnya
     if (!isLastChapter) {
         container.innerHTML = `
             <button class="next-chapter-btn" id="btnNextChapterDynamic">
@@ -271,6 +275,11 @@ function renderEndChapterButtons() {
         
         const btn = document.getElementById('btnNextChapterDynamic');
         btn.onclick = () => navigateChapter('next');
+        
+        // Tampilkan tombol komentar di bawah Next Chapter
+        if (commentsButtonContainer) {
+            commentsButtonContainer.style.display = 'block';
+        }
         return;
     }
     
@@ -294,24 +303,39 @@ function renderEndChapterButtons() {
             const chapterTitle = nextChapter.title || nextChapter.folder;
             showLockedChapterModal(chapterTitle);
         };
+        
+        // Tampilkan tombol komentar di bawah Next Chapter
+        if (commentsButtonContainer) {
+            commentsButtonContainer.style.display = 'block';
+        }
         return;
     }
     
-    // Jika oneshot, tampilkan tombol Back to Info saja (ukuran penuh)
+    // Jika oneshot, tampilkan Back to Info + Komentar
     if (isOneshot) {
         container.innerHTML = `
-            <button class="back-to-info-btn-large" onclick="window.location.href='info-manga.html?repo=${repoParam}'">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                <span>Back to Info</span>
-            </button>
+            <div class="dual-buttons-container">
+                <button class="back-to-info-btn-half" onclick="window.location.href='info-manga.html?repo=${repoParam}'">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>Back to Info</span>
+                </button>
+                <button class="comments-toggle-btn-half" id="btnToggleCommentsHalf">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>Komentar</span>
+                </button>
+            </div>
         `;
+        
+        setupCommentsToggleHalf();
         return;
     }
     
-    // Jika chapter terakhir dan bukan oneshot, tampilkan 2 tombol BERSEBELAHAN
+    // Jika chapter terakhir dan bukan oneshot, tampilkan Back to Info + Trakteer + Komentar
     const predictedNext = predictNextChapter(allChapters, currentChapterFolder);
     
     container.innerHTML = `
@@ -329,8 +353,72 @@ function renderEndChapterButtons() {
             </button>
         </div>
     `;
+    
+    // Tampilkan tombol komentar di bawah
+    if (commentsButtonContainer) {
+        commentsButtonContainer.style.display = 'block';
+    }
 }
 
+// Fungsi untuk setup toggle comments pada tombol setengah
+function setupCommentsToggleHalf() {
+    const btnToggleCommentsHalf = document.getElementById('btnToggleCommentsHalf');
+    const giscusContainer = document.getElementById('giscusContainer');
+    let isCommentsOpen = false;
+    
+    if (btnToggleCommentsHalf) {
+        btnToggleCommentsHalf.addEventListener('click', function() {
+            isCommentsOpen = !isCommentsOpen;
+            
+            if (isCommentsOpen) {
+                giscusContainer.style.display = 'block';
+                btnToggleCommentsHalf.querySelector('span').textContent = 'Minimize';
+                
+                setTimeout(() => {
+                    giscusContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            } else {
+                giscusContainer.style.display = 'none';
+                btnToggleCommentsHalf.querySelector('span').textContent = 'Komentar';
+                
+                btnToggleCommentsHalf.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
+}
+// ============================================
+// SHOW COMMENTS BUTTON ONLY AT BOTTOM
+// ============================================
+
+function setupCommentsVisibility() {
+    const commentsButtonContainer = document.getElementById('commentsButtonContainer');
+    const endChapterContainer = document.getElementById('endChapterContainer');
+    
+    if (!commentsButtonContainer || !endChapterContainer) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Tombol chapter akhir terlihat = tampilkan tombol komentar
+                commentsButtonContainer.classList.add('visible');
+            } else {
+                // Tombol chapter akhir tidak terlihat = sembunyikan tombol komentar
+                commentsButtonContainer.classList.remove('visible');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    observer.observe(endChapterContainer);
+    
+    console.log('✅ Comments visibility observer setup');
+}
+
+// Panggil fungsi ini setelah chapter pages dimuat
+// Tambahkan di akhir fungsi loadChapterPages(), setelah hideLoading()
+    
 const DEBUG_MODE = false;
 
 let mangaData = null;
@@ -700,6 +788,9 @@ async function loadChapterPages() {
         }
         
         hideLoading();
+
+        // Setup comments visibility observer
+        setupCommentsVisibility();
         
     } catch (error) {
         console.error('❌ Error loading pages:', error);
