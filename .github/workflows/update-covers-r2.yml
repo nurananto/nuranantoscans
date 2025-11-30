@@ -2,8 +2,10 @@ name: Auto Update Manga Covers (R2)
 
 on:
   schedule:
-    - cron: '0 0 */14 * *'  # Every 14 days
+    - cron: '0 0 */14 * *'  # Every 14 days (backup full sync)
   workflow_dispatch:
+  # ℹ️ NOTE: Cover updates now primarily handled by manga-update-trigger.yml
+  # This workflow serves as backup/full check every 14 days
 
 permissions:
   contents: write

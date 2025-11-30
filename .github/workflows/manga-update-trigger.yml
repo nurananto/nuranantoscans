@@ -1,54 +1,259 @@
-name: Manga Update Trigger
-
-# ============================================
-# WORKFLOW INI UNTUK REPO WEBSITE
-# (nuranantoscans)
-# Akan triggered otomatis dari repo manga
-# ============================================
+name: Manga Update Trigger (With Cover Check)
 
 on:
   repository_dispatch:
     types: 
       - manga-updated
+  
+  schedule:
+    - cron: '*/5 * * * *'
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: manga-updates
+  cancel-in-progress: false
 
 jobs:
-  rebuild-website:
+  batch-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
-      - name: 🔧 Checkout Website Repo
+      - name: 📧 Checkout Website Repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
-      - name: 📢 Log Update Notification
-        run: |
-          MANGA_REPO="${{ github.event.client_payload.repo }}"
-          echo "🔔 Update received from manga repo: $MANGA_REPO"
-          echo "⏰ Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
-          echo "📦 Triggering cache refresh..."
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
       
-      - name: 🔄 Trigger Auto-Version Workflow
+      - name: 📊 Initialize Pending Tracker
         run: |
-          # Create dummy commit to trigger auto-version workflow
-          echo "# Last updated: $(date)" >> .update-log
+          sudo apt-get update && sudo apt-get install -y jq
+          
+          if [ ! -f pending-manga-updates.json ]; then
+            echo '{"pending":[],"lastRebuild":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > pending-manga-updates.json
+          fi
+      
+      - name: 📝 Add Update to Pending
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          MANGA_REPO="${{ github.event.client_payload.manga }}"
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          
+          echo "📚 New update from: $MANGA_REPO"
+          
+          jq --arg repo "$MANGA_REPO" --arg ts "$TIMESTAMP" \
+            '.pending |= (. + [{"repo": $repo, "timestamp": $ts}] | unique_by(.repo))' \
+            pending-manga-updates.json > temp.json && mv temp.json pending-manga-updates.json
           
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add .update-log
-          git commit -m "🔄 Trigger rebuild from ${{ github.event.client_payload.repo }}"
+          git add pending-manga-updates.json
+          git commit -m "📝 Track update from $MANGA_REPO [skip ci]" || echo "No changes"
+          git push || echo "Push failed"
+          
+          PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
+          echo "✅ Queued. Total pending: $PENDING_COUNT"
+      
+      - name: 🔍 Check if Should Rebuild
+        id: check_rebuild
+        run: |
+          PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
+          LAST_REBUILD=$(jq -r '.lastRebuild' pending-manga-updates.json)
+          CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          
+          LAST_EPOCH=$(date -d "$LAST_REBUILD" +%s 2>/dev/null || echo "0")
+          CURRENT_EPOCH=$(date -d "$CURRENT_TIME" +%s)
+          MINUTES_SINCE=$((($CURRENT_EPOCH - $LAST_EPOCH) / 60))
+          
+          echo "📊 Pending: $PENDING_COUNT manga"
+          echo "⏰ Minutes since rebuild: $MINUTES_SINCE"
+          
+          # Rebuild if: pending > 0 AND (5+ min OR scheduled)
+          if [ "$PENDING_COUNT" -gt 0 ]; then
+            if [ "$MINUTES_SINCE" -ge 5 ] || [ "${{ github.event_name }}" = "schedule" ]; then
+              echo "should_rebuild=true" >> $GITHUB_OUTPUT
+              
+              MANGA_LIST=$(jq -r '.pending[].repo' pending-manga-updates.json | paste -sd "," -)
+              echo "manga_list=$MANGA_LIST" >> $GITHUB_OUTPUT
+              
+              echo "✅ Will rebuild for: $MANGA_LIST"
+            else
+              echo "should_rebuild=false" >> $GITHUB_OUTPUT
+              echo "⏳ Waiting... ($MINUTES_SINCE/5 min)"
+            fi
+          else
+            echo "should_rebuild=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No pending updates"
+          fi
+      
+      - name: 🖼️ Quick Cover Check (Optional)
+        id: cover_check
+        if: steps.check_rebuild.outputs.should_rebuild == 'true'
+        run: |
+          echo "🖼️ Checking if any manga needs cover update..."
+          
+          # Install dependencies
+          npm install --no-save node-fetch@2
+          
+          # Create quick cover check script
+          cat > check-covers.js << 'COVER_CHECK_EOF'
+          const fs = require('fs');
+          const fetch = require('node-fetch');
+          
+          const MANGA_LIST = JSON.parse(fs.readFileSync('pending-manga-updates.json', 'utf8')).pending;
+          
+          async function checkCover(repoName) {
+            try {
+              // Fetch manga.json from repo
+              const url = `https://raw.githubusercontent.com/nurananto/${repoName}/main/manga.json`;
+              const res = await fetch(url);
+              if (!res.ok) return null;
+              
+              const data = await res.json();
+              
+              // Get MangaDex ID
+              const mdUrl = data.manga?.links?.mangadex;
+              if (!mdUrl) return null;
+              
+              const mdId = mdUrl.match(/\/title\/([a-f0-9-]+)/)?.[1];
+              if (!mdId) return null;
+              
+              // Check latest cover from MangaDex
+              const apiUrl = `https://api.mangadex.org/cover?manga[]=${mdId}&limit=1&order[createdAt]=desc`;
+              const coverRes = await fetch(apiUrl);
+              if (!coverRes.ok) return null;
+              
+              const coverData = await coverRes.json();
+              if (!coverData.data?.[0]) return null;
+              
+              const latestHash = coverData.data[0].attributes.fileName.split('.')[0];
+              const currentCover = data.manga.cover || '';
+              
+              // Check if current cover has same hash
+              const hasLatest = currentCover.includes(latestHash);
+              
+              return { repo: repoName, needsUpdate: !hasLatest, hash: latestHash };
+            } catch (err) {
+              console.warn(`⚠️ ${repoName}: ${err.message}`);
+              return null;
+            }
+          }
+          
+          (async () => {
+            const results = [];
+            for (const item of MANGA_LIST) {
+              const result = await checkCover(item.repo);
+              if (result) results.push(result);
+              await new Promise(r => setTimeout(r, 1000)); // Rate limit
+            }
+            
+            const needsUpdate = results.filter(r => r.needsUpdate);
+            console.log(`\n📊 Cover check results:`);
+            console.log(`   Total checked: ${results.length}`);
+            console.log(`   Needs update: ${needsUpdate.length}`);
+            
+            if (needsUpdate.length > 0) {
+              console.log(`\n🖼️ Manga with new covers:`);
+              needsUpdate.forEach(r => console.log(`   - ${r.repo}`));
+            }
+            
+            fs.writeFileSync('cover-check-result.json', JSON.stringify({ needsUpdate: needsUpdate.length > 0 }));
+          })();
+          COVER_CHECK_EOF
+          
+          node check-covers.js || echo "Cover check failed, will continue anyway"
+          
+          if [ -f cover-check-result.json ]; then
+            NEEDS_UPDATE=$(cat cover-check-result.json | jq -r '.needsUpdate')
+            echo "needs_cover_update=$NEEDS_UPDATE" >> $GITHUB_OUTPUT
+          else
+            echo "needs_cover_update=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 🔄 Update Covers (If Needed)
+        if: |
+          steps.check_rebuild.outputs.should_rebuild == 'true' &&
+          steps.cover_check.outputs.needs_cover_update == 'true'
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ACCESS_KEY_ID: ${{ secrets.CF_ACCESS_KEY_ID }}
+          CF_SECRET_ACCESS_KEY: ${{ secrets.CF_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_DOMAIN: ${{ secrets.R2_PUBLIC_DOMAIN }}
+        run: |
+          echo "🖼️ Updating covers..."
+          npm install sharp @aws-sdk/client-s3
+          node download-covers-r2.js || echo "Cover update failed, continuing..."
+          
+          # Commit cover changes if any
+          if [[ -n $(git status -s manga-config.js) ]]; then
+            git add manga-config.js repo-list.txt
+            git commit -m "🖼️ Auto-update covers [skip ci]" || true
+            git push || true
+            echo "✅ Covers updated"
+          fi
+      
+      - name: 📄 Generate Version Bump
+        if: steps.check_rebuild.outputs.should_rebuild == 'true'
+        id: version
+        run: |
+          # Generate version from commit hash
+          VERSION=$(git rev-parse --short HEAD)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 New version: $VERSION"
+          
+          # Update version.txt
+          echo "$VERSION" > version.txt
+          
+          # Update Service Worker (like auto-version.yml does)
+          sed -i "s/const CACHE_NAME = 'nurananto-v[0-9a-f]*'/const CACHE_NAME = 'nurananto-v$VERSION'/g" sw.js
+          sed -i "s/const STATIC_CACHE = 'static-v[0-9a-f]*'/const STATIC_CACHE = 'static-v$VERSION'/g" sw.js
+          sed -i "s/const IMAGE_CACHE = 'images-v[0-9a-f]*'/const IMAGE_CACHE = 'images-v$VERSION'/g" sw.js
+          sed -i "s/const DYNAMIC_CACHE = 'dynamic-v[0-9a-f]*'/const DYNAMIC_CACHE = 'dynamic-v$VERSION'/g" sw.js
+          
+          echo "✅ Cache version updated"
+      
+      - name: 💾 Commit Changes
+        if: steps.check_rebuild.outputs.should_rebuild == 'true'
+        run: |
+          MANGA_LIST="${{ steps.check_rebuild.outputs.manga_list }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add version.txt sw.js
+          git commit -m "🔄 Batch rebuild: $MANGA_LIST (v$VERSION)" || echo "No changes"
           git push
           
-          echo "✅ Auto-version workflow will run automatically"
+          echo "✅ Version committed"
       
-      - name: ⏳ Wait for Pages Deploy
-        run: sleep 120
+      - name: 🧹 Clear Pending
+        if: steps.check_rebuild.outputs.should_rebuild == 'true'
+        run: |
+          jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '.pending = [] | .lastRebuild = $ts' \
+            pending-manga-updates.json > temp.json && mv temp.json pending-manga-updates.json
+          
+          git add pending-manga-updates.json
+          git commit -m "🧹 Clear pending [skip ci]"
+          git push
+      
+      - name: ⏳ Wait for GitHub Pages Deploy
+        if: steps.check_rebuild.outputs.should_rebuild == 'true'
+        run: |
+          echo "⏳ Waiting for GitHub Pages to deploy..."
+          sleep 120
       
       - name: 🗑️ Purge Cloudflare Cache
+        if: steps.check_rebuild.outputs.should_rebuild == 'true'
         run: |
           if [ -n "${{ secrets.CF_ZONE_ID }}" ] && [ -n "${{ secrets.CF_API_TOKEN }}" ]; then
             echo "🌐 Purging Cloudflare cache..."
@@ -60,13 +265,20 @@ jobs:
               --data '{"purge_everything":true}')
             
             echo "Response: $response"
-            echo "✅ Cache purged successfully!"
-          else
-            echo "⚠️ Cloudflare credentials not found, skipping purge"
+            echo "✅ Cache purged!"
           fi
       
-      - name: ✅ Update Complete
+      - name: ✅ Complete
         run: |
-          echo "🎉 Website update complete!"
-          echo "📱 Changes will be visible after cache refresh"
-          echo "🔗 Website: https://nuranantoscans.my.id"
+          if [ "${{ steps.check_rebuild.outputs.should_rebuild }}" = "true" ]; then
+            echo "🎉 Batch rebuild complete!"
+            echo "📱 Updates:"
+            echo "   - Manga: ${{ steps.check_rebuild.outputs.manga_list }}"
+            echo "   - Version: ${{ steps.version.outputs.version }}"
+            if [ "${{ steps.cover_check.outputs.needs_cover_update }}" = "true" ]; then
+              echo "   - Covers: Updated"
+            fi
+            echo "🔗 Website: https://nuranantoscans.my.id"
+          else
+            echo "⏳ Updates queued..."
+          fi

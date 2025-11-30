@@ -1,17 +1,24 @@
 /**
- * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v7.3
+ * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v7.4
  * FITUR: Auto-upload ke Cloudflare R2 + Auto-delete old covers
  * 
- * Update v7.3:
+ * Update v7.4:
+ * - No hardcoded domains (strict env validation)
  * - Clean encoding (no emoji corruption)
  * - Handle existing local cover paths
  * - Preserve hash from old covers
  * - Smart migration from GitHub to R2
  * - Auto-fill empty covers
  * 
+ * Required Environment Variables:
+ * - CF_ACCOUNT_ID
+ * - CF_ACCESS_KEY_ID
+ * - CF_SECRET_ACCESS_KEY
+ * - R2_PUBLIC_DOMAIN
+ * 
  * Cara Pakai:
  * 1. npm install sharp @aws-sdk/client-s3
- * 2. Set env: CF_ACCOUNT_ID, CF_ACCESS_KEY_ID, CF_SECRET_ACCESS_KEY, R2_PUBLIC_DOMAIN
+ * 2. Set all required env variables
  * 3. node download-covers-r2.js
  */
 
@@ -27,20 +34,53 @@ const DELAY_MS = 1500;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 const WEBP_QUALITY = 85;
 
-// R2 Configuration
+// R2 Configuration - NO HARDCODED VALUES
 const R2_CONFIG = {
   accountId: process.env.CF_ACCOUNT_ID,
   accessKeyId: process.env.CF_ACCESS_KEY_ID,
   secretAccessKey: process.env.CF_SECRET_ACCESS_KEY,
   bucketName: 'manga-list',
-  publicDomain: process.env.R2_PUBLIC_DOMAIN || 'cdn.nuranantoscans.my.id'
+  publicDomain: process.env.R2_PUBLIC_DOMAIN
 };
 
-// Validate R2 Config
-if (!R2_CONFIG.accountId || !R2_CONFIG.accessKeyId || !R2_CONFIG.secretAccessKey) {
-  console.error('[ERROR] Missing R2 credentials! Set CF_ACCOUNT_ID, CF_ACCESS_KEY_ID, CF_SECRET_ACCESS_KEY');
+// ============================================
+// STRICT VALIDATION
+// ============================================
+console.log('[INIT] Validating R2 configuration...\n');
+
+const REQUIRED_ENV = {
+  'CF_ACCOUNT_ID': R2_CONFIG.accountId,
+  'CF_ACCESS_KEY_ID': R2_CONFIG.accessKeyId,
+  'CF_SECRET_ACCESS_KEY': R2_CONFIG.secretAccessKey,
+  'R2_PUBLIC_DOMAIN': R2_CONFIG.publicDomain
+};
+
+let missingEnv = [];
+Object.keys(REQUIRED_ENV).forEach(key => {
+  if (!REQUIRED_ENV[key]) {
+    missingEnv.push(key);
+  }
+});
+
+if (missingEnv.length > 0) {
+  console.error('[ERROR] Missing required environment variables:');
+  missingEnv.forEach(env => {
+    console.error(`  ❌ ${env}`);
+  });
+  console.error('\n[TIP] Set all required environment variables:');
+  console.error('  export CF_ACCOUNT_ID=your_account_id');
+  console.error('  export CF_ACCESS_KEY_ID=your_access_key');
+  console.error('  export CF_SECRET_ACCESS_KEY=your_secret_key');
+  console.error('  export R2_PUBLIC_DOMAIN=cdn.nuranantoscans.my.id');
   process.exit(1);
 }
+
+console.log('[SUCCESS] All required environment variables set:');
+console.log(`  ✅ CF_ACCOUNT_ID: ${R2_CONFIG.accountId.substring(0, 8)}...`);
+console.log(`  ✅ CF_ACCESS_KEY_ID: ${R2_CONFIG.accessKeyId.substring(0, 8)}...`);
+console.log(`  ✅ CF_SECRET_ACCESS_KEY: ${R2_CONFIG.secretAccessKey.substring(0, 8)}...`);
+console.log(`  ✅ R2_PUBLIC_DOMAIN: ${R2_CONFIG.publicDomain}`);
+console.log('');
 
 // Initialize R2 Client
 const r2Client = new S3Client({
@@ -116,19 +156,7 @@ function isR2Url(coverPath) {
   return coverPath.startsWith('https://') && 
          (coverPath.includes('r2.cloudflarestorage.com') || 
           coverPath.includes('.r2.dev') ||
-          coverPath.includes('cdn.nuranantoscans.my.id'));
-}
-
-// Helper: Check if cover URL is using OLD format (with /manga-list/)
-function hasOldUrlFormat(coverPath) {
-  if (!coverPath) return false;
-  return coverPath.includes('/manga-list/covers/');
-}
-
-// Helper: Fix old URL format
-function fixOldUrlFormat(coverPath) {
-  if (!coverPath) return coverPath;
-  return coverPath.replace('/manga-list/covers/', '/covers/');
+          coverPath.includes(R2_CONFIG.publicDomain));
 }
 
 // R2 Functions
@@ -184,7 +212,7 @@ async function uploadToR2(filePath, key) {
       CacheControl: 'public, max-age=31536000'
     }));
     
-    // FIXED: Don't include bucket name in public URL for custom domain
+    // Generate public URL using configured domain
     return `https://${R2_CONFIG.publicDomain}/${key}`;
   } catch (error) {
     throw new Error(`R2 upload failed: ${error.message}`);
@@ -356,23 +384,28 @@ async function processAllManga() {
         continue;
       }
       
-      // Check if cover already R2 URL
+      // Check if cover already R2 URL with correct domain
       if (isR2Url(manga.cover)) {
-        // Check if it's using old URL format
-        if (hasOldUrlFormat(manga.cover)) {
-          console.log(`  [FIX] Old URL format detected, updating...`);
-          console.log(`    Old: ${manga.cover}`);
-          manga.cover = fixOldUrlFormat(manga.cover);
-          console.log(`    New: ${manga.cover}`);
+        // Verify it's using the correct configured domain
+        if (manga.cover.includes(R2_CONFIG.publicDomain)) {
+          console.log(`  [SKIP] Cover sudah di R2 dengan domain yang benar`);
           updatedMangaList.push(manga);
-          migratedCount++;
+          skipCount++;
           continue;
+        } else {
+          // URL uses different domain, needs migration
+          console.log(`  [MIGRATE] Cover di R2 tapi domain berbeda`);
+          const hash = extractHashFromCover(manga.cover);
+          if (hash) {
+            const newUrl = `https://${R2_CONFIG.publicDomain}/covers/${manga.id}-${hash}.webp`;
+            console.log(`    Old: ${manga.cover}`);
+            console.log(`    New: ${newUrl}`);
+            manga.cover = newUrl;
+            updatedMangaList.push(manga);
+            migratedCount++;
+            continue;
+          }
         }
-        
-        console.log(`  [SKIP] Cover sudah di R2: ${manga.cover}`);
-        updatedMangaList.push(manga);
-        skipCount++;
-        continue;
       }
       
       // Try to extract hash from existing cover path
@@ -414,7 +447,6 @@ async function processAllManga() {
       if (!mangadexUrl) {
         console.log('  [WARN] Tidak ada MangaDex URL di manga.json');
         
-        // If has existing cover, keep it
         if (manga.cover) {
           console.log('  [INFO] Pakai cover lama');
         }

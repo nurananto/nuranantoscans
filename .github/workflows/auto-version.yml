@@ -8,7 +8,10 @@ on:
       - '**.css'
       - '**.js'
       - '**.html'
-      # covers/** removed - handled by update-covers.yml
+      # ❌ Exclude files handled by manga-update-trigger
+      - '!pending-manga-updates.json'
+      - '!version.txt'
+      - '!sw.js'
 
 permissions:
   contents: write
