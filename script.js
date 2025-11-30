@@ -134,24 +134,26 @@ function createCard(manga, mangaData, index = 0) {
     return num % 1 === 0 ? num.toString() : num.toFixed(1);
   };
   
-  let chapterText = '';
-  if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
-    const unlockedNum = parseFloat(mangaData.latestUnlockedChapter);
-    const lockedNum = parseFloat(mangaData.latestLockedChapter);
-    if (lockedNum > unlockedNum) {
-      const lockedTime = getRelativeTime(mangaData.latestLockedDate);
-      chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
-    } else {
-      const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
-      chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
-    }
-  } else if (mangaData.latestUnlockedChapter) {
-    const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
-    chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
-  } else if (mangaData.latestLockedChapter) {
+let chapterText = '';
+if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
+  const unlockedDate = mangaData.latestUnlockedDate ? new Date(mangaData.latestUnlockedDate) : new Date(0);
+  const lockedDate = mangaData.latestLockedDate ? new Date(mangaData.latestLockedDate) : new Date(0);
+  
+  // ✅ Bandingkan tanggal, bukan nomor chapter
+  if (lockedDate > unlockedDate) {
     const lockedTime = getRelativeTime(mangaData.latestLockedDate);
     chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
+  } else {
+    const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
+    chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
   }
+} else if (mangaData.latestUnlockedChapter) {
+  const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
+  chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
+} else if (mangaData.latestLockedChapter) {
+  const lockedTime = getRelativeTime(mangaData.latestLockedDate);
+  chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
+}
   
   const updatedBadge = isRecent && chapterText ? `
     <div class="updated-badge" aria-label="Recently updated: ${chapterText}">
