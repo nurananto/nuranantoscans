@@ -284,8 +284,8 @@ img {
 }
 
 .next-chapter-btn {
-    background: linear-gradient(135deg, #ffffff, #f0f0f0);
-    color: #ffffff;
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+    color: white;
     border: none;
     padding: 1.2rem 2rem;
     border-radius: 20px;
@@ -297,7 +297,7 @@ img {
     justify-content: center;
     gap: 0.8rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
     width: 100%;
     max-width: 1200px;
     position: relative;
@@ -305,9 +305,9 @@ img {
 }
 
 .next-chapter-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 24px rgba(255, 255, 255, 0.5);
+    background: linear-gradient(135deg, #4d9ff5 0%, #1877f2 100%);  /* ← GANTI */
+    transform: translateY(-2px);                                      /* ← GANTI dari -3px */
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.5);                 /* ← GANTI */
 }
 
 .next-chapter-btn:disabled {
@@ -647,29 +647,6 @@ body.show-page-nav .page-thumb {
     z-index: 10;  /* ← TAMBAHKAN (lebih tinggi dari giscus) */
 }
 
-.next-chapter-btn {
-    width: 100%;
-    padding: 16px 24px;
-    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
-}
-
-.next-chapter-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
-}
-
 .dual-buttons-container {
     display: flex;
     gap: 10px;
@@ -680,12 +657,12 @@ body.show-page-nav .page-thumb {
 
 .back-to-info-btn-large {
     width: 100%;
-    padding: 16px 24px;
+    padding: 1.2rem 24px;
     background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
     color: white;
     border: none;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -703,12 +680,12 @@ body.show-page-nav .page-thumb {
 
 .back-to-info-btn-half {
     flex: 1;
-    padding: 16px 20px;
+    padding: 1.2rem 20px;
     background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
     color: white;
     border: none;
     border-radius: 12px;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -726,12 +703,12 @@ body.show-page-nav .page-thumb {
 
 .trakteer-btn-half {
     flex: 1;
-    padding: 16px 20px;
+    padding: 1.2rem 20px;
     background: linear-gradient(135deg, #be1e2d 0%, #d32f2f 100%);
     color: white;
     border: none;
     border-radius: 12px;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -946,8 +923,8 @@ body.show-page-nav .page-thumb {
     
     .back-to-info-btn-half,
     .trakteer-btn-half {
-        font-size: clamp(0.6rem, 2.5vw, 0.85rem);
-        padding: 12px 8px;
+        font-size: 1rem;
+        padding: 1rem 8px;
         gap: clamp(3px, 1vw, 6px);
         white-space: nowrap;
         overflow: hidden;
@@ -1046,8 +1023,8 @@ body.show-page-nav .page-thumb {
     }
     
     .back-to-info-btn-large {
-    font-size: 0.9rem;
-    padding: 12px 18px; /* Kurangi padding vertikal */
+    font-size: 1rem;
+    padding: 1rem 18px; /* Kurangi padding vertikal */
     }
     
     /* TOMBOL DUAL - MOBILE */
@@ -1058,8 +1035,8 @@ body.show-page-nav .page-thumb {
     
     .back-to-info-btn-half,
     .trakteer-btn-half {
-        font-size: clamp(0.55rem, 3vw, 0.75rem);
-        padding: 11px 6px;
+        font-size: 1rem;
+        padding: 1rem 6px;
         gap: clamp(2px, 1vw, 4px);
         white-space: nowrap;
         overflow: hidden;
@@ -1067,14 +1044,12 @@ body.show-page-nav .page-thumb {
     }
     
     .trakteer-icon-small {
-        width: clamp(12px, 3vw, 18px);
-        height: clamp(12px, 3vw, 18px);
+    display: none;
     }
     
     /* Sembunyikan icon home untuk hemat ruang */
     .back-to-info-btn-half svg {
-        width: clamp(0px, 3vw, 16px);
-        height: clamp(0px, 3vw, 16px);
+    display: none;
     }
     
     .locked-modal-header h2 {
@@ -1109,14 +1084,13 @@ body.show-page-nav .page-thumb {
     
     .back-to-info-btn-half,
     .trakteer-btn-half {
-        font-size: clamp(0.5rem, 3.5vw, 0.68rem);
-        padding: 10px 4px;
+        font-size:1rem;
+        padding: 1rem 4px;
         gap: 2px;
     }
     
     .trakteer-icon-small {
-        width: clamp(10px, 3vw, 14px);
-        height: clamp(10px, 3vw, 14px);
+    display: none;
     }
     
     /* Paksa sembunyikan icon home */
@@ -1182,12 +1156,12 @@ body.show-page-nav .page-thumb {
 
 .comments-toggle-btn {
     width: 100%;
-    padding: 16px 24px;
+    padding: 1.2rem 24px;
     background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%);
     color: white;
     border: none;
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1211,12 +1185,12 @@ body.show-page-nav .page-thumb {
 /* Comments Toggle Button Half (untuk oneshot) */
 .comments-toggle-btn-half {
     flex: 1;
-    padding: 16px 20px;
+    padding: 1.2rem 20px;
     background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%);
     color: white;
     border: none;
     border-radius: 12px;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1263,13 +1237,13 @@ body.show-page-nav .page-thumb {
     }
     
     .comments-toggle-btn {
-        font-size: 0.95rem;
-        padding: 14px 20px;
+        font-size: 1rem;
+        padding: 1rem 20px;
     }
     
     .comments-toggle-btn-half {
-        font-size: clamp(0.6rem, 2.5vw, 0.85rem);
-        padding: 12px 8px;
+        font-size: clamp(0.5rem, 3.5vw, 1rem);
+        padding: 1rem 8px;
         gap: clamp(3px, 1vw, 6px);
     }
     
@@ -1286,12 +1260,12 @@ body.show-page-nav .page-thumb {
     }
     
     .comments-toggle-btn {
-        font-size: 0.9rem;
-        padding: 12px 18px;
+        font-size: 1rem;
+        padding: 1rem 18px;
     }
     
     .comments-toggle-btn-half {
-        font-size: clamp(0.55rem, 3vw, 0.75rem);
+        font-size: clamp(0.5rem, 3.5vw, 1rem);
         padding: 11px 6px;
         gap: clamp(2px, 1vw, 4px);
     }
@@ -1308,8 +1282,8 @@ body.show-page-nav .page-thumb {
     }
     
     .comments-toggle-btn-half {
-        font-size: clamp(0.5rem, 3.5vw, 0.68rem);
-        padding: 10px 4px;
+        font-size: clamp(0.5rem, 3.5vw, 1rem);
+        padding: 1rem 6px;
         gap: 2px;
     }
 }

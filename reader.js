@@ -349,7 +349,7 @@ function renderEndChapterButtons() {
             </button>
             <button class="trakteer-btn-half" onclick="window.open('${TRAKTEER_LINK}', '_blank')">
                 <img src="assets/trakteer-icon.png" alt="Trakteer" class="trakteer-icon-small">
-                <span>Bantu Beli Chapter ${predictedNext || 'Selanjutnya'}</span>
+                <span>Beli Chapter ${predictedNext || 'Selanjutnya'}</span>
             </button>
         </div>
     `;
