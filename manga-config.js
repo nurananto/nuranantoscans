@@ -15,7 +15,7 @@ MANGA_LIST = [
   {
     id: 'mendokusai',
     title: 'Mendokusai Yuurei desu ga, Watashi to Koi Shite Kuremasu ka?',
-    cover: '',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/mendokusai-ac0ac741-c94b-441b-ac30-9b4d9a41f9f1.webp',
     repo: 'MendokusaiYuurei'
   },
   {
