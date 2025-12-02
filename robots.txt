@@ -1,0 +1,32 @@
+# ============================================
+# Nurananto Scanlation - Private Site
+# No search engine indexing allowed
+# ============================================
+
+# Block ALL search engines and crawlers
+User-agent: *
+Disallow: /
+
+# Additional explicit blocks (redundant but clear)
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Googlebot-Image
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+User-agent: Slurp
+Disallow: /
+
+User-agent: DuckDuckBot
+Disallow: /
+
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /
+
+# No sitemap provided
