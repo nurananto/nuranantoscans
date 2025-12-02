@@ -13,6 +13,12 @@
 
 MANGA_LIST = [
   {
+    id: 'mendokusai',
+    title: 'Mendokusai Yuurei desu ga, Watashi to Koi Shite Kuremasu ka?',
+    cover: '',
+    repo: 'MendokusaiYuurei'
+  },
+  {
     id: 'youkyaninatta',
     title: 'Youkya ni Natta Ore no Seishun Shijou Shugi',
     cover: 'https://cdn.nuranantoscans.my.id/covers/youkyaninatta-3eaf02cf-980c-44af-9ab9-2032f7458fb8.webp',
