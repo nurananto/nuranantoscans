@@ -14,7 +14,7 @@
 MANGA_LIST = [
   {
     id: 'yuureigahatsukoi',
-    title: 'Mendokusai Yuurei desu ga, Watashi to Koi Shite Kuremasu ka?',
+    title: 'Moshimo, Yuurei ga Hatsukoi o Shitara',
     cover: 'https://cdn.nuranantoscans.my.id/covers/yuureigahatsukoi-1f5fe857-3e84-451f-8a1c-d25e3960c1b4.webp',
     repo: 'YuureigaHatsukoi'
   },
