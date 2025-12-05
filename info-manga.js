@@ -187,13 +187,8 @@ function showCodeInputModal(chapterNumber = null, chapterFolder = null) {
         
         setTimeout(() => {
             closeModal();
-            // For info-manga.js: open reader
-            // For reader.js: reload page
-            if (typeof window.location.href.includes('reader.html') !== 'undefined' && window.location.href.includes('reader.html')) {
-                window.location.reload();
-            } else {
-                window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
-            }
+             // Open reader with validated chapter
+            window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
         }, 1000);
         
     } else {
