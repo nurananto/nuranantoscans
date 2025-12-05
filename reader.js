@@ -159,22 +159,7 @@ if (codeInput) codeInput.value = '';
     if (errorMsg) errorMsg.style.display = 'none';
     if (successMsg) successMsg.style.display = 'none';
     
-    // ✅ ENABLE TOUCH-HOLD FOR PASTE (Mobile/Tablet Only)
-    if (codeInput) {
-        // Detect mobile/tablet
-        const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-                               || window.innerWidth <= 1024;
-        
-        if (isMobileOrTablet) {
-            // Enable user-select untuk paste
-            codeInput.style.userSelect = 'text';
-            codeInput.style.webkitUserSelect = 'text';
-            
-            console.log('📱 Touch-hold enabled for code input');
-        }
-    }
-    
-    // Show modal
+      // Show modal
     modal.style.display = 'flex';
     modal.classList.add('active');
     
@@ -206,58 +191,75 @@ if (codeInput) codeInput.value = '';
     
     // Add new event listeners
     newBtnSubmit.onclick = async () => {
-        const code = codeInput.value.trim();
-        
-        if (!code) {
-            showCodeError('Masukkan code terlebih dahulu');
-            return;
+    // ✅ STEP 1: Paste from clipboard first
+    try {
+        const clipboardText = await navigator.clipboard.readText();
+        if (clipboardText && clipboardText.trim()) {
+            codeInput.value = clipboardText.trim();
+            console.log('✅ Code pasted from clipboard');
         }
+    } catch (err) {
+        console.log('ℹ️ Clipboard read failed or empty, using manual input');
+    }
+    
+    // ✅ STEP 2: Validate code (from clipboard or manual input)
+    const code = codeInput.value.trim();
+    
+    if (!code) {
+        showCodeError('Paste code atau masukkan code terlebih dahulu');
+        return;
+    }
+    
+    if (code.length !== 16) {
+        showCodeError('Code harus 16 karakter');
+        return;
+    }
+    
+    // Show loading
+    newBtnSubmit.disabled = true;
+    newBtnSubmit.textContent = 'Memvalidasi...';
+    
+    // Get repo info from manga data
+    const urlParams = new URLSearchParams(window.location.search);
+    const repoParam = urlParams.get('repo');
+    
+    if (!repoParam) {
+        showCodeError('Error: Repo tidak ditemukan');
+        newBtnSubmit.disabled = false;
+        newBtnSubmit.textContent = '📋 Paste & Submit Code';
+        return;
+    }
+    
+    // Get repo owner and name from manga data
+    const repoOwner = mangaData.manga.repoUrl.split('/')[3];
+    const repoName = mangaData.manga.repoUrl.split('/')[4];
+    
+    // Validate code
+    const result = await validateChapterCode(repoOwner, repoName, chapterFolder, code);
+    
+    if (result.valid) {
+        // Success - close modal and reload/open reader
+        saveValidatedChapter(repoParam, chapterFolder);
+        showCodeSuccess('Code valid! Membuka chapter...');
         
-        if (code.length !== 16) {
-            showCodeError('Code harus 16 karakter');
-            return;
-        }
-        
-        // Show loading
-        newBtnSubmit.disabled = true;
-        newBtnSubmit.textContent = 'Memvalidasi...';
-        
-        // Get repo info from manga data
-        const urlParams = new URLSearchParams(window.location.search);
-        const repoParam = urlParams.get('repo');
-        
-        if (!repoParam) {
-            showCodeError('Error: Repo tidak ditemukan');
-            newBtnSubmit.disabled = false;
-            newBtnSubmit.textContent = 'Submit Code';
-            return;
-        }
-        
-        // Get repo owner and name from manga data
-        const repoOwner = mangaData.manga.repoUrl.split('/')[3];
-        const repoName = mangaData.manga.repoUrl.split('/')[4];
-        
-        // Validate code
-        const result = await validateChapterCode(repoOwner, repoName, chapterFolder, code);
-        
-        if (result.valid) {
-            // Success - close modal and load chapter
-            saveValidatedChapter(repoParam, chapterFolder);
-            showCodeSuccess('Code valid! Membuka chapter...');
-            
-            setTimeout(() => {
-                closeModal();
-                // Reload page to load chapter with validated code
+        setTimeout(() => {
+            closeModal();
+            // For info-manga.js: open reader
+            // For reader.js: reload page
+            if (typeof window.location.href.includes('reader.html') !== 'undefined' && window.location.href.includes('reader.html')) {
                 window.location.reload();
-            }, 1000);
-            
-        } else {
-            // Error
-            showCodeError(result.message || 'Code tidak valid');
-            newBtnSubmit.disabled = false;
-            newBtnSubmit.textContent = 'Submit Code';
-        }
-    };
+            } else {
+                window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
+            }
+        }, 1000);
+        
+    } else {
+        // Error
+        showCodeError(result.message || 'Code tidak valid');
+        newBtnSubmit.disabled = false;
+        newBtnSubmit.textContent = '📋 Paste & Submit Code';
+    }
+};
     
     newBtnCancel.onclick = closeModal;
     

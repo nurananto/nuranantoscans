@@ -1350,8 +1350,6 @@ body.show-page-nav .page-thumb {
     /* ✅ Allow text selection for paste on mobile/tablet */
     user-select: text;
     -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
 }
 
 .code-input:focus {
