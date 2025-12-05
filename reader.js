@@ -238,15 +238,15 @@ if (codeInput) codeInput.value = '';
     const result = await validateChapterCode(repoOwner, repoName, chapterFolder, code);
     
     if (result.valid) {
-        // Success - close modal and reload/open reader
-        saveValidatedChapter(repoParam, chapterFolder);
-        showCodeSuccess('Code valid! Membuka chapter...');
-        
-        setTimeout(() => {
-            closeModal();
-            // Reload page to load validated chapter
-            window.location.reload();
-        }, 1000);
+    // Success - save session and redirect to chapter
+    saveValidatedChapter(repoParam, chapterFolder);
+    showCodeSuccess('Code valid! Membuka chapter...');
+    
+    setTimeout(() => {
+        closeModal();
+        // ✅ REDIRECT to the validated chapter
+        window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
+    }, 1000);
         
     } else {
         // Error
