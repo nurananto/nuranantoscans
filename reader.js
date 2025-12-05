@@ -791,19 +791,21 @@ async function initializeReader() {
             return;
         }
         
-        if (chapterData.locked) {
-            console.log('🔒 Chapter terkunci');
-    
-         // ✅ CEK SESSION DULU
-        if (isChapterValidated(repoParam, chapterParam)) {
-          console.log('✅ Session valid, skip modal');
-          chapterData.locked = false;
-            } else {
-        const chapterTitle = chapterData.title || chapterParam;
-            showLockedChapterModal(chapterTitle, chapterParam);
-             return;
-    }
+// ✅ CHECK SESSION FIRST - BEFORE CHECKING LOCKED STATUS
+const isValidated = isChapterValidated(repoParam, chapterParam);
+
+if (chapterData.locked && !isValidated) {
+    console.log('🔒 Chapter terkunci, belum divalidasi');
+    const chapterTitle = chapterData.title || chapterParam;
+    showLockedChapterModal(chapterTitle, chapterParam);
+    return;
 }
+
+if (isValidated) {
+    console.log('✅ Session valid, chapter unlocked for this session');
+    // Don't modify chapterData - just proceed to load
+}
+
         
         currentChapter = chapterData;
         currentChapterFolder = chapterParam;
