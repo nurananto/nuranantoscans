@@ -367,14 +367,25 @@ function showLockedChapterModal(chapterNumber = null, chapterFolder = null) {
 function isChapterValidated(repoName, chapter) {
     const key = `validated_${repoName}_${chapter}`;
     const stored = sessionStorage.getItem(key);
+
+    // ✅ DEBUG LOGS - HARUS DI SINI DULU!
+    console.log('🔍 isChapterValidated called:');
+    console.log('   Key:', key);
+    console.log('   Stored value:', stored);
     
     if (!stored) {
+        console.log('   ❌ No session found'); // ← TAMBAH INI
         return false;
     }
     
     try {
         const data = JSON.parse(stored);
         const now = Date.now();
+        
+        // ✅ TAMBAH DEBUG LOGS
+        console.log('   Data:', data);
+        console.log('   Now:', now);
+        console.log('   Expiry:', data.expiry);
         
         // Check if expired
         if (now > data.expiry) {
@@ -762,6 +773,7 @@ async function initializeReader() {
         repoParam = urlParams.get('repo');
         
         console.log('📋 Parameters:', { chapter: chapterParam, repo: repoParam });
+        console.log('📋 Chapter type:', typeof chapterParam, 'Value:', JSON.stringify(chapterParam)); // ← TAMBAH INI
         
         if (!chapterParam) {
             alert('Error: Parameter chapter tidak ditemukan.');
@@ -782,6 +794,13 @@ async function initializeReader() {
             hideLoading();
             return;
         }
+
+        // ✅ TAMBAH INI (6 baris)
+        console.log('📚 Available chapters:', allChapters.map(ch => ({
+            folder: ch.folder,
+            title: ch.title,
+            locked: ch.locked
+        })));
         
         const chapterData = findChapterByFolder(chapterParam);
         
@@ -794,10 +813,17 @@ async function initializeReader() {
 // ✅ CHECK SESSION FIRST - BEFORE CHECKING LOCKED STATUS
 const isValidated = isChapterValidated(repoParam, chapterParam);
 
+// ✅ TAMBAH INI (5 baris)
+console.log('🔐 Lock status check:');
+console.log('   Chapter locked:', chapterData.locked);
+console.log('   Is validated:', isValidated);
+console.log('   Session key:', `validated_${repoParam}_${chapterParam}`);
+
 if (chapterData.locked && !isValidated) {
     console.log('🔒 Chapter terkunci, belum divalidasi');
     const chapterTitle = chapterData.title || chapterParam;
     showLockedChapterModal(chapterTitle, chapterParam);
+    hideLoading(); // ← TAMBAH INI!
     return;
 }
 
