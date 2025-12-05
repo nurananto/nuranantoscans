@@ -1295,7 +1295,8 @@ function openChapterListModal() {
                 closeChapterListModal();
                 setTimeout(() => {
                     const chapterTitle = chapter.title || chapter.folder;
-                    showLockedChapterModal(chapterTitle);
+                    const chapterFolder = chapter.folder;  // ← TAMBAH INI
+                    showLockedChapterModal(chapterTitle, chapterFolder);  // ← TAMBAH PARAMETER KE-2
                 }, 100);
             } else if (chapter.folder !== currentChapterFolder) {
                 window.location.href = `reader.html?repo=${repoParam}&chapter=${chapter.folder}`;

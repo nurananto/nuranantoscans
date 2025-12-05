@@ -537,6 +537,7 @@ body.show-page-nav .page-thumb {
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
+/* Code Input Modal - Solid background */
 #codeInputModal {
     background-color: rgba(10, 10, 10, 0.98);
 }
