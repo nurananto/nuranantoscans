@@ -1021,6 +1021,9 @@ header {
     justify-content: center;
     z-index: 10000;
 }
+#codeInputModal {
+    background-color: rgba(10, 10, 10, 0.98);
+}
 
 .locked-modal-content {
     background: #1a1a1a;
@@ -1492,6 +1495,11 @@ input:focus-visible {
     font-family: 'Courier New', monospace;
     letter-spacing: 2px;
     transition: all 0.3s ease;
+    /* ✅ Allow text selection for paste on mobile/tablet */
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
 }
 
 .code-input:focus {

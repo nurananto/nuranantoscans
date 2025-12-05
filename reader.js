@@ -155,9 +155,24 @@ function showCodeInputModal(chapterNumber = null, chapterFolder = null) {
     const errorMsg = document.getElementById('codeErrorMsg');
     const successMsg = document.getElementById('codeSuccessMsg');
     
-    if (codeInput) codeInput.value = '';
+if (codeInput) codeInput.value = '';
     if (errorMsg) errorMsg.style.display = 'none';
     if (successMsg) successMsg.style.display = 'none';
+    
+    // ✅ ENABLE TOUCH-HOLD FOR PASTE (Mobile/Tablet Only)
+    if (codeInput) {
+        // Detect mobile/tablet
+        const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                               || window.innerWidth <= 1024;
+        
+        if (isMobileOrTablet) {
+            // Enable user-select untuk paste
+            codeInput.style.userSelect = 'text';
+            codeInput.style.webkitUserSelect = 'text';
+            
+            console.log('📱 Touch-hold enabled for code input');
+        }
+    }
     
     // Show modal
     modal.style.display = 'flex';
@@ -173,6 +188,12 @@ function showCodeInputModal(chapterNumber = null, chapterFolder = null) {
         modal.classList.remove('active');
         setTimeout(() => {
             modal.style.display = 'none';
+            
+            // ✅ RESTORE PROTECTION setelah modal tertutup
+            if (codeInput) {
+                codeInput.style.userSelect = 'none';
+                codeInput.style.webkitUserSelect = 'none';
+            }
         }, 300);
     };
     
@@ -1224,7 +1245,8 @@ function navigateChapter(direction) {
     
     if (targetChapter.locked) {
         const chapterTitle = targetChapter.title || targetChapter.folder;
-        showLockedChapterModal(chapterTitle);
+        const chapterFolder = targetChapter.folder;
+        showLockedChapterModal(chapterTitle, chapterFolder);
         return;
     }
     
