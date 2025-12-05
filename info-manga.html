@@ -247,5 +247,50 @@
       navigator.serviceWorker.register('/sw.js?v=4b51f1b').catch(e=>console.error(e));
     }
   </script>
+<!-- Code Input Modal (for Webtoon Type) -->
+  <div id="codeInputModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="code-modal-title">
+    <div class="modal-content code-modal-content">
+      <div class="modal-header code-modal-header">
+        <h2 id="code-modal-title">🔐 Masukkan Code Chapter</h2>
+      </div>
+      <div class="modal-body code-modal-body">
+        <p class="code-explanation">
+          Masukkan <strong>16 karakter code</strong> yang Anda dapatkan dari <strong>Trakteer</strong>.
+        </p>
+        
+        <div class="code-input-container">
+          <input 
+            type="text" 
+            id="chapterCodeInput" 
+            class="code-input" 
+            placeholder="Contoh: AbC123XyZ456PqRs"
+            maxlength="16"
+            autocomplete="off"
+            spellcheck="false"
+          >
+        </div>
+        
+        <div id="codeErrorMsg" class="code-error-msg" style="display: none;">
+          Code tidak valid
+        </div>
+        
+        <div id="codeSuccessMsg" class="code-success-msg" style="display: none;">
+          Code valid! Membuka chapter...
+        </div>
+        
+        <p class="code-info">
+          💡 Belum punya code? 
+          <a href="https://trakteer.id/NuranantoScanlation" target="_blank" rel="noopener noreferrer" class="trakteer-link">
+            Donasi di Trakteer
+          </a>
+        </p>
+        
+        <div class="code-modal-buttons">
+          <button class="code-btn code-btn-cancel" id="btnCancelCode">Batal</button>
+          <button class="code-btn code-btn-submit" id="btnSubmitCode">Submit Code</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

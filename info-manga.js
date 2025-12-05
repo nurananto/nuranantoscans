@@ -26,6 +26,308 @@ function getResponsiveCDN(originalUrl) {
   };
 }
 
+/**
+ * INFO-MANGA.JS - CODE VALIDATION FOR WEBTOON TYPE
+ * Tambahkan fungsi ini di bagian atas info-manga.js (setelah constants)
+ */
+
+// ============================================
+// CODE VALIDATION MODULE
+// ============================================
+
+const CODE_VALIDATION_URL = 'https://manga-code-validator.nuranantoadhien.workers.dev/';
+
+/**
+ * Validate chapter code via Google Apps Script
+ */
+async function validateChapterCode(repoOwner, repoName, chapterFolder, userCode) {
+    try {
+        console.log('🔐 Validating code for chapter:', chapterFolder);
+        
+        const response = await fetch(CODE_VALIDATION_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'validateCode',
+                repoName: repoName,
+                chapter: chapterFolder,
+                code: userCode
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        console.log('✅ Validation result:', result);
+        
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Code validation error:', error);
+        return { valid: false, error: error.message };
+    }
+}
+
+/**
+ * Show code input modal for webtoon locked chapters
+ */
+function showCodeInputModal(chapterNumber = null, chapterFolder = null) {
+    console.log('🔐 showCodeInputModal called:', { chapterNumber, chapterFolder });
+    
+    const modal = document.getElementById('codeInputModal');
+    if (!modal) {
+        console.error('❌ codeInputModal element not found!');
+        return;
+    }
+    
+    // Update modal title
+    const modalHeader = modal.querySelector('.code-modal-header h2');
+    if (modalHeader && chapterNumber) {
+        const hasChapter = /^chapter\s+/i.test(chapterNumber);
+        const titleText = hasChapter ? chapterNumber : `Chapter ${chapterNumber}`;
+        modalHeader.textContent = `🔐 Masukkan Code untuk ${titleText}`;
+    }
+    
+    // Clear previous input
+    const codeInput = document.getElementById('chapterCodeInput');
+    const errorMsg = document.getElementById('codeErrorMsg');
+    const successMsg = document.getElementById('codeSuccessMsg');
+    
+    if (codeInput) codeInput.value = '';
+    if (errorMsg) errorMsg.style.display = 'none';
+    if (successMsg) successMsg.style.display = 'none';
+    
+    // Show modal
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    console.log('🔐 Code modal shown');
+    
+    // Setup button handlers
+    const btnSubmit = document.getElementById('btnSubmitCode');
+    const btnCancel = document.getElementById('btnCancelCode');
+    
+    const closeModal = () => {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    };
+    
+    // Remove old event listeners
+    const newBtnSubmit = btnSubmit.cloneNode(true);
+    btnSubmit.parentNode.replaceChild(newBtnSubmit, btnSubmit);
+    
+    const newBtnCancel = btnCancel.cloneNode(true);
+    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+    
+    // Add new event listeners
+    newBtnSubmit.onclick = async () => {
+        const code = codeInput.value.trim();
+        
+        if (!code) {
+            showCodeError('Masukkan code terlebih dahulu');
+            return;
+        }
+        
+        if (code.length !== 16) {
+            showCodeError('Code harus 16 karakter');
+            return;
+        }
+        
+        // Show loading
+        newBtnSubmit.disabled = true;
+        newBtnSubmit.textContent = 'Memvalidasi...';
+        
+        // Get repo info from manga data
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        
+        if (!repoParam) {
+            showCodeError('Error: Repo tidak ditemukan');
+            newBtnSubmit.disabled = false;
+            newBtnSubmit.textContent = 'Submit Code';
+            return;
+        }
+        
+        // Get repo owner and name from manga data
+        const repoOwner = mangaData.manga.repoUrl.split('/')[3];
+        const repoName = mangaData.manga.repoUrl.split('/')[4];
+        
+        // Validate code
+        const result = await validateChapterCode(repoOwner, repoName, chapterFolder, code);
+        
+        if (result.valid) {
+            // Success - close modal and open reader
+            saveValidatedChapter(repoParam, chapterFolder);
+            showCodeSuccess('Code valid! Membuka chapter...');
+            
+            setTimeout(() => {
+                closeModal();
+                // Open reader with validated chapter
+                window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
+            }, 1000);
+            
+        } else {
+            // Error
+            showCodeError(result.message || 'Code tidak valid');
+            newBtnSubmit.disabled = false;
+            newBtnSubmit.textContent = 'Submit Code';
+        }
+    };
+    
+    newBtnCancel.onclick = closeModal;
+    
+    // Close on overlay click
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    };
+}
+
+/**
+ * Show error message in code modal
+ */
+function showCodeError(message) {
+    const errorMsg = document.getElementById('codeErrorMsg');
+    const successMsg = document.getElementById('codeSuccessMsg');
+    
+    if (errorMsg) {
+        errorMsg.textContent = message;
+        errorMsg.style.display = 'block';
+    }
+    
+    if (successMsg) {
+        successMsg.style.display = 'none';
+    }
+}
+
+/**
+ * Show success message in code modal
+ */
+function showCodeSuccess(message) {
+    const successMsg = document.getElementById('codeSuccessMsg');
+    const errorMsg = document.getElementById('codeErrorMsg');
+    
+    if (successMsg) {
+        successMsg.textContent = message;
+        successMsg.style.display = 'block';
+    }
+    
+    if (errorMsg) {
+        errorMsg.style.display = 'none';
+    }
+}
+
+/**
+ * MODIFY EXISTING trackLockedChapterView function
+ * Update to pass chapter data correctly
+ */
+async function trackLockedChapterView(chapter) {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        
+        if (!repoParam) {
+            console.error('❌ Repo parameter not found');
+            openTrakteer();
+            return;
+        }
+        
+        console.log('🔒 Locked chapter clicked:', chapter.folder);
+        
+        const githubRepo = window.currentGithubRepo || repoParam;
+        
+        // Track view
+        incrementPendingChapterViews(githubRepo, chapter.folder).catch(err => {
+            console.error('⚠️ Failed to track locked chapter view:', err);
+        });
+        
+        // Show appropriate modal based on type
+        const chapterTitle = chapter.title || chapter.folder;
+        const chapterFolder = chapter.folder;  // ← TAMBAH INI
+        showLockedChapterModal(chapterTitle, chapterFolder);  // ← FIX INI
+        
+    } catch (error) {
+        console.error('❌ Error tracking locked chapter:', error);
+        openTrakteer();
+    }
+}
+
+/**
+ * SESSION STORAGE HELPER - 1 HOUR EXPIRY
+ * Tambahkan di reader.js dan info-manga.js (setelah constants)
+ */
+
+// ============================================
+// SESSION STORAGE WITH EXPIRY
+// ============================================
+
+const SESSION_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+
+/**
+ * Save validated chapter to session storage with expiry
+ */
+function saveValidatedChapter(repoName, chapter) {
+    const key = `validated_${repoName}_${chapter}`;
+    const data = {
+        validated: true,
+        expiry: Date.now() + SESSION_DURATION
+    };
+    sessionStorage.setItem(key, JSON.stringify(data));
+    console.log(`💾 Saved session for ${chapter} (expires in 1 hour)`);
+}
+
+/**
+ * Check if chapter is already validated (and not expired)
+ */
+function isChapterValidated(repoName, chapter) {
+    const key = `validated_${repoName}_${chapter}`;
+    const stored = sessionStorage.getItem(key);
+    
+    if (!stored) {
+        return false;
+    }
+    
+    try {
+        const data = JSON.parse(stored);
+        const now = Date.now();
+        
+        // Check if expired
+        if (now > data.expiry) {
+            console.log(`⏰ Session expired for ${chapter}`);
+            sessionStorage.removeItem(key);
+            return false;
+        }
+        
+        const remainingMs = data.expiry - now;
+        const remainingMin = Math.floor(remainingMs / 60000);
+        console.log(`✅ Session valid for ${chapter} (${remainingMin} min remaining)`);
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Error parsing session data:', error);
+        sessionStorage.removeItem(key);
+        return false;
+    }
+}
+
+/**
+ * Clear validation session for a chapter
+ */
+function clearValidatedChapter(repoName, chapter) {
+    const key = `validated_${repoName}_${chapter}`;
+    sessionStorage.removeItem(key);
+    console.log(`🗑️  Cleared session for ${chapter}`);
+}
+
 // ============================================
 // EARLY COVER PRELOAD - Optimized Version
 // ============================================
@@ -97,16 +399,32 @@ function convertToWIB(isoString) {
 const TRAKTEER_LINK = 'https://trakteer.id/NuranantoScanlation';
 
 /**
- * Show locked chapter modal
+ * Show locked chapter modal (with type detection)
  */
 function showLockedChapterModal(chapterNumber = null) {
+    console.log('🔒 showLockedChapterModal called with chapter:', chapterNumber);
+    
+    // Check manga type
+    const mangaType = mangaData?.manga?.type || 'manga';
+    
+    // Extract chapter folder from chapterNumber (might be "Chapter 7.3" or "7.3")
+    let chapterFolder = chapterNumber;
+    if (typeof chapterNumber === 'string' && chapterNumber.toLowerCase().startsWith('chapter ')) {
+        chapterFolder = chapterNumber.replace(/^chapter\s+/i, '');
+    }
+    
+    if (mangaType === 'webtoon') {
+        // Show code input modal for webtoon
+        showCodeInputModal(chapterNumber, chapterFolder);
+        return;
+    }
+    
+    // Original code for manga type (Trakteer modal)
     const modal = document.getElementById('lockedChapterModal');
     if (!modal) return;
     
-    // Update modal title with chapter number
     const modalHeader = modal.querySelector('.locked-modal-header h2');
     if (modalHeader && chapterNumber) {
-        // Check if chapterNumber already contains "Chapter"
         const hasChapter = /^chapter\s+/i.test(chapterNumber);
         const titleText = hasChapter ? chapterNumber : `Chapter ${chapterNumber}`;
         modalHeader.textContent = `🔒 ${titleText} Terkunci karena RAW Berbayar`;
@@ -116,7 +434,6 @@ function showLockedChapterModal(chapterNumber = null) {
     
     modal.style.display = 'flex';
     
-    // Setup button handlers
     const btnYes = document.getElementById('btnLockedYes');
     const btnNo = document.getElementById('btnLockedNo');
     
@@ -131,7 +448,6 @@ function showLockedChapterModal(chapterNumber = null) {
     
     btnNo.onclick = closeModal;
     
-    // Close on overlay click
     modal.onclick = (e) => {
         if (e.target === modal) {
             closeModal();
@@ -499,7 +815,8 @@ async function trackLockedChapterView(chapter) {
         });
         
         const chapterTitle = chapter.title || chapter.folder;
-        showLockedChapterModal(chapterTitle);
+        const chapterFolder = chapter.folder;  // ← TAMBAH INI
+        showLockedChapterModal(chapterTitle, chapterFolder);  // ← PASS 2 PARAMETER
         
     } catch (error) {
         console.error('❌ Error tracking locked chapter:', error);
