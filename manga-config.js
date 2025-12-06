@@ -12,6 +12,12 @@
 // ============================================
 
 MANGA_LIST = [
+    {
+    id: 'karadaoarawasanai',
+    title: 'Na wa Karada o Arawasanai',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/KaradaoArawasanai-Cover.webp',
+    repo: 'KaradaoArawasanai'
+  },
   {
     id: 'yuureigahatsukoi',
     title: 'Moshimo, Yuurei ga Hatsukoi o Shitara',
