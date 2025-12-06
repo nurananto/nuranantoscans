@@ -1,14 +1,10 @@
 /**
- * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v7.4
+ * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v7.5
  * FITUR: Auto-upload ke Cloudflare R2 + Auto-delete old covers
  * 
- * Update v7.4:
- * - No hardcoded domains (strict env validation)
- * - Clean encoding (no emoji corruption)
- * - Handle existing local cover paths
- * - Preserve hash from old covers
- * - Smart migration from GitHub to R2
- * - Auto-fill empty covers
+ * Update v7.5:
+ * - Skip checking manga dengan blank MangaDex URL
+ * - Preserve existing R2 covers for non-MangaDex manga
  * 
  * Required Environment Variables:
  * - CF_ACCOUNT_ID
@@ -65,7 +61,7 @@ Object.keys(REQUIRED_ENV).forEach(key => {
 if (missingEnv.length > 0) {
   console.error('[ERROR] Missing required environment variables:');
   missingEnv.forEach(env => {
-    console.error(`  ❌ ${env}`);
+    console.error(`  ✗ ${env}`);
   });
   console.error('\n[TIP] Set all required environment variables:');
   console.error('  export CF_ACCOUNT_ID=your_account_id');
@@ -76,10 +72,10 @@ if (missingEnv.length > 0) {
 }
 
 console.log('[SUCCESS] All required environment variables set:');
-console.log(`  ✅ CF_ACCOUNT_ID: ${R2_CONFIG.accountId.substring(0, 8)}...`);
-console.log(`  ✅ CF_ACCESS_KEY_ID: ${R2_CONFIG.accessKeyId.substring(0, 8)}...`);
-console.log(`  ✅ CF_SECRET_ACCESS_KEY: ${R2_CONFIG.secretAccessKey.substring(0, 8)}...`);
-console.log(`  ✅ R2_PUBLIC_DOMAIN: ${R2_CONFIG.publicDomain}`);
+console.log(`  ✓ CF_ACCOUNT_ID: ${R2_CONFIG.accountId.substring(0, 8)}...`);
+console.log(`  ✓ CF_ACCESS_KEY_ID: ${R2_CONFIG.accessKeyId.substring(0, 8)}...`);
+console.log(`  ✓ CF_SECRET_ACCESS_KEY: ${R2_CONFIG.secretAccessKey.substring(0, 8)}...`);
+console.log(`  ✓ R2_PUBLIC_DOMAIN: ${R2_CONFIG.publicDomain}`);
 console.log('');
 
 // Initialize R2 Client
@@ -368,6 +364,7 @@ async function processAllManga() {
   let errorCount = 0;
   let deletedCount = 0;
   let migratedCount = 0;
+  let noMangaDexCount = 0;
 
   for (let i = 0; i < MANGA_LIST.length; i++) {
     const manga = MANGA_LIST[i];
@@ -444,16 +441,29 @@ async function processAllManga() {
         mangadexUrl = mangaJson.mangadex;
       }
       
-      if (!mangadexUrl) {
-        console.log('  [WARN] Tidak ada MangaDex URL di manga.json');
+      // ✅ NEW: Check if MangaDex URL is blank/empty
+      if (!mangadexUrl || mangadexUrl.trim() === '') {
+        console.log('  [NO-MDEX] Tidak ada MangaDex URL (blank)');
         
-        if (manga.cover) {
-          console.log('  [INFO] Pakai cover lama');
+        if (manga.cover && isR2Url(manga.cover)) {
+          console.log('  [PRESERVE] Cover di R2 dipertahankan (tidak di-check/update)');
+          updatedMangaList.push(manga);
+          noMangaDexCount++;
+          skipCount++;
+          continue;
+        } else if (manga.cover) {
+          console.log('  [KEEP] Cover lama dipertahankan (tidak dari R2)');
+          updatedMangaList.push(manga);
+          noMangaDexCount++;
+          skipCount++;
+          continue;
+        } else {
+          console.log('  [WARN] Tidak ada cover & tidak ada MangaDex URL');
+          updatedMangaList.push(manga);
+          noMangaDexCount++;
+          errorCount++;
+          continue;
         }
-        
-        updatedMangaList.push(manga);
-        skipCount++;
-        continue;
       }
       
       const mangaId = getMangaIdFromUrl(mangadexUrl);
@@ -548,7 +558,7 @@ async function processAllManga() {
     }
   }
 
-  return { updatedMangaList, successCount, skipCount, errorCount, deletedCount, migratedCount };
+  return { updatedMangaList, successCount, skipCount, errorCount, deletedCount, migratedCount, noMangaDexCount };
 }
 
 function updateMangaConfigJs(updatedMangaList) {
@@ -595,7 +605,7 @@ function exportRepoList() {
 // Main
 (async () => {
   try {
-    const { updatedMangaList, successCount, skipCount, errorCount, deletedCount, migratedCount } = await processAllManga();
+    const { updatedMangaList, successCount, skipCount, errorCount, deletedCount, migratedCount, noMangaDexCount } = await processAllManga();
     
     console.log('\n========================================');
     console.log('[RESULTS]');
@@ -603,6 +613,7 @@ function exportRepoList() {
     console.log(`  [MIGRATE] URL updated: ${migratedCount}`);
     console.log(`  [DELETE] Old covers deleted: ${deletedCount}`);
     console.log(`  [SKIP] Already in R2: ${skipCount}`);
+    console.log(`  [NO-MDEX] Blank MangaDex (preserved): ${noMangaDexCount}`);
     console.log(`  [FAILED] Failed: ${errorCount}`);
     console.log(`  [TOTAL] ${MANGA_LIST.length} manga`);
     console.log('========================================\n');
@@ -623,6 +634,9 @@ function exportRepoList() {
       if (deletedCount > 0) {
         console.log(`  - ${deletedCount} old covers deleted from R2`);
       }
+      if (noMangaDexCount > 0) {
+        console.log(`  - ${noMangaDexCount} manga without MangaDex (preserved)`);
+      }
       
       console.log('\n[NEXT STEP] Push to GitHub:');
       console.log('  git add manga-config.js repo-list.txt');
@@ -630,6 +644,9 @@ function exportRepoList() {
       console.log('  git push\n');
     } else {
       console.log('[INFO] All covers are already up-to-date in R2!');
+      if (noMangaDexCount > 0) {
+        console.log(`[INFO] ${noMangaDexCount} manga without MangaDex URL (covers preserved)`);
+      }
     }
     
     // Cleanup temp folder
