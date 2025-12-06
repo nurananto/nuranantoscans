@@ -15,10 +15,9 @@ MANGA_LIST = [
   {
     id: 'gyakutensekai',
     title: 'Teisou Gyakuten Sekai Nara Moteru to Omotte Itara',
-    cover: '',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/gyakutensekai-bdb1f782-3cad-4938-919f-0035c38e641a.webp',
     repo: 'GyakutenSekai'
   },
-  
   {
     id: 'yuureigahatsukoi',
     title: 'Moshimo, Yuurei ga Hatsukoi o Shitara',
