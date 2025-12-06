@@ -1,4 +1,9 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "repo": "Waka-chan",
+      "timestamp": "2025-12-06T11:47:15Z"
+    }
+  ],
   "lastRebuild": "2025-12-06T10:05:01Z"
 }
