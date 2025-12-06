@@ -1286,8 +1286,6 @@ function openChapterListModal() {
     const modalBody = document.getElementById('chapterListModal');
     
     console.log('📋 Opening chapter list modal...');
-    console.log('Modal element:', modal);
-    console.log('Modal body:', modalBody);
     
     if (!modal || !modalBody) {
         console.error('❌ Modal elements not found!');
@@ -1310,8 +1308,23 @@ function openChapterListModal() {
         
         const lockIcon = chapter.locked ? '🔒 ' : '';
         
+        // ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER
+        const isEndChapter = mangaData.manga.status === 'END' && 
+                             mangaData.manga.endChapter && 
+                             parseFloat(chapter.folder) === parseFloat(mangaData.manga.endChapter);
+        
+        // ✅ BUILD BADGES
+        const endBadge = isEndChapter ? '<span class="chapter-end-badge-modal">END</span>' : '';
+        const updatedBadge = ''; // Bisa ditambah logic isRecent jika perlu
+        
+        const badges = (endBadge || updatedBadge) 
+            ? `<div class="badge-container-modal">${endBadge}${updatedBadge}</div>` 
+            : '';
+        
         item.innerHTML = `
-            <div class="chapter-item-title">${lockIcon}${chapter.title}</div>
+            <div class="chapter-item-title">
+                ${lockIcon}${chapter.title}${badges}
+            </div>
             <div class="chapter-item-views">👁️ ${chapter.views}</div>
         `;
         
@@ -1320,8 +1333,8 @@ function openChapterListModal() {
                 closeChapterListModal();
                 setTimeout(() => {
                     const chapterTitle = chapter.title || chapter.folder;
-                    const chapterFolder = chapter.folder;  // ← TAMBAH INI
-                    showLockedChapterModal(chapterTitle, chapterFolder);  // ← TAMBAH PARAMETER KE-2
+                    const chapterFolder = chapter.folder;
+                    showLockedChapterModal(chapterTitle, chapterFolder);
                 }, 100);
             } else if (chapter.folder !== currentChapterFolder) {
                 window.location.href = `reader.html?repo=${repoParam}&chapter=${chapter.folder}`;

@@ -785,13 +785,26 @@ function createChapterElement(chapter) {
     const lockIcon = chapter.locked ? '🔒 ' : '';
     const uploadDate = getRelativeTime(chapter.uploadDate);
     const isRecent = isRecentlyUploaded(chapter.uploadDate);
+    
+    // ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER
+    const isEndChapter = mangaData.manga.status === 'END' && 
+                         mangaData.manga.endChapter && 
+                         parseFloat(chapter.folder) === parseFloat(mangaData.manga.endChapter);
+    
+    // ✅ BUILD BADGES
+    const endBadge = isEndChapter ? '<span class="chapter-end-badge">END</span>' : '';
     const updatedBadge = isRecent ? '<span class="chapter-updated-badge">UPDATED</span>' : '';
+    
+    // ✅ BADGE CONTAINER (END di kiri, UPDATED di kanan)
+    const badges = (endBadge || updatedBadge) 
+        ? `<div class="badge-container">${endBadge}${updatedBadge}</div>` 
+        : '';
     
     div.innerHTML = `
         <div class="chapter-info">
             <div class="chapter-title-row">
                 <span class="chapter-title-text">${lockIcon}${chapter.title}</span>
-                ${updatedBadge}
+                ${badges}
             </div>
             ${uploadDate ? `<div class="chapter-upload-date">${uploadDate}</div>` : ''}
         </div>
