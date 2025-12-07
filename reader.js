@@ -552,8 +552,6 @@ function isOneshotChapter(chapterFolder) {
     return lower.includes('oneshot') || lower.includes('one-shot') || lower === 'os';
 }
 
-// Ganti fungsi renderEndChapterButtons() yang lama dengan yang ini:
-
 function renderEndChapterButtons() {
     const container = document.getElementById('endChapterContainer');
     const commentsButtonContainer = document.getElementById('commentsButtonContainer');
@@ -564,7 +562,15 @@ function renderEndChapterButtons() {
     const isLastChapter = currentIndex === 0;
     const isOneshot = isOneshotChapter(currentChapterFolder);
     
-    // Jika BUKAN chapter terakhir, tampilkan tombol Next Chapter + Komentar di bawahnya
+    // ✅ NEW: Check if manga is END and this is the actual end chapter
+    const isMangaEnd = mangaData.manga.status === 'END';
+    const isActualEndChapter = isMangaEnd && 
+                                mangaData.manga.endChapter && 
+                                parseFloat(currentChapterFolder) === parseFloat(mangaData.manga.endChapter);
+    
+    // ============================================
+    // 1️⃣ JIKA BUKAN CHAPTER TERAKHIR
+    // ============================================
     if (!isLastChapter) {
         container.innerHTML = `
             <button class="next-chapter-btn" id="btnNextChapterDynamic">
@@ -585,11 +591,12 @@ function renderEndChapterButtons() {
         return;
     }
     
-    // Cek apakah chapter berikutnya locked
+    // ============================================
+    // 2️⃣ CEK APAKAH CHAPTER BERIKUTNYA LOCKED
+    // ============================================
     const nextChapter = allChapters[currentIndex - 1];
     const nextIsLocked = nextChapter && nextChapter.locked;
     
-    // Jika chapter berikutnya locked, tampilkan tombol Next Chapter yang mengarah ke modal
     if (nextIsLocked) {
         container.innerHTML = `
             <button class="next-chapter-btn" id="btnNextChapterLocked">
@@ -603,7 +610,8 @@ function renderEndChapterButtons() {
         const btn = document.getElementById('btnNextChapterLocked');
         btn.onclick = () => {
             const chapterTitle = nextChapter.title || nextChapter.folder;
-            showLockedChapterModal(chapterTitle);
+            const chapterFolder = nextChapter.folder;
+            showLockedChapterModal(chapterTitle, chapterFolder);
         };
         
         // Tampilkan tombol komentar di bawah Next Chapter
@@ -613,7 +621,9 @@ function renderEndChapterButtons() {
         return;
     }
     
-    // Jika oneshot, tampilkan Back to Info + Komentar
+    // ============================================
+    // 3️⃣ JIKA ONESHOT - TAMPILKAN BACK TO INFO + KOMENTAR (DALAM 1 ROW)
+    // ============================================
     if (isOneshot) {
         container.innerHTML = `
             <div class="dual-buttons-container">
@@ -633,11 +643,43 @@ function renderEndChapterButtons() {
             </div>
         `;
         
+        // ✅ SETUP TOGGLE UNTUK TOMBOL KOMENTAR ONESHOT
         setupCommentsToggleHalf();
+        
+        // ❌ JANGAN TAMPILKAN commentsButtonContainer (sudah ada di dalam dual-buttons)
+        if (commentsButtonContainer) {
+            commentsButtonContainer.style.display = 'none';
+        }
         return;
     }
     
-    // Jika chapter terakhir dan bukan oneshot, tampilkan Back to Info + Trakteer + Komentar
+    // ============================================
+    // 4️⃣ JIKA MANGA END DAN INI CHAPTER TERAKHIR
+    // ============================================
+    if (isActualEndChapter) {
+        console.log('🏁 This is the actual END chapter - hiding Trakteer button');
+        
+        // HANYA Back to Info button (FULL WIDTH)
+        container.innerHTML = `
+            <button class="back-to-info-btn-large" onclick="window.location.href='info-manga.html?repo=${repoParam}'">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span>Back to Info</span>
+            </button>
+        `;
+        
+        // Tampilkan tombol komentar di bawah
+        if (commentsButtonContainer) {
+            commentsButtonContainer.style.display = 'block';
+        }
+        return;
+    }
+    
+    // ============================================
+    // 5️⃣ JIKA CHAPTER TERAKHIR TAPI MANGA ONGOING
+    // ============================================
     const predictedNext = predictNextChapter(allChapters, currentChapterFolder);
     
     container.innerHTML = `
@@ -661,8 +703,8 @@ function renderEndChapterButtons() {
         commentsButtonContainer.style.display = 'block';
     }
 }
-
-// Fungsi untuk setup toggle comments pada tombol setengah
+    
+  // Fungsi untuk setup toggle comments pada tombol setengah
 function setupCommentsToggleHalf() {
     const btnToggleCommentsHalf = document.getElementById('btnToggleCommentsHalf');
     const giscusContainer = document.getElementById('giscusContainer');
