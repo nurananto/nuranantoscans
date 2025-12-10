@@ -90,8 +90,15 @@ function isRecentlyUpdated(lastChapterUpdateStr) {
   if (!lastChapterUpdateStr) return false;
   const lastChapterUpdate = new Date(lastChapterUpdateStr);
   if (!lastChapterUpdate || isNaN(lastChapterUpdate.getTime())) return false;
+  
+  // ✅ FIX: Normalize to WIB (GMT+7) timezone
   const now = new Date();
-  const diffDays = (now - lastChapterUpdate) / (1000 * 60 * 60 * 24);
+  const wibNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+  
+  // Calculate difference in days
+  const diffMs = wibNow - lastChapterUpdate;
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  
   return diffDays <= 2;
 }
 
