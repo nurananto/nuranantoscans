@@ -1339,18 +1339,24 @@ function openChapterListModal() {
         
         const lockIcon = chapter.locked ? '🔒 ' : '';
         
-        // ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER
-        const isEndChapter = mangaData.manga.status === 'END' && 
-                             mangaData.manga.endChapter && 
-                             parseFloat(chapter.folder) === parseFloat(mangaData.manga.endChapter);
-        
-        // ✅ BUILD BADGES
-        const endBadge = isEndChapter ? '<span class="chapter-end-badge-modal">END</span>' : '';
-        const updatedBadge = ''; // Bisa ditambah logic isRecent jika perlu
-        
-        const badges = (endBadge || updatedBadge) 
-            ? `<div class="badge-container-modal">${endBadge}${updatedBadge}</div>` 
-            : '';
+// ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER (SUPPORT ONESHOT + CASE-INSENSITIVE)
+const isEndChapter = mangaData.manga.status === 'END' && 
+                     mangaData.manga.endChapter && 
+                     (chapter.folder.toLowerCase() === mangaData.manga.endChapter.toLowerCase() || 
+                      parseFloat(chapter.folder) === parseFloat(mangaData.manga.endChapter));
+
+// ✅ CEK APAKAH CHAPTER INI ADALAH CHAPTER TERAKHIR YANG HIATUS
+const isHiatusChapter = mangaData.manga.status === 'HIATUS' && 
+                        allChapters.length > 0 && 
+                        parseFloat(chapter.folder) === parseFloat(allChapters[0].folder);
+
+// ✅ BUILD BADGES
+const endBadge = isEndChapter ? '<span class="chapter-end-badge-modal">END</span>' : '';
+const hiatusBadge = isHiatusChapter ? '<span class="chapter-hiatus-badge-modal">HIATUS</span>' : '';
+
+const badges = (endBadge || hiatusBadge) 
+    ? `<div class="badge-container-modal">${endBadge}${hiatusBadge}</div>` 
+    : '';
         
         item.innerHTML = `
             <div class="chapter-item-title">

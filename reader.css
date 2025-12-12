@@ -559,6 +559,30 @@ body.show-page-nav .page-thumb {
   box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
 }
 
+/* Badge HIATUS - Abu-abu */
+.chapter-hiatus-badge-modal {
+  display: inline-block;
+  background: linear-gradient(135deg, #757575 0%, #616161 100%);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(117, 117, 117, 0.3);
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .chapter-hiatus-badge-modal {
+    font-size: 8px;
+    padding: 2px 5px;
+  }
+}
+
 .chapter-updated-badge-modal {
   display: inline-block;
   background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);

@@ -786,19 +786,26 @@ function createChapterElement(chapter) {
     const uploadDate = getRelativeTime(chapter.uploadDate);
     const isRecent = isRecentlyUploaded(chapter.uploadDate);
     
-    // ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER
-    const isEndChapter = mangaData.manga.status === 'END' && 
-                         mangaData.manga.endChapter && 
-                         parseFloat(chapter.folder) === parseFloat(mangaData.manga.endChapter);
-    
-    // ✅ BUILD BADGES
-    const endBadge = isEndChapter ? '<span class="chapter-end-badge">END</span>' : '';
-    const updatedBadge = isRecent ? '<span class="chapter-updated-badge">UPDATED</span>' : '';
-    
-    // ✅ BADGE CONTAINER (END di kiri, UPDATED di kanan)
-    const badges = (endBadge || updatedBadge) 
-        ? `<div class="badge-container">${endBadge}${updatedBadge}</div>` 
-        : '';
+// ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER (SUPPORT ONESHOT + CASE-INSENSITIVE)
+const isEndChapter = mangaData.manga.status === 'END' && 
+                     mangaData.manga.endChapter && 
+                     (chapter.folder.toLowerCase() === mangaData.manga.endChapter.toLowerCase() || 
+                      parseFloat(chapter.folder) === parseFloat(mangaData.manga.endChapter));
+
+// ✅ CEK APAKAH CHAPTER INI ADALAH CHAPTER TERAKHIR YANG HIATUS
+const isHiatusChapter = mangaData.manga.status === 'HIATUS' && 
+                        allChapters.length > 0 && 
+                        parseFloat(chapter.folder) === parseFloat(allChapters[0].folder);
+
+// ✅ BUILD BADGES
+const endBadge = isEndChapter ? '<span class="chapter-end-badge">END</span>' : '';
+const hiatusBadge = isHiatusChapter ? '<span class="chapter-hiatus-badge-modal">HIATUS</span>' : '';
+const updatedBadge = isRecent ? '<span class="chapter-updated-badge">UPDATED</span>' : '';
+
+// ✅ BADGE CONTAINER (END/HIATUS di kiri, UPDATED di kanan)
+const badges = (endBadge || hiatusBadge || updatedBadge) 
+    ? `<div class="badge-container">${endBadge}${hiatusBadge}${updatedBadge}</div>` 
+    : '';
     
     div.innerHTML = `
         <div class="chapter-info">
