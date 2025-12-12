@@ -734,7 +734,9 @@ function isRecentlyUploaded(uploadDateStr) {
 }
 
 /**
- * Display chapters
+ * Display chapters - FINAL VERSION (REPLACE LINE 770-803)
+ * ⚠️ HAPUS fungsi displayChapters() yang PERTAMA (line 770-803)
+ * ⚠️ KEEP HANYA fungsi ini
  */
 function displayChapters() {
     const chapterList = document.getElementById('chapterList');
@@ -742,21 +744,23 @@ function displayChapters() {
     
     const chaptersArray = Object.values(mangaData.chapters);
     
+    // ✅ SORT DULU
     chaptersArray.sort((a, b) => {
         const numA = parseFloat(a.folder);
         const numB = parseFloat(b.folder);
         return numB - numA;
     });
     
-    // ✅ TAMBAH INI - Mark chapter terakhir
+    // ✅ MARK LAST CHAPTER (SETELAH SORTING)
     if (chaptersArray.length > 0) {
         chaptersArray[0].isLastChapter = true;
     }
     
     const initialLimit = getInitialChapterLimit();
     
+    // ✅ RENDER CHAPTERS - PASS chaptersArray as 2nd parameter
     chaptersArray.forEach((chapter, index) => {
-        const chapterElement = createChapterElement(chapter);
+        const chapterElement = createChapterElement(chapter, chaptersArray);
         
         if (index >= initialLimit) {
             chapterElement.classList.add('chapter-hidden');
@@ -774,9 +778,10 @@ function displayChapters() {
 }
 
 /**
- * Create chapter element
+ * Create chapter element - FINAL VERSION (REPLACE LINE 846-920)
+ * ⚠️ PASTIKAN fungsi ini TERIMA 2 PARAMETER: (chapter, allChapters)
  */
-function createChapterElement(chapter) {
+function createChapterElement(chapter, allChapters) {
     const div = document.createElement('div');
     div.className = 'chapter-item';
     
@@ -791,7 +796,7 @@ function createChapterElement(chapter) {
     const uploadDate = getRelativeTime(chapter.uploadDate);
     const isRecent = isRecentlyUploaded(chapter.uploadDate);
     
-    // ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER (SUPPORT ONESHOT + ANGKA)
+    // ✅ CEK END CHAPTER
     const isEndChapter = mangaData.manga.status === 'END' && 
                          mangaData.manga.endChapter && 
                          (
@@ -801,16 +806,15 @@ function createChapterElement(chapter) {
                            String(chapter.folder) === String(mangaData.manga.endChapter)
                          );
 
-    // ✅ CEK APAKAH CHAPTER INI ADALAH CHAPTER TERAKHIR YANG HIATUS
+    // ✅ CEK HIATUS CHAPTER (menggunakan isLastChapter flag)
     const isHiatusChapter = mangaData.manga.status === 'HIATUS' && 
-                            chapter.isLastChapter === true;  // ← GANTI DENGAN INI!
+                            chapter.isLastChapter === true;
 
     // ✅ BUILD BADGES
     const endBadge = isEndChapter ? '<span class="chapter-end-badge">END</span>' : '';
     const hiatusBadge = isHiatusChapter ? '<span class="chapter-hiatus-badge-modal">HIATUS</span>' : '';
     const updatedBadge = isRecent ? '<span class="chapter-updated-badge">UPDATED</span>' : '';
 
-    // ✅ BADGE CONTAINER (END/HIATUS di kiri, UPDATED di kanan)
     const badges = (endBadge || hiatusBadge || updatedBadge) 
         ? `<div class="badge-container">${endBadge}${hiatusBadge}${updatedBadge}</div>` 
         : '';
@@ -830,6 +834,7 @@ function createChapterElement(chapter) {
     
     return div;
 }
+
 /**
  * Open Trakteer link
  */
