@@ -1,4 +1,9 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "repo": "TeisouGyakuten",
+      "timestamp": "2025-12-12T06:45:42Z"
+    }
+  ],
   "lastRebuild": "2025-12-11T14:22:05Z"
 }
