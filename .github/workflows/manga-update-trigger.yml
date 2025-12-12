@@ -205,6 +205,8 @@ jobs:
           steps.check_rebuild.outputs.should_rebuild == 'true' &&
           steps.cover_check.outputs.needs_cover_update == 'true'
         run: |
+          set +e  # Don't exit on error
+          
           echo "📤 Triggering cover sync to all manga repos..."
           
           if [ ! -f "repo-list.txt" ]; then
@@ -217,6 +219,7 @@ jobs:
           
           success=0
           failed=0
+          skipped=0
           
           while IFS= read -r repo; do
             if [ -z "$repo" ]; then
@@ -229,14 +232,17 @@ jobs:
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
               https://api.github.com/repos/nurananto/$repo/dispatches \
-              -d '{"event_type":"sync-covers"}')
+              -d '{"event_type":"sync-covers"}' 2>&1 || echo "000")
             
             if [ "$http_code" = "204" ]; then
               echo "    ✅ Success"
-              ((success++))
+              success=$((success + 1))
+            elif [ "$http_code" = "404" ]; then
+              echo "    ⚠️ Workflow not found (HTTP 404)"
+              skipped=$((skipped + 1))
             else
               echo "    ❌ Failed (HTTP $http_code)"
-              ((failed++))
+              failed=$((failed + 1))
             fi
             
             sleep 1
@@ -246,10 +252,26 @@ jobs:
           echo "=========================================="
           echo "📤 Cover Sync Trigger Summary:"
           echo "   ✅ Success: $success repos"
+          echo "   ⚠️ Skipped: $skipped repos (workflow missing)"
           echo "   ❌ Failed: $failed repos"
           echo "   📊 Total: $repo_count repos"
           echo "   ℹ️  Repos will update with [skip ci]"
           echo "=========================================="
+          
+          # Exit with success if at least one trigger succeeded
+          if [ $success -gt 0 ]; then
+            echo ""
+            echo "✅ At least $success repos triggered successfully"
+            exit 0
+          elif [ $skipped -gt 0 ]; then
+            echo ""
+            echo "⚠️ No triggers succeeded, but $skipped repos need sync-cover.yml"
+            exit 0
+          else
+            echo ""
+            echo "❌ All trigger attempts failed"
+            exit 1
+          fi
       
       - name: 📄 Generate Version Bump
         if: steps.check_rebuild.outputs.should_rebuild == 'true'
