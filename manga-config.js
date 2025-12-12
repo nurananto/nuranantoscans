@@ -27,7 +27,7 @@ MANGA_LIST = [
   {
     id: 'yuurikuntochihirochan',
     title: 'Yuuri-kun to Chihiro-chan',
-    cover: '',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/yuurikuntochihirochan-8235d341-4f78-4d32-a747-08ba7c4afa58.webp',
     repo: 'YuurikuntoChihirochan'
   },
   {
