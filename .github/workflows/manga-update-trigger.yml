@@ -29,7 +29,7 @@ jobs:
       needs_cover_update: ${{ steps.cover_check.outputs.needs_cover_update }}
     
     steps:
-      - name: 📧 Checkout Website Repo
+      - name: 🔧 Checkout Website Repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -200,6 +200,57 @@ jobs:
             echo "✅ Covers updated"
           fi
       
+      - name: 📤 Trigger Cover Sync to Manga Repos
+        if: |
+          steps.check_rebuild.outputs.should_rebuild == 'true' &&
+          steps.cover_check.outputs.needs_cover_update == 'true'
+        run: |
+          echo "📤 Triggering cover sync to all manga repos..."
+          
+          if [ ! -f "repo-list.txt" ]; then
+            echo "❌ repo-list.txt not found!"
+            exit 0
+          fi
+          
+          repo_count=$(wc -l < repo-list.txt)
+          echo "📊 Found $repo_count repos to trigger"
+          
+          success=0
+          failed=0
+          
+          while IFS= read -r repo; do
+            if [ -z "$repo" ]; then
+              continue
+            fi
+            
+            echo "  [TRIGGER] $repo..."
+            
+            http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
+              https://api.github.com/repos/nurananto/$repo/dispatches \
+              -d '{"event_type":"sync-covers"}')
+            
+            if [ "$http_code" = "204" ]; then
+              echo "    ✅ Success"
+              ((success++))
+            else
+              echo "    ❌ Failed (HTTP $http_code)"
+              ((failed++))
+            fi
+            
+            sleep 1
+          done < repo-list.txt
+          
+          echo ""
+          echo "=========================================="
+          echo "📤 Cover Sync Trigger Summary:"
+          echo "   ✅ Success: $success repos"
+          echo "   ❌ Failed: $failed repos"
+          echo "   📊 Total: $repo_count repos"
+          echo "   ℹ️  Repos will update with [skip ci]"
+          echo "=========================================="
+      
       - name: 📄 Generate Version Bump
         if: steps.check_rebuild.outputs.should_rebuild == 'true'
         id: version
@@ -227,7 +278,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
           git add version.txt sw.js
-          git commit -m "🔄 Batch rebuild: $MANGA_LIST (v$VERSION)" || echo "No changes"
+          git commit -m "📄 Batch rebuild: $MANGA_LIST (v$VERSION)" || echo "No changes"
           git push
           
           echo "✅ Version committed"
@@ -280,6 +331,6 @@ jobs:
           echo "   - Manga: ${{ needs.batch-updates.outputs.manga_list }}"
           echo "   - Version: ${{ needs.batch-updates.outputs.version }}"
           if [ "${{ needs.batch-updates.outputs.needs_cover_update }}" = "true" ]; then
-            echo "   - Covers: Updated"
+            echo "   - Covers: Updated & synced to repos with [skip ci]"
           fi
           echo "🔗 Website: https://nuranantoscans.my.id"

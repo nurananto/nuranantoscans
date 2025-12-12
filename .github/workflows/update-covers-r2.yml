@@ -42,7 +42,7 @@ jobs:
           node download-covers-r2.js
         continue-on-error: false
       
-      - name: 📝 Check for Changes
+      - name: 🔍 Check for Changes
         id: check_changes
         run: |
           if [[ -n $(git status -s manga-config.js repo-list.txt) ]]; then
@@ -132,6 +132,7 @@ jobs:
           if [ $success -gt 0 ]; then
             echo ""
             echo "[INFO] At least $success repos triggered successfully"
+            echo "[INFO] Cover sync will run with [skip ci] - no website rebuild"
             exit 0
           elif [ $skipped -gt 0 ]; then
             echo ""
@@ -152,6 +153,8 @@ jobs:
           echo "  ☁️  Covers uploaded to Cloudflare R2"
           echo "  🗑️  Old covers auto-deleted from R2"
           echo "  📤 Sync triggers sent to all manga repos"
+          echo "  ℹ️  Repos will update with [skip ci]"
+          echo "  ✅ No website rebuild triggered"
           echo "========================================"
           echo ""
       
