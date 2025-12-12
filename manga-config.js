@@ -15,7 +15,7 @@ MANGA_LIST = [
   {
     id: 'gotousan',
     title: 'Gotou-san wa Furimukasetai!',
-    cover: '',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/gotousan-c396db84-6cc5-41c0-bf66-f54d0cfa2b44.webp',
     repo: 'Gotou-san'
   },
   {
