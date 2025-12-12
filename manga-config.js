@@ -12,7 +12,13 @@
 // ============================================
 
 MANGA_LIST = [
-    {
+  {
+    id: 'teisougyakuten',
+    title: 'Teisou Gyakuten Sekai Nara Moteru to Omotte Itara',
+    cover: '',
+    repo: 'TeisouGyakuten'
+  },
+  {
     id: 'karadaoarawasanai',
     title: 'Na wa Karada o Arawasanai',
     cover: 'https://cdn.nuranantoscans.my.id/covers/KaradaoArawasanai-Cover.webp',
