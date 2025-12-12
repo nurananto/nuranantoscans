@@ -21,7 +21,7 @@ MANGA_LIST = [
   {
     id: 'wearenotdating',
     title: 'We Are not Dating!!',
-    cover: '',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/wearenotdating-ff110214-8c55-4479-b7d8-bf2fc4658e4e.webp',
     repo: 'WearenotDating'
   },
   {
