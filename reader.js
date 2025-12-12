@@ -1339,11 +1339,18 @@ function openChapterListModal() {
         
         const lockIcon = chapter.locked ? '🔒 ' : '';
         
-// ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER (SUPPORT ONESHOT + CASE-INSENSITIVE)
+// ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER (SUPPORT ONESHOT + ANGKA)
 const isEndChapter = mangaData.manga.status === 'END' && 
                      mangaData.manga.endChapter && 
-                     (chapter.folder.toLowerCase() === mangaData.manga.endChapter.toLowerCase() || 
-                      parseFloat(chapter.folder) === parseFloat(mangaData.manga.endChapter));
+                     (
+                       // String comparison (case-insensitive untuk oneshot)
+                       (typeof mangaData.manga.endChapter === 'string' && 
+                        chapter.folder.toLowerCase() === mangaData.manga.endChapter.toLowerCase()) ||
+                       // Number comparison
+                       parseFloat(chapter.folder) === parseFloat(mangaData.manga.endChapter) ||
+                       // String-to-string comparison (jika keduanya string)
+                       String(chapter.folder) === String(mangaData.manga.endChapter)
+                     );
 
 // ✅ CEK APAKAH CHAPTER INI ADALAH CHAPTER TERAKHIR YANG HIATUS
 const isHiatusChapter = mangaData.manga.status === 'HIATUS' && 
