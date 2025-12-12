@@ -13,6 +13,24 @@
 
 MANGA_LIST = [
   {
+    id: 'gotousan',
+    title: 'Gotou-san wa Furimukasetai!',
+    cover: '',
+    repo: 'Gotou-san'
+  },
+  {
+    id: 'wearenotdating',
+    title: 'We Are not Dating!!',
+    cover: '',
+    repo: 'WearenotDating'
+  },
+  {
+    id: 'yuurikuntochihirochan',
+    title: 'Yuuri-kun to Chihiro-chan',
+    cover: '',
+    repo: 'YuurikuntoChihirochan'
+  },
+  {
     id: 'teisougyakuten',
     title: 'Teisou Gyakuten Sekai Nara Moteru to Omotte Itara',
     cover: 'https://cdn.nuranantoscans.my.id/covers/teisougyakuten-bdb1f782-3cad-4938-919f-0035c38e641a.webp',
