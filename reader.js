@@ -554,8 +554,6 @@ function isOneshotChapter(chapterFolder) {
 
 function renderEndChapterButtons() {
     const container = document.getElementById('endChapterContainer');
-    const commentsButtonContainer = document.getElementById('commentsButtonContainer');
-    
     if (!container) return;
     
     const currentIndex = allChapters.findIndex(ch => ch.folder === currentChapterFolder);
@@ -583,11 +581,6 @@ function renderEndChapterButtons() {
         
         const btn = document.getElementById('btnNextChapterDynamic');
         btn.onclick = () => navigateChapter('next');
-        
-        // Tampilkan tombol komentar di bawah Next Chapter
-        if (commentsButtonContainer) {
-            commentsButtonContainer.style.display = 'block';
-        }
         return;
     }
     
@@ -613,11 +606,6 @@ function renderEndChapterButtons() {
             const chapterFolder = nextChapter.folder;
             showLockedChapterModal(chapterTitle, chapterFolder);
         };
-        
-        // Tampilkan tombol komentar di bawah Next Chapter
-        if (commentsButtonContainer) {
-            commentsButtonContainer.style.display = 'block';
-        }
         return;
     }
     
@@ -634,11 +622,6 @@ if (isOneshot) {
             <span>Back to Info</span>
         </button>
     `;
-    
-    // ✅ TAMPILKAN tombol komentar di bawah (menggunakan commentsButtonContainer)
-    if (commentsButtonContainer) {
-        commentsButtonContainer.style.display = 'block';
-    }
     return;
 }
     
@@ -658,11 +641,6 @@ if (isOneshot) {
                 <span>Back to Info</span>
             </button>
         `;
-        
-        // Tampilkan tombol komentar di bawah
-        if (commentsButtonContainer) {
-            commentsButtonContainer.style.display = 'block';
-        }
         return;
     }
     
@@ -686,72 +664,8 @@ if (isOneshot) {
             </button>
         </div>
     `;
-    
-    // Tampilkan tombol komentar di bawah
-    if (commentsButtonContainer) {
-        commentsButtonContainer.style.display = 'block';
-    }
-}
-    
-  // Fungsi untuk setup toggle comments pada tombol setengah
-function setupCommentsToggleHalf() {
-    const btnToggleCommentsHalf = document.getElementById('btnToggleCommentsHalf');
-    const giscusContainer = document.getElementById('giscusContainer');
-    let isCommentsOpen = false;
-    
-    if (btnToggleCommentsHalf) {
-        btnToggleCommentsHalf.addEventListener('click', function() {
-            isCommentsOpen = !isCommentsOpen;
-            
-            if (isCommentsOpen) {
-                giscusContainer.style.display = 'block';
-                btnToggleCommentsHalf.querySelector('span').textContent = 'Minimize';
-                
-                setTimeout(() => {
-                    giscusContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-            } else {
-                giscusContainer.style.display = 'none';
-                btnToggleCommentsHalf.querySelector('span').textContent = 'Komentar';
-                
-                btnToggleCommentsHalf.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        });
-    }
-}
-// ============================================
-// SHOW COMMENTS BUTTON ONLY AT BOTTOM
-// ============================================
-
-function setupCommentsVisibility() {
-    const commentsButtonContainer = document.getElementById('commentsButtonContainer');
-    const endChapterContainer = document.getElementById('endChapterContainer');
-    
-    if (!commentsButtonContainer || !endChapterContainer) return;
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                // Tombol chapter akhir terlihat = tampilkan tombol komentar
-                commentsButtonContainer.classList.add('visible');
-            } else {
-                // Tombol chapter akhir tidak terlihat = sembunyikan tombol komentar
-                commentsButtonContainer.classList.remove('visible');
-            }
-        });
-    }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    });
-    
-    observer.observe(endChapterContainer);
-    
-    console.log('✅ Comments visibility observer setup');
 }
 
-// Panggil fungsi ini setelah chapter pages dimuat
-// Tambahkan di akhir fungsi loadChapterPages(), setelah hideLoading()
-    
 const DEBUG_MODE = false;
 
 let mangaData = null;
@@ -1149,9 +1063,6 @@ async function loadChapterPages() {
         }
         
         hideLoading();
-
-        // Setup comments visibility observer
-        setupCommentsVisibility();
         
     } catch (error) {
         console.error('❌ Error loading pages:', error);
@@ -1662,42 +1573,6 @@ window.addEventListener('scroll', () => {
         navbar.style.transform = 'translateY(0)';
         navbar.style.opacity = '1';
     }
-    
-if (readMode === 'webtoon') {
-    const endChapterContainer = document.getElementById('endChapterContainer');
-    const commentsButtonContainer = document.getElementById('commentsButtonContainer');
-    const giscusContainer = document.getElementById('giscusContainer');
-    
-    if (endChapterContainer) {
-        const windowHeight = window.innerHeight;
-        const documentHeight = document.documentElement.scrollHeight;
-        const scrollBottom = scrollTop + windowHeight;
-        
-        // Cek apakah Giscus sedang terbuka
-        const isGiscusOpen = giscusContainer && giscusContainer.style.display === 'block';
-        
-        if (scrollBottom >= documentHeight - 200) {
-            endChapterContainer.style.display = 'block';
-            if (commentsButtonContainer) {
-                commentsButtonContainer.style.display = 'block';
-            }
-        } else {
-            // Jika Giscus terbuka, TETAP TAMPILKAN semua tombol
-            if (isGiscusOpen) {
-                endChapterContainer.style.display = 'block';  // ← TAMBAHKAN INI
-                if (commentsButtonContainer) {
-                    commentsButtonContainer.style.display = 'block';
-                }
-            } else {
-                // Jika Giscus tertutup, hide seperti biasa
-                endChapterContainer.style.display = 'none';
-                if (commentsButtonContainer) {
-                    commentsButtonContainer.style.display = 'none';
-                }
-            }
-        }
-    }
-}
-    
+
     lastScrollTop = scrollTop;
 });

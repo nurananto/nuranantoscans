@@ -51,36 +51,6 @@
 
     <main class="reader-container webtoon-mode" id="readerContainer"></main>
     <div class="end-chapter-container" id="endChapterContainer"></div>
-    
-    <!-- Comments Toggle Button Container -->
-    <div class="comments-button-container" id="commentsButtonContainer" style="display: none;">
-        <button class="comments-toggle-btn" id="btnToggleComments">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span id="commentsButtonText">Buka Komentar</span>
-        </button>
-    </div>
-
-    <!-- Giscus Comments Section (Hidden by default) -->
-    <div class="giscus-container" id="giscusContainer" style="display: none;">
-        <script src="https://giscus.app/client.js"
-                data-repo="nurananto/nuranantoscans"
-                data-repo-id="R_kgDOQanRcg"
-                data-category="General"
-                data-category-id="DIC_kwDOQanRcs4CyIPU"
-                data-mapping="url"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="dark"
-                data-lang="en"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </div>
-
     <div class="page-nav-handle" id="pageNavHandle"></div>
 
     <div class="page-nav" id="pageNav">
@@ -137,36 +107,6 @@
     <script defer src="auto-reload.js?v=4b51f1b"></script>
     <script defer src="manga-config.js?v=4b51f1b"></script>
     <script defer src="reader.js?v=4b51f1b"></script>
-    
-    <!-- Giscus Toggle Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const btnToggleComments = document.getElementById('btnToggleComments');
-            const giscusContainer = document.getElementById('giscusContainer');
-            const commentsButtonText = document.getElementById('commentsButtonText');
-            let isCommentsOpen = false;
-
-            btnToggleComments.addEventListener('click', function() {
-                isCommentsOpen = !isCommentsOpen;
-                
-                if (isCommentsOpen) {
-                    giscusContainer.style.display = 'block';
-                    commentsButtonText.textContent = 'Minimize Komentar';
-                    
-                    // Smooth scroll to comments
-                    setTimeout(() => {
-                        giscusContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                } else {
-                    giscusContainer.style.display = 'none';
-                    commentsButtonText.textContent = 'Buka Komentar';
-                    
-                    // Scroll back to button
-                    btnToggleComments.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            });
-        });
-    </script>
     
     <script>
       if ('serviceWorker' in navigator) {
