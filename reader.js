@@ -1573,6 +1573,22 @@ window.addEventListener('scroll', () => {
         navbar.style.transform = 'translateY(0)';
         navbar.style.opacity = '1';
     }
+    
+    // ✅ TAMBAHKAN INI - Show end chapter buttons saat scroll ke bawah
+    if (readMode === 'webtoon') {
+        const endChapterContainer = document.getElementById('endChapterContainer');
+        if (endChapterContainer) {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            const scrollBottom = scrollTop + windowHeight;
+            
+            if (scrollBottom >= documentHeight - 200) {
+                endChapterContainer.style.display = 'block';
+            } else {
+                endChapterContainer.style.display = 'none';
+            }
+        }
+    }
 
     lastScrollTop = scrollTop;
 });
