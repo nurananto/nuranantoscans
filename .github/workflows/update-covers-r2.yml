@@ -45,7 +45,7 @@ jobs:
       - name: 🔍 Check for Changes
         id: check_changes
         run: |
-          if [[ -n $(git status -s manga-config.js repo-list.txt) ]]; then
+          if [[ -n $(git status -s manga-config.js) ]]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "[SUCCESS] Ada perubahan cover terdeteksi"
             git status -s
@@ -60,27 +60,42 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          git add manga-config.js repo-list.txt
+          git add manga-config.js updated-repo-list.txt
           
           COMMIT_MSG="🤖 Auto-update covers (R2) - $(date +'%Y-%m-%d')"
           git commit -m "$COMMIT_MSG" || exit 0
           
           git push
       
-      - name: 📤 Trigger Sync to Manga Repos (Auto-detect)
+      - name: 📤 Trigger Sync to ONLY Updated Manga Repos
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           set +e  # Don't exit on error
           
-          echo "[INFO] Reading repo list from repo-list.txt..."
+          echo "[INFO] Triggering ONLY repos with cover updates..."
           
-          if [ ! -f "repo-list.txt" ]; then
-            echo "[FAILED] repo-list.txt not found!"
-            exit 1
+          # Use ONLY updated-repo-list.txt (no fallback)
+          REPO_FILE="updated-repo-list.txt"
+          
+          if [ ! -f "$REPO_FILE" ]; then
+            echo "[INFO] updated-repo-list.txt not found"
+            echo "[INFO] This means no repos have cover updates"
+            echo "[INFO] Skipping all triggers"
+            exit 0
           fi
           
-          repo_count=$(wc -l < repo-list.txt)
-          echo "[INFO] Found $repo_count repos"
+          repo_count=$(wc -l < "$REPO_FILE")
+          
+          if [ "$repo_count" -eq 0 ]; then
+            echo "[INFO] No repos to trigger"
+            exit 0
+          fi
+          
+          if [ "$REPO_FILE" = "updated-repo-list.txt" ]; then
+            echo "[INFO] Found $repo_count repos with cover updates (smart trigger)"
+          else
+            echo "[WARN] Using all $repo_count repos (fallback mode)"
+          fi
           
           success=0
           failed=0
@@ -93,7 +108,6 @@ jobs:
             
             echo "[TRIGGER] Triggering $repo..."
             
-            # Use separate variable for HTTP code to avoid pipeline issues
             http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
@@ -116,7 +130,7 @@ jobs:
             fi
             
             sleep 1
-          done < repo-list.txt
+          done < "$REPO_FILE"
           
           echo ""
           echo "========================================"
@@ -124,11 +138,15 @@ jobs:
           echo "  [SUCCESS] $success repos"
           echo "  [WARN] $skipped repos (workflow missing)"
           echo "  [FAILED] $failed repos"
+          if [ "$REPO_FILE" = "updated-repo-list.txt" ]; then
+            echo "  [MODE] Smart trigger (only updated repos)"
+          else
+            echo "  [MODE] Fallback (all repos)"
+          fi
           echo "  [TOTAL] $repo_count repos"
           echo "========================================"
           
           # Exit with success even if some repos failed
-          # (main cover upload was successful)
           if [ $success -gt 0 ]; then
             echo ""
             echo "[INFO] At least $success repos triggered successfully"
@@ -144,6 +162,25 @@ jobs:
             exit 1
           fi
       
+      - name: 🧹 Cleanup Updated Repo List
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "[CLEANUP] Removing updated-repo-list.txt..."
+          
+          if [ -f "updated-repo-list.txt" ]; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            
+            rm updated-repo-list.txt
+            git add updated-repo-list.txt
+            git commit -m "🧹 Cleanup updated repo list [skip ci]" || echo "No changes to commit"
+            git push || echo "Push failed"
+            
+            echo "[SUCCESS] updated-repo-list.txt removed"
+          else
+            echo "[INFO] File not found, nothing to clean"
+          fi
+      
       - name: ✅ Success Notification
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
@@ -152,7 +189,7 @@ jobs:
           echo "[COMPLETE] Cover update process finished!"
           echo "  ☁️  Covers uploaded to Cloudflare R2"
           echo "  🗑️  Old covers auto-deleted from R2"
-          echo "  📤 Sync triggers sent to all manga repos"
+          echo "  📤 Sync triggers sent to repos with changes ONLY"
           echo "  ℹ️  Repos will update with [skip ci]"
           echo "  ✅ No website rebuild triggered"
           echo "========================================"
@@ -165,5 +202,6 @@ jobs:
           echo "========================================"
           echo "[INFO] All covers are already up-to-date!"
           echo "  ℹ️  No changes made"
+          echo "  ℹ️  No repos triggered"
           echo "========================================"
           echo ""

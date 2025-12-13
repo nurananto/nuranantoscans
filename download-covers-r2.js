@@ -1,21 +1,16 @@
 /**
- * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v7.5
+ * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v7.6
  * FITUR: Auto-upload ke Cloudflare R2 + Auto-delete old covers
  * 
- * Update v7.5:
- * - Skip checking manga dengan blank MangaDex URL
- * - Preserve existing R2 covers for non-MangaDex manga
+ * Update v7.6:
+ * - Export list of repos that actually have cover updates
+ * - Only trigger repos with actual changes
  * 
  * Required Environment Variables:
  * - CF_ACCOUNT_ID
  * - CF_ACCESS_KEY_ID
  * - CF_SECRET_ACCESS_KEY
  * - R2_PUBLIC_DOMAIN
- * 
- * Cara Pakai:
- * 1. npm install sharp @aws-sdk/client-s3
- * 2. Set all required env variables
- * 3. node download-covers-r2.js
  */
 
 const fs = require('fs');
@@ -30,7 +25,7 @@ const DELAY_MS = 1500;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 const WEBP_QUALITY = 85;
 
-// R2 Configuration - NO HARDCODED VALUES
+// R2 Configuration
 const R2_CONFIG = {
   accountId: process.env.CF_ACCOUNT_ID,
   accessKeyId: process.env.CF_ACCESS_KEY_ID,
@@ -137,16 +132,13 @@ if (!fs.existsSync(coversDir)) {
   fs.mkdirSync(coversDir);
 }
 
-// Helper: Extract hash from existing cover path
+// Helper functions
 function extractHashFromCover(coverPath) {
   if (!coverPath) return null;
-  
-  // Match pattern: covers/manga-id-{hash}.webp or full URL with hash
   const match = coverPath.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.webp$/i);
   return match ? match[1] : null;
 }
 
-// Helper: Check if cover is already R2 URL
 function isR2Url(coverPath) {
   if (!coverPath) return false;
   return coverPath.startsWith('https://') && 
@@ -208,14 +200,12 @@ async function uploadToR2(filePath, key) {
       CacheControl: 'public, max-age=31536000'
     }));
     
-    // Generate public URL using configured domain
     return `https://${R2_CONFIG.publicDomain}/${key}`;
   } catch (error) {
     throw new Error(`R2 upload failed: ${error.message}`);
   }
 }
 
-// Fetch manga.json dari URL
 function fetchMangaJson(url) {
   return new Promise((resolve, reject) => {
     https.get(url, { headers: { 'User-Agent': USER_AGENT } }, (res) => {
@@ -359,6 +349,7 @@ function delay(ms) {
 
 async function processAllManga() {
   const updatedMangaList = [];
+  const updatedRepos = new Set(); // Track repos with actual updates
   let successCount = 0;
   let skipCount = 0;
   let errorCount = 0;
@@ -383,14 +374,12 @@ async function processAllManga() {
       
       // Check if cover already R2 URL with correct domain
       if (isR2Url(manga.cover)) {
-        // Verify it's using the correct configured domain
         if (manga.cover.includes(R2_CONFIG.publicDomain)) {
           console.log(`  [SKIP] Cover sudah di R2 dengan domain yang benar`);
           updatedMangaList.push(manga);
           skipCount++;
           continue;
         } else {
-          // URL uses different domain, needs migration
           console.log(`  [MIGRATE] Cover di R2 tapi domain berbeda`);
           const hash = extractHashFromCover(manga.cover);
           if (hash) {
@@ -399,19 +388,18 @@ async function processAllManga() {
             console.log(`    New: ${newUrl}`);
             manga.cover = newUrl;
             updatedMangaList.push(manga);
+            updatedRepos.add(manga.repo); // Mark repo as updated
             migratedCount++;
             continue;
           }
         }
       }
       
-      // Try to extract hash from existing cover path
       let existingHash = extractHashFromCover(manga.cover);
       
       if (existingHash) {
         console.log(`  [FOUND] Existing hash: ${existingHash}`);
         
-        // Check if already uploaded to R2
         const r2Key = `covers/${manga.id}-${existingHash}.webp`;
         const existsInR2 = await checkR2ObjectExists(r2Key);
         
@@ -420,12 +408,12 @@ async function processAllManga() {
           const r2Url = `https://${R2_CONFIG.publicDomain}/${r2Key}`;
           manga.cover = r2Url;
           updatedMangaList.push(manga);
+          updatedRepos.add(manga.repo); // Mark repo as updated
           migratedCount++;
           continue;
         }
       }
       
-      // Fetch manga.json to get MangaDex URL
       const mangaJsonUrl = typeof mangaConfig === 'string' ? mangaConfig : mangaConfig.url;
       
       console.log(`  [FETCH] Getting manga.json...`);
@@ -441,7 +429,6 @@ async function processAllManga() {
         mangadexUrl = mangaJson.mangadex;
       }
       
-      // ✅ NEW: Check if MangaDex URL is blank/empty
       if (!mangadexUrl || mangadexUrl.trim() === '') {
         console.log('  [NO-MDEX] Tidak ada MangaDex URL (blank)');
         
@@ -480,7 +467,6 @@ async function processAllManga() {
       const coverHash = latestCover.filename.split('.')[0];
       const r2Key = `covers/${manga.id}-${coverHash}.webp`;
       
-      // Check if already exists in R2
       const existsInR2 = await checkR2ObjectExists(r2Key);
       
       if (existsInR2) {
@@ -492,7 +478,7 @@ async function processAllManga() {
         continue;
       }
       
-      // Download & convert to WebP
+      // NEW COVER DETECTED - This repo needs to be triggered
       console.log('  [DOWNLOAD] Downloading cover...');
       const tempJpgPath = path.join(coversDir, `temp-${manga.id}.jpg`);
       await downloadFile(latestCover.url, tempJpgPath);
@@ -506,7 +492,6 @@ async function processAllManga() {
       
       console.log(`  [SUCCESS] WebP created: ${(webpSize / 1024).toFixed(1)} KB (${reduction}% smaller)`);
       
-      // Delete old covers from R2 (if any)
       console.log('  [CHECK] Checking for old covers in R2...');
       const existingCovers = await listR2Objects(`covers/${manga.id}-`);
       
@@ -521,18 +506,17 @@ async function processAllManga() {
         }
       }
       
-      // Upload to R2
       console.log('  [UPLOAD] Uploading to R2...');
       const r2Url = await uploadToR2(tempWebpPath, r2Key);
       console.log(`  [SUCCESS] Uploaded: ${r2Url}`);
       console.log(`  [INFO] MangaDex Upload: ${new Date(latestCover.createdAt).toLocaleDateString()}`);
       
-      // Cleanup temp files
       fs.unlinkSync(tempJpgPath);
       fs.unlinkSync(tempWebpPath);
       
       manga.cover = r2Url;
       updatedMangaList.push(manga);
+      updatedRepos.add(manga.repo); // Mark repo as updated
       successCount++;
       
       if (i < MANGA_LIST.length - 1) {
@@ -558,7 +542,16 @@ async function processAllManga() {
     }
   }
 
-  return { updatedMangaList, successCount, skipCount, errorCount, deletedCount, migratedCount, noMangaDexCount };
+  return { 
+    updatedMangaList, 
+    updatedRepos: Array.from(updatedRepos), 
+    successCount, 
+    skipCount, 
+    errorCount, 
+    deletedCount, 
+    migratedCount, 
+    noMangaDexCount 
+  };
 }
 
 function updateMangaConfigJs(updatedMangaList) {
@@ -594,18 +587,26 @@ function updateMangaConfigJs(updatedMangaList) {
   console.log('[BACKUP] Backup saved: manga-config.js.backup');
 }
 
-function exportRepoList() {
-  const repos = MANGA_LIST.map(m => m.repo).filter(Boolean);
-  const repoListPath = path.join(__dirname, 'repo-list.txt');
-  fs.writeFileSync(repoListPath, repos.join('\n'));
-  console.log(`\n[EXPORT] Exported ${repos.length} repos to repo-list.txt`);
-  return repos;
+function exportUpdatedRepoList(updatedRepos) {
+  const repoListPath = path.join(__dirname, 'updated-repo-list.txt');
+  fs.writeFileSync(repoListPath, updatedRepos.join('\n'));
+  console.log(`\n[EXPORT] Exported ${updatedRepos.length} updated repos to updated-repo-list.txt`);
+  return updatedRepos;
 }
 
 // Main
 (async () => {
   try {
-    const { updatedMangaList, successCount, skipCount, errorCount, deletedCount, migratedCount, noMangaDexCount } = await processAllManga();
+    const { 
+      updatedMangaList, 
+      updatedRepos, 
+      successCount, 
+      skipCount, 
+      errorCount, 
+      deletedCount, 
+      migratedCount, 
+      noMangaDexCount 
+    } = await processAllManga();
     
     console.log('\n========================================');
     console.log('[RESULTS]');
@@ -616,12 +617,15 @@ function exportRepoList() {
     console.log(`  [NO-MDEX] Blank MangaDex (preserved): ${noMangaDexCount}`);
     console.log(`  [FAILED] Failed: ${errorCount}`);
     console.log(`  [TOTAL] ${MANGA_LIST.length} manga`);
+    console.log(`  [UPDATED REPOS] ${updatedRepos.length} repos need sync`);
     console.log('========================================\n');
     
     updateMangaConfigJs(updatedMangaList);
     
-    // Export repo list for GitHub Actions
-    const repos = exportRepoList();
+    // Export ONLY updated repos (for triggering)
+    if (updatedRepos.length > 0) {
+      exportUpdatedRepoList(updatedRepos);
+    }
     
     if (successCount > 0 || migratedCount > 0) {
       console.log('[COMPLETE] Process finished!');
@@ -637,9 +641,12 @@ function exportRepoList() {
       if (noMangaDexCount > 0) {
         console.log(`  - ${noMangaDexCount} manga without MangaDex (preserved)`);
       }
+      if (updatedRepos.length > 0) {
+        console.log(`  - ${updatedRepos.length} repos will be triggered for sync`);
+      }
       
       console.log('\n[NEXT STEP] Push to GitHub:');
-      console.log('  git add manga-config.js repo-list.txt');
+      console.log('  git add manga-config.js updated-repo-list.txt');
       console.log('  git commit -m "Auto-update covers (R2)"');
       console.log('  git push\n');
     } else {
@@ -647,6 +654,7 @@ function exportRepoList() {
       if (noMangaDexCount > 0) {
         console.log(`[INFO] ${noMangaDexCount} manga without MangaDex URL (covers preserved)`);
       }
+      console.log('[INFO] No repos need to be triggered');
     }
     
     // Cleanup temp folder

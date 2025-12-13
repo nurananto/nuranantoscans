@@ -194,28 +194,37 @@ jobs:
           node download-covers-r2.js || echo "Cover update failed, continuing..."
           
           if [[ -n $(git status -s manga-config.js) ]]; then
-            git add manga-config.js repo-list.txt
+            git add manga-config.js updated-repo-list.txt
             git commit -m "🖼️ Auto-update covers [skip ci]" || true
             git push || true
             echo "✅ Covers updated"
           fi
       
-      - name: 📤 Trigger Cover Sync to Manga Repos
+      - name: 📤 Trigger Cover Sync to Updated Manga Repos ONLY
         if: |
           steps.check_rebuild.outputs.should_rebuild == 'true' &&
           steps.cover_check.outputs.needs_cover_update == 'true'
         run: |
           set +e  # Don't exit on error
           
-          echo "📤 Triggering cover sync to all manga repos..."
+          echo "📤 Triggering cover sync to repos with updated covers ONLY..."
           
-          if [ ! -f "repo-list.txt" ]; then
-            echo "❌ repo-list.txt not found!"
+          # Use updated-repo-list.txt instead of repo-list.txt
+          REPO_FILE="updated-repo-list.txt"
+          
+          if [ ! -f "$REPO_FILE" ]; then
+            echo "ℹ️ No updated-repo-list.txt found - no repos to trigger"
             exit 0
           fi
           
-          repo_count=$(wc -l < repo-list.txt)
-          echo "📊 Found $repo_count repos to trigger"
+          repo_count=$(wc -l < "$REPO_FILE")
+          
+          if [ "$repo_count" -eq 0 ]; then
+            echo "ℹ️ No repos in updated list - skipping triggers"
+            exit 0
+          fi
+          
+          echo "📊 Found $repo_count repos with cover updates"
           
           success=0
           failed=0
@@ -246,7 +255,7 @@ jobs:
             fi
             
             sleep 1
-          done < repo-list.txt
+          done < "$REPO_FILE"
           
           echo ""
           echo "=========================================="
@@ -254,7 +263,7 @@ jobs:
           echo "   ✅ Success: $success repos"
           echo "   ⚠️ Skipped: $skipped repos (workflow missing)"
           echo "   ❌ Failed: $failed repos"
-          echo "   📊 Total: $repo_count repos"
+          echo "   📊 Total Updated: $repo_count repos"
           echo "   ℹ️  Repos will update with [skip ci]"
           echo "=========================================="
           
@@ -273,7 +282,28 @@ jobs:
             exit 1
           fi
       
-      - name: 📄 Generate Version Bump
+      - name: 🧹 Cleanup Updated Repo List
+        if: |
+          steps.check_rebuild.outputs.should_rebuild == 'true' &&
+          steps.cover_check.outputs.needs_cover_update == 'true'
+        run: |
+          echo "🧹 Cleaning up updated-repo-list.txt..."
+          
+          if [ -f "updated-repo-list.txt" ]; then
+            git config --local user.name "github-actions[bot]"
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            
+            rm updated-repo-list.txt
+            git add updated-repo-list.txt
+            git commit -m "🧹 Cleanup updated repo list [skip ci]" || echo "No changes to commit"
+            git push || echo "Push failed"
+            
+            echo "✅ updated-repo-list.txt removed"
+          else
+            echo "ℹ️ File not found, nothing to clean"
+          fi
+      
+      - name: 🔄 Generate Version Bump
         if: steps.check_rebuild.outputs.should_rebuild == 'true'
         id: version
         run: |
@@ -300,7 +330,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
           git add version.txt sw.js
-          git commit -m "📄 Batch rebuild: $MANGA_LIST (v$VERSION)" || echo "No changes"
+          git commit -m "🔄 Batch rebuild: $MANGA_LIST (v$VERSION)" || echo "No changes"
           git push
           
           echo "✅ Version committed"
@@ -353,6 +383,6 @@ jobs:
           echo "   - Manga: ${{ needs.batch-updates.outputs.manga_list }}"
           echo "   - Version: ${{ needs.batch-updates.outputs.version }}"
           if [ "${{ needs.batch-updates.outputs.needs_cover_update }}" = "true" ]; then
-            echo "   - Covers: Updated & synced to repos with [skip ci]"
+            echo "   - Covers: Updated & synced to ONLY repos with changes [skip ci]"
           fi
           echo "🔗 Website: https://nuranantoscans.my.id"

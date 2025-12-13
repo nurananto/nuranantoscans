@@ -13,6 +13,12 @@
 
 MANGA_LIST = [
   {
+    id: 'wearenotdating',
+    title: 'We Are not Dating!!',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/wearenotdating-ff110214-8c55-4479-b7d8-bf2fc4658e4e.webp',
+    repo: 'WearenotDating'
+  },
+  {
     id: 'gotousan',
     title: 'Gotou-san wa Furimukasetai!',
     cover: 'https://cdn.nuranantoscans.my.id/covers/gotousan-c396db84-6cc5-41c0-bf66-f54d0cfa2b44.webp',
