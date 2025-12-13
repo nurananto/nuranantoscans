@@ -138,16 +138,16 @@ function getRelativeTime(lastChapterUpdateStr) {
 function createCard(manga, mangaData, index = 0) {
   const isRecent = isRecentlyUpdated(mangaData.lastChapterUpdate);
   
-  const formatChapter = (chapterNum) => {
+const formatChapter = (chapterNum) => {
     if (!chapterNum) return '';
     const chapterStr = chapterNum.toString().toLowerCase();
     if (chapterStr.includes('oneshot') || chapterStr.includes('one-shot') || chapterStr === 'os') {
       return 'Oneshot';
     }
-    const num = parseFloat(chapterNum);
-    if (isNaN(num)) return chapterNum.toString();
-    return num % 1 === 0 ? num.toString() : num.toFixed(1);
+    // ✅ Return as-is untuk chapter dengan titik (jangan pakai parseFloat)
+    return chapterNum.toString();
   };
+
   
 let chapterText = '';
 if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
