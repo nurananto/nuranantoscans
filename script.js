@@ -42,22 +42,30 @@ async function fetchMangaData(repo) {
       
       const unlockedChapters = chaptersArray.filter(ch => !ch.locked);
       if (unlockedChapters.length > 0) {
-        unlockedChapters.sort((a, b) => {
-          const numA = parseFloat(a.folder);
-          const numB = parseFloat(b.folder);
-          return numB - numA;
-        });
+    unlockedChapters.sort((a, b) => {
+    const getSort = (folder) => {
+    const parts = folder.split('.');
+    const int = parseInt(parts[0]) || 0;
+    const dec = parts[1] ? parseInt(parts[1]) : 0;
+    return int + (dec / 1000);
+  };
+  return getSort(b.folder) - getSort(a.folder);
+});
         latestUnlockedChapter = unlockedChapters[0].folder;
         latestUnlockedDate = unlockedChapters[0].uploadDate;
       }
       
       const lockedChapters = chaptersArray.filter(ch => ch.locked);
       if (lockedChapters.length > 0) {
-        lockedChapters.sort((a, b) => {
-          const numA = parseFloat(a.folder);
-          const numB = parseFloat(b.folder);
-          return numB - numA;
-        });
+lockedChapters.sort((a, b) => {
+  const getSort = (folder) => {
+    const parts = folder.split('.');
+    const int = parseInt(parts[0]) || 0;
+    const dec = parts[1] ? parseInt(parts[1]) : 0;
+    return int + (dec / 1000);
+  };
+  return getSort(b.folder) - getSort(a.folder);
+});
         latestLockedChapter = lockedChapters[0].folder;
         latestLockedDate = lockedChapters[0].uploadDate;
       }

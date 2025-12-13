@@ -827,9 +827,15 @@ async function loadMangaData(repo) {
         
         console.log('📦 Manga data loaded:', mangaData);
         
-        allChapters = Object.values(mangaData.chapters).sort((a, b) => {
-            return parseFloat(b.folder) - parseFloat(a.folder);
-        });
+allChapters = Object.values(mangaData.chapters).sort((a, b) => {
+    const getSort = (folder) => {
+        const parts = folder.split('.');
+        const int = parseInt(parts[0]) || 0;
+        const dec = parts[1] ? parseInt(parts[1]) : 0;
+        return int + (dec / 1000);
+    };
+    return getSort(b.folder) - getSort(a.folder);
+});
         
         console.log(`✅ Loaded ${allChapters.length} chapters`);
         

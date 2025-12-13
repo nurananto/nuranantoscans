@@ -744,12 +744,15 @@ function displayChapters() {
     
     const chaptersArray = Object.values(mangaData.chapters);
     
-    // ✅ SORT DULU
-    chaptersArray.sort((a, b) => {
-        const numA = parseFloat(a.folder);
-        const numB = parseFloat(b.folder);
-        return numB - numA;
-    });
+chaptersArray.sort((a, b) => {
+    const getSort = (folder) => {
+        const parts = folder.split('.');
+        const int = parseInt(parts[0]) || 0;
+        const dec = parts[1] ? parseInt(parts[1]) : 0;
+        return int + (dec / 1000);
+    };
+    return getSort(b.folder) - getSort(a.folder);
+});
     
     // ✅ MARK LAST CHAPTER (SETELAH SORTING)
     if (chaptersArray.length > 0) {
@@ -1226,11 +1229,15 @@ function setupReadFirstButton() {
         
         const chaptersArray = Object.values(mangaData.chapters);
         
-        chaptersArray.sort((a, b) => {
-            const numA = parseFloat(a.folder);
-            const numB = parseFloat(b.folder);
-            return numA - numB;
-        });
+chaptersArray.sort((a, b) => {
+    const getSort = (folder) => {
+        const parts = folder.split('.');
+        const int = parseInt(parts[0]) || 0;
+        const dec = parts[1] ? parseInt(parts[1]) : 0;
+        return int + (dec / 1000);
+    };
+    return getSort(a.folder) - getSort(b.folder);  // ascending (awal duluan)
+});
         
         const firstUnlocked = chaptersArray.find(ch => !ch.locked);
         
