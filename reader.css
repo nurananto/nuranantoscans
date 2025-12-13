@@ -1420,9 +1420,9 @@ body.show-page-nav .page-thumb {
 
 .scroll-to-top {
     position: fixed;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
+    right: 5px;
+    bottom: 180px;
+    transform: scale(1.1);
     width: 48px;
     height: 48px;
     background: rgba(24, 119, 242, 0.3);
@@ -1464,7 +1464,8 @@ body.show-page-nav .page-thumb {
 /* Responsive */
 @media (max-width: 768px) {
     .scroll-to-top {
-        right: 15px;
+        right: 8px;         /* dari 15px */
+        bottom: 160px;      /* TAMBAH baris ini (sebelumnya tidak ada) */
         width: 44px;
         height: 44px;
     }
@@ -1472,7 +1473,8 @@ body.show-page-nav .page-thumb {
 
 @media (max-width: 480px) {
     .scroll-to-top {
-        right: 10px;
+        right: 6px;         /* dari 10px */
+        bottom: 150px;      /* TAMBAH baris ini (sebelumnya tidak ada) */
         width: 40px;
         height: 40px;
     }
