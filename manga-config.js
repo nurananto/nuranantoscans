@@ -19,12 +19,6 @@ MANGA_LIST = [
     repo: 'Gotou-san'
   },
   {
-    id: 'wearenotdating',
-    title: 'We Are not Dating!!',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/wearenotdating-ff110214-8c55-4479-b7d8-bf2fc4658e4e.webp',
-    repo: 'WearenotDating'
-  },
-  {
     id: 'yuurikuntochihirochan',
     title: 'Yuuri-kun to Chihiro-chan',
     cover: 'https://cdn.nuranantoscans.my.id/covers/yuurikuntochihirochan-8235d341-4f78-4d32-a747-08ba7c4afa58.webp',
