@@ -1098,6 +1098,18 @@ function setupWebtoonScrollTracking() {
     
     if (endChapterContainer) {
         endChapterContainer.style.display = 'none';
+        
+        // ✅ TAMBAHKAN INI - Auto-show jika chapter pendek (no scroll)
+        setTimeout(() => {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            
+            // Jika tidak ada scroll atau scroll area sangat kecil
+            if (documentHeight <= windowHeight + 50) {
+                console.log('📏 Short chapter detected - auto-showing end buttons');
+                endChapterContainer.style.display = 'block';
+            }
+        }, 500); // Delay 500ms untuk memastikan semua gambar sudah di-render
     }
 }
 
