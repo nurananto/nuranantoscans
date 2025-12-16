@@ -1,11 +1,12 @@
-// Service Worker for Nurananto Scanlation v3.1
-// ✅ FIXED: Response clone error
-// ✅ FIXED: Proper error handling
+// Service Worker for Nurananto Scanlation v3.3
+// ✅ FULLY FIXED: Response clone error eliminated
+// 📅 Last updated: 2025-12-16
 
-const CACHE_NAME = 'nurananto-v2b58b75';
-const STATIC_CACHE = 'static-v2b58b75';
-const IMAGE_CACHE = 'images-v2b58b75';
-const DYNAMIC_CACHE = 'dynamic-v2b58b75';
+// ✅ STABLE CACHE NAMES - only change for major breaking changes
+const CACHE_VERSION = 'v1';
+const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const IMAGE_CACHE = `images-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
 // Static assets (HTML, CSS, JS)
 const STATIC_ASSETS = [
@@ -30,7 +31,7 @@ const STATIC_ASSETS = [
 
 // Install - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('🔧 SW: Installing new version...');
+    console.log('🔧 SW: Installing...');
     event.waitUntil(
         caches.open(STATIC_CACHE).then((cache) => {
             console.log('📦 SW: Caching static assets');
@@ -44,15 +45,14 @@ self.addEventListener('install', (event) => {
 
 // Activate - clean old caches
 self.addEventListener('activate', (event) => {
-    console.log('✅ SW: Activated new version');
+    console.log('✅ SW: Activated');
+    const currentCaches = [STATIC_CACHE, IMAGE_CACHE, DYNAMIC_CACHE];
+    
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME && 
-                        cacheName !== STATIC_CACHE && 
-                        cacheName !== IMAGE_CACHE && 
-                        cacheName !== DYNAMIC_CACHE) {
+                    if (!currentCaches.includes(cacheName)) {
                         console.log('🗑️ SW: Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
@@ -63,117 +63,149 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
-// ✅ FIXED: Fetch handler dengan proper clone
+// ✅ FULLY FIXED: Proper clone handling
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
     
-    // Skip cross-origin requests except GitHub raw content
+    // Skip cross-origin except GitHub
     if (url.origin !== location.origin) {
-        // Cache GitHub raw content (covers & manga.json)
+        // GitHub raw content (covers & manga.json)
         if (url.hostname === 'raw.githubusercontent.com') {
-            event.respondWith(
-                caches.open(IMAGE_CACHE).then(cache => {
-                    return cache.match(request).then(cached => {
-                        const fetchPromise = fetch(request).then(response => {
-                            // ✅ FIX: Clone immediately before any operation
-                            if (response && response.ok && response.status === 200) {
-                                cache.put(request, response.clone()).catch(err => {
-                                    console.warn('Cache put failed:', err);
-                                });
-                            }
-                            return response;
-                        }).catch(err => {
-                            console.warn('GitHub fetch failed:', err);
-                            return cached || new Response('Network error', { 
-                                status: 408,
-                                statusText: 'Request Timeout'
-                            });
-                        });
-                        return cached || fetchPromise;
-                    });
-                })
-            );
+            event.respondWith(handleGitHubRequest(request));
             return;
         }
         
-        // Don't cache other external requests
-        event.respondWith(fetch(request));
+        // Other external - no caching
         return;
     }
     
-    // Cache strategy for local files
+    // Local cover images
     if (url.pathname.startsWith('/covers/')) {
-        event.respondWith(
-            caches.open(IMAGE_CACHE).then(cache => {
-                return cache.match(request).then(cached => {
-                    const fetchPromise = fetch(request).then(response => {
-                        // ✅ FIX: Clone immediately
-                        if (response && response.ok && response.status === 200) {
-                            cache.put(request, response.clone()).catch(err => {
-                                console.warn('Cache put failed:', err);
-                            });
-                        }
-                        return response;
-                    }).catch(err => {
-                        console.warn('Cover fetch failed:', err);
-                        return cached;
-                    });
-                    return cached || fetchPromise;
-                });
-            })
-        );
+        event.respondWith(handleImageRequest(request));
         return;
     }
     
-    // Static assets: Cache first, fallback to network
+    // Static assets
     if (STATIC_ASSETS.some(asset => url.pathname.includes(asset.replace('./', '')))) {
-        event.respondWith(
-            caches.match(request).then(cached => {
-                return cached || fetch(request).then(response => {
-                    // ✅ FIX: Clone immediately
-                    if (response && response.ok && response.status === 200) {
-                        caches.open(STATIC_CACHE).then(cache => {
-                            cache.put(request, response.clone()).catch(err => {
-                                console.warn('Cache put failed:', err);
-                            });
-                        });
-                    }
-                    return response;
-                }).catch(err => {
-                    console.warn('Static fetch failed:', err);
-                    return cached;
-                });
-            })
-        );
+        event.respondWith(handleStaticRequest(request));
         return;
     }
     
-    // Dynamic content: Network first, fallback to cache
-    event.respondWith(
-        fetch(request)
-            .then(response => {
-                // ✅ FIX: Clone immediately and validate
-                if (response && response.ok && response.status === 200 && 
-                    !url.pathname.includes('manga.json')) {
-                    caches.open(DYNAMIC_CACHE).then(cache => {
-                        cache.put(request, response.clone()).catch(err => {
-                            console.warn('Cache put failed:', err);
-                        });
-                    });
-                }
-                return response;
-            })
-            .catch(err => {
-                console.warn('Dynamic fetch failed:', err);
-                return caches.match(request).then(cached => {
-                    return cached || caches.match('./index.html');
-                });
-            })
-    );
+    // Dynamic content
+    event.respondWith(handleDynamicRequest(request, url));
 });
 
-// Message - manual cache control
+// ✅ GitHub request handler - stale-while-revalidate
+async function handleGitHubRequest(request) {
+    const cache = await caches.open(IMAGE_CACHE);
+    const cached = await cache.match(request);
+    
+    // Return cached immediately, update in background
+    if (cached) {
+        // Update cache in background (don't await)
+        fetch(request)
+            .then(response => {
+                if (response && response.ok) {
+                    cache.put(request, response.clone());
+                }
+            })
+            .catch(() => {});
+        
+        return cached;
+    }
+    
+    // No cache - fetch fresh
+    try {
+        const response = await fetch(request);
+        if (response && response.ok) {
+            // Clone IMMEDIATELY after fetch, before any other operation
+            const clonedResponse = response.clone();
+            cache.put(request, clonedResponse).catch(() => {});
+        }
+        return response;
+    } catch (err) {
+        console.warn('GitHub fetch failed:', err);
+        return new Response('Network error', { 
+            status: 408,
+            statusText: 'Request Timeout'
+        });
+    }
+}
+
+// ✅ Image request handler - cache first
+async function handleImageRequest(request) {
+    const cache = await caches.open(IMAGE_CACHE);
+    const cached = await cache.match(request);
+    
+    if (cached) {
+        return cached;
+    }
+    
+    try {
+        const response = await fetch(request);
+        if (response && response.ok) {
+            // Clone immediately
+            cache.put(request, response.clone()).catch(() => {});
+        }
+        return response;
+    } catch (err) {
+        console.warn('Image fetch failed:', err);
+        // Return cached even if stale
+        return cached || new Response('Image not found', { status: 404 });
+    }
+}
+
+// ✅ Static request handler - cache first
+async function handleStaticRequest(request) {
+    const cached = await caches.match(request);
+    
+    if (cached) {
+        return cached;
+    }
+    
+    try {
+        const response = await fetch(request);
+        if (response && response.ok) {
+            const cache = await caches.open(STATIC_CACHE);
+            // Clone immediately
+            cache.put(request, response.clone()).catch(() => {});
+        }
+        return response;
+    } catch (err) {
+        console.warn('Static fetch failed:', err);
+        return cached || new Response('Not found', { status: 404 });
+    }
+}
+
+// ✅ Dynamic request handler - network first
+async function handleDynamicRequest(request, url) {
+    try {
+        const response = await fetch(request);
+        
+        // Cache successful responses (except manga.json)
+        if (response && response.ok && !url.pathname.includes('manga.json')) {
+            const cache = await caches.open(DYNAMIC_CACHE);
+            // Clone immediately
+            cache.put(request, response.clone()).catch(() => {});
+        }
+        
+        return response;
+    } catch (err) {
+        console.warn('Dynamic fetch failed:', err);
+        
+        // Fallback to cache
+        const cached = await caches.match(request);
+        if (cached) {
+            return cached;
+        }
+        
+        // Last resort - return index
+        return caches.match('./index.html') || new Response('Offline', { status: 503 });
+    }
+}
+
+// Message handler
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
@@ -188,14 +220,15 @@ self.addEventListener('message', (event) => {
             }).then(() => {
                 console.log('🗑️ All caches cleared');
                 self.clients.matchAll().then(clients => {
-                    clients.forEach(client => client.postMessage({ type: 'CACHE_CLEARED' }));
+                    clients.forEach(client => 
+                        client.postMessage({ type: 'CACHE_CLEARED' })
+                    );
                 });
             })
         );
     }
 });
 
-// Update notification
 self.addEventListener('controllerchange', () => {
-    console.log('🔄 New Service Worker took control');
+    console.log('🔄 New SW active');
 });
