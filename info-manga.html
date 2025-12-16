@@ -242,9 +242,21 @@
   <script defer src="manga-config.js?v=4b51f1b"></script>
   <script defer src="info-manga.js?v=4b51f1b"></script>
   
-  <script>
+<script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js?v=4b51f1b').catch(e=>console.error(e));
+      (async () => {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) {
+            if (reg.active && reg.active.scriptURL.includes('?v=')) {
+              await reg.unregister();
+            }
+          }
+          await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+        } catch (e) {
+          console.error(e);
+        }
+      })();
     }
   </script>
 <!-- Code Input Modal (for Webtoon Type) -->

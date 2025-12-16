@@ -146,12 +146,27 @@
   <script defer src="script.js?v=4b51f1b"></script>
   
   <!-- Service Worker Registration -->
-  <script>
+<script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=4b51f1b')
-          .then(reg => console.log('✅ SW registered'))
-          .catch(err => console.error('❌ SW failed:', err));
+      window.addEventListener('load', async () => {
+        try {
+          // Unregister old SW with version query
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) {
+            if (reg.active && reg.active.scriptURL.includes('?v=')) {
+              await reg.unregister();
+              console.log('🗑️ Unregistered old SW');
+            }
+          }
+          
+          // Register new SW without version
+          const registration = await navigator.serviceWorker.register('./sw.js', {
+            updateViaCache: 'none'
+          });
+          console.log('✅ SW registered');
+        } catch (err) {
+          console.error('❌ SW failed:', err);
+        }
       });
     }
   </script>
