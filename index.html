@@ -158,15 +158,19 @@
   }
   
   /* ✅ FIXED: Background & Shadow Transparent */
-  .manga-card {
-    position: relative;
-    overflow: visible;
-    background: transparent;
-    border-radius: 0.6rem;
-    box-shadow: none;
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
+.manga-card {
+  position: relative;
+  overflow: visible;
+  background: transparent;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  box-shadow: none;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
   
   .manga-card:hover {
     transform: scale(1.03);
@@ -181,11 +185,24 @@
   display: block;
   background: transparent;
   contain-intrinsic-size: 300px 420px;
+  order: 1;
+}
+
+/* Badge container untuk manga list */
+.manga-badges-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  background: transparent;
+  border-radius: 0;
+  gap: 8px;
+  min-height: 50px;
 }
   
   .manga-title {
     color: #fff;
-    padding: 0.6rem 0.5rem 1.2rem;
+    padding: 0.4rem 0.5rem 1.2rem;
     text-align: center;
     font-size: 0.95rem;
     font-weight: 600;
@@ -198,31 +215,6 @@
     word-break: break-word;
   }
   
-  /* ✅ KEEP: Updated Badge Tetap BIRU */
-  .updated-badge {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, rgba(24, 119, 242, 0.75) 0%, rgba(10, 91, 214, 0.75) 100%);
-    backdrop-filter: blur(10px) saturate(180%);
-    -webkit-backdrop-filter: blur(10px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #fff;
-    padding: 6px 8px;
-    border-radius: 0.6rem 0.6rem 0 0;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
-    z-index: 10;
-    text-align: center;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    line-height: 1.2;
-  }
   
   .visually-hidden {
     position: absolute;
@@ -421,6 +413,17 @@
   letter-spacing: 1px;
 }
 
+.top5-badges-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  background: transparent;
+  border-radius: 0;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
 .top5-container {
   display: flex;
   gap: 1rem;
@@ -438,7 +441,9 @@
   position: relative;
   flex: 0 0 45%;
   background: transparent;
-  border-radius: 0;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
   box-shadow: none;
   cursor: pointer;
   overflow: visible;
@@ -461,7 +466,7 @@
   object-fit: cover;
   display: block;
   background: transparent;
-  border-radius: 0;
+  border-radius: 0.6rem;
 }
 
 @media (min-width: 1024px) {
@@ -545,20 +550,8 @@
 <!-- TOP 5 MOST VIEWED SECTION -->
   <section class="top5-section" aria-labelledby="top5-heading">
     <h2 id="top5-heading" class="top5-heading">Paling Banyak Dibaca</h2>
-    <div class="top5-wrapper">
-      <button class="top5-nav-btn top5-nav-left" id="top5NavLeft" aria-label="Scroll left">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-      </button>
-      <div class="top5-container" id="top5Container" role="list">
-        <!-- Top 5 cards will be rendered here by JavaScript -->
-      </div>
-      <button class="top5-nav-btn top5-nav-right" id="top5NavRight" aria-label="Scroll right">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-      </button>
+    <div class="top5-container" id="top5Container" role="list">
+      <!-- Top 5 cards will be rendered here by JavaScript -->
     </div>
   </section>
 

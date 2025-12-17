@@ -73,16 +73,18 @@ async function fetchMangaData(repo) {
       }
     }
     
-    return {
-      lastUpdated: data.lastUpdated || null,
-      lastChapterUpdate: data.lastChapterUpdate || data.lastUpdated || null,
-      totalChapters: Object.keys(data.chapters || {}).length,
-      views: data.manga?.views || 0,
-      latestUnlockedChapter,
-      latestUnlockedDate,
-      latestLockedChapter,
-      latestLockedDate
-    };
+return {
+  lastUpdated: data.lastUpdated || null,
+  lastChapterUpdate: data.lastChapterUpdate || data.lastUpdated || null,
+  totalChapters: Object.keys(data.chapters || {}).length,
+  views: data.manga?.views || 0,
+  status: data.manga?.status || 'ONGOING',
+  latestUnlockedChapter,
+  latestUnlockedDate,
+  latestLockedChapter,
+  latestLockedDate
+};
+
   } catch (error) {
     console.error(`Error fetching manga data for ${repo}:`, error);
     return {
@@ -249,20 +251,42 @@ function createCard(manga, mangaData, index = 0) {
     chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
   }
   
-const updatedBadge = isRecent && chapterText ? `
-    <div class="manga-badges-container">
-      <div class="updated-badge" aria-label="Recently updated: ${chapterText}">
-        <span class="badge-text">UPDATED!</span>
-        <span class="badge-chapter">${chapterText}</span>
+let badgeHTML = '';
+  
+  if (isRecent && chapterText) {
+    badgeHTML = `
+      <div class="manga-badges-container">
+        <div class="updated-badge" aria-label="Recently updated: ${chapterText}">
+          <span class="badge-text">UPDATED!</span>
+          <span class="badge-chapter">${chapterText}</span>
+        </div>
       </div>
-    </div>
-  ` : `
-    <div class="manga-badges-container" style="visibility: hidden;">
-      <div class="updated-badge">
-        <span class="badge-text">-</span>
+    `;
+  } else {
+    const status = mangaData.status || 'ONGOING';
+    let statusClass = '';
+    let statusText = '';
+    
+    if (status === 'END' || status === 'COMPLETED') {
+      statusClass = 'status-badge-end';
+      statusText = 'TAMAT';
+    } else if (status === 'HIATUS') {
+      statusClass = 'status-badge-hiatus';
+      statusText = 'HIATUS';
+    } else {
+      statusClass = 'status-badge-ongoing';
+      statusText = 'ONGOING';
+    }
+    
+    badgeHTML = `
+      <div class="manga-badges-container">
+        <div class="status-badge ${statusClass}" aria-label="${statusText}: ${chapterText}">
+          <span class="badge-text">${statusText}</span>
+          ${chapterText ? `<span class="badge-chapter">${chapterText}</span>` : ''}
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
   
   const cdnUrls = getResponsiveCDN(manga.cover);
   
@@ -289,7 +313,6 @@ return `
          aria-label="${ariaLabel}"
          onclick="window.location.href='info-manga.html?repo=${manga.id}'"
          onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
-      ${updatedBadge}
       <img 
         src="${cdnUrls.medium}" 
         srcset="${srcset}"
@@ -300,6 +323,7 @@ return `
         ${decodingAttr}
         onerror="this.src='${manga.cover}'"
         aria-hidden="true">
+      ${badgeHTML}
       <div class="manga-title" aria-hidden="true">${manga.title}</div>
     </div>`;
 }
@@ -331,111 +355,9 @@ async function renderTop5(mangaList) {
   top5Container.innerHTML = top5.map(({ manga, mangaData }, index) => 
     createTop5Card(manga, mangaData, index + 1, index)
   ).join("");
-  
-  // Initialize scroll navigation
-  initTop5Navigation();
-  
-  console.log('✅ Top 5 Most Viewed loaded');
-}
 
-/**
- * ✅ TOP 5 SCROLL NAVIGATION
- */
-function initTop5Navigation() {
-  const container = document.getElementById('top5Container');
-  const btnLeft = document.getElementById('top5NavLeft');
-  const btnRight = document.getElementById('top5NavRight');
-  
-  if (!container || !btnLeft || !btnRight) return;
-  
-  let currentIndex = 0;
-  const cards = container.querySelectorAll('.top5-card');
-  const totalCards = cards.length;
-  
-  // Function to update button visibility
-  function updateButtons() {
-    // Hide left button if at start
-    if (currentIndex <= 0) {
-      btnLeft.style.display = 'none';
-    } else {
-      btnLeft.style.display = 'flex';
-    }
-    
-    // Hide right button if at end
-    if (currentIndex >= totalCards - 1) {
-      btnRight.style.display = 'none';
-    } else {
-      btnRight.style.display = 'flex';
-    }
-  }
-  
-  // Function to scroll to specific card
-  function scrollToCard(index) {
-    if (index < 0 || index >= totalCards) return;
-    
-    const card = cards[index];
-    const containerRect = container.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    
-    // Calculate scroll position to center the card
-    const scrollLeft = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
-    
-    container.scrollTo({
-      left: scrollLeft,
-      behavior: 'smooth'
-    });
-    
-    currentIndex = index;
-    updateButtons();
-  }
-  
-  // Scroll right - go to next card
-  btnRight.addEventListener('click', () => {
-    if (currentIndex < totalCards - 1) {
-      scrollToCard(currentIndex + 1);
-    }
-  });
-  
-  // Scroll left - go to previous card
-  btnLeft.addEventListener('click', () => {
-    if (currentIndex > 0) {
-      scrollToCard(currentIndex - 1);
-    }
-  });
-  
-  // Update current index on manual scroll
-  container.addEventListener('scroll', () => {
-    const containerCenter = container.scrollLeft + (container.offsetWidth / 2);
-    
-    let closestIndex = 0;
-    let closestDistance = Infinity;
-    
-    cards.forEach((card, index) => {
-      const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
-      const distance = Math.abs(containerCenter - cardCenter);
-      
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = index;
-      }
-    });
-    
-    if (closestIndex !== currentIndex) {
-      currentIndex = closestIndex;
-      updateButtons();
-    }
-  });
-  
-// Initial update
-  updateButtons();
-  
-  // Force check after short delay (for initial render)
-  setTimeout(updateButtons, 100);
-  
-  // Update on window resize
-  window.addEventListener('resize', () => {
-    scrollToCard(currentIndex);
-  });
+
+  console.log('✅ Top 5 Most Viewed loaded');
 }
 
 /**
@@ -547,12 +469,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Tambahkan setelah setupSearchAccessibility();
   renderTop5(mangaList);      // ← TAMBAH INI
   renderMangaList(mangaList);  // ← TAMBAH INI
-
-    // Force hide left button on initial load
-  setTimeout(() => {
-    const btnLeft = document.getElementById('top5NavLeft');
-    if (btnLeft) btnLeft.style.display = 'none';
-  }, 200);
 
   const searchInput = document.getElementById("searchInput");
   searchInput.addEventListener("input", function() {

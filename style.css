@@ -228,11 +228,28 @@ header {
 .manga-card {
   position: relative;
   overflow: visible;
-  background-color: transparent; /* DARI var(--bg-card) JADI transparent */
-  border-radius: 0.6rem;
-  box-shadow: none; /* HAPUS shadow */
+  background-color: transparent;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  box-shadow: none;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Manga card image */
+.manga-card img {
+  width: 100%;
+  aspect-ratio: 3/4.2;
+  object-fit: cover;
+  border-radius: 0.6rem;
+  display: block;
+  background-color: var(--bg-card);
+  transition: filter 0.3s ease;
+  position: relative;
+  order: 1;
 }
 
 .manga-card:hover {
@@ -240,27 +257,32 @@ header {
   box-shadow: none; /* HAPUS shadow */
 }
 
-.manga-card img {
-  width: 100%;
-  aspect-ratio: 3/4.2;
-  object-fit: cover;
-  border-radius: 0; /* Persegi penuh seperti top 5 */
-  display: block;
-  background-color: var(--bg-card);
-  transition: filter 0.3s ease;
-  position: relative;
+.manga-title {
+  color: var(--text-primary);
+  padding: 0.6rem 0.5rem 1.2rem;
+  text-align: center;
+  background: transparent;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  padding-top: 0.6rem;
 }
 
-/* ← TAMBAH INI (Badge container untuk manga list) */
 .manga-badges-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px; /* DARI 10px 12px JADI 8px 10px */
+  padding: 8px 0;
   background: transparent;
-  border-radius: 20px 20px 0 0; /* Squircle atas */
+  border-radius: 0;
   gap: 8px;
-  min-height: 50px; /* DARI 58px JADI 50px */
+  min-height: 50px;
+  order: 2;
 }
 
 /* ============================================
@@ -273,7 +295,7 @@ header {
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #fff;
   padding: 6px 8px;
-  border-radius: 0.6rem 0.6rem 0 0;
+  border-radius: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -284,8 +306,46 @@ header {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  flex: 1; /* ← TAMBAH setelah gap: 2px; */
+  flex: 1;
   line-height: 1.2;
+}
+
+/* ============================================
+   STATUS BADGES (END/ONGOING/HIATUS)
+   ============================================ */
+.status-badge {
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 10;
+  text-align: center;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  line-height: 1.2;
+}
+
+.status-badge-end {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.75) 0%, rgba(185, 28, 28, 0.75) 100%);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.status-badge-ongoing {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.75) 0%, rgba(22, 163, 74, 0.75) 100%);
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+}
+
+.status-badge-hiatus {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.75) 0%, rgba(75, 85, 99, 0.75) 100%);
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
 }
 
 .badge-text {
@@ -322,7 +382,7 @@ header {
    ============================================ */
 .manga-title {
   color: var(--text-primary);
-  padding: 0.6rem 0.5rem 1.2rem;
+  padding: 0.4rem 0.5rem 1.2rem;
   text-align: center;
   background: transparent;
   display: -webkit-box;
@@ -334,10 +394,11 @@ header {
   word-wrap: break-word;
   overflow-wrap: break-word;
   padding-top: 0.6rem;
+  order: 3;
 }
 
 .manga-card.recently-updated .manga-title {
-  padding-top: 0.6rem;
+  padding-top: 0.4rem;
 }
 
 /* Desktop - Font lebih besar */
@@ -817,154 +878,31 @@ input:focus-visible {
   letter-spacing: 1px;
 }
 
-/* Top 5 Wrapper with Navigation Buttons */
-.top5-wrapper {
-  position: relative;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-/* Navigation Buttons */
-.top5-nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: none;
-  color: #fff;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: all 0.3s ease;
-  opacity: 0.6;
-}
-
-.top5-nav-btn:hover {
-  background: rgba(24, 119, 242, 0.7);
-  opacity: 1;
-  transform: translateY(-50%) scale(1.1);
-}
-
-.top5-nav-btn:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-.top5-nav-left {
-  left: 10px;
-}
-
-.top5-nav-right {
-  right: 10px;
-}
-
-.top5-nav-btn svg {
-  width: 28px;
-  height: 28px;
-}
-
-/* Hide buttons on desktop (grid layout) */
-@media (min-width: 1024px) {
-  .top5-nav-btn {
-    display: none;
-  }
-}
-
-/* Tablet adjustments */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .top5-nav-btn {
-    width: 45px;
-    height: 45px;
-  }
-  
-  .top5-nav-btn svg {
-    width: 24px;
-    height: 24px;
-  }
-  
-.top5-nav-left {
-  left: 10px;
-  display: none; /* Hidden by default, JavaScript will show when needed */
-}
-  
-  .top5-nav-right {
-    right: 5px;
-  }
-}
-
-/* Mobile adjustments */
-@media (max-width: 767px) {
-  .top5-nav-btn {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .top5-nav-btn svg {
-    width: 22px;
-    height: 22px;
-  }
-  
-  .top5-nav-left {
-    left: 5px;
-  }
-  
-  .top5-nav-right {
-    right: 5px;
-  }
-}
-
-@media (max-width: 480px) {
-  .top5-nav-btn {
-    width: 36px;
-    height: 36px;
-    opacity: 0.5;
-  }
-  
-  .top5-nav-btn svg {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .top5-nav-left {
-    left: 2px;
-  }
-  
-  .top5-nav-right {
-    right: 2px;
-  }
-}
-
 .top5-badges-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px; /* SAMAKAN dengan manga list */
+  padding: 8px 0;
   background: transparent;
-  border-radius: 20px 20px 0 0; /* SAMAKAN dengan manga list */
+  border-radius: 20px 20px 0 0;
   gap: 10px;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-   margin-bottom: 0; /* DARI 8px JADI 0 */
+  margin-bottom: 0;
 }
 
 /* Top 5 Container - Horizontal Scroll */
 .top5-container {
   display: flex;
-  gap: 1.5rem; /* ← DARI 1rem JADI 1.5rem */
+  gap: 1.5rem;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-snap-type: x proximity;
+  scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
-  padding: 15px; /* ← DARI 10px JADI 15px */
-  margin: 0 -15px; /* ← DARI -10px JADI -15px */
+  padding: 15px;
+  margin: 0 -15px;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
   overscroll-behavior-x: contain;
 }
 
@@ -977,9 +915,11 @@ input:focus-visible {
   position: relative;
   flex: 0 0 45%;
   background-color: transparent;
-  border-radius: 0;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
   box-shadow: none;
-  transition: transform 0.3s ease; /* ✅ UBAH: tambah transform */
+  transition: transform 0.3s ease;
   cursor: pointer;
   scroll-snap-align: start;
   overflow: visible;
@@ -1002,7 +942,7 @@ input:focus-visible {
   object-fit: cover;
   display: block;
   background-color: transparent;
-  border-radius: 0; /* ✅ UBAH: persegi seperti manga list */
+  border-radius: 0.6rem;
 }
 
 /* Ranking Badge */
