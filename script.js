@@ -1,16 +1,15 @@
 // ============================================
-// SCRIPT.JS - MAIN PAGE (index.html) - FINAL VERSION
-// CDN Optimized + Accessibility Features
+// SCRIPT.JS - WITH TOP 5 MOST VIEWED
 // ============================================
 
 /**
- * ✅ CDN IMAGE OPTIMIZER - Auto resize menggunakan images.weserv.nl (FREE)
+ * ✅ CDN IMAGE OPTIMIZER
  */
 function getResponsiveCDN(originalUrl) {
   const sizes = {
-    small: 300,   // Mobile
-    medium: 400,  // Tablet
-    large: 600    // Desktop
+    small: 300,
+    medium: 400,
+    large: 600
   };
   
   const encodeUrl = (url, width) => {
@@ -26,6 +25,9 @@ function getResponsiveCDN(originalUrl) {
   };
 }
 
+/**
+ * Fetch manga data with views
+ */
 async function fetchMangaData(repo) {
   try {
     const response = await fetch(`https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`);
@@ -42,30 +44,30 @@ async function fetchMangaData(repo) {
       
       const unlockedChapters = chaptersArray.filter(ch => !ch.locked);
       if (unlockedChapters.length > 0) {
-    unlockedChapters.sort((a, b) => {
-    const getSort = (folder) => {
-    const parts = folder.split('.');
-    const int = parseInt(parts[0]) || 0;
-    const dec = parts[1] ? parseInt(parts[1]) : 0;
-    return int + (dec / 1000);
-  };
-  return getSort(b.folder) - getSort(a.folder);
-});
+        unlockedChapters.sort((a, b) => {
+          const getSort = (folder) => {
+            const parts = folder.split('.');
+            const int = parseInt(parts[0]) || 0;
+            const dec = parts[1] ? parseInt(parts[1]) : 0;
+            return int + (dec / 1000);
+          };
+          return getSort(b.folder) - getSort(a.folder);
+        });
         latestUnlockedChapter = unlockedChapters[0].folder;
         latestUnlockedDate = unlockedChapters[0].uploadDate;
       }
       
       const lockedChapters = chaptersArray.filter(ch => ch.locked);
       if (lockedChapters.length > 0) {
-lockedChapters.sort((a, b) => {
-  const getSort = (folder) => {
-    const parts = folder.split('.');
-    const int = parseInt(parts[0]) || 0;
-    const dec = parts[1] ? parseInt(parts[1]) : 0;
-    return int + (dec / 1000);
-  };
-  return getSort(b.folder) - getSort(a.folder);
-});
+        lockedChapters.sort((a, b) => {
+          const getSort = (folder) => {
+            const parts = folder.split('.');
+            const int = parseInt(parts[0]) || 0;
+            const dec = parts[1] ? parseInt(parts[1]) : 0;
+            return int + (dec / 1000);
+          };
+          return getSort(b.folder) - getSort(a.folder);
+        });
         latestLockedChapter = lockedChapters[0].folder;
         latestLockedDate = lockedChapters[0].uploadDate;
       }
@@ -75,6 +77,7 @@ lockedChapters.sort((a, b) => {
       lastUpdated: data.lastUpdated || null,
       lastChapterUpdate: data.lastChapterUpdate || data.lastUpdated || null,
       totalChapters: Object.keys(data.chapters || {}).length,
+      views: data.manga?.views || 0,
       latestUnlockedChapter,
       latestUnlockedDate,
       latestLockedChapter,
@@ -86,6 +89,7 @@ lockedChapters.sort((a, b) => {
       lastUpdated: null,
       lastChapterUpdate: null,
       totalChapters: 0,
+      views: 0,
       latestUnlockedChapter: null,
       latestUnlockedDate: null,
       latestLockedChapter: null,
@@ -99,11 +103,9 @@ function isRecentlyUpdated(lastChapterUpdateStr) {
   const lastChapterUpdate = new Date(lastChapterUpdateStr);
   if (!lastChapterUpdate || isNaN(lastChapterUpdate.getTime())) return false;
   
-  // ✅ FIX: Normalize to WIB (GMT+7) timezone
   const now = new Date();
   const wibNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
   
-  // Calculate difference in days
   const diffMs = wibNow - lastChapterUpdate;
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
   
@@ -132,52 +134,135 @@ function getRelativeTime(lastChapterUpdateStr) {
   });
 }
 
+const formatChapter = (chapterNum) => {
+  if (!chapterNum) return '';
+  const chapterStr = chapterNum.toString().toLowerCase();
+  if (chapterStr.includes('oneshot') || chapterStr.includes('one-shot') || chapterStr === 'os') {
+    return 'Oneshot';
+  }
+  return chapterNum.toString();
+};
+
 /**
- * ✅ CREATE CARD - WITH ACCESSIBILITY
+ * Format number with thousand separator
+ */
+function formatViews(views) {
+  return views.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+/**
+ * ✅ CREATE TOP 5 CARD - WITH RANKING BADGE
+ */
+function createTop5Card(manga, mangaData, rank, index = 0) {
+  const cdnUrls = getResponsiveCDN(manga.cover);
+  
+  const srcset = `
+    ${cdnUrls.small} 300w,
+    ${cdnUrls.medium} 400w,
+    ${cdnUrls.large} 600w
+  `.trim();
+  
+  const sizes = '(max-width: 480px) 45vw, (max-width: 768px) 30vw, 20vw';
+  
+  const loadingAttr = index < 5 ? 'eager' : 'lazy';
+  const fetchPriority = index < 5 ? ' fetchpriority="high"' : '';
+  const decodingAttr = index < 5 ? ' decoding="sync"' : ' decoding="async"';
+  
+  // Ranking badge styles
+  const rankBadges = {
+    1: { emoji: '🥇', gradient: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', text: '#000' },
+    2: { emoji: '🥈', gradient: 'linear-gradient(135deg, #C0C0C0 0%, #808080 100%)', text: '#000' },
+    3: { emoji: '🥉', gradient: 'linear-gradient(135deg, #CD7F32 0%, #8B4513 100%)', text: '#fff' },
+    4: { emoji: '🏆', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: '#fff' },
+    5: { emoji: '🏆', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: '#fff' }
+  };
+  
+  const badge = rankBadges[rank];
+  
+  const ariaLabel = `${manga.title}, Rank ${rank}, ${formatViews(mangaData.views)} views`;
+  
+  return `
+    <div class="top5-card" 
+         role="listitem"
+         tabindex="0"
+         data-manga-id="${manga.id}"
+         aria-label="${ariaLabel}"
+         onclick="window.location.href='info-manga.html?repo=${manga.id}'"
+         onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
+      
+      <!-- ✅ BADGES CONTAINER DI LUAR -->
+      <div class="top5-badges-container">
+        <div class="rank-badge" style="background: ${badge.gradient}; color: ${badge.text};">
+          <span class="rank-number">#${rank}</span>
+          <span class="rank-emoji">${badge.emoji}</span>
+        </div>
+        
+        <div class="views-badge-top5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span>${formatViews(mangaData.views)}</span>
+        </div>
+      </div>
+      
+      <!-- Cover Image -->
+      <img 
+        src="${cdnUrls.medium}" 
+        srcset="${srcset}"
+        sizes="${sizes}"
+        alt="${manga.title} cover image"
+        loading="${loadingAttr}"
+        ${fetchPriority}
+        ${decodingAttr}
+        onerror="this.src='${manga.cover}'"
+        aria-hidden="true">
+      
+      <!-- Title -->
+      <div class="manga-title" aria-hidden="true">${manga.title}</div>
+    </div>`;
+}
+
+/**
+ * ✅ CREATE REGULAR CARD (for Manga List)
  */
 function createCard(manga, mangaData, index = 0) {
   const isRecent = isRecentlyUpdated(mangaData.lastChapterUpdate);
   
-const formatChapter = (chapterNum) => {
-    if (!chapterNum) return '';
-    const chapterStr = chapterNum.toString().toLowerCase();
-    if (chapterStr.includes('oneshot') || chapterStr.includes('one-shot') || chapterStr === 'os') {
-      return 'Oneshot';
+  let chapterText = '';
+  if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
+    const unlockedDate = mangaData.latestUnlockedDate ? new Date(mangaData.latestUnlockedDate) : new Date(0);
+    const lockedDate = mangaData.latestLockedDate ? new Date(mangaData.latestLockedDate) : new Date(0);
+    
+    if (lockedDate > unlockedDate) {
+      const lockedTime = getRelativeTime(mangaData.latestLockedDate);
+      chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
+    } else {
+      const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
+      chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
     }
-    // ✅ Return as-is untuk chapter dengan titik (jangan pakai parseFloat)
-    return chapterNum.toString();
-  };
-
-  
-let chapterText = '';
-if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
-  const unlockedDate = mangaData.latestUnlockedDate ? new Date(mangaData.latestUnlockedDate) : new Date(0);
-  const lockedDate = mangaData.latestLockedDate ? new Date(mangaData.latestLockedDate) : new Date(0);
-  
-  // ✅ Bandingkan tanggal, bukan nomor chapter
-  if (lockedDate > unlockedDate) {
-    const lockedTime = getRelativeTime(mangaData.latestLockedDate);
-    chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
-  } else {
+  } else if (mangaData.latestUnlockedChapter) {
     const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
     chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
+  } else if (mangaData.latestLockedChapter) {
+    const lockedTime = getRelativeTime(mangaData.latestLockedDate);
+    chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
   }
-} else if (mangaData.latestUnlockedChapter) {
-  const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
-  chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
-} else if (mangaData.latestLockedChapter) {
-  const lockedTime = getRelativeTime(mangaData.latestLockedDate);
-  chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
-}
   
-  const updatedBadge = isRecent && chapterText ? `
-    <div class="updated-badge" aria-label="Recently updated: ${chapterText}">
-      <span class="badge-text">UPDATED!</span>
-      <span class="badge-chapter">${chapterText}</span>
+const updatedBadge = isRecent && chapterText ? `
+    <div class="manga-badges-container">
+      <div class="updated-badge" aria-label="Recently updated: ${chapterText}">
+        <span class="badge-text">UPDATED!</span>
+        <span class="badge-chapter">${chapterText}</span>
+      </div>
     </div>
-  ` : '';
-  
-  const placeholderSVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420' viewBox='0 0 300 420'%3E%3Crect width='300' height='420' fill='%231a1a1a'/%3E%3Cg fill='%23666'%3E%3Cpath d='M150 160c-22.091 0-40 17.909-40 40s17.909 40 40 40 40-17.909 40-40-17.909-40-40-40zm0 60c-11.046 0-20-8.954-20-20s8.954-20 20-20 20 8.954 20 20-8.954 20-20 20z'/%3E%3Cpath d='M250 120H50c-11.046 0-20 8.954-20 20v160c0 11.046 8.954 20 20 20h200c11.046 0 20-8.954 20-20V140c0-11.046-8.954-20-20-20zm0 180H50V140h200v160z'/%3E%3C/g%3E%3Ctext x='150' y='350' font-family='Arial,sans-serif' font-size='16' fill='%23666' text-anchor='middle'%3ENo Image%3C/text%3E%3C/svg%3E`;
+  ` : `
+    <div class="manga-badges-container" style="visibility: hidden;">
+      <div class="updated-badge">
+        <span class="badge-text">-</span>
+      </div>
+    </div>
+  `;
   
   const cdnUrls = getResponsiveCDN(manga.cover);
   
@@ -194,10 +279,9 @@ if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
   const fetchPriority = index < eagerLoadCount ? ' fetchpriority="high"' : '';
   const decodingAttr = index < eagerLoadCount ? ' decoding="sync"' : ' decoding="async"';
   
-  // ✅ ARIA label for screen readers
   const ariaLabel = `${manga.title}${chapterText ? ', ' + chapterText : ''}${isRecent ? ', recently updated' : ''}`;
   
-  return `
+return `
     <div class="manga-card ${isRecent ? 'recently-updated' : ''}" 
          role="listitem"
          tabindex="0"
@@ -205,6 +289,7 @@ if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
          aria-label="${ariaLabel}"
          onclick="window.location.href='info-manga.html?repo=${manga.id}'"
          onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
+      ${updatedBadge}
       <img 
         src="${cdnUrls.medium}" 
         srcset="${srcset}"
@@ -215,34 +300,148 @@ if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
         ${decodingAttr}
         onerror="this.src='${manga.cover}'"
         aria-hidden="true">
-      ${updatedBadge}
       <div class="manga-title" aria-hidden="true">${manga.title}</div>
     </div>`;
 }
 
 /**
- * ✅ SCREEN READER ANNOUNCER
+ * ✅ RENDER TOP 5 SECTION
  */
-function announceToScreenReader(message) {
-  const existingAnnouncer = document.getElementById('screenReaderAnnouncer');
-  if (existingAnnouncer) existingAnnouncer.remove();
+async function renderTop5(mangaList) {
+  const top5Container = document.getElementById("top5Container");
   
-  const announcer = document.createElement('div');
-  announcer.id = 'screenReaderAnnouncer';
-  announcer.setAttribute('role', 'status');
-  announcer.setAttribute('aria-live', 'polite');
-  announcer.setAttribute('aria-atomic', 'true');
-  announcer.className = 'visually-hidden';
-  announcer.textContent = message;
+  if (!top5Container) return;
   
-  document.body.appendChild(announcer);
-  setTimeout(() => announcer.remove(), 5000);
+  top5Container.innerHTML = '<div class="loading-top5">Loading Top 5...</div>';
+  
+  // Fetch all manga with views
+  const mangaWithViews = await Promise.all(
+    mangaList.map(async (manga) => {
+      const mangaData = await fetchMangaData(manga.repo);
+      return { manga, mangaData, views: mangaData.views };
+    })
+  );
+  
+  // Sort by views (descending) and take top 5
+  const top5 = mangaWithViews
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 5);
+  
+  // Render top 5 cards
+  top5Container.innerHTML = top5.map(({ manga, mangaData }, index) => 
+    createTop5Card(manga, mangaData, index + 1, index)
+  ).join("");
+  
+  // Initialize scroll navigation
+  initTop5Navigation();
+  
+  console.log('✅ Top 5 Most Viewed loaded');
 }
 
 /**
- * ✅ RENDER MANGA - WITH ANNOUNCEMENTS
+ * ✅ TOP 5 SCROLL NAVIGATION
  */
-async function renderManga(filteredList) {
+function initTop5Navigation() {
+  const container = document.getElementById('top5Container');
+  const btnLeft = document.getElementById('top5NavLeft');
+  const btnRight = document.getElementById('top5NavRight');
+  
+  if (!container || !btnLeft || !btnRight) return;
+  
+  let currentIndex = 0;
+  const cards = container.querySelectorAll('.top5-card');
+  const totalCards = cards.length;
+  
+  // Function to update button visibility
+  function updateButtons() {
+    // Hide left button if at start
+    if (currentIndex <= 0) {
+      btnLeft.style.display = 'none';
+    } else {
+      btnLeft.style.display = 'flex';
+    }
+    
+    // Hide right button if at end
+    if (currentIndex >= totalCards - 1) {
+      btnRight.style.display = 'none';
+    } else {
+      btnRight.style.display = 'flex';
+    }
+  }
+  
+  // Function to scroll to specific card
+  function scrollToCard(index) {
+    if (index < 0 || index >= totalCards) return;
+    
+    const card = cards[index];
+    const containerRect = container.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    
+    // Calculate scroll position to center the card
+    const scrollLeft = card.offsetLeft - (containerRect.width / 2) + (cardRect.width / 2);
+    
+    container.scrollTo({
+      left: scrollLeft,
+      behavior: 'smooth'
+    });
+    
+    currentIndex = index;
+    updateButtons();
+  }
+  
+  // Scroll right - go to next card
+  btnRight.addEventListener('click', () => {
+    if (currentIndex < totalCards - 1) {
+      scrollToCard(currentIndex + 1);
+    }
+  });
+  
+  // Scroll left - go to previous card
+  btnLeft.addEventListener('click', () => {
+    if (currentIndex > 0) {
+      scrollToCard(currentIndex - 1);
+    }
+  });
+  
+  // Update current index on manual scroll
+  container.addEventListener('scroll', () => {
+    const containerCenter = container.scrollLeft + (container.offsetWidth / 2);
+    
+    let closestIndex = 0;
+    let closestDistance = Infinity;
+    
+    cards.forEach((card, index) => {
+      const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
+      const distance = Math.abs(containerCenter - cardCenter);
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+    
+    if (closestIndex !== currentIndex) {
+      currentIndex = closestIndex;
+      updateButtons();
+    }
+  });
+  
+// Initial update
+  updateButtons();
+  
+  // Force check after short delay (for initial render)
+  setTimeout(updateButtons, 100);
+  
+  // Update on window resize
+  window.addEventListener('resize', () => {
+    scrollToCard(currentIndex);
+  });
+}
+
+/**
+ * ✅ RENDER ALL MANGA LIST (sorted by last update)
+ */
+async function renderMangaList(filteredList) {
   const mangaGrid = document.getElementById("mangaGrid");
   const loadingIndicator = document.getElementById("loadingIndicator");
   
@@ -256,6 +455,7 @@ async function renderManga(filteredList) {
     })
   );
   
+  // Sort by last update (descending)
   mangaWithData.sort((a, b) => {
     const dateA = a.lastChapterUpdate ? new Date(a.lastChapterUpdate) : new Date(0);
     const dateB = b.lastChapterUpdate ? new Date(b.lastChapterUpdate) : new Date(0);
@@ -273,7 +473,6 @@ async function renderManga(filteredList) {
         <p style="font-size: 14px;">Coba kata kunci yang berbeda</p>
       </div>
     `;
-    announceToScreenReader('Tidak ada manga yang ditemukan');
     return;
   }
   
@@ -281,8 +480,7 @@ async function renderManga(filteredList) {
     createCard(manga, mangaData, index)
   ).join("");
   
-  announceToScreenReader(`Menampilkan ${mangaWithData.length} manga`);
-  console.log('✅ Manga loaded with accessibility support');
+  console.log('✅ Manga list loaded');
 }
 
 /**
@@ -292,8 +490,8 @@ function setupKeyboardNavigation() {
   document.addEventListener('keydown', function(e) {
     const focusedElement = document.activeElement;
     
-    if (focusedElement && focusedElement.classList.contains('manga-card')) {
-      const cards = Array.from(document.querySelectorAll('.manga-card'));
+    if (focusedElement && (focusedElement.classList.contains('manga-card') || focusedElement.classList.contains('top5-card'))) {
+      const cards = Array.from(document.querySelectorAll('.manga-card, .top5-card'));
       const currentIndex = cards.indexOf(focusedElement);
       let nextIndex = -1;
       
@@ -317,7 +515,7 @@ function setupKeyboardNavigation() {
 }
 
 /**
- * ✅ SEARCH ACCESSIBILITY
+ * ✅ SEARCH FUNCTIONALITY
  */
 function setupSearchAccessibility() {
   const searchInput = document.getElementById("searchInput");
@@ -327,27 +525,9 @@ function setupSearchAccessibility() {
     if (e.key === 'Escape') {
       this.value = '';
       this.dispatchEvent(new Event('input'));
-      announceToScreenReader('Pencarian dibersihkan');
     }
   });
 }
-
-/**
- * ✅ PRELOAD FIRST IMAGE (LCP)
- */
-(function() {
-  if (typeof MANGA_LIST !== 'undefined' && MANGA_LIST.length > 0) {
-    const firstManga = MANGA_LIST[0];
-    const preloadLink = document.createElement('link');
-    preloadLink.rel = 'preload';
-    preloadLink.as = 'image';
-    const encodedUrl = encodeURIComponent(firstManga.cover);
-    preloadLink.href = `https://images.weserv.nl/?url=${encodedUrl}&w=400&q=85&output=webp`;
-    preloadLink.fetchpriority = 'high';
-    document.head.appendChild(preloadLink);
-    console.log('🚀 LCP image preloaded:', firstManga.title);
-  }
-})();
 
 /**
  * ✅ DOM CONTENT LOADED
@@ -359,12 +539,21 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
   
-  console.log('🚀 Initializing with accessibility...');
+  console.log('🚀 Initializing...');
   
   setupKeyboardNavigation();
   setupSearchAccessibility();
-  renderManga(mangaList);
   
+  // Tambahkan setelah setupSearchAccessibility();
+  renderTop5(mangaList);      // ← TAMBAH INI
+  renderMangaList(mangaList);  // ← TAMBAH INI
+
+    // Force hide left button on initial load
+  setTimeout(() => {
+    const btnLeft = document.getElementById('top5NavLeft');
+    if (btnLeft) btnLeft.style.display = 'none';
+  }, 200);
+
   const searchInput = document.getElementById("searchInput");
   searchInput.addEventListener("input", function() {
     clearTimeout(searchTimeout);
@@ -372,12 +561,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     searchTimeout = setTimeout(() => {
       if (query === '') {
-        renderManga(mangaList);
+        renderMangaList(mangaList);
       } else {
         const filtered = mangaList.filter(manga => 
           manga.title.toLowerCase().includes(query)
         );
-        renderManga(filtered);
+        renderMangaList(filtered);
       }
     }, 300);
   });
