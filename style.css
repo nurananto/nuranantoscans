@@ -232,7 +232,7 @@ header {
   border-radius: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.5rem;
-  box-shadow: none;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
   display: flex;
@@ -369,8 +369,8 @@ header {
 
 /* Recently Updated Card - Efek glow biru */
 .manga-card.recently-updated {
-  border: none; /* HAPUS border */
-  box-shadow: none; /* HAPUS shadow */
+  border: 1px solid rgba(24, 119, 242, 0.5);
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
 }
 
 .manga-card.recently-updated:hover {
@@ -918,7 +918,7 @@ input:focus-visible {
   border-radius: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.5rem;
-  box-shadow: none;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
   transition: transform 0.3s ease;
   cursor: pointer;
   scroll-snap-align: start;
