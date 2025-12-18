@@ -26,18 +26,22 @@ body {
   padding-bottom: 100px;
 }
 
-/* ============================================
-   HEADER STYLES - ✅ FIXED: SAMA dengan info-manga.css
-   ============================================ */
 header {
-  background-color: #0a0a0a; /* ✅ Same as body background */
-  box-shadow: none; /* ✅ No shadow */
-  padding: 0; /* ✅ No padding */
-  position: static; /* ✅ Not sticky */
+  background-color: #0a0a0a;
+  box-shadow: none;
+  padding: 0;
+  position: static;
   z-index: 1000;
   border-bottom: none;
-  margin: 0 auto 1.5rem; /* ✅ Same margin as info-manga */
-  max-width: 1400px; /* ✅ Centered like info-manga */
+  margin: 0 auto 0;
+  max-width: 1400px;
+}
+
+.header-border {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin-top: 1rem;
+  margin-bottom: 2rem;
 }
 
 .header-content {
@@ -122,37 +126,54 @@ header {
   white-space: nowrap;
 }
 
-/* ============================================
-   SEARCH SECTION
-   ============================================ */
-.search-section {
-  max-width: 1400px;
-  margin: 0 auto 0.5rem;
-  padding: 0 0; /* ✅ No side padding on desktop */
+/* Manga List Header - Flex Layout */
+.manga-list-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0;
+}
+
+.manga-list-heading {
+  font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 #searchInput {
-  width: 100%;
-  padding: 0.75rem 1.25rem;
-  font-size: 1rem;
-  border-radius: 12px;
-  border: 2px solid var(--border-color);
+  width: 280px;
+  max-width: 280px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
   outline: none;
   background: #222;
-  color: var(--text-primary);
-  transition: all 0.3s ease;
+  color: #fff;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  flex-shrink: 0;
+  margin: 0;
 }
 
 #searchInput:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
   background-color: #242526;
 }
 
 #searchInput::placeholder {
-  color: var(--text-secondary);
+  color: #888;
 }
 
 /* ============================================
@@ -861,10 +882,9 @@ input:focus-visible {
    Tambahkan CSS ini di AKHIR file style.css
    ============================================ */
 
-/* Top 5 Section */
 .top5-section {
   max-width: 1400px;
-  margin: 0 auto 0.5rem;
+  margin: 0 auto 2.5rem;
   padding: 0;
 }
 
@@ -1020,16 +1040,6 @@ input:focus-visible {
 .manga-list-section {
   max-width: 1400px;
   margin: 0 auto;
-}
-
-.manga-list-heading {
-  text-align: center;
-  font-size: clamp(1.3rem, 3.5vw, 1.8rem);
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 /* ============================================
@@ -1234,4 +1244,79 @@ input:focus-visible {
   outline: none;
   transform: scale(1.03);
   z-index: 10;
+}
+
+/* ============================================
+   RESPONSIVE - MANGA LIST HEADER
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .manga-list-header {
+    gap: 1.25rem;
+  }
+  
+  #searchInput {
+    width: 220px;
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 767px) {
+  .header-border {
+    margin-bottom: 1.5rem;
+  }
+  
+  .manga-list-header {
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding: 0;
+    align-items: center;
+    display: flex;
+  }
+  
+  .manga-list-heading {
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0.6rem 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    height: 2.4rem;
+  }
+  
+  #searchInput {
+    width: 160px;
+    max-width: 160px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    height: 2.4rem;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .manga-list-header {
+    gap: 0.5rem;
+    padding: 0;
+    align-items: center;
+    display: flex;
+  }
+  
+  .manga-list-heading {
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0.55rem 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    height: 2.2rem;
+  }
+  
+  #searchInput {
+    width: 130px;
+    max-width: 130px;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.8rem;
+    height: 2.2rem;
+    box-sizing: border-box;
+  }
 }
