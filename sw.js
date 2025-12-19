@@ -1,8 +1,8 @@
-// Service Worker for Nurananto Scanlation v3.3
-// ✅ FULLY FIXED: Response clone error eliminated
-// 📅 Last updated: 2025-12-16
+// Service Worker for Nurananto Scanlation v4.0
+// ✅ FULLY FIXED: CORS preflight & cache cleanup
+// 📅 Last updated: 2025-12-19
 
-// ✅ STABLE CACHE NAMES - only change for major breaking changes
+// ✅ STABLE CACHE NAMES
 const CACHE_VERSION = 'v1';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
@@ -27,6 +27,13 @@ const STATIC_ASSETS = [
     './assets/mangadex-logo.png',
     './assets/book.png',
     './assets/trakteer-icon.png'
+];
+
+// ✅ CRITICAL: Files that should NEVER be cached
+const NEVER_CACHE = [
+    'manga.json',
+    'version.txt',
+    'manifest.json'
 ];
 
 // Install - cache static assets
@@ -63,37 +70,40 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
-// ✅ FULLY FIXED: Proper clone handling
+// ✅ Helper: Check if URL should never be cached
+function shouldNeverCache(url) {
+    return NEVER_CACHE.some(pattern => url.includes(pattern));
+}
+
+// ✅ CRITICAL FIX: Bypass SW completely for certain requests
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
     
-    // Skip cross-origin except GitHub
-    if (url.origin !== location.origin) {
-        // GitHub raw content (covers & manga.json)
-        // ✅ CRITICAL: NEVER cache manga.json & version.txt!
-if (url.pathname.includes('manga.json')) {
-    console.log('🚫 SW: Bypassing cache for manga.json');
-    event.respondWith(fetch(request));
-    return;
-}
-
-if (url.pathname.includes('version.txt')) {
-    console.log('🚫 SW: Bypassing cache for version.txt');
-    event.respondWith(fetch(request));
-    return;
-}
-
-// GitHub raw content (covers only, NOT manga.json!)
-if (url.hostname === 'raw.githubusercontent.com') {
-    // Double check - skip manga.json
-    if (url.pathname.includes('manga.json')) {
-        event.respondWith(fetch(request));
+    // ✅ BYPASS SW completely for files that should never be cached
+    if (shouldNeverCache(url.pathname)) {
+        console.log('🚫 SW: Complete bypass for:', url.pathname);
+        // Don't call event.respondWith() - let browser handle it directly
         return;
     }
-    event.respondWith(handleGitHubRequest(request));
-    return;
-}
+    
+    // Skip cross-origin except GitHub & CDN
+    if (url.origin !== location.origin) {
+        // ✅ GitHub raw content (covers & encrypted manifests ONLY)
+        if (url.hostname === 'raw.githubusercontent.com') {
+            // Double check - bypass if it's a never-cache file
+            if (shouldNeverCache(url.pathname)) {
+                return;
+            }
+            event.respondWith(handleGitHubRequest(request));
+            return;
+        }
+        
+        // ✅ CDN images (images.weserv.nl, cdn.nuranantoscans.my.id)
+        if (url.hostname.includes('weserv.nl') || url.hostname.includes('cdn.nuranantoscans.my.id')) {
+            event.respondWith(handleCDNRequest(request));
+            return;
+        }
         
         // Other external - no caching
         return;
@@ -115,15 +125,53 @@ if (url.hostname === 'raw.githubusercontent.com') {
     event.respondWith(handleDynamicRequest(request, url));
 });
 
-// ✅ GitHub request handler - stale-while-revalidate
+// ✅ GitHub request handler - network first with cache fallback
 async function handleGitHubRequest(request) {
+    const cache = await caches.open(IMAGE_CACHE);
+    
+    try {
+        // ✅ CRITICAL: Use simple fetch without intercepting CORS
+        const response = await fetch(request, {
+            mode: 'cors',
+            credentials: 'omit'
+        });
+        
+        if (response && response.ok) {
+            // Clone immediately after successful fetch
+            const clonedResponse = response.clone();
+            cache.put(request, clonedResponse).catch(() => {});
+        }
+        return response;
+    } catch (err) {
+        console.warn('⚠️ GitHub fetch failed, trying cache:', err.message);
+        
+        // Fallback to cache
+        const cached = await cache.match(request);
+        if (cached) {
+            console.log('📦 Serving from cache:', request.url);
+            return cached;
+        }
+        
+        // No cache available
+        return new Response('Network error', { 
+            status: 408,
+            statusText: 'Request Timeout'
+        });
+    }
+}
+
+// ✅ CDN request handler - stale-while-revalidate
+async function handleCDNRequest(request) {
     const cache = await caches.open(IMAGE_CACHE);
     const cached = await cache.match(request);
     
-    // Return cached immediately, update in background
+    // Return cached immediately if available
     if (cached) {
-        // Update cache in background (don't await)
-        fetch(request)
+        // Update in background (don't await)
+        fetch(request, {
+            mode: 'cors',
+            credentials: 'omit'
+        })
             .then(response => {
                 if (response && response.ok) {
                     cache.put(request, response.clone());
@@ -136,19 +184,19 @@ async function handleGitHubRequest(request) {
     
     // No cache - fetch fresh
     try {
-        const response = await fetch(request);
+        const response = await fetch(request, {
+            mode: 'cors',
+            credentials: 'omit'
+        });
+        
         if (response && response.ok) {
-            // Clone IMMEDIATELY after fetch, before any other operation
             const clonedResponse = response.clone();
             cache.put(request, clonedResponse).catch(() => {});
         }
         return response;
     } catch (err) {
-        console.warn('GitHub fetch failed:', err);
-        return new Response('Network error', { 
-            status: 408,
-            statusText: 'Request Timeout'
-        });
+        console.warn('⚠️ CDN fetch failed:', err);
+        return new Response('Image not found', { status: 404 });
     }
 }
 
@@ -164,18 +212,16 @@ async function handleImageRequest(request) {
     try {
         const response = await fetch(request);
         if (response && response.ok) {
-            // Clone immediately
             cache.put(request, response.clone()).catch(() => {});
         }
         return response;
     } catch (err) {
-        console.warn('Image fetch failed:', err);
-        // Return cached even if stale
+        console.warn('⚠️ Image fetch failed:', err);
         return cached || new Response('Image not found', { status: 404 });
     }
 }
 
-// ✅ Static request handler - cache first
+// ✅ Static request handler - cache first with network fallback
 async function handleStaticRequest(request) {
     const cached = await caches.match(request);
     
@@ -187,12 +233,11 @@ async function handleStaticRequest(request) {
         const response = await fetch(request);
         if (response && response.ok) {
             const cache = await caches.open(STATIC_CACHE);
-            // Clone immediately
             cache.put(request, response.clone()).catch(() => {});
         }
         return response;
     } catch (err) {
-        console.warn('Static fetch failed:', err);
+        console.warn('⚠️ Static fetch failed:', err);
         return cached || new Response('Not found', { status: 404 });
     }
 }
@@ -202,16 +247,15 @@ async function handleDynamicRequest(request, url) {
     try {
         const response = await fetch(request);
         
-        // Cache successful responses (except manga.json)
-        if (response && response.ok && !url.pathname.includes('manga.json')) {
+        // Cache successful responses (except never-cache files)
+        if (response && response.ok && !shouldNeverCache(url.pathname)) {
             const cache = await caches.open(DYNAMIC_CACHE);
-            // Clone immediately
             cache.put(request, response.clone()).catch(() => {});
         }
         
         return response;
     } catch (err) {
-        console.warn('Dynamic fetch failed:', err);
+        console.warn('⚠️ Dynamic fetch failed:', err);
         
         // Fallback to cache
         const cached = await caches.match(request);

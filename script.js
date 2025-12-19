@@ -9,16 +9,51 @@
  * ✅ Force fresh fetch - no cache
  */
 async function fetchFreshJSON(url) {
-    const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
-    const response = await fetch(url + '?t=' + cacheBuster, {
-        cache: 'no-store'
-    });
-    
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+    try {
+        const urlObj = new URL(url);
+        const isCrossOrigin = urlObj.origin !== window.location.origin;
+        
+        // For GitHub: NO query string (prevents CORS preflight)
+        if (isCrossOrigin && urlObj.hostname.includes('githubusercontent.com')) {
+            const response = await fetch(url, {
+                method: 'GET',
+                cache: 'no-store',
+                mode: 'cors',
+                credentials: 'omit',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                    'Pragma': 'no-cache'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+        
+        // For same-origin: can use query string
+        const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
+        const response = await fetch(url + '?t=' + cacheBuster, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return await response.json();
+        
+    } catch (error) {
+        console.error('❌ fetchFreshJSON failed:', error);
+        throw error;
     }
-    
-    return await response.json();
 }
 
 function getResponsiveCDN(originalUrl) {
