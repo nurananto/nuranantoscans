@@ -41,7 +41,7 @@ header {
   height: 1px;
   background: rgba(255, 255, 255, 0.15);
   margin-top: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .header-content {
@@ -884,7 +884,7 @@ input:focus-visible {
 
 .top5-section {
   max-width: 1400px;
-  margin: 0 auto 2.5rem;
+  margin: 0 auto 1rem;
   padding: 0;
 }
 
@@ -892,7 +892,8 @@ input:focus-visible {
   text-align: center;
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  padding-top: 0;
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -1121,13 +1122,19 @@ input:focus-visible {
    RESPONSIVE - MOBILE
    ============================================ */
 @media (max-width: 767px) {
+  .header-border {
+    margin-top: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
   .top5-section {
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
   }
   
   .top5-heading {
     font-size: 1.3rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+    padding-top: 0;
   }
   
   .top5-container {
@@ -1188,8 +1195,24 @@ input:focus-visible {
    RESPONSIVE - SMALL MOBILE
    ============================================ */
 @media (max-width: 480px) {
+  .header-border {
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .top5-section {
+    margin-bottom: 0.75rem;
+  }
+  
   .top5-heading {
     font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    padding-top: 0;
+  }
+  
+  .manga-list-header {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
   }
   
   .top5-card {
@@ -1267,14 +1290,15 @@ input:focus-visible {
   
   .manga-list-header {
     gap: 0.5rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
+    margin-top: 0;
     padding: 0;
     align-items: center;
     display: flex;
   }
   
   .manga-list-heading {
-    font-size: 1rem;
+    font-size: 1.3rem;
     line-height: 1;
     padding: 0.6rem 0;
     margin: 0;
@@ -1302,7 +1326,7 @@ input:focus-visible {
   }
   
   .manga-list-heading {
-    font-size: 0.9rem;
+    font-size: 1.3rem;
     line-height: 1;
     padding: 0.55rem 0;
     margin: 0;

@@ -360,15 +360,14 @@ async function renderTop5(mangaList) {
   console.log('✅ Top 5 Most Viewed loaded');
 }
 
-/**
- * ✅ RENDER ALL MANGA LIST (sorted by last update)
- */
-async function renderMangaList(filteredList) {
+async function renderMangaList(filteredList, showLoading = true) {
   const mangaGrid = document.getElementById("mangaGrid");
   const loadingIndicator = document.getElementById("loadingIndicator");
   
-  loadingIndicator.classList.add('show');
-  mangaGrid.innerHTML = '';
+  if (showLoading) {
+    loadingIndicator.classList.add('show');
+    mangaGrid.innerHTML = '';
+  }
   
   const mangaWithData = await Promise.all(
     filteredList.map(async (manga) => {
@@ -386,7 +385,9 @@ async function renderMangaList(filteredList) {
     return timeB - timeA;
   });
   
-  loadingIndicator.classList.remove('show');
+  if (showLoading) {
+    loadingIndicator.classList.remove('show');
+  }
   
   if (mangaWithData.length === 0) {
     mangaGrid.innerHTML = `
@@ -470,19 +471,55 @@ document.addEventListener('DOMContentLoaded', function() {
   renderTop5(mangaList);      // ← TAMBAH INI
   renderMangaList(mangaList);  // ← TAMBAH INI
 
-  const searchInput = document.getElementById("searchInput");
+const searchInput = document.getElementById("searchInput");
+  let currentSearch = '';
+  
   searchInput.addEventListener("input", function() {
     clearTimeout(searchTimeout);
     const query = this.value.toLowerCase().trim();
+    currentSearch = query;
     
-    searchTimeout = setTimeout(() => {
+    searchTimeout = setTimeout(async () => {
+      const mangaGrid = document.getElementById("mangaGrid");
+      
       if (query === '') {
-        renderMangaList(mangaList);
+        await renderMangaList(mangaList, false); // ← UBAH INI: tambah parameter false
       } else {
         const filtered = mangaList.filter(manga => 
           manga.title.toLowerCase().includes(query)
         );
-        renderMangaList(filtered);
+        
+        // Fetch data WITHOUT loading indicator
+        const mangaWithData = await Promise.all(
+          filtered.map(async (manga) => {
+            const mangaData = await fetchMangaData(manga.repo);
+            return { manga, mangaData, lastChapterUpdate: mangaData.lastChapterUpdate };
+          })
+        );
+        
+        // Only update if this is still the current search
+        if (currentSearch === query) {
+          mangaWithData.sort((a, b) => {
+            const dateA = a.lastChapterUpdate ? new Date(a.lastChapterUpdate) : new Date(0);
+            const dateB = b.lastChapterUpdate ? new Date(b.lastChapterUpdate) : new Date(0);
+            const timeA = isNaN(dateA.getTime()) ? 0 : dateA.getTime();
+            const timeB = isNaN(dateB.getTime()) ? 0 : dateB.getTime();
+            return timeB - timeA;
+          });
+          
+          if (mangaWithData.length === 0) {
+            mangaGrid.innerHTML = `
+              <div class="empty-state" role="status">
+                <p>Tidak ada manga yang ditemukan</p>
+                <p style="font-size: 14px;">Coba kata kunci yang berbeda</p>
+              </div>
+            `;
+          } else {
+            mangaGrid.innerHTML = mangaWithData.map(({ manga, mangaData }, index) => 
+              createCard(manga, mangaData, index)
+            ).join("");
+          }
+        }
       }
     }, 300);
   });
