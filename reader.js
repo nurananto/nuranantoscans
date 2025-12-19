@@ -7,57 +7,7 @@
 // DECRYPTION MODULE
 // ============================================
 
-const SECRET_TOKEN = 'XfXqB1d0ud6rZCVPqzpzKxowGVpZ0GBU';
 const ENCRYPTION_ALGORITHM = 'AES-CBC';
-
-/**
- * Derive encryption key from token using SHA-256
- */
-async function deriveKeyFromToken(token) {
-    const encoder = new TextEncoder();
-    const keyMaterial = encoder.encode(token);
-    
-    const hashBuffer = await crypto.subtle.digest('SHA-256', keyMaterial);
-    
-    const key = await crypto.subtle.importKey(
-        'raw',
-        hashBuffer,
-        { name: ENCRYPTION_ALGORITHM },
-        false,
-        ['decrypt']
-    );
-    
-    return key;
-}
-
-/**
- * Decrypt single encrypted text
- */
-async function decryptText(encryptedText, key) {
-    try {
-        const [ivHex, encryptedHex] = encryptedText.split(':');
-        
-        if (!ivHex || !encryptedHex) {
-            throw new Error('Invalid encrypted format');
-        }
-        
-        const iv = new Uint8Array(ivHex.match(/.{2}/g).map(byte => parseInt(byte, 16)));
-        const encrypted = new Uint8Array(encryptedHex.match(/.{2}/g).map(byte => parseInt(byte, 16)));
-        
-        const decrypted = await crypto.subtle.decrypt(
-            { name: ENCRYPTION_ALGORITHM, iv: iv },
-            key,
-            encrypted
-        );
-        
-        const decoder = new TextDecoder();
-        return decoder.decode(decrypted);
-        
-    } catch (error) {
-        console.error('❌ Decryption error:', error);
-        return null;
-    }
-}
 
 /**
  * ✅ Force fresh fetch - no cache
@@ -461,57 +411,6 @@ function clearValidatedChapter(repoName, chapter) {
     const key = `validated_${repoName}_${chapter}`;
     sessionStorage.removeItem(key);
     console.log(`🗑️  Cleared session for ${chapter}`);
-}
-
-/**
- * Check if text is encrypted (matches pattern: hex:hex)
- */
-function isEncrypted(text) {
-    if (!text || typeof text !== 'string') return false;
-    return /^[0-9a-f]{32}:[0-9a-f]+$/i.test(text);
-}
-
-/**
- * Decrypt manifest pages array
- */
-async function decryptManifest(manifest) {
-    if (!manifest || !manifest.pages) {
-        console.warn('⚠️ Invalid manifest structure');
-        return null;
-    }
-    
-    const firstPage = manifest.pages[0] || '';
-    if (!isEncrypted(firstPage)) {
-        console.log('ℹ️  Manifest is not encrypted');
-        return manifest;
-    }
-    
-    console.log('🔓 Decrypting manifest...');
-    
-    try {
-        const key = await deriveKeyFromToken(SECRET_TOKEN);
-        
-        const decryptedPages = await Promise.all(
-            manifest.pages.map(encryptedUrl => decryptText(encryptedUrl, key))
-        );
-        
-        if (decryptedPages.some(page => page === null)) {
-            console.error('❌ Some pages failed to decrypt');
-            return null;
-        }
-        
-        console.log('✅ Manifest decrypted successfully');
-        
-        return {
-            ...manifest,
-            pages: decryptedPages,
-            encrypted: false
-        };
-        
-    } catch (error) {
-        console.error('❌ Error decrypting manifest:', error);
-        return null;
-    }
 }
 
 // ============================================
@@ -1007,53 +906,54 @@ async function loadChapterPages() {
         readerContainer.innerHTML = '';
         readerContainer.className = `reader-container ${readMode}-mode`;
         
-        console.log('📄 Loading chapter pages from manifest...');
+        console.log('📄 Loading chapter pages from Worker...');
         
-        let { repoUrl } = mangaData.manga;
-        repoUrl = repoUrl.replace(/\/$/, '');
+        // Get repo info
+        const repoOwner = mangaData.manga.repoUrl.split('/')[3];
+        const repoName = mangaData.manga.repoUrl.split('/')[4];
         
-        const manifestUrl = `${repoUrl}/${currentChapterFolder}/manifest.json`;
-        console.log('📄 Manifest URL:', manifestUrl);
+        // Call Worker untuk decrypt manifest
+        console.log(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
         
-        const timestamp = new Date().getTime();
-        const manifestResponse = await fetch(`${manifestUrl}?t=${timestamp}`);
+        const workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                repo: `${repoOwner}/${repoName}`,
+                chapter: currentChapterFolder
+            })
+        });
         
-        if (!manifestResponse.ok) {
-            throw new Error(`Failed to load manifest: ${manifestResponse.status}`);
+        if (!workerResponse.ok) {
+            throw new Error(`Worker error: ${workerResponse.status}`);
         }
         
-        let manifest = await manifestResponse.json();
-        console.log('📦 Manifest loaded:', manifest);
+        const workerData = await workerResponse.json();
         
-        if (manifest.encrypted || isEncrypted(manifest.pages[0])) {
-            console.log('🔒 Manifest is encrypted, decrypting...');
-            manifest = await decryptManifest(manifest);
-            
-            if (!manifest) {
-                throw new Error('Failed to decrypt manifest');
-            }
-            
-            console.log('✅ Manifest decrypted successfully');
-        } else {
-            console.log('ℹ️  Manifest is not encrypted');
+        if (!workerData.success || !workerData.pages) {
+            throw new Error('Failed to decrypt manifest');
         }
         
-        totalPages = manifest.pages.length;
-        console.log(`📊 Total pages from manifest: ${totalPages}`);
+        const signedPages = workerData.pages;
+        totalPages = signedPages.length;
         
-        manifest.pages.forEach((imageUrl, index) => {
+        console.log(`📊 Total pages from worker: ${totalPages}`);
+        
+        // Render pages dengan signed URLs
+        signedPages.forEach((signedUrl, index) => {
             const pageNum = index + 1;
             
-            console.log(`🖼️ Page ${pageNum}: ${imageUrl}`);
+            console.log(`🖼️ Page ${pageNum}: ${signedUrl.substring(0, 80)}...`);
             
             const img = document.createElement('img');
             img.className = 'reader-page';
-            img.src = imageUrl;
+            img.src = signedUrl;
             img.alt = `Page ${pageNum}`;
             
             if (pageNum <= 3) {
                 img.loading = 'eager';
-                console.log(`⚡ Page ${pageNum}: eager loading (priority)`);
             } else {
                 img.loading = 'lazy';
             }
@@ -1065,7 +965,7 @@ async function loadChapterPages() {
             };
             
             img.onerror = () => {
-                console.error(`❌ Failed to load page ${pageNum}:`, imageUrl);
+                console.error(`❌ Failed to load page ${pageNum}`);
                 const placeholder = document.createElement('div');
                 placeholder.className = 'reader-page-error';
                 placeholder.style.minHeight = '600px';
@@ -1075,8 +975,7 @@ async function loadChapterPages() {
                 placeholder.style.justifyContent = 'center';
                 placeholder.style.color = 'var(--text-secondary)';
                 placeholder.style.fontSize = '0.9rem';
-                placeholder.style.borderRadius = '4px';
-                placeholder.style.border = '1px solid var(--border-color)';
+                placeholder.textContent = '❌ Failed to load image';
                 placeholder.setAttribute('data-page', pageNum);
                 
                 img.replaceWith(placeholder);
@@ -1088,17 +987,7 @@ async function loadChapterPages() {
         setupPageTracking();
         setupWebtoonScrollTracking();
         
-        if (manifest.pages[0]) {
-            const preloadLink = document.createElement('link');
-            preloadLink.rel = 'preload';
-            preloadLink.as = 'image';
-            preloadLink.href = manifest.pages[0];
-            document.head.appendChild(preloadLink);
-            console.log(`🚀 Preloading first page: ${manifest.pages[0]}`);
-        }
-        
-        renderPageThumbnails(manifest.pages);
-        
+        renderPageThumbnails(signedPages);
         updateProgressBar();
         
         console.log('✅ Pages container setup complete');
@@ -1120,7 +1009,7 @@ async function loadChapterPages() {
     } catch (error) {
         console.error('❌ Error loading pages:', error);
         hideLoading();
-        alert('Gagal memuat halaman chapter. Manifest mungkin tidak tersedia atau terenkripsi salah.');
+        alert('Gagal memuat halaman chapter: ' + error.message);
     }
 }
 
