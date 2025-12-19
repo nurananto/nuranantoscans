@@ -69,22 +69,22 @@ jobs:
           PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
           echo "✅ Queued. Total pending: $PENDING_COUNT"
       
-      -- name: 🔍 Check if Should Rebuild
-  id: check_rebuild
-  run: |
-    PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
+      - name: 🔍 Check if Should Rebuild
+        id: check_rebuild
+        run: |
+          PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
     
-    echo "📊 Pending: $PENDING_COUNT manga"
+          echo "📊 Pending: $PENDING_COUNT manga"
     
-    if [ "$PENDING_COUNT" -gt 0 ]; then
-      echo "should_rebuild=true" >> $GITHUB_OUTPUT
-      MANGA_LIST=$(jq -r '.pending[].repo' pending-manga-updates.json | paste -sd "," -)
-      echo "manga_list=$MANGA_LIST" >> $GITHUB_OUTPUT
-      echo "✅ Instant rebuild for: $MANGA_LIST"
-    else
-      echo "should_rebuild=false" >> $GITHUB_OUTPUT
-      echo "ℹ️ No pending updates"
-    fi
+          if [ "$PENDING_COUNT" -gt 0 ]; then
+          echo "should_rebuild=true" >> $GITHUB_OUTPUT
+          MANGA_LIST=$(jq -r '.pending[].repo' pending-manga-updates.json | paste -sd "," -)
+          echo "manga_list=$MANGA_LIST" >> $GITHUB_OUTPUT
+          echo "✅ Instant rebuild for: $MANGA_LIST"
+          else
+          echo "should_rebuild=false" >> $GITHUB_OUTPUT
+          echo "ℹ️ No pending updates"
+          fi
       
       - name: 🖼️ Quick Cover Check
         id: cover_check
@@ -343,35 +343,35 @@ jobs:
     
     steps:
       - name: 🗑️ Purge Cloudflare Cache
-  run: |
-    if [ -n "${{ secrets.CF_ZONE_ID }}" ] && [ -n "${{ secrets.CF_API_TOKEN }}" ]; then
-      echo "🌐 Purging Cloudflare cache..."
+        run: |
+          if [ -n "${{ secrets.CF_ZONE_ID }}" ] && [ -n "${{ secrets.CF_API_TOKEN }}" ]; then
+          echo "🌐 Purging Cloudflare cache..."
       
-      # Purge specific files first
-      echo "🗑️ Purging critical files..."
-      curl -s -X POST \
-        "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
-        -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
-        -H "Content-Type: application/json" \
-        --data '{
+          # Purge specific files first
+          echo "🗑️ Purging critical files..."
+          curl -s -X POST \
+          "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+          -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          --data '{
           "files": [
             "https://nuranantoscans.my.id/version.txt",
             "https://nuranantoscans.my.id/sw.js",
             "https://nuranantoscans.my.id/manga-config.js"
-          ]
-        }'
+            ]
+          }'
+     
+          sleep 2
       
-      sleep 2
+          # Purge everything
+          echo "🗑️ Purging all cache..."
+          curl -s -X POST \
+          "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+          -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          --data '{"purge_everything":true}'
       
-      # Purge everything
-      echo "🗑️ Purging all cache..."
-      curl -s -X POST \
-        "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
-        -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
-        -H "Content-Type: application/json" \
-        --data '{"purge_everything":true}'
-      
-      echo "✅ Cache purged!"
-    else
-      echo "⚠️ Cloudflare credentials not found, skipping purge"
-    fi
+          echo "✅ Cache purged!"
+          else
+             echo "⚠️ Cloudflare credentials not found, skipping purge"
+           fi

@@ -11,13 +11,7 @@
 async function fetchFreshJSON(url) {
     const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
     const response = await fetch(url + '?t=' + cacheBuster, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-        }
+        cache: 'no-store'
     });
     
     if (!response.ok) {
