@@ -8,7 +8,7 @@
 /**
  * ✅ Force fresh fetch - no cache
  */
-a/**
+/**
  * ✅ FIXED: No custom headers to avoid CORS preflight
  */
 async function fetchFreshJSON(url) {
