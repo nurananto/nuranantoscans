@@ -5,6 +5,28 @@
 /**
  * ✅ CDN IMAGE OPTIMIZER - Auto resize menggunakan images.weserv.nl (FREE)
  */
+/**
+ * ✅ Force fresh fetch - no cache
+ */
+async function fetchFreshJSON(url) {
+    const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
+    const response = await fetch(url + '?t=' + cacheBuster, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    
+    return await response.json();
+}
+
 function getResponsiveCDN(originalUrl) {
   const sizes = {
     small: 400,   // Mobile
@@ -528,15 +550,8 @@ async function loadMangaFromRepo() {
         const mangaJsonUrl = getMangaJsonUrl();
         if (!mangaJsonUrl) return;
         
-        // Add cache buster
-        const timestamp = new Date().getTime();
-        const response = await fetch(`${mangaJsonUrl}?t=${timestamp}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        mangaData = await response.json();
+        // ✅ Use force fresh fetch
+        mangaData = await fetchFreshJSON(mangaJsonUrl);
         
         console.log('📦 Raw manga data:', mangaData);
         

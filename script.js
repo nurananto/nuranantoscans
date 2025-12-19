@@ -5,6 +5,28 @@
 /**
  * ✅ CDN IMAGE OPTIMIZER
  */
+/**
+ * ✅ Force fresh fetch - no cache
+ */
+async function fetchFreshJSON(url) {
+    const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
+    const response = await fetch(url + '?t=' + cacheBuster, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    
+    return await response.json();
+}
+
 function getResponsiveCDN(originalUrl) {
   const sizes = {
     small: 300,
@@ -30,9 +52,9 @@ function getResponsiveCDN(originalUrl) {
  */
 async function fetchMangaData(repo) {
   try {
-    const response = await fetch(`https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`);
-    if (!response.ok) throw new Error('Failed to fetch manga data');
-    const data = await response.json();
+    // ✅ Use force fresh fetch
+    const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`;
+    const data = await fetchFreshJSON(url);
     
     let latestUnlockedChapter = null;
     let latestUnlockedDate = null;

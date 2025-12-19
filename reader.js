@@ -60,6 +60,28 @@ async function decryptText(encryptedText, key) {
 }
 
 /**
+ * ✅ Force fresh fetch - no cache
+ */
+async function fetchFreshJSON(url) {
+    const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
+    const response = await fetch(url + '?t=' + cacheBuster, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    
+    return await response.json();
+}
+
+/**
  * SESSION STORAGE HELPER - 1 HOUR EXPIRY
  * Tambahkan di reader.js dan info-manga.js (setelah constants)
  */
@@ -823,7 +845,7 @@ async function loadMangaData(repo) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        mangaData = await response.json();
+        mangaData = await fetchFreshJSON(mangaJsonUrl);
         
         console.log('📦 Manga data loaded:', mangaData);
         

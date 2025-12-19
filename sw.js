@@ -71,10 +71,29 @@ self.addEventListener('fetch', (event) => {
     // Skip cross-origin except GitHub
     if (url.origin !== location.origin) {
         // GitHub raw content (covers & manga.json)
-        if (url.hostname === 'raw.githubusercontent.com') {
-            event.respondWith(handleGitHubRequest(request));
-            return;
-        }
+        // ✅ CRITICAL: NEVER cache manga.json & version.txt!
+if (url.pathname.includes('manga.json')) {
+    console.log('🚫 SW: Bypassing cache for manga.json');
+    event.respondWith(fetch(request));
+    return;
+}
+
+if (url.pathname.includes('version.txt')) {
+    console.log('🚫 SW: Bypassing cache for version.txt');
+    event.respondWith(fetch(request));
+    return;
+}
+
+// GitHub raw content (covers only, NOT manga.json!)
+if (url.hostname === 'raw.githubusercontent.com') {
+    // Double check - skip manga.json
+    if (url.pathname.includes('manga.json')) {
+        event.respondWith(fetch(request));
+        return;
+    }
+    event.respondWith(handleGitHubRequest(request));
+    return;
+}
         
         // Other external - no caching
         return;

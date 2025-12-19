@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    const CHECK_INTERVAL = 2 * 60 * 1000; // Check setiap 2 menit
+    const CHECK_INTERVAL = 15 * 1000; // ✅ Check setiap 15 detik (lebih cepat!)
     const VERSION_KEY = 'site_version';
     const VERSION_URL = 'version.txt';
     
@@ -18,11 +18,17 @@
      */
     async function checkUpdate() {
         try {
-            // Fetch dengan cache bypass
-            const response = await fetch(VERSION_URL + '?t=' + Date.now(), {
-                cache: 'no-store',
-                headers: { 'Cache-Control': 'no-cache' }
-            });
+           // ✅ Aggressive cache bypass
+const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
+const response = await fetch(VERSION_URL + '?v=' + cacheBuster, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { 
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    }
+});
             
             if (!response.ok) {
                 console.warn('⚠️ Version check failed:', response.status);
@@ -86,7 +92,7 @@
     console.log('🚀 Auto-reload initialized');
     checkUpdate();
     
-    // Check setiap 2 menit
+    // Check setiap 15 detik
     setInterval(checkUpdate, CHECK_INTERVAL);
     
     // Check saat user kembali ke app (mobile)
@@ -103,6 +109,6 @@
         checkUpdate();
     });
     
-    console.log('✅ Auto-reload ready (check every 2 minutes)');
+    console.log('✅ Auto-reload ready (check every 15 seconds)'); // ✅ BENAR!
     
 })();

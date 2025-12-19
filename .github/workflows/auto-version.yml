@@ -8,10 +8,12 @@ on:
       - '**.css'
       - '**.js'
       - '**.html'
-      # ❌ Exclude files handled by manga-update-trigger
+      - 'manga-config.js'  # ✅ TAMBAH INI!
+      # Exclude files
       - '!pending-manga-updates.json'
       - '!version.txt'
       - '!sw.js'
+      - '!updated-repo-list.txt'  # ✅ TAMBAH INI!
 
 permissions:
   contents: write
