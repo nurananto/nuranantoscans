@@ -8,22 +8,22 @@
 /**
  * ✅ Force fresh fetch - no cache
  */
+/**
+ * ✅ FIXED: No custom headers to avoid CORS preflight
+ */
 async function fetchFreshJSON(url) {
     try {
         const urlObj = new URL(url);
         const isCrossOrigin = urlObj.origin !== window.location.origin;
         
-        // For GitHub: NO query string (prevents CORS preflight)
+        // For GitHub: NO query string, NO custom headers (avoid preflight)
         if (isCrossOrigin && urlObj.hostname.includes('githubusercontent.com')) {
             const response = await fetch(url, {
                 method: 'GET',
                 cache: 'no-store',
                 mode: 'cors',
-                credentials: 'omit',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
-                    'Pragma': 'no-cache'
-                }
+                credentials: 'omit'
+                // ❌ NO headers - this triggers preflight!
             });
             
             if (!response.ok) {
@@ -37,11 +37,7 @@ async function fetchFreshJSON(url) {
         const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
         const response = await fetch(url + '?t=' + cacheBuster, {
             method: 'GET',
-            cache: 'no-store',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
-            }
+            cache: 'no-store'
         });
         
         if (!response.ok) {
