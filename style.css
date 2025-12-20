@@ -140,11 +140,11 @@ header {
 }
 
 .manga-list-heading {
-  font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+  font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 700;
   color: #fff;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   margin: 0;
   padding: 0;
   flex-shrink: 0;
@@ -897,6 +897,55 @@ input:focus-visible {
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 2vw, 1rem);
+}
+
+/* Class untuk text heading */
+.heading-text {
+  white-space: nowrap;
+}
+
+/* Base style fire icon */
+.fire-icon {
+  flex-shrink: 0;
+  width: clamp(24px, 5vw, 40px);
+  height: clamp(24px, 5vw, 40px);
+  object-fit: contain;
+}
+
+/* Animasi untuk fire kiri */
+.fire-icon-left {
+  animation: fireFlickerLeft 1.5s ease-in-out infinite;
+}
+
+/* Animasi untuk fire kanan */
+.fire-icon-right {
+  animation: fireFlickerRight 1.5s ease-in-out infinite;
+}
+
+@keyframes fireFlickerLeft {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1) rotate(-3deg);
+  }
+  50% { 
+    opacity: 0.85; 
+    transform: scale(1.1) rotate(3deg);
+  }
+}
+
+@keyframes fireFlickerRight {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1) rotate(3deg);
+  }
+  50% { 
+    opacity: 0.85; 
+    transform: scale(1.1) rotate(-3deg);
+  }
 }
 
 .top5-badges-container {
@@ -1054,6 +1103,11 @@ input:focus-visible {
     overflow-x: visible;
     scroll-snap-type: none;
   }
+
+  .fire-icon {
+    width: 40px;
+    height: 40px;
+  }
   
   .top5-card {
     flex: none;
@@ -1097,6 +1151,11 @@ input:focus-visible {
     flex: 0 0 30%;
   }
   
+  .fire-icon {
+    width: 32px;
+    height: 32px;
+  }
+
   .top5-badges-container {
     padding: 9px 11px;
   }
@@ -1125,6 +1184,15 @@ input:focus-visible {
   .header-border {
     margin-top: 0.75rem;
     margin-bottom: 1rem;
+  }
+
+  .fire-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .top5-heading {
+    gap: 0.5rem;
   }
   
   .top5-section {
@@ -1185,10 +1253,10 @@ input:focus-visible {
     max-height: calc(0.8rem * 1.65 * 2 + 0.7rem);
   }
   
-  .manga-list-heading {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-  }
+.manga-list-heading {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
 }
 
 /* ============================================
@@ -1198,6 +1266,15 @@ input:focus-visible {
   .header-border {
     margin-top: 0.5rem;
     margin-bottom: 0.75rem;
+  }
+
+  .fire-icon {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .top5-heading {
+    gap: 0.4rem;
   }
   
   .top5-section {
