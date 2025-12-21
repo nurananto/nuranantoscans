@@ -121,8 +121,73 @@ async function validateChapterCode(repoOwner, repoName, chapterFolder, userCode)
 }
 
 /**
- * Show code input modal for webtoon locked chapters
+ * Check if user is blocked before showing modal
  */
+async function checkIfBlocked() {
+    try {
+        const response = await fetch(CODE_VALIDATION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'checkBlockStatus'
+            })
+        });
+        
+        const result = await response.json();
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Block check error:', error);
+        return { blocked: false, remainingAttempts: 3 };
+    }
+}
+
+/**
+ * Show blocked notification (instead of modal)
+ */
+function showBlockedNotification() {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.display = 'flex';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+    
+    // Create content
+    overlay.innerHTML = `
+        <div class="modal-content locked-modal-content" style="max-width: 400px;">
+            <div class="modal-header locked-modal-header">
+                <h2>🚫 Akses Diblokir</h2>
+            </div>
+            <div class="modal-body locked-modal-body">
+                <p class="locked-explanation">
+                    Anda telah melakukan <strong>3x percobaan salah</strong> dalam 24 jam terakhir.
+                </p>
+                <p class="locked-benefit">
+                    ⏰ Silakan coba lagi <strong>besok</strong> pada waktu yang sama.
+                </p>
+                <div class="locked-modal-buttons">
+                    <button class="locked-btn locked-btn-yes" id="btnBlockedOK" style="max-width: 100%;">
+                        Mengerti
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Close button
+    document.getElementById('btnBlockedOK').onclick = () => {
+        overlay.remove();
+    };
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+}
+
 function showCodeInputModal(chapterNumber = null, chapterFolder = null) {
     console.log('🔐 showCodeInputModal called:', { chapterNumber, chapterFolder });
     
@@ -463,23 +528,31 @@ function convertToWIB(isoString) {
 // Link Trakteer untuk chapter terkunci
 const TRAKTEER_LINK = 'https://trakteer.id/NuranantoScanlation';
 
-/**
- * Show locked chapter modal (with type detection)
- */
-function showLockedChapterModal(chapterNumber = null) {
+async function showLockedChapterModal(chapterNumber = null, chapterFolder = null) {
     console.log('🔒 showLockedChapterModal called with chapter:', chapterNumber);
     
     // Check manga type
     const mangaType = mangaData?.manga?.type || 'manga';
     
+    // ✅ PERTAHANKAN EXTRACTION LOGIC (untuk backward compatibility)
     // Extract chapter folder from chapterNumber (might be "Chapter 7.3" or "7.3")
-    let chapterFolder = chapterNumber;
-    if (typeof chapterNumber === 'string' && chapterNumber.toLowerCase().startsWith('chapter ')) {
-        chapterFolder = chapterNumber.replace(/^chapter\s+/i, '');
+    if (!chapterFolder && chapterNumber) {
+        chapterFolder = chapterNumber;
+        if (typeof chapterNumber === 'string' && chapterNumber.toLowerCase().startsWith('chapter ')) {
+            chapterFolder = chapterNumber.replace(/^chapter\s+/i, '');
+        }
     }
     
     if (mangaType === 'webtoon') {
-        // Show code input modal for webtoon
+        // ✅ CHECK IF BLOCKED FIRST
+        const blockStatus = await checkIfBlocked();
+        
+        if (blockStatus.blocked) {
+            showBlockedNotification();
+            return;
+        }
+        
+        // Not blocked, show code input modal
         showCodeInputModal(chapterNumber, chapterFolder);
         return;
     }
