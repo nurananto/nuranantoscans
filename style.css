@@ -1092,6 +1092,101 @@ input:focus-visible {
   margin: 0 auto;
 }
 
+/* Top 5 Badges - Row 1: Rank + Views */
+.top5-rank-views {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  gap: 10px;
+  order: 1;
+}
+
+/* Top 5 Badges - Row 2: Status + Chapter */
+.top5-status-chapter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+  order: 3;
+}
+
+/* Views Badge for Top 5 - Restore original style */
+.views-badge-top5 {
+  position: static;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.views-badge-top5 svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Status Badge for Top 5 - SAMA DENGAN MANGA LIST */
+.status-badge-top5 {
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  line-height: 1.2;
+}
+
+.status-badge-top5-end,
+.status-badge-top5-completed {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.75) 0%, rgba(185, 28, 28, 0.75) 100%);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.status-badge-top5-ongoing {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.75) 0%, rgba(22, 163, 74, 0.75) 100%);
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+}
+
+.status-badge-top5-hiatus {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.75) 0%, rgba(75, 85, 99, 0.75) 100%);
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
+}
+
+.status-text {
+  display: block;
+  font-size: clamp(0.75rem, 2.2vw, 0.95rem);
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.status-chapter {
+  display: block;
+  font-size: clamp(0.55rem, 2vw, 0.75rem);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.3px;
+  opacity: 0.95;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ============================================
    RESPONSIVE - DESKTOP
    ============================================ */

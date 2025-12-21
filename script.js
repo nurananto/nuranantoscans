@@ -1,29 +1,23 @@
 // ============================================
-// SCRIPT.JS - WITH TOP 5 MOST VIEWED
+// SCRIPT.JS - NURANANTO SCANLATION
 // ============================================
 
+const DEBUG_MODE = false;
+
 /**
- * ✅ CDN IMAGE OPTIMIZER
- */
-/**
- * ✅ Force fresh fetch - no cache
- */
-/**
- * ✅ FIXED: No custom headers to avoid CORS preflight
+ * Fetch JSON tanpa cache
  */
 async function fetchFreshJSON(url) {
     try {
         const urlObj = new URL(url);
         const isCrossOrigin = urlObj.origin !== window.location.origin;
         
-        // For GitHub: NO query string, NO custom headers (avoid preflight)
         if (isCrossOrigin && urlObj.hostname.includes('githubusercontent.com')) {
             const response = await fetch(url, {
                 method: 'GET',
                 cache: 'no-store',
                 mode: 'cors',
                 credentials: 'omit'
-                // ❌ NO headers - this triggers preflight!
             });
             
             if (!response.ok) {
@@ -33,7 +27,6 @@ async function fetchFreshJSON(url) {
             return await response.json();
         }
         
-        // For same-origin: can use query string
         const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
         const response = await fetch(url + '?t=' + cacheBuster, {
             method: 'GET',
@@ -52,6 +45,9 @@ async function fetchFreshJSON(url) {
     }
 }
 
+/**
+ * CDN Image Optimizer
+ */
 function getResponsiveCDN(originalUrl) {
   const sizes = {
     small: 300,
@@ -73,11 +69,10 @@ function getResponsiveCDN(originalUrl) {
 }
 
 /**
- * Fetch manga data with views
+ * Fetch manga data dengan views & status
  */
 async function fetchMangaData(repo) {
   try {
-    // ✅ Use force fresh fetch
     const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`;
     const data = await fetchFreshJSON(url);
     
@@ -120,17 +115,17 @@ async function fetchMangaData(repo) {
       }
     }
     
-return {
-  lastUpdated: data.lastUpdated || null,
-  lastChapterUpdate: data.lastChapterUpdate || data.lastUpdated || null,
-  totalChapters: Object.keys(data.chapters || {}).length,
-  views: data.manga?.views || 0,
-  status: data.manga?.status || 'ONGOING',
-  latestUnlockedChapter,
-  latestUnlockedDate,
-  latestLockedChapter,
-  latestLockedDate
-};
+    return {
+      lastUpdated: data.lastUpdated || null,
+      lastChapterUpdate: data.lastChapterUpdate || data.lastUpdated || null,
+      totalChapters: Object.keys(data.chapters || {}).length,
+      views: data.manga?.views || 0,
+      status: data.manga?.status || 'ONGOING',
+      latestUnlockedChapter,
+      latestUnlockedDate,
+      latestLockedChapter,
+      latestLockedDate
+    };
 
   } catch (error) {
     console.error(`Error fetching manga data for ${repo}:`, error);
@@ -139,6 +134,7 @@ return {
       lastChapterUpdate: null,
       totalChapters: 0,
       views: 0,
+      status: 'ONGOING',
       latestUnlockedChapter: null,
       latestUnlockedDate: null,
       latestLockedChapter: null,
@@ -147,6 +143,9 @@ return {
   }
 }
 
+/**
+ * Check if recently updated (within 2 days)
+ */
 function isRecentlyUpdated(lastChapterUpdateStr) {
   if (!lastChapterUpdateStr) return false;
   const lastChapterUpdate = new Date(lastChapterUpdateStr);
@@ -161,6 +160,9 @@ function isRecentlyUpdated(lastChapterUpdateStr) {
   return diffDays <= 2;
 }
 
+/**
+ * Get relative time string
+ */
 function getRelativeTime(lastChapterUpdateStr) {
   if (!lastChapterUpdateStr) return '';
   const lastChapterUpdate = new Date(lastChapterUpdateStr);
@@ -183,6 +185,9 @@ function getRelativeTime(lastChapterUpdateStr) {
   });
 }
 
+/**
+ * Format chapter number
+ */
 const formatChapter = (chapterNum) => {
   if (!chapterNum) return '';
   const chapterStr = chapterNum.toString().toLowerCase();
@@ -193,14 +198,14 @@ const formatChapter = (chapterNum) => {
 };
 
 /**
- * Format number with thousand separator
+ * Format views dengan thousand separator
  */
 function formatViews(views) {
   return views.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 /**
- * ✅ CREATE TOP 5 CARD - WITH RANKING BADGE
+ * Create Top 5 Card dengan Rank + Views + Status Badge
  */
 function createTop5Card(manga, mangaData, rank, index = 0) {
   const cdnUrls = getResponsiveCDN(manga.cover);
@@ -217,7 +222,6 @@ function createTop5Card(manga, mangaData, rank, index = 0) {
   const fetchPriority = index < 5 ? ' fetchpriority="high"' : '';
   const decodingAttr = index < 5 ? ' decoding="sync"' : ' decoding="async"';
   
-  // Ranking badge styles
   const rankBadges = {
     1: { emoji: '🥇', gradient: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', text: '#000' },
     2: { emoji: '🥈', gradient: 'linear-gradient(135deg, #C0C0C0 0%, #808080 100%)', text: '#000' },
@@ -228,7 +232,35 @@ function createTop5Card(manga, mangaData, rank, index = 0) {
   
   const badge = rankBadges[rank];
   
-  const ariaLabel = `${manga.title}, Rank ${rank}, ${formatViews(mangaData.views)} views`;
+  // Status & Chapter
+  const status = mangaData.status || 'ONGOING';
+  const statusClass = status === 'END' || status === 'COMPLETED' ? 'end' : 
+                      status === 'HIATUS' ? 'hiatus' : 'ongoing';
+  const statusText = status === 'END' || status === 'COMPLETED' ? 'TAMAT' :
+                     status === 'HIATUS' ? 'HIATUS' : 'ONGOING';
+  
+// Get chapter info dengan tanggal - SAMA DENGAN MANGA LIST
+  let chapterText = '';
+  if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
+    const unlockedDate = mangaData.latestUnlockedDate ? new Date(mangaData.latestUnlockedDate) : new Date(0);
+    const lockedDate = mangaData.latestLockedDate ? new Date(mangaData.latestLockedDate) : new Date(0);
+    
+    if (lockedDate > unlockedDate) {
+      const lockedTime = getRelativeTime(mangaData.latestLockedDate);
+      chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
+    } else {
+      const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
+      chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
+    }
+  } else if (mangaData.latestUnlockedChapter) {
+    const unlockedTime = getRelativeTime(mangaData.latestUnlockedDate);
+    chapterText = `Ch. ${formatChapter(mangaData.latestUnlockedChapter)}${unlockedTime ? ` - ${unlockedTime}` : ''}`;
+  } else if (mangaData.latestLockedChapter) {
+    const lockedTime = getRelativeTime(mangaData.latestLockedDate);
+    chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
+  }
+  
+  const ariaLabel = `${manga.title}, Rank ${rank}, ${statusText}, ${formatViews(mangaData.views)} views`;
   
   return `
     <div class="top5-card" 
@@ -239,8 +271,8 @@ function createTop5Card(manga, mangaData, rank, index = 0) {
          onclick="window.location.href='info-manga.html?repo=${manga.id}'"
          onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
       
-      <!-- ✅ BADGES CONTAINER DI LUAR -->
-      <div class="top5-badges-container">
+      <!-- KOTAK 1: Rank Badge + Views Badge -->
+      <div class="top5-badges-container top5-rank-views">
         <div class="rank-badge" style="background: ${badge.gradient}; color: ${badge.text};">
           <span class="rank-number">#${rank}</span>
           <span class="rank-emoji">${badge.emoji}</span>
@@ -255,9 +287,10 @@ function createTop5Card(manga, mangaData, rank, index = 0) {
         </div>
       </div>
       
-      <!-- Cover Image -->
+      <!-- KOTAK 2: Cover Image -->
       <img 
-        src="${cdnUrls.medium}" 
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 420'%3E%3Crect fill='%23222' width='300' height='420'/%3E%3C/svg%3E"
+        data-src="${cdnUrls.medium}"
         srcset="${srcset}"
         sizes="${sizes}"
         alt="${manga.title} cover image"
@@ -267,13 +300,21 @@ function createTop5Card(manga, mangaData, rank, index = 0) {
         onerror="this.src='${manga.cover}'"
         aria-hidden="true">
       
-      <!-- Title -->
+      <!-- KOTAK 3: Status Badge + Chapter -->
+      <div class="top5-badges-container top5-status-chapter">
+        <div class="status-badge-top5 status-badge-top5-${statusClass}">
+          <span class="status-text">${statusText}</span>
+          ${chapterText ? `<span class="status-chapter">${chapterText}</span>` : ''}
+        </div>
+      </div>
+      
+      <!-- KOTAK 4: Title -->
       <div class="manga-title" aria-hidden="true">${manga.title}</div>
     </div>`;
 }
 
 /**
- * ✅ CREATE REGULAR CARD (for Manga List)
+ * Create Regular Card (untuk Manga List)
  */
 function createCard(manga, mangaData, index = 0) {
   const isRecent = isRecentlyUpdated(mangaData.lastChapterUpdate);
@@ -298,7 +339,7 @@ function createCard(manga, mangaData, index = 0) {
     chapterText = `🔒 Ch. ${formatChapter(mangaData.latestLockedChapter)}${lockedTime ? ` - ${lockedTime}` : ''}`;
   }
   
-let badgeHTML = '';
+  let badgeHTML = '';
   
   if (isRecent && chapterText) {
     badgeHTML = `
@@ -352,7 +393,7 @@ let badgeHTML = '';
   
   const ariaLabel = `${manga.title}${chapterText ? ', ' + chapterText : ''}${isRecent ? ', recently updated' : ''}`;
   
-return `
+  return `
     <div class="manga-card ${isRecent ? 'recently-updated' : ''}" 
          role="listitem"
          tabindex="0"
@@ -361,7 +402,8 @@ return `
          onclick="window.location.href='info-manga.html?repo=${manga.id}'"
          onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
       <img 
-        src="${cdnUrls.medium}" 
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 420'%3E%3Crect fill='%23222' width='300' height='420'/%3E%3C/svg%3E"
+        data-src="${cdnUrls.medium}"
         srcset="${srcset}"
         sizes="${sizes}"
         alt="${manga.title} cover image"
@@ -376,7 +418,7 @@ return `
 }
 
 /**
- * ✅ RENDER TOP 5 SECTION
+ * Render Top 5 Section
  */
 async function renderTop5(mangaList) {
   const top5Container = document.getElementById("top5Container");
@@ -385,7 +427,6 @@ async function renderTop5(mangaList) {
   
   top5Container.innerHTML = '<div class="loading-top5">Loading Top 5...</div>';
   
-  // Fetch all manga with views
   const mangaWithViews = await Promise.all(
     mangaList.map(async (manga) => {
       const mangaData = await fetchMangaData(manga.repo);
@@ -393,20 +434,20 @@ async function renderTop5(mangaList) {
     })
   );
   
-  // Sort by views (descending) and take top 5
   const top5 = mangaWithViews
     .sort((a, b) => b.views - a.views)
     .slice(0, 5);
   
-  // Render top 5 cards
   top5Container.innerHTML = top5.map(({ manga, mangaData }, index) => 
     createTop5Card(manga, mangaData, index + 1, index)
   ).join("");
 
-
   console.log('✅ Top 5 Most Viewed loaded');
 }
 
+/**
+ * Render Manga List
+ */
 async function renderMangaList(filteredList, showLoading = true) {
   const mangaGrid = document.getElementById("mangaGrid");
   const loadingIndicator = document.getElementById("loadingIndicator");
@@ -423,7 +464,6 @@ async function renderMangaList(filteredList, showLoading = true) {
     })
   );
   
-  // Sort by last update (descending)
   mangaWithData.sort((a, b) => {
     const dateA = a.lastChapterUpdate ? new Date(a.lastChapterUpdate) : new Date(0);
     const dateB = b.lastChapterUpdate ? new Date(b.lastChapterUpdate) : new Date(0);
@@ -454,7 +494,7 @@ async function renderMangaList(filteredList, showLoading = true) {
 }
 
 /**
- * ✅ KEYBOARD NAVIGATION
+ * Setup Keyboard Navigation
  */
 function setupKeyboardNavigation() {
   document.addEventListener('keydown', function(e) {
@@ -485,7 +525,7 @@ function setupKeyboardNavigation() {
 }
 
 /**
- * ✅ SEARCH FUNCTIONALITY
+ * Setup Search Accessibility
  */
 function setupSearchAccessibility() {
   const searchInput = document.getElementById("searchInput");
@@ -500,7 +540,7 @@ function setupSearchAccessibility() {
 }
 
 /**
- * ✅ DOM CONTENT LOADED
+ * DOM Content Loaded
  */
 let searchTimeout;
 document.addEventListener('DOMContentLoaded', function() {
@@ -514,11 +554,10 @@ document.addEventListener('DOMContentLoaded', function() {
   setupKeyboardNavigation();
   setupSearchAccessibility();
   
-  // Tambahkan setelah setupSearchAccessibility();
-  renderTop5(mangaList);      // ← TAMBAH INI
-  renderMangaList(mangaList);  // ← TAMBAH INI
+  renderTop5(mangaList);
+  renderMangaList(mangaList);
 
-const searchInput = document.getElementById("searchInput");
+  const searchInput = document.getElementById("searchInput");
   let currentSearch = '';
   
   searchInput.addEventListener("input", function() {
@@ -530,13 +569,12 @@ const searchInput = document.getElementById("searchInput");
       const mangaGrid = document.getElementById("mangaGrid");
       
       if (query === '') {
-        await renderMangaList(mangaList, false); // ← UBAH INI: tambah parameter false
+        await renderMangaList(mangaList, false);
       } else {
         const filtered = mangaList.filter(manga => 
           manga.title.toLowerCase().includes(query)
         );
         
-        // Fetch data WITHOUT loading indicator
         const mangaWithData = await Promise.all(
           filtered.map(async (manga) => {
             const mangaData = await fetchMangaData(manga.repo);
@@ -544,7 +582,6 @@ const searchInput = document.getElementById("searchInput");
           })
         );
         
-        // Only update if this is still the current search
         if (currentSearch === query) {
           mangaWithData.sort((a, b) => {
             const dateA = a.lastChapterUpdate ? new Date(a.lastChapterUpdate) : new Date(0);
@@ -570,13 +607,20 @@ const searchInput = document.getElementById("searchInput");
       }
     }, 300);
   });
+  
+  // Lazy load images after initial render
+  setTimeout(() => {
+    const images = document.querySelectorAll('img[data-src]');
+    images.forEach(img => {
+      img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+    });
+  }, 100);
 });
 
 /**
- * ✅ PROTECTION CODE
+ * Protection Code
  */
-const DEBUG_MODE = false;
-
 function initProtection() {
   if (DEBUG_MODE) {
     console.log('🔓 Debug mode enabled');
@@ -624,3 +668,4 @@ function initProtection() {
 }
 
 initProtection();
+      
