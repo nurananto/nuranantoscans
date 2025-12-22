@@ -1,9 +1,4 @@
 {
-  "pending": [
-    {
-      "repo": "Haibara-kun",
-      "timestamp": "2025-12-22T12:59:16Z"
-    }
-  ],
-  "lastRebuild": "2025-12-22T12:54:31Z"
+  "pending": [],
+  "lastRebuild": "2025-12-22T12:59:31Z"
 }
