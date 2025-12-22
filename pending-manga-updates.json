@@ -1,4 +1,9 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "repo": "TenshiSenpai",
+      "timestamp": "2025-12-22T12:54:28Z"
+    }
+  ],
   "lastRebuild": "2025-12-21T14:04:45Z"
 }
