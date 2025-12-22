@@ -1,6 +1,6 @@
 // Service Worker for Nurananto Scanlation v4.0
 // ✅ FULLY FIXED: CORS preflight & cache cleanup
-// 📅 Last updated: 2025-12-19
+// 📅 Last updated: 2025-12-22
 
 // ✅ STABLE CACHE NAMES
 const CACHE_VERSION = 'v1';
@@ -71,9 +71,12 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
-// ✅ Helper: Check if URL should never be cached
+// ✅ FIXED: Check if URL should never be cached (works with full URLs)
 function shouldNeverCache(url) {
-    return NEVER_CACHE.some(pattern => url.includes(pattern));
+    // Check both pathname and full URL
+    return NEVER_CACHE.some(pattern => {
+        return url.includes(pattern) || url.endsWith(pattern);
+    });
 }
 
 // ✅ CRITICAL FIX: Bypass SW completely for certain requests
@@ -82,8 +85,8 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
     
     // ✅ BYPASS SW completely for files that should never be cached
-    if (shouldNeverCache(url.pathname)) {
-        console.log('🚫 SW: Complete bypass for:', url.pathname);
+    if (shouldNeverCache(url.pathname) || shouldNeverCache(url.href)) {
+        console.log('🚫 SW: Complete bypass for:', url.pathname || url.href);
         // Don't call event.respondWith() - let browser handle it directly
         return;
     }
@@ -93,7 +96,8 @@ self.addEventListener('fetch', (event) => {
         // ✅ GitHub raw content (covers & encrypted manifests ONLY)
         if (url.hostname === 'raw.githubusercontent.com') {
             // Double check - bypass if it's a never-cache file
-            if (shouldNeverCache(url.pathname)) {
+            if (shouldNeverCache(url.pathname) || shouldNeverCache(url.href)) {
+                console.log('🚫 SW: Bypass GitHub file:', url.pathname);
                 return;
             }
             event.respondWith(handleGitHubRequest(request));
@@ -249,7 +253,7 @@ async function handleDynamicRequest(request, url) {
         const response = await fetch(request);
         
         // Cache successful responses (except never-cache files)
-        if (response && response.ok && !shouldNeverCache(url.pathname)) {
+        if (response && response.ok && !shouldNeverCache(url.pathname) && !shouldNeverCache(url.href)) {
             const cache = await caches.open(DYNAMIC_CACHE);
             cache.put(request, response.clone()).catch(() => {});
         }
