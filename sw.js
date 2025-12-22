@@ -33,7 +33,7 @@ const STATIC_ASSETS = [
 const NEVER_CACHE = [
     'manga.json',
     'version.txt',
-    'manifest.json'
+    'manifest.json',
     'daily-views.json'
 ];
 
