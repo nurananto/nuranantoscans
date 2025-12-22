@@ -418,23 +418,53 @@ function createCard(manga, mangaData, index = 0) {
 }
 
 /**
- * Render Top 5 Section
+ * Calculate 24h views
+ */
+async function calculate24HourViews(repo) {
+  try {
+    const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/daily-views.json`;
+    const data = await fetchFreshJSON(url);
+    
+    if (!data || !data.dailyRecords) return 0;
+    
+    // Get today's date in WIB timezone
+    const now = new Date();
+    const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
+    
+    // Return today's views only (00:00 - 23:59 WIB)
+    const todayRecord = data.dailyRecords[todayStr];
+    return todayRecord ? (todayRecord.manga || 0) : 0;
+    
+  } catch (error) {
+    return 0;
+  }
+}
+
+/**
+ * Render Top 5 - 24H TRENDING
  */
 async function renderTop5(mangaList) {
   const top5Container = document.getElementById("top5Container");
   
   if (!top5Container) return;
   
-  top5Container.innerHTML = '<div class="loading-top5">Loading Top 5...</div>';
+  top5Container.innerHTML = '<div class="loading-top5">Loading Top 5 Trending (24h)...</div>';
   
-  const mangaWithViews = await Promise.all(
+  const mangaWith24hViews = await Promise.all(
     mangaList.map(async (manga) => {
       const mangaData = await fetchMangaData(manga.repo);
-      return { manga, mangaData, views: mangaData.views };
+      const views24h = await calculate24HourViews(manga.repo);
+      
+      return { 
+        manga, 
+        mangaData, 
+        views: views24h > 0 ? views24h : mangaData.views,
+        is24h: views24h > 0
+      };
     })
   );
   
-  const top5 = mangaWithViews
+  const top5 = mangaWith24hViews
     .sort((a, b) => b.views - a.views)
     .slice(0, 5);
   
@@ -442,7 +472,7 @@ async function renderTop5(mangaList) {
     createTop5Card(manga, mangaData, index + 1, index)
   ).join("");
 
-  console.log('✅ Top 5 Most Viewed loaded');
+  console.log('✅ Top 5 Trending (24h) loaded');
 }
 
 /**
