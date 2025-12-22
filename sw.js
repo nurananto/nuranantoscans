@@ -34,6 +34,7 @@ const NEVER_CACHE = [
     'manga.json',
     'version.txt',
     'manifest.json'
+    'daily-views.json'
 ];
 
 // Install - cache static assets
