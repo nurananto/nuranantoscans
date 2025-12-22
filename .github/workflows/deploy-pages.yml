@@ -45,3 +45,14 @@ jobs:
         run: |
           echo "🎉 Website deployed successfully!"
           echo "🔗 URL: ${{ steps.deployment.outputs.page_url }}"
+      
+      - name: 🔄 Trigger Auto Version
+        if: success()
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/auto-version.yml/dispatches \
+            -d '{"ref":"main"}'
+          
+          echo "✅ Auto-version workflow triggered!"

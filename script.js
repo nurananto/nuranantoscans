@@ -425,18 +425,16 @@ async function calculate24HourViews(repo) {
     const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/daily-views.json`;
     const data = await fetchFreshJSON(url);
     
-    if (!data || !data.dailyRecords) return 0;
+    if (!data || !data.dailyRecords) return null; // ← UBAH return 0 jadi return null
     
-    // Get today's date in WIB timezone
     const now = new Date();
     const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
     
-    // Return today's views only (00:00 - 23:59 WIB)
     const todayRecord = data.dailyRecords[todayStr];
-    return todayRecord ? (todayRecord.manga || 0) : 0;
+    return todayRecord ? (todayRecord.manga || 0) : null; // ← UBAH return 0 jadi return null
     
   } catch (error) {
-    return 0;
+    return null; // ← UBAH return 0 jadi return null
   }
 }
 
@@ -450,19 +448,19 @@ async function renderTop5(mangaList) {
   
   top5Container.innerHTML = '<div class="loading-top5">Loading Top 5 Trending (24h)...</div>';
   
-  const mangaWith24hViews = await Promise.all(
-    mangaList.map(async (manga) => {
-      const mangaData = await fetchMangaData(manga.repo);
-      const views24h = await calculate24HourViews(manga.repo);
-      
-      return { 
-        manga, 
-        mangaData, 
-        views: views24h > 0 ? views24h : mangaData.views,
-        is24h: views24h > 0
-      };
-    })
-  );
+const mangaWith24hViews = await Promise.all(
+  mangaList.map(async (manga) => {
+    const mangaData = await fetchMangaData(manga.repo);
+    const views24h = await calculate24HourViews(manga.repo);
+    
+    return { 
+      manga, 
+      mangaData, 
+      views: views24h !== null ? views24h : mangaData.views, // ← GANTI JADI INI
+      is24h: views24h !== null
+    };
+  })
+);
   
   const top5 = mangaWith24hViews
     .sort((a, b) => b.views - a.views)
