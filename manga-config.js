@@ -13,6 +13,18 @@
 
 MANGA_LIST = [
   {
+    id: 'tenshisenpai',
+    title: 'Tenshi Senpai',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/tenshisenpai-cover.webp',
+    repo: 'TenshiSenpai'
+  },
+  {
+    id: 'haibarakun',
+    title: 'Haibara-kun no Tsuyokute Seishun New Game',
+    cover: '',
+    repo: 'Haibara-kun'
+  },
+  {
     id: 'kiminisasayaku',
     title: 'Kimi ni Sasayaku',
     cover: 'https://cdn.nuranantoscans.my.id/covers/KiminiSasayaku-cover.webp',
