@@ -207,7 +207,7 @@ function formatViews(views) {
 /**
  * Create Top 5 Card dengan Rank + Views + Status Badge
  */
-function createTop5Card(manga, mangaData, rank, index = 0) {
+function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
   const cdnUrls = getResponsiveCDN(manga.cover);
   
   const srcset = `
@@ -283,7 +283,7 @@ function createTop5Card(manga, mangaData, rank, index = 0) {
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
-          <span>${formatViews(mangaData.views)}</span>
+          <span>${formatViews(views24h !== null ? views24h : mangaData.views)}</span>
         </div>
       </div>
       
@@ -466,9 +466,9 @@ const mangaWith24hViews = await Promise.all(
     .sort((a, b) => b.views - a.views)
     .slice(0, 5);
   
-  top5Container.innerHTML = top5.map(({ manga, mangaData }, index) => 
-    createTop5Card(manga, mangaData, index + 1, index)
-  ).join("");
+  top5Container.innerHTML = top5.map(({ manga, mangaData, views }, index) => 
+  createTop5Card(manga, mangaData, index + 1, index, views)
+).join("");
 
   console.log('✅ Top 5 Trending (24h) loaded');
 }
