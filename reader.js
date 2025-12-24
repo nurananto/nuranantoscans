@@ -1136,10 +1136,6 @@ function goToPage(pageNum) {
     updatePageNavigation();
 }
 
-function getThumbnailUrl(originalUrl) {
-    const encodedUrl = originalUrl.replace('https://', '');
-    return `https://images.weserv.nl/?url=${encodedUrl}&w=200&h=300&fit=cover&output=webp`;
-}
 
 function renderPageThumbnails(pageUrls) {
     pageList.innerHTML = '';
@@ -1159,18 +1155,23 @@ function renderPageThumbnails(pageUrls) {
         
         img.style.backgroundColor = 'var(--secondary-bg)';
         
-        const thumbnailUrl = getThumbnailUrl(imageUrl);
-        img.src = thumbnailUrl;
+		img.src = imageUrl;
         
         img.onload = () => {
             thumb.classList.add('loaded');
         };
         
-        img.onerror = () => {
-            console.warn(`Proxy failed for page ${pageNum}, using original`);
-            img.src = imageUrl;
-            thumb.classList.add('error');
-        };
+		img.onerror = () => {
+			console.error(`❌ Failed to load thumbnail for page ${pageNum}`);
+			thumb.classList.add('error');
+    
+			// Fallback: show page number only
+			img.style.display = 'none';
+			thumb.style.backgroundColor = 'var(--secondary-bg)';
+			thumb.style.display = 'flex';
+			thumb.style.alignItems = 'center';
+			thumb.style.justifyContent = 'center';
+		};
         
         const pageNumDiv = document.createElement('div');
         pageNumDiv.className = 'page-number';
@@ -1186,8 +1187,7 @@ function renderPageThumbnails(pageUrls) {
         pageList.appendChild(thumb);
     });
     
-    console.log(`🖼️ Generated ${pageUrls.length} thumbnails using image proxy`);
-}
+	console.log(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);}
 
 function updatePageNavigation() {
     document.querySelectorAll('.page-thumb').forEach((thumb, index) => {
