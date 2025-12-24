@@ -440,6 +440,9 @@ async function calculate24HourViews(repo) {
  * Render Top 5 - 24H TRENDING
  */
 async function renderTop5(mangaList) {
+  console.log('🔥 renderTop5 CALLED at:', new Date().toISOString());
+  console.trace();
+    
   const top5Container = document.getElementById("top5Container");
   
   if (!top5Container) return;
