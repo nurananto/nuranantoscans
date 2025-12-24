@@ -18,6 +18,7 @@
   <link rel="dns-prefetch" href="https://raw.githubusercontent.com">
   <link rel="preconnect" href="https://images.weserv.nl">
   <link rel="dns-prefetch" href="https://images.weserv.nl">
+  <link rel="preload" href="assets/fire.png" as="image">
   
   <!-- Preload CSS (non-blocking) -->
 <link rel="preload" href="style.css?v=f7d92a3" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -411,6 +412,24 @@
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  min-height: 2.5rem; /* ← TAMBAHKAN INI */
+}
+
+.fire-icon {
+  flex-shrink: 0;
+  width: clamp(24px, 5vw, 40px);
+  height: clamp(24px, 5vw, 40px);
+  object-fit: contain;
+  opacity: 0; /* ← Mulai tersembunyi */
+  transition: opacity 0.3s ease;
+}
+
+.fire-icon.loaded {
+  opacity: 1; /* ← Tampil setelah dimuat */
 }
 
 .top5-badges-container {

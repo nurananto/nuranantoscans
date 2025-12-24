@@ -5,6 +5,19 @@
 const DEBUG_MODE = false;
 
 /**
+ * Preload fire icon untuk mencegah glitch
+ */
+function preloadFireIcon() {
+  const fireImg = new Image();
+  fireImg.onload = () => {
+    document.querySelectorAll('.fire-icon').forEach(icon => {
+      icon.classList.add('loaded');
+    });
+  };
+  fireImg.src = 'assets/fire.png';
+}
+
+/**
  * Fetch JSON tanpa cache
  */
 async function fetchFreshJSON(url) {
@@ -438,9 +451,6 @@ async function calculate24HourViews(repo) {
   }
 }
 
-/**
- * Render Top 5 - 24H TRENDING
- */
 async function renderTop5(mangaList) {
   const top5Container = document.getElementById("top5Container");
   
@@ -448,27 +458,27 @@ async function renderTop5(mangaList) {
   
   top5Container.innerHTML = '<div class="loading-top5">Loading Top 5 Trending (24h)...</div>';
   
-const mangaWith24hViews = await Promise.all(
-  mangaList.map(async (manga) => {
-    const mangaData = await fetchMangaData(manga.repo);
-    const views24h = await calculate24HourViews(manga.repo);
-    
-    return { 
-      manga, 
-      mangaData, 
-      views: views24h !== null ? views24h : mangaData.views, // ← GANTI JADI INI
-      is24h: views24h !== null
-    };
-  })
-);
+  const mangaWith24hViews = await Promise.all(
+    mangaList.map(async (manga) => {
+      const mangaData = await fetchMangaData(manga.repo);
+      const views24h = await calculate24HourViews(manga.repo);
+      
+      return { 
+        manga, 
+        mangaData, 
+        views24h, // ← Simpan views24h terpisah (bisa null atau angka)
+        sortValue: views24h !== null ? views24h : 0 // ← Untuk sorting, 0 jika null
+      };
+    })
+  );
   
   const top5 = mangaWith24hViews
-    .sort((a, b) => b.views - a.views)
+    .sort((a, b) => b.sortValue - a.sortValue) // ← Sort pakai sortValue
     .slice(0, 5);
   
-  top5Container.innerHTML = top5.map(({ manga, mangaData, views }, index) => 
-  createTop5Card(manga, mangaData, index + 1, index, views)
-).join("");
+  top5Container.innerHTML = top5.map(({ manga, mangaData, views24h }, index) => 
+    createTop5Card(manga, mangaData, index + 1, index, views24h) // ← Pass views24h
+  ).join("");
 
   console.log('✅ Top 5 Trending (24h) loaded');
 }
@@ -578,7 +588,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   console.log('🚀 Initializing...');
-  
+
+  preloadFireIcon();
   setupKeyboardNavigation();
   setupSearchAccessibility();
   
