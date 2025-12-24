@@ -5,19 +5,6 @@
 const DEBUG_MODE = false;
 
 /**
- * Preload fire icon untuk mencegah glitch
- */
-function preloadFireIcon() {
-  const fireImg = new Image();
-  fireImg.onload = () => {
-    document.querySelectorAll('.fire-icon').forEach(icon => {
-      icon.classList.add('loaded');
-    });
-  };
-  fireImg.src = 'assets/fire.png';
-}
-
-/**
  * Fetch JSON tanpa cache
  */
 async function fetchFreshJSON(url) {
@@ -252,7 +239,7 @@ function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
   const statusText = status === 'END' || status === 'COMPLETED' ? 'TAMAT' :
                      status === 'HIATUS' ? 'HIATUS' : 'ONGOING';
   
-// Get chapter info dengan tanggal - SAMA DENGAN MANGA LIST
+  // Get chapter info dengan tanggal - SAMA DENGAN MANGA LIST
   let chapterText = '';
   if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
     const unlockedDate = mangaData.latestUnlockedDate ? new Date(mangaData.latestUnlockedDate) : new Date(0);
@@ -302,8 +289,7 @@ function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
       
       <!-- KOTAK 2: Cover Image -->
       <img 
-        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 420'%3E%3Crect fill='%23222' width='300' height='420'/%3E%3C/svg%3E"
-        data-src="${cdnUrls.medium}"
+        src="${cdnUrls.medium}"
         srcset="${srcset}"
         sizes="${sizes}"
         alt="${manga.title} cover image"
@@ -415,8 +401,7 @@ function createCard(manga, mangaData, index = 0) {
          onclick="window.location.href='info-manga.html?repo=${manga.id}'"
          onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
       <img 
-        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 420'%3E%3Crect fill='%23222' width='300' height='420'/%3E%3C/svg%3E"
-        data-src="${cdnUrls.medium}"
+        src="${cdnUrls.medium}"
         srcset="${srcset}"
         sizes="${sizes}"
         alt="${manga.title} cover image"
@@ -438,19 +423,22 @@ async function calculate24HourViews(repo) {
     const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/daily-views.json`;
     const data = await fetchFreshJSON(url);
     
-    if (!data || !data.dailyRecords) return null; // ← UBAH return 0 jadi return null
+    if (!data || !data.dailyRecords) return null;
     
     const now = new Date();
     const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
     
     const todayRecord = data.dailyRecords[todayStr];
-    return todayRecord ? (todayRecord.manga || 0) : null; // ← UBAH return 0 jadi return null
+    return todayRecord ? (todayRecord.manga || 0) : null;
     
   } catch (error) {
-    return null; // ← UBAH return 0 jadi return null
+    return null;
   }
 }
 
+/**
+ * Render Top 5 - 24H TRENDING
+ */
 async function renderTop5(mangaList) {
   const top5Container = document.getElementById("top5Container");
   
@@ -466,19 +454,31 @@ async function renderTop5(mangaList) {
       return { 
         manga, 
         mangaData, 
-        views24h, // ← Simpan views24h terpisah (bisa null atau angka)
-        sortValue: views24h !== null ? views24h : 0 // ← Untuk sorting, 0 jika null
+        views: views24h !== null ? views24h : mangaData.views,
+        is24h: views24h !== null
       };
     })
   );
   
   const top5 = mangaWith24hViews
-    .sort((a, b) => b.sortValue - a.sortValue) // ← Sort pakai sortValue
+    .filter(({ is24h }) => is24h)
+    .sort((a, b) => b.views - a.views)
     .slice(0, 5);
-  
-  top5Container.innerHTML = top5.map(({ manga, mangaData, views24h }, index) => 
-    createTop5Card(manga, mangaData, index + 1, index, views24h) // ← Pass views24h
-  ).join("");
+
+  // Jika tidak ada manga dengan daily views, tampilkan top 5 berdasarkan total views
+  if (top5.length === 0) {
+    const fallbackTop5 = mangaWith24hViews
+      .sort((a, b) => b.mangaData.views - a.mangaData.views)
+      .slice(0, 5);
+    
+    top5Container.innerHTML = fallbackTop5.map(({ manga, mangaData }, index) => 
+      createTop5Card(manga, mangaData, index + 1, index, mangaData.views)
+    ).join("");
+  } else {
+    top5Container.innerHTML = top5.map(({ manga, mangaData, views }, index) => 
+      createTop5Card(manga, mangaData, index + 1, index, views)
+    ).join("");
+  }
 
   console.log('✅ Top 5 Trending (24h) loaded');
 }
@@ -578,6 +578,59 @@ function setupSearchAccessibility() {
 }
 
 /**
+ * Enable mouse drag scroll for Top5
+ */
+function enableTop5MouseDrag() {
+  const container = document.getElementById('top5Container');
+  if (!container) return;
+  
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+  let hasMoved = false;
+  
+  container.addEventListener('mousedown', (e) => {
+    isDown = true;
+    hasMoved = false;
+    container.style.cursor = 'grabbing';
+    container.classList.add('is-dragging'); // ← TAMBAHKAN
+    startX = e.pageX - container.offsetLeft;
+    scrollLeft = container.scrollLeft;
+  });
+  
+  container.addEventListener('mouseleave', () => {
+    isDown = false;
+    container.style.cursor = 'grab';
+    container.classList.remove('is-dragging'); // ← TAMBAHKAN
+  });
+  
+  container.addEventListener('mouseup', () => {
+    isDown = false;
+    container.style.cursor = 'grab';
+    // ← TAMBAHKAN: Delay remove class untuk smooth transition
+    setTimeout(() => {
+      container.classList.remove('is-dragging');
+    }, 50);
+  });
+  
+  container.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    hasMoved = true;
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - startX) * 2;
+    container.scrollLeft = scrollLeft - walk;
+  });
+  
+  container.addEventListener('click', (e) => {
+    if (hasMoved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+}
+
+/**
  * DOM Content Loaded
  */
 let searchTimeout;
@@ -588,12 +641,15 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   console.log('🚀 Initializing...');
-
-  preloadFireIcon();
+  
   setupKeyboardNavigation();
   setupSearchAccessibility();
   
-  renderTop5(mangaList);
+  // ✅ Render Top5 dengan mouse drag
+  renderTop5(mangaList).then(() => {
+    enableTop5MouseDrag();
+  });
+  
   renderMangaList(mangaList);
 
   const searchInput = document.getElementById("searchInput");
@@ -646,15 +702,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }, 300);
   });
-  
-  // Lazy load images after initial render
-  setTimeout(() => {
-    const images = document.querySelectorAll('img[data-src]');
-    images.forEach(img => {
-      img.src = img.dataset.src;
-        img.removeAttribute('data-src');
-    });
-  }, 100);
 });
 
 /**
@@ -672,39 +719,38 @@ function initProtection() {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (
-      e.keyCode === 123 ||
-      (e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
-      (e.ctrlKey && e.shiftKey && e.keyCode === 74) ||
-      (e.ctrlKey && e.keyCode === 85) ||
-      (e.ctrlKey && e.keyCode === 83)
-    ) {
-      e.preventDefault();
-      return false;
-    }
-  });
-
-  document.addEventListener('selectstart', (e) => {
-    if (e.target.tagName === 'IMG') {
-      e.preventDefault();
-      return false;
-    }
-  });
-
-  document.addEventListener('dragstart', (e) => {
-    if (e.target.tagName === 'IMG') {
-      e.preventDefault();
-      return false;
-    }
-  });
-
-  document.addEventListener('copy', (e) => {
+  if (
+    e.keyCode === 123 ||
+    (e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
+    (e.ctrlKey && e.shiftKey && e.keyCode === 74) ||
+    (e.ctrlKey && e.keyCode === 85) ||
+    (e.ctrlKey && e.keyCode === 83)
+  ) {
     e.preventDefault();
     return false;
-  });
-  
-  console.log('🔒 Protection enabled');
+  }
+});
+
+document.addEventListener('selectstart', (e) => {
+  if (e.target.tagName === 'IMG') {
+    e.preventDefault();
+    return false;
+  }
+});
+
+document.addEventListener('dragstart', (e) => {
+  if (e.target.tagName === 'IMG') {
+    e.preventDefault();
+    return false;
+  }
+});
+
+document.addEventListener('copy', (e) => {
+  e.preventDefault();
+  return false;
+});
+
+console.log('🔒 Protection enabled');
 }
 
 initProtection();
-      
