@@ -325,10 +325,8 @@ function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
          role="listitem"
          tabindex="0"
          data-manga-id="${manga.id}"
-         aria-label="${ariaLabel}"
-         onclick="window.location.href='info-manga.html?repo=${manga.id}'"
-         onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
-      
+         aria-label="${ariaLabel}">
+               
       <!-- KOTAK 1: Rank Badge + Views Badge -->
       <div class="top5-badges-container top5-rank-views">
         <div class="rank-badge" style="background: ${badge.gradient}; color: ${badge.text};">
@@ -566,6 +564,9 @@ async function renderTop5(mangaList) {
   }
 
   console.log('✅ Top 5 Trending (24h) loaded');
+
+  // ✅ Enable drag & click setelah render
+enableTop5MouseDrag();
 }
 
 /**
@@ -678,27 +679,32 @@ function enableTop5MouseDrag() {
     isDown = true;
     hasMoved = false;
     container.style.cursor = 'grabbing';
-    container.classList.add('is-dragging'); // ← TAMBAHKAN
+    container.classList.add('is-dragging');
     startX = e.pageX - container.offsetLeft;
     scrollLeft = container.scrollLeft;
+    console.log('🖱️ MOUSEDOWN');
   });
   
   container.addEventListener('mouseleave', () => {
     isDown = false;
     container.style.cursor = 'grab';
-    container.classList.remove('is-dragging'); // ← TAMBAHKAN
+    container.classList.remove('is-dragging');
   });
   
   container.addEventListener('mouseup', () => {
     isDown = false;
     container.style.cursor = 'grab';
-    // ← TAMBAHKAN: Delay remove class untuk smooth transition
+    console.log('🖱️ MOUSEUP: hasMoved =', hasMoved);
+    
     setTimeout(() => {
       container.classList.remove('is-dragging');
+      setTimeout(() => {
+        hasMoved = false;
+        console.log('🔄 RESET');
+      }, 50);
     }, 50);
   });
   
-    // KODE BARU - dengan threshold 5px
   container.addEventListener('mousemove', (e) => {
     if (!isDown) return;
     const x = e.pageX - container.offsetLeft;
@@ -707,20 +713,59 @@ function enableTop5MouseDrag() {
     if (moved > 5) {
       e.preventDefault();
       hasMoved = true;
+      console.log('🔄 DRAGGING:', moved, 'px');
       const walk = (x - startX) * 2;
       container.scrollLeft = scrollLeft - walk;
     }
   });
   
-  // KODE BARU - blokir click hanya jika drag
-  const cards = container.querySelectorAll('.top5-card');
-  cards.forEach(card => {
-    card.addEventListener('click', (e) => {
-      if (hasMoved) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, true);
+// ✅ EVENT DELEGATION
+// ✅ EVENT DELEGATION - Simple & Robust
+container.addEventListener('click', (e) => {
+  console.log('🔍 CLICK at:', e.clientX, e.clientY);
+  
+  // Cari semua card yang visible
+  const cards = Array.from(container.querySelectorAll('.top5-card'));
+  
+  console.log('🔍 Total cards:', cards.length);
+  
+  // Cari card yang diklik berdasarkan bounding box
+  const clickedCard = cards.find(card => {
+    const rect = card.getBoundingClientRect();
+    return (
+      e.clientX >= rect.left &&
+      e.clientX <= rect.right &&
+      e.clientY >= rect.top &&
+      e.clientY <= rect.bottom
+    );
+  });
+  
+  console.log('🔍 Clicked card:', clickedCard?.getAttribute('data-manga-id') || 'NONE');
+  
+  if (!clickedCard) return;
+  
+  const mangaId = clickedCard.getAttribute('data-manga-id');
+  
+  if (hasMoved) {
+    console.log('❌ BLOCKED: Was dragging');
+    return;
+  }
+  
+  console.log('✅ NAVIGATING to:', mangaId);
+  window.location.href = `info-manga.html?repo=${mangaId}`;
+});
+  
+  // Keyboard support
+  container.addEventListener('keypress', (e) => {
+    const card = e.target.closest('.top5-card');
+    if (!card) return;
+    
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const mangaId = card.getAttribute('data-manga-id');
+      console.log('⌨️ KEYBOARD:', e.key);
+      window.location.href = `info-manga.html?repo=${mangaId}`;
+    }
   });
 }
 
@@ -740,10 +785,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setupSearchAccessibility();
   
   // ✅ Render Top5 dengan mouse drag
-  renderTop5(mangaList).then(() => {
-    enableTop5MouseDrag();
-  });
-  
+  renderTop5(mangaList);  
   renderMangaList(mangaList);
 
   const searchInput = document.getElementById("searchInput");

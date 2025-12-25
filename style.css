@@ -1047,6 +1047,13 @@ input:focus-visible {
     scroll-snap-align: start;
     overflow: visible;
     z-index: 1; /* ← TAMBAHKAN */
+    pointer-events: auto; /* ✅ TAMBAH INI */
+}
+
+/* ✅ Hanya nonaktifkan untuk elemen yang mengganggu */
+.top5-card img,
+.top5-card svg {
+    pointer-events: none;
 }
 
 .top5-card:hover {
