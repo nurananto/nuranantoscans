@@ -698,21 +698,30 @@ function enableTop5MouseDrag() {
     }, 50);
   });
   
+    // KODE BARU - dengan threshold 5px
   container.addEventListener('mousemove', (e) => {
     if (!isDown) return;
-    e.preventDefault();
-    hasMoved = true;
     const x = e.pageX - container.offsetLeft;
-    const walk = (x - startX) * 2;
-    container.scrollLeft = scrollLeft - walk;
+    const moved = Math.abs(x - startX);
+    
+    if (moved > 5) {
+      e.preventDefault();
+      hasMoved = true;
+      const walk = (x - startX) * 2;
+      container.scrollLeft = scrollLeft - walk;
+    }
   });
   
-  container.addEventListener('click', (e) => {
-    if (hasMoved) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, true);
+  // KODE BARU - blokir click hanya jika drag
+  const cards = container.querySelectorAll('.top5-card');
+  cards.forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (hasMoved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  });
 }
 
 /**
