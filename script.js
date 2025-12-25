@@ -69,10 +69,54 @@ function getResponsiveCDN(originalUrl) {
 }
 
 /**
- * Fetch manga data dengan views & status
+ * ✅ NEW: Cache helper dengan expiry
+ */
+function getCachedData(key, maxAge = 300000) { // 5 minutes default
+  try {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const age = Date.now() - timestamp;
+    
+    if (age < maxAge) {
+      console.log(`📦 Cache HIT: ${key} (${Math.floor(age/1000)}s old)`);
+      return data;
+    }
+    
+    console.log(`⏰ Cache EXPIRED: ${key}`);
+    localStorage.removeItem(key);
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function setCachedData(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.warn('Cache write failed:', error);
+  }
+}
+
+/**
+ * ✅ UPDATED: fetchMangaData dengan LocalStorage cache
  */
 async function fetchMangaData(repo) {
   try {
+    // ✅ CHECK CACHE FIRST (5 minutes TTL)
+    const cacheKey = `manga_${repo}`;
+    const cached = getCachedData(cacheKey, 300000); // 5 min
+    
+    if (cached) {
+      return cached;
+    }
+    
+    // ✅ CACHE MISS - Fetch fresh
     const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`;
     const data = await fetchFreshJSON(url);
     
@@ -115,7 +159,7 @@ async function fetchMangaData(repo) {
       }
     }
     
-    return {
+    const result = {
       lastUpdated: data.lastUpdated || null,
       lastChapterUpdate: data.lastChapterUpdate || data.lastUpdated || null,
       totalChapters: Object.keys(data.chapters || {}).length,
@@ -126,9 +170,23 @@ async function fetchMangaData(repo) {
       latestLockedChapter,
       latestLockedDate
     };
+    
+    // ✅ SAVE TO CACHE
+    setCachedData(cacheKey, result);
+    console.log(`💾 Cached: ${cacheKey}`);
+    
+    return result;
 
   } catch (error) {
     console.error(`Error fetching manga data for ${repo}:`, error);
+    
+    // ✅ FALLBACK: Try stale cache
+    const staleCache = getCachedData(`manga_${repo}`, Infinity);
+    if (staleCache) {
+      console.warn('⚠️ Using stale cache');
+      return staleCache;
+    }
+    
     return {
       lastUpdated: null,
       lastChapterUpdate: null,
@@ -416,22 +474,46 @@ function createCard(manga, mangaData, index = 0) {
 }
 
 /**
- * Calculate 24h views
+ * ✅ UPDATED: calculate24HourViews dengan cache
  */
 async function calculate24HourViews(repo) {
   try {
+    // ✅ CHECK CACHE FIRST (10 minutes TTL - daily views berubah lambat)
+    const cacheKey = `daily_${repo}`;
+    const cached = getCachedData(cacheKey, 600000); // 10 min
+    
+    if (cached !== null) {
+      return cached;
+    }
+    
+    // ✅ CACHE MISS - Fetch fresh
     const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/daily-views.json`;
     const data = await fetchFreshJSON(url);
     
-    if (!data || !data.dailyRecords) return null;
+    if (!data || !data.dailyRecords) {
+      setCachedData(cacheKey, null);
+      return null;
+    }
     
     const now = new Date();
     const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
     
     const todayRecord = data.dailyRecords[todayStr];
-    return todayRecord ? (todayRecord.manga || 0) : null;
+    const result = todayRecord ? (todayRecord.manga || 0) : null;
+    
+    // ✅ SAVE TO CACHE
+    setCachedData(cacheKey, result);
+    console.log(`💾 Cached daily views: ${cacheKey}`);
+    
+    return result;
     
   } catch (error) {
+    // ✅ FALLBACK: Stale cache
+    const staleCache = getCachedData(`daily_${repo}`, Infinity);
+    if (staleCache !== null) {
+      console.warn('⚠️ Using stale daily views cache');
+      return staleCache;
+    }
     return null;
   }
 }

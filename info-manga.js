@@ -51,6 +51,41 @@ async function fetchFreshJSON(url) {
         throw error;
     }
 }
+
+/**
+ * ✅ CACHE HELPER - Same as script.js
+ */
+function getCachedData(key, maxAge = 300000) { // 5 minutes default
+  try {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const age = Date.now() - timestamp;
+    
+    if (age < maxAge) {
+      console.log(`📦 Cache HIT: ${key} (${Math.floor(age/1000)}s old)`);
+      return data;
+    }
+    
+    console.log(`⏰ Cache EXPIRED: ${key}`);
+    localStorage.removeItem(key);
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function setCachedData(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.warn('Cache write failed:', error);
+  }
+}
     
 function getResponsiveCDN(originalUrl) {
   const sizes = {
@@ -640,18 +675,53 @@ function getMangaJsonUrl() {
     }
 }
 
-/**
- * Load manga.json dari repo chapter
- */
 async function loadMangaFromRepo() {
     try {
         const mangaJsonUrl = getMangaJsonUrl();
         if (!mangaJsonUrl) return;
         
-        // ✅ Use force fresh fetch
+        // ✅ GET REPO PARAM untuk cache key
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        
+        // ✅ CHECK CACHE FIRST (5 minutes TTL)
+        if (repoParam) {
+            const cacheKey = `manga_full_${repoParam}`;
+            const cached = getCachedData(cacheKey, 300000); // 5 min
+            
+            if (cached) {
+                mangaData = cached;
+                console.log('✅ Manga data loaded from cache');
+                
+                // Display immediately from cache
+                displayMangaInfo();
+                displayChapters();
+                setupReadFirstButton();
+                
+                // Update title
+                document.title = `${mangaData.manga.title} - Info`;
+                
+                // Fetch rating (async, non-blocking)
+                fetchMangaDexRating();
+                
+                // Track page view
+                trackPageView();
+                
+                return;
+            }
+        }
+        
+        // ✅ CACHE MISS - Fetch fresh
+        console.log('📡 Fetching fresh manga data...');
         mangaData = await fetchFreshJSON(mangaJsonUrl);
         
         console.log('📦 Raw manga data:', mangaData);
+        
+        // ✅ SAVE TO CACHE
+        if (repoParam) {
+            setCachedData(`manga_full_${repoParam}`, mangaData);
+            console.log(`💾 Cached manga data: manga_full_${repoParam}`);
+        }
         
         // Display manga info
         displayMangaInfo();
@@ -672,6 +742,24 @@ async function loadMangaFromRepo() {
         
     } catch (error) {
         console.error('❌ Error loading manga data:', error);
+        
+        // ✅ FALLBACK: Try stale cache
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        
+        if (repoParam) {
+            const staleCache = getCachedData(`manga_full_${repoParam}`, Infinity);
+            if (staleCache) {
+                console.warn('⚠️ Using stale cache due to error');
+                mangaData = staleCache;
+                displayMangaInfo();
+                displayChapters();
+                setupReadFirstButton();
+                document.title = `${mangaData.manga.title} - Info`;
+                return;
+            }
+        }
+        
         alert('Gagal memuat data manga dari repository. Cek console untuk detail.');
     }
 }
@@ -1229,9 +1317,6 @@ function initProtection() {
 
 initProtection();
 
-/**
- * Fetch MangaDex rating
- */
 async function fetchMangaDexRating() {
     try {
         const mangadexUrl = mangaData.manga.links?.mangadex;
@@ -1250,7 +1335,7 @@ async function fetchMangaDexRating() {
         
         const mangaId = mangaIdMatch[1];
         
-        // Check cache (48 hours)
+        // ✅ Check cache (48 hours)
         const cachedRating = localStorage.getItem(`rating_${mangaId}`);
         const cachedTime = localStorage.getItem(`rating_time_${mangaId}`);
         
@@ -1260,18 +1345,18 @@ async function fetchMangaDexRating() {
             const CACHE_DURATION = 48 * 3600000;
             
             if (cacheAge < CACHE_DURATION) {
-                console.log(`📦 Using cached rating: ${cachedRating} (${cacheAgeHours} hours old)`);
+                console.log(`📦 MangaDex rating from cache: ${cachedRating} (${cacheAgeHours}h old)`);
                 
                 document.getElementById('ratingScore').textContent = cachedRating;
                 document.getElementById('ratingScoreMobile').textContent = cachedRating;
                 
                 return;
             } else {
-                console.log(`🔄 Cache expired (${cacheAgeHours} hours old), fetching fresh data...`);
+                console.log(`⏰ Rating cache expired (${cacheAgeHours}h old), fetching fresh...`);
             }
         }
         
-        console.log(`📊 Fetching rating untuk manga ID: ${mangaId}`);
+        console.log(`📊 Fetching fresh rating for manga ID: ${mangaId}`);
         
         const apiUrl = `https://script.google.com/macros/s/AKfycbwZ0-VeyloQxjvh-h65G0wtfAzxVq6VYzU5Bz9n1Rl0T4GAkGu9X7HmGh_3_0cJhCS1iA/exec?action=getRating&mangaId=${mangaId}`;
         

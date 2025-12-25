@@ -55,6 +55,41 @@ async function fetchFreshJSON(url) {
         throw error;
     }
 }
+
+/**
+ * ✅ CACHE HELPER - Same as others
+ */
+function getCachedData(key, maxAge = 300000) { // 5 minutes default
+  try {
+    const cached = sessionStorage.getItem(key); // ✅ Use sessionStorage for reader
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const age = Date.now() - timestamp;
+    
+    if (age < maxAge) {
+      console.log(`📦 Cache HIT: ${key} (${Math.floor(age/1000)}s old)`);
+      return data;
+    }
+    
+    console.log(`⏰ Cache EXPIRED: ${key}`);
+    sessionStorage.removeItem(key);
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function setCachedData(key, data) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.warn('Cache write failed:', error);
+  }
+}
     
 /**
  * SESSION STORAGE HELPER - 1 HOUR EXPIRY
@@ -812,13 +847,28 @@ if (isValidated) {
 
 async function loadMangaData(repo) {
     try {
+        // ✅ CHECK CACHE FIRST (5 minutes TTL)
+        const cacheKey = `reader_manga_${repo}`;
+        const cached = getCachedData(cacheKey, 300000); // 5 min
+        
+        if (cached) {
+            mangaData = cached.mangaData;
+            allChapters = cached.allChapters;
+            window.currentGithubRepo = cached.githubRepo;
+            
+            console.log('✅ Manga data loaded from cache');
+            console.log(`📚 Loaded ${allChapters.length} chapters (cached)`);
+            return;
+        }
+        
+        // ✅ CACHE MISS - Fetch fresh
         const mangaConfig = MANGA_REPOS[repo];
         
         if (!mangaConfig) {
             throw new Error(`Repo "${repo}" tidak ditemukan di mapping`);
         }
         
-        console.log(`📚 Loading manga data from: ${repo}`);
+        console.log(`📡 Fetching fresh manga data from: ${repo}`);
         
         let mangaJsonUrl;
         if (typeof mangaConfig === 'string') {
@@ -829,31 +879,43 @@ async function loadMangaData(repo) {
             console.log(`🔗 GitHub repo: ${mangaConfig.githubRepo}`);
         }
         
-        const timestamp = new Date().getTime();
-        const response = await fetch(`${mangaJsonUrl}?t=${timestamp}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
         mangaData = await fetchFreshJSON(mangaJsonUrl);
         
         console.log('📦 Manga data loaded:', mangaData);
         
-allChapters = Object.values(mangaData.chapters).sort((a, b) => {
-    const getSort = (folder) => {
-        const parts = folder.split('.');
-        const int = parseInt(parts[0]) || 0;
-        const dec = parts[1] ? parseInt(parts[1]) : 0;
-        return int + (dec / 1000);
-    };
-    return getSort(b.folder) - getSort(a.folder);
-});
+        allChapters = Object.values(mangaData.chapters).sort((a, b) => {
+            const getSort = (folder) => {
+                const parts = folder.split('.');
+                const int = parseInt(parts[0]) || 0;
+                const dec = parts[1] ? parseInt(parts[1]) : 0;
+                return int + (dec / 1000);
+            };
+            return getSort(b.folder) - getSort(a.folder);
+        });
         
         console.log(`✅ Loaded ${allChapters.length} chapters`);
         
+        // ✅ SAVE TO CACHE
+        setCachedData(cacheKey, {
+            mangaData,
+            allChapters,
+            githubRepo: window.currentGithubRepo
+        });
+        console.log(`💾 Cached manga data: ${cacheKey}`);
+        
     } catch (error) {
         console.error('❌ Error loading manga data:', error);
+        
+        // ✅ FALLBACK: Try stale cache
+        const staleCache = getCachedData(`reader_manga_${repo}`, Infinity);
+        if (staleCache) {
+            console.warn('⚠️ Using stale cache due to error');
+            mangaData = staleCache.mangaData;
+            allChapters = staleCache.allChapters;
+            window.currentGithubRepo = staleCache.githubRepo;
+            return;
+        }
+        
         throw error;
     }
 }
@@ -973,7 +1035,39 @@ async function loadChapterPages() {
         readerContainer.innerHTML = '';
         readerContainer.className = `reader-container ${readMode}-mode`;
         
-        console.log('📄 Loading chapter pages from Worker...');
+        // ✅ CHECK CACHE FIRST (1 hour TTL - karena signed URL expire 1 jam)
+        const cacheKey = `chapter_${repoParam}_${currentChapterFolder}`;
+        const cached = getCachedData(cacheKey, 3600000); // 1 hour
+        
+        if (cached && cached.signedPages && cached.signedPages.length > 0) {
+            console.log('📦 Chapter pages loaded from cache');
+            totalPages = cached.signedPages.length;
+            
+            // Render from cache
+            renderPagesFromCache(cached.signedPages);
+            
+            setupPageTracking();
+            setupWebtoonScrollTracking();
+            renderPageThumbnails(cached.signedPages);
+            updateProgressBar();
+            
+            currentPage = loadLastPage();
+            readerContainer.classList.add('webtoon-mode');
+            readerContainer.classList.remove('manga-mode');
+            
+            if (currentPage > 1) {
+                setTimeout(() => {
+                    goToPage(currentPage);
+                    updatePageNavigation();
+                }, 100);
+            }
+            
+            hideLoading();
+            return;
+        }
+        
+        // ✅ CACHE MISS - Fetch from Worker
+        console.log('📡 Loading chapter pages from Worker...');
         
         // Get repo info
         const repoOwner = mangaData.manga.repoUrl.split('/')[3];
@@ -1008,59 +1102,21 @@ async function loadChapterPages() {
         
         console.log(`📊 Total pages from worker: ${totalPages}`);
         
-        // Render pages dengan signed URLs
-        signedPages.forEach((signedUrl, index) => {
-            const pageNum = index + 1;
-            
-            console.log(`🖼️ Page ${pageNum}: ${signedUrl.substring(0, 80)}...`);
-            
-            const img = document.createElement('img');
-            img.className = 'reader-page';
-            img.src = signedUrl;
-            img.alt = `Page ${pageNum}`;
-            
-            if (pageNum <= 3) {
-                img.loading = 'eager';
-            } else {
-                img.loading = 'lazy';
-            }
-            
-            img.setAttribute('data-page', pageNum);
-            
-            img.onload = () => {
-                console.log(`✅ Page ${pageNum} loaded successfully`);
-            };
-            
-            img.onerror = () => {
-                console.error(`❌ Failed to load page ${pageNum}`);
-                const placeholder = document.createElement('div');
-                placeholder.className = 'reader-page-error';
-                placeholder.style.minHeight = '600px';
-                placeholder.style.backgroundColor = 'var(--secondary-bg)';
-                placeholder.style.display = 'flex';
-                placeholder.style.alignItems = 'center';
-                placeholder.style.justifyContent = 'center';
-                placeholder.style.color = 'var(--text-secondary)';
-                placeholder.style.fontSize = '0.9rem';
-                placeholder.textContent = '❌ Failed to load image';
-                placeholder.setAttribute('data-page', pageNum);
-                
-                img.replaceWith(placeholder);
-            };
-            
-            readerContainer.appendChild(img);
-        });
+        // ✅ SAVE TO CACHE
+        setCachedData(cacheKey, { signedPages });
+        console.log(`💾 Cached chapter pages: ${cacheKey}`);
+        
+        // Render pages
+        renderPagesFromCache(signedPages);
         
         setupPageTracking();
         setupWebtoonScrollTracking();
-        
         renderPageThumbnails(signedPages);
         updateProgressBar();
         
         console.log('✅ Pages container setup complete');
         
         currentPage = loadLastPage();
-        
         readerContainer.classList.add('webtoon-mode');
         readerContainer.classList.remove('manga-mode');
         
@@ -1076,8 +1132,67 @@ async function loadChapterPages() {
     } catch (error) {
         console.error('❌ Error loading pages:', error);
         hideLoading();
+        
+        // ✅ FALLBACK: Try stale cache
+        const staleCache = getCachedData(`chapter_${repoParam}_${currentChapterFolder}`, Infinity);
+        if (staleCache && staleCache.signedPages) {
+            console.warn('⚠️ Using stale cache due to error');
+            renderPagesFromCache(staleCache.signedPages);
+            setupPageTracking();
+            setupWebtoonScrollTracking();
+            renderPageThumbnails(staleCache.signedPages);
+            updateProgressBar();
+            hideLoading();
+            return;
+        }
+        
         alert('Gagal memuat halaman chapter: ' + error.message);
     }
+}
+
+/**
+ * ✅ NEW: Render pages from cached data
+ */
+function renderPagesFromCache(signedPages) {
+    signedPages.forEach((signedUrl, index) => {
+        const pageNum = index + 1;
+        
+        const img = document.createElement('img');
+        img.className = 'reader-page';
+        img.src = signedUrl;
+        img.alt = `Page ${pageNum}`;
+        
+        if (pageNum <= 3) {
+            img.loading = 'eager';
+        } else {
+            img.loading = 'lazy';
+        }
+        
+        img.setAttribute('data-page', pageNum);
+        
+        img.onload = () => {
+            console.log(`✅ Page ${pageNum} loaded successfully`);
+        };
+        
+        img.onerror = () => {
+            console.error(`❌ Failed to load page ${pageNum}`);
+            const placeholder = document.createElement('div');
+            placeholder.className = 'reader-page-error';
+            placeholder.style.minHeight = '600px';
+            placeholder.style.backgroundColor = 'var(--secondary-bg)';
+            placeholder.style.display = 'flex';
+            placeholder.style.alignItems = 'center';
+            placeholder.style.justifyContent = 'center';
+            placeholder.style.color = 'var(--text-secondary)';
+            placeholder.style.fontSize = '0.9rem';
+            placeholder.textContent = '❌ Failed to load image';
+            placeholder.setAttribute('data-page', pageNum);
+            
+            img.replaceWith(placeholder);
+        };
+        
+        readerContainer.appendChild(img);
+    });
 }
 
 function setupPageTracking() {

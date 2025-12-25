@@ -29,11 +29,15 @@ const STATIC_ASSETS = [
     './assets/trakteer-icon.png'
 ];
 
-// ✅ CRITICAL: Files that should NEVER be cached
+// ✅ UPDATED: Hanya manifest.json yang never cache
 const NEVER_CACHE = [
+    'manifest.json',  // Encrypted manifest MUST always fresh
+    'version.txt'     // Version check
+];
+
+// ✅ NEW: Cache dengan TTL pendek (5-15 menit)
+const SHORT_TTL_CACHE = [
     'manga.json',
-    'version.txt',
-    'manifest.json',
     'daily-views.json'
 ];
 
@@ -77,6 +81,24 @@ function shouldNeverCache(url) {
     return NEVER_CACHE.some(pattern => {
         return url.includes(pattern) || url.endsWith(pattern);
     });
+}
+
+// ✅ NEW: Check if URL should use short TTL cache
+function shouldUseShortTTL(url) {
+    return SHORT_TTL_CACHE.some(pattern => {
+        return url.includes(pattern) || url.endsWith(pattern);
+    });
+}
+
+// ✅ NEW: Check if cache is still fresh (5 minutes)
+async function isCacheFresh(cachedResponse) {
+    const cacheTime = cachedResponse.headers.get('sw-cache-time');
+    if (!cacheTime) return false;
+    
+    const age = Date.now() - parseInt(cacheTime);
+    const maxAge = 300000; // 5 minutes
+    
+    return age < maxAge;
 }
 
 // ✅ CRITICAL FIX: Bypass SW completely for certain requests
@@ -130,34 +152,56 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(handleDynamicRequest(request, url));
 });
 
-// ✅ GitHub request handler - network first with cache fallback
+// ✅ GitHub request handler - UPDATED with TTL cache
 async function handleGitHubRequest(request) {
     const cache = await caches.open(IMAGE_CACHE);
+    const url = new URL(request.url);
+    
+    // ✅ Check if this is short-TTL content
+    const useShortTTL = shouldUseShortTTL(url.pathname) || shouldUseShortTTL(url.href);
+    
+    if (useShortTTL) {
+        // Check cache freshness
+        const cached = await cache.match(request);
+        if (cached && await isCacheFresh(cached)) {
+            console.log('📦 SW: Fresh cache HIT:', url.pathname);
+            return cached;
+        }
+        
+        console.log('⏰ SW: Cache expired or missing, fetching fresh');
+    }
     
     try {
-        // ✅ CRITICAL: Use simple fetch without intercepting CORS
         const response = await fetch(request, {
             mode: 'cors',
             credentials: 'omit'
         });
         
         if (response && response.ok) {
-            // Clone immediately after successful fetch
+            // Clone and add timestamp header
             const clonedResponse = response.clone();
-            cache.put(request, clonedResponse).catch(() => {});
+            const headers = new Headers(clonedResponse.headers);
+            headers.set('sw-cache-time', Date.now().toString());
+            
+            const cachedResponse = new Response(clonedResponse.body, {
+                status: clonedResponse.status,
+                statusText: clonedResponse.statusText,
+                headers: headers
+            });
+            
+            cache.put(request, cachedResponse).catch(() => {});
         }
         return response;
     } catch (err) {
         console.warn('⚠️ GitHub fetch failed, trying cache:', err.message);
         
-        // Fallback to cache
+        // Fallback to cache (even if stale)
         const cached = await cache.match(request);
         if (cached) {
-            console.log('📦 Serving from cache:', request.url);
+            console.log('📦 Serving STALE cache:', request.url);
             return cached;
         }
         
-        // No cache available
         return new Response('Network error', { 
             status: 408,
             statusText: 'Request Timeout'
