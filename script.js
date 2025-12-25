@@ -80,11 +80,9 @@ function getCachedData(key, maxAge = 300000) { // 5 minutes default
     const age = Date.now() - timestamp;
     
     if (age < maxAge) {
-      console.log(`📦 Cache HIT: ${key} (${Math.floor(age/1000)}s old)`);
       return data;
     }
     
-    console.log(`⏰ Cache EXPIRED: ${key}`);
     localStorage.removeItem(key);
     return null;
   } catch (error) {
@@ -173,7 +171,6 @@ async function fetchMangaData(repo) {
     
     // ✅ SAVE TO CACHE
     setCachedData(cacheKey, result);
-    console.log(`💾 Cached: ${cacheKey}`);
     
     return result;
 
@@ -501,8 +498,6 @@ async function calculate24HourViews(repo) {
     
     // ✅ SAVE TO CACHE
     setCachedData(cacheKey, result);
-    console.log(`💾 Cached daily views: ${cacheKey}`);
-    
     return result;
     
   } catch (error) {
@@ -520,10 +515,7 @@ async function calculate24HourViews(repo) {
  * Render Top 5 - 24H TRENDING
  */
 async function renderTop5(mangaList) {
-  console.log('🔥 renderTop5 CALLED at:', new Date().toISOString());
-  console.trace();
-    
-  const top5Container = document.getElementById("top5Container");
+    const top5Container = document.getElementById("top5Container");
   
   if (!top5Container) return;
   
@@ -562,9 +554,6 @@ async function renderTop5(mangaList) {
       createTop5Card(manga, mangaData, index + 1, index, views)
     ).join("");
   }
-
-  console.log('✅ Top 5 Trending (24h) loaded');
-
   // ✅ Enable drag & click setelah render
 enableTop5MouseDrag();
 }
@@ -614,7 +603,6 @@ async function renderMangaList(filteredList, showLoading = true) {
     createCard(manga, mangaData, index)
   ).join("");
   
-  console.log('✅ Manga list loaded');
 }
 
 /**
@@ -682,7 +670,7 @@ function enableTop5MouseDrag() {
     container.classList.add('is-dragging');
     startX = e.pageX - container.offsetLeft;
     scrollLeft = container.scrollLeft;
-    console.log('🖱️ MOUSEDOWN');
+
   });
   
   container.addEventListener('mouseleave', () => {
@@ -693,14 +681,11 @@ function enableTop5MouseDrag() {
   
   container.addEventListener('mouseup', () => {
     isDown = false;
-    container.style.cursor = 'grab';
-    console.log('🖱️ MOUSEUP: hasMoved =', hasMoved);
-    
+    container.style.cursor = 'grab';    
     setTimeout(() => {
       container.classList.remove('is-dragging');
       setTimeout(() => {
         hasMoved = false;
-        console.log('🔄 RESET');
       }, 50);
     }, 50);
   });
@@ -713,7 +698,6 @@ function enableTop5MouseDrag() {
     if (moved > 5) {
       e.preventDefault();
       hasMoved = true;
-      console.log('🔄 DRAGGING:', moved, 'px');
       const walk = (x - startX) * 2;
       container.scrollLeft = scrollLeft - walk;
     }
@@ -722,13 +706,10 @@ function enableTop5MouseDrag() {
 // ✅ EVENT DELEGATION
 // ✅ EVENT DELEGATION - Simple & Robust
 container.addEventListener('click', (e) => {
-  console.log('🔍 CLICK at:', e.clientX, e.clientY);
   
   // Cari semua card yang visible
   const cards = Array.from(container.querySelectorAll('.top5-card'));
-  
-  console.log('🔍 Total cards:', cards.length);
-  
+   
   // Cari card yang diklik berdasarkan bounding box
   const clickedCard = cards.find(card => {
     const rect = card.getBoundingClientRect();
@@ -740,18 +721,14 @@ container.addEventListener('click', (e) => {
     );
   });
   
-  console.log('🔍 Clicked card:', clickedCard?.getAttribute('data-manga-id') || 'NONE');
-  
   if (!clickedCard) return;
   
   const mangaId = clickedCard.getAttribute('data-manga-id');
   
   if (hasMoved) {
-    console.log('❌ BLOCKED: Was dragging');
-    return;
+     return;
   }
   
-  console.log('✅ NAVIGATING to:', mangaId);
   window.location.href = `info-manga.html?repo=${mangaId}`;
 });
   
@@ -763,7 +740,6 @@ container.addEventListener('click', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       const mangaId = card.getAttribute('data-manga-id');
-      console.log('⌨️ KEYBOARD:', e.key);
       window.location.href = `info-manga.html?repo=${mangaId}`;
     }
   });
@@ -778,9 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.error('❌ ERROR: mangaList not found!');
     return;
   }
-  
-  console.log('🚀 Initializing...');
-  
+ 
   setupKeyboardNavigation();
   setupSearchAccessibility();
   
