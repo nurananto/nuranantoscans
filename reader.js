@@ -15,6 +15,29 @@ const ENCRYPTION_ALGORITHM = 'AES-CBC';
 /**
  * ✅ FIXED: No custom headers to avoid CORS preflight
  */
+// ============================================
+// 🛡️ SMART LOGGING - PRODUCTION MODE
+// ============================================
+
+const urlParams = new URLSearchParams(window.location.search);
+const DEBUG_MODE = urlParams.get('debug') === 'true';
+const isLocalhost = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1';
+
+const PRODUCTION_MODE = !DEBUG_MODE && !isLocalhost;
+
+if (PRODUCTION_MODE) {
+    const noop = () => {};
+    window._originalLog = console.log;
+    window._originalWarn = console.warn;
+    
+    console.log = noop;
+    console.warn = noop;
+    console.info = noop;
+} else {
+    console.log('🔧 Debug mode enabled');
+}
+
 async function fetchFreshJSON(url) {
     try {
         const urlObj = new URL(url);
@@ -68,7 +91,7 @@ function getCachedData(key, maxAge = 300000) { // 5 minutes default
     const age = Date.now() - timestamp;
     
     if (age < maxAge) {
-      console.log(`📦 Cache HIT: ${key} (${Math.floor(age/1000)}s old)`);
+      if (DEBUG_MODE) console.log(`📦 Cache HIT: ${key} (${Math.floor(age/1000)}s old)`);
       return data;
     }
     
@@ -468,12 +491,12 @@ function isChapterValidated(repoName, chapter) {
     const stored = sessionStorage.getItem(key);
 
     // ✅ DEBUG LOGS - HARUS DI SINI DULU!
-    console.log('🔍 isChapterValidated called:');
-    console.log('   Key:', key);
-    console.log('   Stored value:', stored);
+    if (DEBUG_MODE) console.log('🔍 isChapterValidated called:');
+    if (DEBUG_MODE) console.log('   Key:', key);
+    if (DEBUG_MODE) console.log('   Stored value:', stored);
     
     if (!stored) {
-        console.log('   ❌ No session found'); // ← TAMBAH INI
+        if (DEBUG_MODE) console.log('   ❌ No session found');
         return false;
     }
     
@@ -482,20 +505,20 @@ function isChapterValidated(repoName, chapter) {
         const now = Date.now();
         
         // ✅ TAMBAH DEBUG LOGS
-        console.log('   Data:', data);
-        console.log('   Now:', now);
-        console.log('   Expiry:', data.expiry);
+if (DEBUG_MODE) console.log('   Data:', data);
+if (DEBUG_MODE) console.log('   Now:', now);
+if (DEBUG_MODE) console.log('   Expiry:', data.expiry);
         
         // Check if expired
         if (now > data.expiry) {
-            console.log(`⏰ Session expired for ${chapter}`);
+            if (DEBUG_MODE) console.log(`⏰ Session expired for ${chapter}`);
             sessionStorage.removeItem(key);
             return false;
         }
         
         const remainingMs = data.expiry - now;
         const remainingMin = Math.floor(remainingMs / 60000);
-        console.log(`✅ Session valid for ${chapter} (${remainingMin} min remaining)`);
+        if (DEBUG_MODE) console.log(`✅ Session valid for ${chapter} (${remainingMin} min remaining)`);
         
         return true;
         
@@ -512,7 +535,7 @@ function isChapterValidated(repoName, chapter) {
 function clearValidatedChapter(repoName, chapter) {
     const key = `validated_${repoName}_${chapter}`;
     sessionStorage.removeItem(key);
-    console.log(`🗑️  Cleared session for ${chapter}`);
+    if (DEBUG_MODE) console.log(`🗑️  Cleared session for ${chapter}`);
 }
 
 // ============================================
@@ -713,8 +736,6 @@ if (isOneshot) {
         </div>
     `;
 }
-
-const DEBUG_MODE = false;
 
 let mangaData = null;
 let currentChapterFolder = null;
@@ -929,7 +950,7 @@ function findChapterByFolder(folder) {
 function saveLastPage() {
     const storageKey = `lastPage_${repoParam}_${currentChapterFolder}`;
     localStorage.setItem(storageKey, currentPage);
-    console.log(`💾 Saved page ${currentPage} for ${currentChapterFolder}`);
+    if (DEBUG_MODE) console.log(`💾 Saved page ${currentPage} for ${currentChapterFolder}`);
 }
 
 function loadLastPage() {
@@ -962,7 +983,7 @@ function adjustChapterTitleFontSize(element) {
         element.style.fontSize = `${fontSize}px`;
     }
     
-    console.log(`📏 Chapter title font adjusted to: ${fontSize}px`);
+    if (DEBUG_MODE) console.log(`📏 Chapter title font adjusted to: ${fontSize}px`);
 }
 
 function setupUI() {
@@ -978,7 +999,7 @@ function setupUI() {
     
     adjustChapterTitleFontSize(titleElement);
     
-    console.log(`📖 Read mode: ${readMode}`);
+    if (DEBUG_MODE) console.log(`📖 Read mode: ${readMode}`);
     
     const btnBack = document.getElementById('btnBackToInfo');
     btnBack.onclick = () => {
@@ -1016,7 +1037,7 @@ function adjustTitleFontSize(element) {
         const maxHeight = initialFontSize * lineHeight * maxLines;
         
         if (scrollHeight <= maxHeight) {
-            console.log(`📏 Title fits: ${initialFontSize}px`);
+            if (DEBUG_MODE) console.log(`📏 Title fits: ${initialFontSize}px`);
             return;
         }
         
@@ -1025,7 +1046,7 @@ function adjustTitleFontSize(element) {
         
         requestAnimationFrame(() => {
             element.style.fontSize = `${newFontSize}px`;
-            console.log(`📏 Title font adjusted: ${initialFontSize}px → ${newFontSize}px`);
+            if (DEBUG_MODE) console.log(`📏 Title font adjusted: ${initialFontSize}px → ${newFontSize}px`);
         });
     });
 }
@@ -1035,46 +1056,12 @@ async function loadChapterPages() {
         readerContainer.innerHTML = '';
         readerContainer.className = `reader-container ${readMode}-mode`;
         
-        // ✅ CHECK CACHE FIRST (1 hour TTL - karena signed URL expire 1 jam)
-        const cacheKey = `chapter_${repoParam}_${currentChapterFolder}`;
-        const cached = getCachedData(cacheKey, 3600000); // 1 hour
-        
-        if (cached && cached.signedPages && cached.signedPages.length > 0) {
-            console.log('📦 Chapter pages loaded from cache');
-            totalPages = cached.signedPages.length;
-            
-            // Render from cache
-            renderPagesFromCache(cached.signedPages);
-            
-            setupPageTracking();
-            setupWebtoonScrollTracking();
-            renderPageThumbnails(cached.signedPages);
-            updateProgressBar();
-            
-            currentPage = loadLastPage();
-            readerContainer.classList.add('webtoon-mode');
-            readerContainer.classList.remove('manga-mode');
-            
-            if (currentPage > 1) {
-                setTimeout(() => {
-                    goToPage(currentPage);
-                    updatePageNavigation();
-                }, 100);
-            }
-            
-            hideLoading();
-            return;
-        }
-        
-        // ✅ CACHE MISS - Fetch from Worker
-        console.log('📡 Loading chapter pages from Worker...');
-        
         // Get repo info
         const repoOwner = mangaData.manga.repoUrl.split('/')[3];
         const repoName = mangaData.manga.repoUrl.split('/')[4];
         
         // Call Worker untuk decrypt manifest
-        console.log(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
+        if (DEBUG_MODE) console.log(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
         
         const workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
             method: 'POST',
@@ -1100,23 +1087,70 @@ async function loadChapterPages() {
         const signedPages = workerData.pages;
         totalPages = signedPages.length;
         
-        console.log(`📊 Total pages from worker: ${totalPages}`);
+        // ✅ Log expiry info (only in debug mode)
+        if (DEBUG_MODE) {
+            const expiresIn = workerData.expiresIn;
+            console.log(`📊 Total pages: ${totalPages}`);
+            console.log(`⏰ Token expires in ${Math.floor(expiresIn / 60)} minutes`);
+        }
         
-        // ✅ SAVE TO CACHE
-        setCachedData(cacheKey, { signedPages });
-        console.log(`💾 Cached chapter pages: ${cacheKey}`);
-        
-        // Render pages
-        renderPagesFromCache(signedPages);
+        // Render pages dengan signed URLs
+        signedPages.forEach((signedUrl, index) => {
+            const pageNum = index + 1;
+            
+            // ❌ NO LOG in production
+            if (DEBUG_MODE) {
+                console.log(`🖼️ Page ${pageNum}: ${signedUrl.substring(0, 80)}...`);
+            }
+            
+            const img = document.createElement('img');
+            img.className = 'reader-page';
+            img.src = signedUrl;
+            img.alt = `Page ${pageNum}`;
+            
+            if (pageNum <= 3) {
+                img.loading = 'eager';
+            } else {
+                img.loading = 'lazy';
+            }
+            
+            img.setAttribute('data-page', pageNum);
+            
+            img.onload = () => {
+                if (DEBUG_MODE) console.log(`✅ Page ${pageNum} loaded successfully`);
+            };
+            
+            img.onerror = () => {
+                if (DEBUG_MODE) console.error(`❌ Failed to load page ${pageNum}`);
+                
+                const placeholder = document.createElement('div');
+                placeholder.className = 'reader-page-error';
+                placeholder.style.minHeight = '600px';
+                placeholder.style.backgroundColor = 'var(--secondary-bg)';
+                placeholder.style.display = 'flex';
+                placeholder.style.alignItems = 'center';
+                placeholder.style.justifyContent = 'center';
+                placeholder.style.color = 'var(--text-secondary)';
+                placeholder.style.fontSize = '0.9rem';
+                placeholder.textContent = '❌ Failed to load image';
+                placeholder.setAttribute('data-page', pageNum);
+                
+                img.replaceWith(placeholder);
+            };
+            
+            readerContainer.appendChild(img);
+        });
         
         setupPageTracking();
         setupWebtoonScrollTracking();
+        
         renderPageThumbnails(signedPages);
         updateProgressBar();
         
-        console.log('✅ Pages container setup complete');
+        if (DEBUG_MODE) console.log('✅ Pages container setup complete');
         
         currentPage = loadLastPage();
+        
         readerContainer.classList.add('webtoon-mode');
         readerContainer.classList.remove('manga-mode');
         
@@ -1132,20 +1166,6 @@ async function loadChapterPages() {
     } catch (error) {
         console.error('❌ Error loading pages:', error);
         hideLoading();
-        
-        // ✅ FALLBACK: Try stale cache
-        const staleCache = getCachedData(`chapter_${repoParam}_${currentChapterFolder}`, Infinity);
-        if (staleCache && staleCache.signedPages) {
-            console.warn('⚠️ Using stale cache due to error');
-            renderPagesFromCache(staleCache.signedPages);
-            setupPageTracking();
-            setupWebtoonScrollTracking();
-            renderPageThumbnails(staleCache.signedPages);
-            updateProgressBar();
-            hideLoading();
-            return;
-        }
-        
         alert('Gagal memuat halaman chapter: ' + error.message);
     }
 }
@@ -1230,7 +1250,7 @@ function setupWebtoonScrollTracking() {
             
             // Jika tidak ada scroll atau scroll area sangat kecil
             if (documentHeight <= windowHeight + 50) {
-                console.log('📏 Short chapter detected - auto-showing end buttons');
+                if (DEBUG_MODE) console.log('📏 Short chapter detected - auto-showing end buttons');
                 endChapterContainer.style.display = 'block';
             }
         }, 500); // Delay 500ms untuk memastikan semua gambar sudah di-render
@@ -1302,7 +1322,7 @@ function renderPageThumbnails(pageUrls) {
         pageList.appendChild(thumb);
     });
     
-	console.log(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);}
+	if (DEBUG_MODE) console.log(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);
 
 function updatePageNavigation() {
     document.querySelectorAll('.page-thumb').forEach((thumb, index) => {
@@ -1363,7 +1383,7 @@ function openChapterListModal() {
     const modal = document.getElementById('modalOverlay');
     const modalBody = document.getElementById('chapterListModal');
     
-    console.log('📋 Opening chapter list modal...');
+    if (DEBUG_MODE) console.log('📋 Opening chapter list modal...');
     
     if (!modal || !modalBody) {
         console.error('❌ Modal elements not found!');
@@ -1440,8 +1460,7 @@ const badges = (endBadge || hiatusBadge)
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
     
-    console.log('✅ Chapter list modal opened');
-}
+    if (DEBUG_MODE) console.log('✅ Chapter list modal opened');
 
 /**
  * Close chapter list modal - FIXED
@@ -1449,7 +1468,7 @@ const badges = (endBadge || hiatusBadge)
 function closeChapterListModal() {
     const modal = document.getElementById('modalOverlay');
     
-    console.log('❌ Closing chapter list modal...');
+    if (DEBUG_MODE) console.log('❌ Closing chapter list modal...');
     
     modal.classList.remove('active');
     
@@ -1459,7 +1478,7 @@ function closeChapterListModal() {
         document.body.style.overflow = '';
     }, 300);
     
-    console.log('✅ Chapter list modal closed');
+    if (DEBUG_MODE) console.log('✅ Chapter list modal closed');
 }
 
 async function trackChapterView() {
@@ -1468,17 +1487,17 @@ async function trackChapterView() {
         const hasViewed = sessionStorage.getItem(viewKey);
         
         if (hasViewed) {
-            console.log('👁️ Already counted in this session');
+            if (DEBUG_MODE) console.log('👁️ Already counted in this session');
             return;
         }
         
-        console.log('📤 Tracking chapter view...');
+        if (DEBUG_MODE) console.log('📤 Tracking chapter view...');
         
         const githubRepo = window.currentGithubRepo || repoParam;
         
-        console.log(`   URL param: ${repoParam}`);
-        console.log(`   GitHub repo: ${githubRepo}`);
-        console.log(`   Chapter: ${currentChapterFolder}`);
+        if (DEBUG_MODE) console.log(`   URL param: ${repoParam}`);
+        if (DEBUG_MODE) console.log(`   GitHub repo: ${githubRepo}`);
+        if (DEBUG_MODE) console.log(`   Chapter: ${currentChapterFolder}`);
         
         await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
@@ -1496,7 +1515,7 @@ async function trackChapterView() {
         
         sessionStorage.setItem(viewKey, 'true');
         
-        console.log('✅ Chapter view tracked successfully (WIB)');
+        if (DEBUG_MODE) console.log('✅ Chapter view tracked successfully (WIB)');
         
     } catch (error) {
         console.error('❌ Error tracking chapter view:', error);
@@ -1507,7 +1526,7 @@ function showLoading() {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
         overlay.classList.add('active');
-        console.log('📄 Loading overlay shown');
+        if (DEBUG_MODE) console.log('📄 Loading overlay shown');
     }
 }
 
@@ -1518,13 +1537,13 @@ function hideLoading() {
         overlay.style.display = 'none';
         overlay.style.opacity = '0';
         overlay.style.visibility = 'hidden';
-        console.log('✅ Loading overlay hidden');
+        if (DEBUG_MODE) console.log('✅ Loading overlay hidden');
     }
 }
 
 function initProtection() {
     if (DEBUG_MODE) {
-        console.log('🔓 Debug mode enabled - protection disabled');
+        if (DEBUG_MODE) console.log('🔓 Debug mode enabled - protection disabled');
         return;
     }
     
