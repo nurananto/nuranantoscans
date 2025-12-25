@@ -808,45 +808,43 @@
                         // ✅ STEP 3: Check for updates immediately
                         registration.update();
 
-                        // ✅ STEP 4: Listen for updates
-                        registration.addEventListener("updatefound", () => {
-                            const newWorker = registration.installing;
-                            console.log("🔄 New SW installing...");
+                       // ✅ STEP 4: Listen for updates - SMOOTH TRANSITION
+registration.addEventListener("updatefound", () => {
+    const newWorker = registration.installing;
+    console.log("🔄 New SW installing...");
 
-                            newWorker.addEventListener("statechange", () => {
-                                if (
-                                    newWorker.state === "installed" &&
-                                    navigator.serviceWorker.controller
-                                ) {
-                                    console.log(
-                                        "✅ New SW installed, reload recommended",
-                                    );
+    newWorker.addEventListener("statechange", () => {
+        if (
+            newWorker.state === "installed" &&
+            navigator.serviceWorker.controller
+        ) {
+            console.log("✅ New SW ready");
+            
+            // Skip waiting & activate immediately
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+        }
+    });
+});
 
-                                    // Optional: Show update notification
-                                    // You can uncomment this to notify users
-                                    /*
-                        if (confirm('New version available! Reload now?')) {
-                            window.location.reload();
-                        }
-                        */
-                                }
-                            });
-                        });
-
-                        // ✅ STEP 5: Handle controller change
-                        let refreshing = false;
-                        navigator.serviceWorker.addEventListener(
-                            "controllerchange",
-                            () => {
-                                if (!refreshing) {
-                                    refreshing = true;
-                                    console.log(
-                                        "🔄 SW controller changed, reloading...",
-                                    );
-                                    window.location.reload();
-                                }
-                            },
-                        );
+// ✅ STEP 5: Handle controller change - SMOOTH RELOAD
+let refreshing = false;
+navigator.serviceWorker.addEventListener(
+    "controllerchange",
+    () => {
+        if (!refreshing) {
+            refreshing = true;
+            console.log("🔄 SW updated");
+            
+            // Fade out sebelum reload
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.3s ease';
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }
+    },
+);
                     } catch (err) {
                         console.error("❌ SW registration failed:", err);
 
