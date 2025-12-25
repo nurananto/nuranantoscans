@@ -1322,7 +1322,7 @@ function renderPageThumbnails(pageUrls) {
         pageList.appendChild(thumb);
     });
     
-	if (DEBUG_MODE) console.log(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);
+	if (DEBUG_MODE) console.log(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);}
 
 function updatePageNavigation() {
     document.querySelectorAll('.page-thumb').forEach((thumb, index) => {
@@ -1460,7 +1460,7 @@ const badges = (endBadge || hiatusBadge)
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
     
-    if (DEBUG_MODE) console.log('✅ Chapter list modal opened');
+    if (DEBUG_MODE) console.log('✅ Chapter list modal opened');}
 
 /**
  * Close chapter list modal - FIXED
@@ -1543,7 +1543,7 @@ function hideLoading() {
 
 function initProtection() {
     if (DEBUG_MODE) {
-        if (DEBUG_MODE) console.log('🔓 Debug mode enabled - protection disabled');
+        console.log('🔓 Debug mode enabled - protection disabled');  // ← Tidak perlu if lagi
         return;
     }
     
