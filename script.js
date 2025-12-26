@@ -49,11 +49,18 @@ async function fetchFreshJSON(url) {
  * CDN Image Optimizer
  */
 function getResponsiveCDN(originalUrl) {
-  const sizes = {
-    small: 300,
-    medium: 400,
-    large: 600
-  };
+  // ✅ BYPASS weserv untuk R2 domain
+  if (originalUrl.includes('cdn.nuranantoscans.my.id')) {
+    return {
+      small: originalUrl,
+      medium: originalUrl,
+      large: originalUrl,
+      original: originalUrl
+    };
+  }
+  
+  // Untuk domain lain tetap pakai weserv
+  const sizes = { small: 300, medium: 400, large: 600 };
   
   const encodeUrl = (url, width) => {
     const encoded = encodeURIComponent(url);
@@ -67,7 +74,6 @@ function getResponsiveCDN(originalUrl) {
     original: originalUrl
   };
 }
-
 /**
  * ✅ NEW: Cache helper dengan expiry
  */
