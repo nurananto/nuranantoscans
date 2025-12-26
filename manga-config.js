@@ -147,7 +147,7 @@ MANGA_LIST = [
   {
     id: 'yarikonda',
     title: 'Yarikonda Renai Game no Akuyaku ni Tensei shitanode, Gensaku Chishiki de Heroine wo Kouryaku shimasu',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/yarikonda-eaecd9b5-0510-46aa-b65c-a09611fa912b.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/yarikonda-eddbbab2-d0a4-4bb2-a12d-98e4f2ad7a1d.webp',
     repo: 'YarikondaRenaiGame'
   },
   {
