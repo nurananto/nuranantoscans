@@ -68,68 +68,6 @@ header {
     align-items: center;
 }
 
-/* GitHub Link - Modern Style */
-.github-link-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: #24292e;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.github-link-header:hover {
-    background: #1b1f23;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(36, 41, 46, 0.5);
-}
-
-.github-icon {
-    width: 24px;
-    height: 24px;
-    color: #fff;
-}
-
-.github-text {
-    color: #fff;
-    font-weight: 600;
-    font-size: 14px;
-    white-space: nowrap;
-}
-
-/* Facebook Link - Modern Style */
-.facebook-link-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: #1877f2;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.facebook-link-header:hover {
-    background: #166fe5;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.5);
-}
-
-.facebook-icon {
-    width: 24px;
-    height: 24px;
-    color: #fff;
-}
-
-.facebook-text {
-    color: #fff;
-    font-weight: 600;
-    font-size: 14px;
-    white-space: nowrap;
-}
-
 /* Manga List Header - Flex Layout */
 .manga-list-header {
     display: flex;
@@ -600,24 +538,6 @@ header {
         gap: 8px;
     }
 
-    .github-link-header,
-    .facebook-link-header {
-        padding: 8px 16px; /* ✅ Keep full button on tablet */
-        gap: 8px;
-        border-radius: 8px;
-    }
-
-    .github-icon,
-    .facebook-icon {
-        width: 24px;
-        height: 24px;
-    }
-
-    .github-text,
-    .facebook-text {
-        font-size: 14px;
-        display: inline; /* ✅ Show text on tablet */
-    }
 }
 
 @media (max-width: 767px) {
@@ -656,28 +576,6 @@ header {
         height: 45px;
     }
 
-    /* ✅ GitHub & Facebook - Icon only on mobile */
-    .github-link-header,
-    .facebook-link-header {
-        width: 45px;
-        height: 45px;
-        min-width: 45px;
-        min-height: 45px;
-        padding: 0;
-        justify-content: center;
-        border-radius: 10px;
-    }
-
-    .github-icon,
-    .facebook-icon {
-        width: 24px;
-        height: 24px;
-    }
-
-    .github-text,
-    .facebook-text {
-        display: none;
-    }
 }
 
 @media (max-width: 480px) {
@@ -713,22 +611,6 @@ header {
 
     .site-logo {
         height: 40px;
-    }
-
-    .github-link-header,
-    .facebook-link-header {
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
-        min-height: 40px;
-        padding: 0;
-        border-radius: 8px;
-    }
-
-    .github-icon,
-    .facebook-icon {
-        width: 22px;
-        height: 22px;
     }
 
     #searchInput {
@@ -1544,6 +1426,47 @@ input:focus-visible {
     }
 }
 
+/* ============================================
+   RESPONSIVE - HEADER ICON BUTTONS
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .header-icon-button {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .header-icon {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+@media (max-width: 767px) {
+    .header-icon-button {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+    }
+    
+    .header-icon {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-icon-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }
+    
+    .header-icon {
+        width: 22px;
+        height: 22px;
+    }
+}
+
 @media (max-width: 767px) {
     .header-border {
         margin-bottom: 1.5rem;
@@ -1603,5 +1526,360 @@ input:focus-visible {
         font-size: 0.8rem;
         height: 2.2rem;
         box-sizing: border-box;
+    }
+}
+
+/* ============================================
+   HEADER ICON BUTTONS (GitHub, Facebook, Profile)
+   ============================================ */
+.header-icon-button {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.header-icon {
+    width: 28px;
+    height: 28px;
+    color: #fff;
+}
+
+/* GitHub Button - Dark Gray */
+.github-button {
+    background: #24292e;
+}
+
+.github-button:hover {
+    background: #1b1f23;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(36, 41, 46, 0.5);
+}
+
+/* Facebook Button - Blue */
+.facebook-button {
+    background: #1877f2;
+}
+
+.facebook-button:hover {
+    background: #166fe5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.5);
+}
+
+/* Profile Button - Gradient */
+.profile-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.profile-button:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+}
+
+.profile-button .header-icon {
+    stroke-width: 2.5;
+}
+
+/* Focus states */
+.header-icon-button:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: 2px;
+}
+
+/* ============================================
+   MODAL OVERLAY (Login Modal)
+   ============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+}
+/* ============================================
+   LOGIN MODAL
+   ============================================ */
+.login-modal-content {
+    background: #2a2a2a;
+    border-radius: 24px;
+    max-width: 420px;
+    width: 90%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+/* Tabs */
+.login-tabs {
+    display: flex;
+    background: #1a1a1a;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+.login-tab {
+    flex: 1;
+    padding: 16px 12px;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.login-tab svg {
+    stroke-width: 2.5;
+}
+
+.login-tab.active {
+    color: #fff;
+    background: #2a2a2a;
+}
+
+.login-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-tab:hover:not(.active) {
+    color: #b0b0b0;
+    background: #222;
+}
+
+/* Panels */
+.login-panel {
+    display: none;
+    padding: 40px 32px 32px;
+    animation: fadeIn 0.3s ease;
+}
+
+.login-panel.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+/* Form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #b0b0b0;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 14px 16px;
+    background: #1a1a1a;
+    border: 2px solid #3a3a3a;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    background: #222;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input::placeholder {
+    color: #555;
+}
+
+/* Password Input with Toggle */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    padding-right: 48px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.toggle-password svg {
+    stroke: #888;
+    transition: stroke 0.2s ease;
+}
+
+.toggle-password:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.toggle-password:hover svg {
+    stroke: #b0b0b0;
+}
+
+/* Buttons */
+.btn-quick-login {
+    width: 100%;
+    padding: 14px 20px;
+    background: #3a3a3a;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-quick-login:hover {
+    background: #444;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-login:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 767px) {
+    .header-icon-button {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+    }
+    
+    .header-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .login-modal-content {
+        max-width: 90%;
+        border-radius: 20px;
+    }
+    
+    .login-panel {
+        padding: 32px 24px 24px;
+    }
+    
+    .login-title {
+        font-size: 20px;
+    }
+    
+    .login-tab {
+        font-size: 12px;
+        padding: 14px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-icon-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }
+    
+    .header-icon {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .login-modal-content {
+        border-radius: 18px;
+    }
+    
+    .login-panel {
+        padding: 28px 20px 20px;
     }
 }

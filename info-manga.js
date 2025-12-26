@@ -1469,3 +1469,85 @@ chaptersArray.sort((a, b) => {
     
     console.log('✅ Read First buttons initialized');
 }
+
+/**
+ * LOGIN MODAL - Nurananto Scanlation
+ * Dipakai di index.html dan info-manga.html
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    const btnOpen = document.getElementById('btnOpenLogin');
+    const modal = document.getElementById('loginModal');
+    
+    if (!btnOpen || !modal) {
+        console.warn('⚠️ Login button or modal not found');
+        return;
+    }
+
+    // Open modal
+    btnOpen.addEventListener('click', () => {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        console.log('✅ Login modal opened');
+    });
+
+    // Close modal
+    function closeLoginModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target.id === 'loginModal') {
+            closeLoginModal();
+        }
+    });
+
+    // Tab switching
+    document.querySelectorAll('.login-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.login-tab').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            document.querySelectorAll('.login-panel').forEach(p => p.classList.remove('active'));
+            
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            
+            const panelId = tab.id.replace('tab', 'panel');
+            document.getElementById(panelId)?.classList.add('active');
+        });
+    });
+
+    // Password toggle
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = btn.previousElementSibling;
+            const type = input.type === 'password' ? 'text' : 'password';
+            input.type = type;
+            
+            const svg = btn.querySelector('svg');
+            if (type === 'text') {
+                svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            } else {
+                svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            }
+        });
+    });
+
+    // Form submissions
+    document.querySelectorAll('.login-form').forEach(form => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Login functionality will be implemented soon!');
+        });
+    });
+
+    // Quick Login button
+    document.querySelector('.btn-quick-login')?.addEventListener('click', () => {
+        alert('Quick Login: Skip password entry for returning users');
+    });
+
+    console.log('✅ Login modal initialized');
+});
