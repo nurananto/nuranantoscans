@@ -372,48 +372,7 @@ async function processAllManga() {
         continue;
       }
       
-      // Check if cover already R2 URL with correct domain
-      if (isR2Url(manga.cover)) {
-        if (manga.cover.includes(R2_CONFIG.publicDomain)) {
-          console.log(`  [SKIP] Cover sudah di R2 dengan domain yang benar`);
-          updatedMangaList.push(manga);
-          skipCount++;
-          continue;
-        } else {
-          console.log(`  [MIGRATE] Cover di R2 tapi domain berbeda`);
-          const hash = extractHashFromCover(manga.cover);
-          if (hash) {
-            const newUrl = `https://${R2_CONFIG.publicDomain}/covers/${manga.id}-${hash}.webp`;
-            console.log(`    Old: ${manga.cover}`);
-            console.log(`    New: ${newUrl}`);
-            manga.cover = newUrl;
-            updatedMangaList.push(manga);
-            updatedRepos.add(manga.repo); // Mark repo as updated
-            migratedCount++;
-            continue;
-          }
-        }
-      }
-      
-      let existingHash = extractHashFromCover(manga.cover);
-      
-      if (existingHash) {
-        console.log(`  [FOUND] Existing hash: ${existingHash}`);
-        
-        const r2Key = `covers/${manga.id}-${existingHash}.webp`;
-        const existsInR2 = await checkR2ObjectExists(r2Key);
-        
-        if (existsInR2) {
-          console.log(`  [MIGRATE] Cover already in R2, updating URL...`);
-          const r2Url = `https://${R2_CONFIG.publicDomain}/${r2Key}`;
-          manga.cover = r2Url;
-          updatedMangaList.push(manga);
-          updatedRepos.add(manga.repo); // Mark repo as updated
-          migratedCount++;
-          continue;
-        }
-      }
-      
+     
       const mangaJsonUrl = typeof mangaConfig === 'string' ? mangaConfig : mangaConfig.url;
       
       console.log(`  [FETCH] Getting manga.json...`);
