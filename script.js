@@ -863,41 +863,430 @@ console.log('🔒 Protection enabled');
 initProtection();
 
 /**
- * LOGIN MODAL - Nurananto Scanlation
- * Dipakai di index.html dan info-manga.html
+ * LOGIN MODAL - FULL DEBUG VERSION
+ * Replace SELURUH bagian login modal di script.js DAN info-manga.js
  */
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎬 [INIT] ========================================');
+    console.log('🎬 [INIT] Login modal initialization started');
+    console.log('🎬 [INIT] ========================================');
+    
     const btnOpen = document.getElementById('btnOpenLogin');
     const modal = document.getElementById('loginModal');
+    const profileModal = document.getElementById('profileModal');
     
-    if (!btnOpen || !modal) {
-        console.warn('⚠️ Login button or modal not found');
+    console.log('🔍 [CHECK] ========================================');
+    console.log('🔍 [CHECK] Checking DOM elements...');
+    console.log('🔍 [CHECK] btnOpenLogin:', btnOpen);
+    console.log('🔍 [CHECK] loginModal:', modal);
+    console.log('🔍 [CHECK] profileModal:', profileModal);
+    console.log('🔍 [CHECK] ========================================');
+    
+    if (!btnOpen || !modal || !profileModal) {
+        console.error('❌ [ERROR] ========================================');
+        console.error('❌ [ERROR] Required elements missing!');
+        console.error('❌ [ERROR] btnOpen:', !!btnOpen);
+        console.error('❌ [ERROR] modal:', !!modal);
+        console.error('❌ [ERROR] profileModal:', !!profileModal);
+        console.error('❌ [ERROR] ========================================');
         return;
     }
 
-    // Open modal
-    btnOpen.addEventListener('click', () => {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        console.log('✅ Login modal opened');
-    });
+    // ✅ STEP 1: Check localStorage on page load
+    console.log('📦 [STORAGE] ========================================');
+    console.log('📦 [STORAGE] Checking localStorage...');
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('authToken');
+    
+    console.log('📦 [STORAGE] Raw user data:', storedUser);
+    console.log('📦 [STORAGE] Has token:', !!storedToken);
+    
+    if (storedUser) {
+        try {
+            const parsedUser = JSON.parse(storedUser);
+            console.log('📦 [STORAGE] Parsed user:', parsedUser);
+        } catch (e) {
+            console.error('❌ [STORAGE] JSON parse error:', e);
+        }
+    }
+    console.log('📦 [STORAGE] ========================================');
 
-    // Close modal
-    function closeLoginModal() {
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
+    // ✅ STEP 2: Profile button click handler
+    console.log('🔧 [SETUP] Adding click handler to profile button...');
+    btnOpen.addEventListener('click', () => {
+        console.log('🖱️ [CLICK] ========================================');
+        console.log('🖱️ [CLICK] Profile button clicked!');
+        console.log('🖱️ [CLICK] Time:', new Date().toISOString());
+        
+        const currentUser = localStorage.getItem('user');
+        console.log('👤 [USER] Raw user data:', currentUser);
+        
+        if (currentUser) {
+            try {
+                const parsedUser = JSON.parse(currentUser);
+                console.log('👤 [USER] Parsed user:', parsedUser);
+                console.log('➡️ [ACTION] Opening profile modal...');
+                showProfileModal(parsedUser);
+            } catch (e) {
+                console.error('❌ [USER] Parse error:', e);
+                console.log('➡️ [ACTION] Opening login modal (parse error)');
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        } else {
+            console.log('👤 [USER] No user found');
+            console.log('➡️ [ACTION] Opening login modal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        console.log('🖱️ [CLICK] ========================================');
+    });
+    console.log('🔧 [SETUP] Click handler added!');
+
+    // ✅ STEP 3: Login modal overlay click
+    console.log('🔧 [SETUP] Adding click handler to login modal...');
+    modal.addEventListener('click', (e) => {
+        console.log('🖱️ [LOGIN-CLICK] ========================================');
+        console.log('🖱️ [LOGIN-CLICK] Login modal clicked');
+        console.log('🖱️ [LOGIN-CLICK] Target:', e.target);
+        console.log('🖱️ [LOGIN-CLICK] Target ID:', e.target.id);
+        console.log('🖱️ [LOGIN-CLICK] Target tagName:', e.target.tagName);
+        
+        if (e.target.id === 'loginModal') {
+            console.log('✅ [OVERLAY] Overlay clicked - closing');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+            console.log('✅ [OVERLAY] Login modal closed');
+        } else {
+            console.log('⚠️ [OVERLAY] Content clicked - ignoring');
+        }
+        console.log('🖱️ [LOGIN-CLICK] ========================================');
+    });
+    console.log('🔧 [SETUP] Login modal click handler added!');
+
+    // ✅ STEP 4: Show Profile Modal Function
+    function showProfileModal(user) {
+        console.log('🎭 [PROFILE] ========================================');
+        console.log('🎭 [PROFILE] showProfileModal called');
+        console.log('🎭 [PROFILE] User object:', user);
+        console.log('🎭 [PROFILE] User username:', user?.username);
+        console.log('🎭 [PROFILE] Time:', new Date().toISOString());
+        
+        const loginModal = document.getElementById('loginModal');
+        let profileModal = document.getElementById('profileModal');
+        
+        console.log('📍 [PROFILE] Elements:');
+        console.log('📍 [PROFILE] - loginModal:', loginModal);
+        console.log('📍 [PROFILE] - profileModal:', profileModal);
+        
+        // Close login modal
+        console.log('❌ [PROFILE] Closing login modal...');
+        loginModal.style.display = 'none';
+        console.log('❌ [PROFILE] Login modal closed');
+        
+        // Clone profile modal to remove old listeners
+        console.log('🔄 [PROFILE] Cloning profile modal...');
+        const newProfileModal = profileModal.cloneNode(true);
+        console.log('🔄 [PROFILE] Profile modal cloned');
+        
+        console.log('🔄 [PROFILE] Replacing in DOM...');
+        profileModal.parentNode.replaceChild(newProfileModal, profileModal);
+        profileModal = newProfileModal;
+        console.log('🔄 [PROFILE] Profile modal replaced');
+        
+        // Update username
+        console.log('📝 [PROFILE] Updating username...');
+        const usernameEl = profileModal.querySelector('#profileUsername');
+        console.log('📝 [PROFILE] Username element:', usernameEl);
+        
+        if (usernameEl) {
+            usernameEl.textContent = user.username;
+            console.log('✅ [PROFILE] Username updated to:', user.username);
+        } else {
+            console.error('❌ [PROFILE] Username element not found!');
+        }
+        
+        // Show modal
+        console.log('👁️ [PROFILE] Showing profile modal...');
+        profileModal.style.display = 'flex';
+        console.log('👁️ [PROFILE] Profile modal display set to flex');
+        console.log('👁️ [PROFILE] Profile modal visible:', profileModal.style.display);
+        
+        // ✅ CRITICAL: Profile modal overlay click
+        console.log('🔧 [PROFILE] Adding overlay click handler...');
+        profileModal.addEventListener('click', (e) => {
+            console.log('🖱️ [PROFILE-CLICK] ========================================');
+            console.log('🖱️ [PROFILE-CLICK] Profile modal clicked!');
+            console.log('🖱️ [PROFILE-CLICK] Event target:', e.target);
+            console.log('🖱️ [PROFILE-CLICK] Event target ID:', e.target.id);
+            console.log('🖱️ [PROFILE-CLICK] Event target class:', e.target.className);
+            console.log('🖱️ [PROFILE-CLICK] Event target tagName:', e.target.tagName);
+            console.log('🖱️ [PROFILE-CLICK] profileModal:', profileModal);
+            console.log('🖱️ [PROFILE-CLICK] Target === profileModal?', e.target === profileModal);
+            console.log('🖱️ [PROFILE-CLICK] Target ID === "profileModal"?', e.target.id === 'profileModal');
+            
+            if (e.target === profileModal) {
+                console.log('✅ [PROFILE-CLOSE] ===== OVERLAY CLICKED =====');
+                console.log('✅ [PROFILE-CLOSE] Closing profile modal...');
+                profileModal.style.display = 'none';
+                console.log('✅ [PROFILE-CLOSE] Profile modal display:', profileModal.style.display);
+                document.body.style.overflow = '';
+                console.log('✅ [PROFILE-CLOSE] Body overflow reset');
+                console.log('✅ [PROFILE-CLOSE] DONE - NO LOGIN MODAL OPENED!');
+                console.log('✅ [PROFILE-CLOSE] ===========================');
+            } else {
+                console.log('⚠️ [PROFILE-CLICK] Not overlay - ignoring click');
+                console.log('⚠️ [PROFILE-CLICK] Clicked element:', e.target);
+            }
+            console.log('🖱️ [PROFILE-CLICK] ========================================');
+        });
+        console.log('🔧 [PROFILE] Overlay click handler added!');
+        
+        // Logout button
+        console.log('🔧 [PROFILE] Setting up logout button...');
+        const btnLogout = profileModal.querySelector('#btnLogout');
+        console.log('🔧 [PROFILE] Logout button:', btnLogout);
+        
+        if (btnLogout) {
+            btnLogout.addEventListener('click', () => {
+                console.log('🚪 [LOGOUT] ========================================');
+                console.log('🚪 [LOGOUT] Logout button clicked!');
+                console.log('🚪 [LOGOUT] Removing localStorage...');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                console.log('🚪 [LOGOUT] localStorage cleared');
+                
+                console.log('🚪 [LOGOUT] Closing profile modal...');
+                profileModal.style.display = 'none';
+                console.log('🚪 [LOGOUT] Opening login modal...');
+                loginModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                console.log('✅ [LOGOUT] Logged out successfully');
+                console.log('🚪 [LOGOUT] ========================================');
+                alert('Berhasil logout');
+            });
+            console.log('🔧 [PROFILE] Logout handler added');
+        } else {
+            console.error('❌ [PROFILE] Logout button not found!');
+        }
+        
+        console.log('🔍 [PROFILE] Checking VIP status...');
+        checkVIPStatus();
+        console.log('🎭 [PROFILE] ========================================');
     }
 
-    // Close on overlay click
-    modal.addEventListener('click', (e) => {
-        if (e.target.id === 'loginModal') {
-            closeLoginModal();
+    // ✅ STEP 5: Check VIP Status
+    async function checkVIPStatus() {
+        console.log('👑 [VIP] ========================================');
+        const token = localStorage.getItem('authToken');
+        console.log('👑 [VIP] Checking VIP status...');
+        console.log('👑 [VIP] Token exists:', !!token);
+        
+        if (!token) {
+            console.log('⚠️ [VIP] No token - skipping VIP check');
+            console.log('👑 [VIP] ========================================');
+            return;
         }
+        
+        const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+        
+        try {
+            console.log('🌐 [VIP] Fetching from:', `${API_URL}/vip/status`);
+            const response = await fetch(`${API_URL}/vip/status`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            console.log('📥 [VIP] Response status:', response.status);
+            const data = await response.json();
+            console.log('📥 [VIP] Response data:', data);
+            
+            const vipBadge = document.getElementById('vipBadge');
+            const vipText = document.getElementById('vipText');
+            const vipExpiryText = document.getElementById('vipExpiryText');
+            
+            console.log('📍 [VIP] Elements:', {
+                vipBadge: !!vipBadge,
+                vipText: !!vipText,
+                vipExpiryText: !!vipExpiryText
+            });
+            
+            if (data.success && data.isVIP) {
+                console.log('👑 [VIP] User is VIP!');
+                if (vipBadge) {
+                    vipBadge.className = 'vip-badge vip-badge-vip';
+                    console.log('✅ [VIP] Badge class updated');
+                }
+                if (vipText) {
+                    vipText.textContent = 'DONATUR SETIA';
+                    console.log('✅ [VIP] Text updated');
+                }
+                
+                const expiry = new Date(data.expiresAt);
+                console.log('📅 [VIP] Expiry date:', expiry);
+                
+                if (vipExpiryText) {
+                    vipExpiryText.textContent = `VIP Sampai ${expiry.toLocaleString('id-ID', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        timeZone: 'Asia/Jakarta'
+                    })} WIB`;
+                    console.log('✅ [VIP] Expiry text updated');
+                }
+            } else {
+                console.log('👤 [VIP] User is NOT VIP');
+                if (vipBadge) vipBadge.className = 'vip-badge vip-badge-free';
+                if (vipText) vipText.textContent = 'PEMBACA SETIA';
+                if (vipExpiryText) vipExpiryText.textContent = 'FREE ACCESS ONLY';
+                console.log('✅ [VIP] Free member badges updated');
+            }
+        } catch (error) {
+            console.error('❌ [VIP] Error:', error);
+            console.error('❌ [VIP] Error stack:', error.stack);
+        }
+        console.log('👑 [VIP] ========================================');
+    }
+
+    // ✅ Don't auto-show profile modal - only show when user clicks profile button
+console.log('ℹ️ [INIT] Profile modal ready - waiting for user click');   // ✅ STEP 7: Login/Register forms
+    const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+
+    console.log('🔧 [SETUP] Adding form handlers...');
+
+    document.querySelector('#panelLogin form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('🔐 [LOGIN] ========================================');
+        console.log('🔐 [LOGIN] Form submitted');
+        console.log('🔐 [LOGIN] Time:', new Date().toISOString());
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        console.log('🔐 [LOGIN] Email:', email);
+        
+        try {
+            console.log('🌐 [LOGIN] Sending request to:', `${API_URL}/auth/login`);
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            
+            console.log('📥 [LOGIN] Response status:', response.status);
+            const data = await response.json();
+            console.log('📥 [LOGIN] Response data:', data);
+            
+            if (data.success) {
+                console.log('✅ [LOGIN] Login successful!');
+                console.log('💾 [LOGIN] Saving to localStorage...');
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                console.log('💾 [LOGIN] Saved');
+                
+                console.log('🎭 [LOGIN] Showing profile modal...');
+                showProfileModal(data.user);
+            } else {
+                console.error('❌ [LOGIN] Login failed:', data.error);
+                alert(data.error || 'Login gagal');
+            }
+        } catch (error) {
+            console.error('❌ [LOGIN] Error:', error);
+            console.error('❌ [LOGIN] Error stack:', error.stack);
+            alert('Terjadi kesalahan: ' + error.message);
+        }
+        console.log('🔐 [LOGIN] ========================================');
     });
 
+document.querySelector('#panelRegister form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log('📝 [REGISTER] ========================================');
+    console.log('📝 [REGISTER] Form submitted');
+    console.log('📝 [REGISTER] Time:', new Date().toISOString());
+    
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    const confirm = document.getElementById('registerConfirm').value;
+    
+    console.log('📝 [REGISTER] Email:', email);
+    console.log('📝 [REGISTER] Password length:', password.length);
+    
+    if (password !== confirm) {
+        console.error('❌ [REGISTER] Password mismatch');
+        alert('Password tidak cocok!');
+        return;
+    }
+    
+    if (password.length < 8) {
+        console.error('❌ [REGISTER] Password too short');
+        alert('Password minimal 8 karakter');
+        return;
+    }
+    
+    try {
+        console.log('🌐 [REGISTER] Sending request to:', `${API_URL}/auth/register`);
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        
+        console.log('📥 [REGISTER] Response status:', response.status);
+        const data = await response.json();
+        console.log('📥 [REGISTER] Response data:', data);
+        
+        if (data.success) {
+            console.log('✅ [REGISTER] Registration successful!');
+            console.log('✅ [REGISTER] Message:', data.message);
+            console.log('✅ [REGISTER] User email:', data.email);
+            
+            alert('✅ ' + data.message);
+            
+            // Tutup modal dan switch ke login tab
+            console.log('🚪 [REGISTER] Closing modal...');
+            document.getElementById('loginModal').style.display = 'none';
+            document.body.style.overflow = '';
+            console.log('✅ [REGISTER] Modal closed');
+        } else {
+            console.error('❌ [REGISTER] Registration failed:', data.error);
+            alert('❌ ' + data.error);
+        }
+    } catch (error) {
+        console.error('❌ [REGISTER] Error:', error);
+        console.error('❌ [REGISTER] Error stack:', error.stack);
+        alert('Terjadi kesalahan: ' + error.message);
+    }
+    console.log('📝 [REGISTER] ========================================');
+});
+
+    console.log('🔧 [SETUP] Form handlers added');
+
+    // Password toggle
+    console.log('🔧 [SETUP] Adding password toggle handlers...');
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const input = btn.previousElementSibling;
+            const type = input.type === 'password' ? 'text' : 'password';
+            input.type = type;
+            console.log('👁️ [PASSWORD] Toggled to:', type);
+            
+            const svg = btn.querySelector('svg');
+            if (type === 'text') {
+                svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            } else {
+                svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            }
+        });
+    });
+    console.log('🔧 [SETUP] Password toggle handlers added');
+
     // Tab switching
+    console.log('🔧 [SETUP] Adding tab switching handlers...');
     document.querySelectorAll('.login-tab').forEach(tab => {
         tab.addEventListener('click', () => {
+            console.log('📑 [TAB] Switched to:', tab.id);
+            
             document.querySelectorAll('.login-tab').forEach(t => {
                 t.classList.remove('active');
                 t.setAttribute('aria-selected', 'false');
@@ -911,35 +1300,18 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(panelId)?.classList.add('active');
         });
     });
+    console.log('🔧 [SETUP] Tab switching handlers added');
 
-    // Password toggle
-    document.querySelectorAll('.toggle-password').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const input = btn.previousElementSibling;
-            const type = input.type === 'password' ? 'text' : 'password';
-            input.type = type;
-            
-            const svg = btn.querySelector('svg');
-            if (type === 'text') {
-                svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-            } else {
-                svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-            }
-        });
+    // Forgot password
+    console.log('🔧 [SETUP] Adding forgot password handler...');
+    document.querySelector('#panelForgot form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        console.log('🔑 [FORGOT] Form submitted');
+        alert('Fitur reset password segera hadir!');
     });
+    console.log('🔧 [SETUP] Forgot password handler added');
 
-    // Form submissions
-    document.querySelectorAll('.login-form').forEach(form => {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('Login functionality will be implemented soon!');
-        });
-    });
-
-    // Quick Login button
-    document.querySelector('.btn-quick-login')?.addEventListener('click', () => {
-        alert('Quick Login: Skip password entry for returning users');
-    });
-
-    console.log('✅ Login modal initialized');
+    console.log('✅ [INIT] ========================================');
+    console.log('✅ [INIT] Login modal fully initialized!');
+    console.log('✅ [INIT] ========================================');
 });

@@ -397,7 +397,7 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
   </div>
-<!-- Login Modal -->
+<!-- ✅ Login Modal -->
 <div id="loginModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
   <div class="login-modal-content">
     <!-- Tabs -->
@@ -446,7 +446,6 @@ if ('serviceWorker' in navigator) {
             </button>
           </div>
         </div>
-        <button type="button" class="btn-quick-login">Quick Login</button>
         <button type="submit" class="btn-login">Login</button>
       </form>
     </div>
@@ -498,6 +497,26 @@ if ('serviceWorker' in navigator) {
         </div>
         <button type="submit" class="btn-login">Send Reset Link</button>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ Profile Modal (TERPISAH - DI LUAR loginModal) -->
+<div id="profileModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true">
+  <div class="login-modal-content">
+    <div class="profile-content">
+      <img src="assets/Logo 2.png" alt="Profile" class="profile-avatar">
+      <h2 id="profileUsername" class="profile-username">Username</h2>
+      
+      <div id="vipBadge" class="vip-badge vip-badge-free">
+        <span id="vipText">PEMBACA SETIA</span>
+      </div>
+      
+      <div id="vipExpiry" class="vip-expiry">
+        <span id="vipExpiryText">FREE ACCESS ONLY</span>
+      </div>
+      
+      <button id="btnLogout" class="btn-logout">Logout</button>
     </div>
   </div>
 </div>

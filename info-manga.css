@@ -1664,6 +1664,7 @@ input:focus-visible {
     position: relative;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    border: 2px solid #667eea; /* ← TAMBAH INI */
 }
 
 /* Tabs */
@@ -1925,4 +1926,82 @@ input:focus-visible {
     .login-panel {
         padding: 28px 20px 20px;
     }
+}
+/* Profile Modal */
+.profile-content {
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid #667eea;
+  object-fit: cover;
+}
+
+.profile-username {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.vip-badge {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  border: 2px solid;
+}
+
+.vip-badge-vip {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-color: #FFC700;
+  color: #000;
+}
+
+.vip-badge-free {
+  background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
+  border-color: #6B7280;
+  color: #fff;
+}
+
+.vip-expiry {
+  width: 100%;
+  padding: 12px 16px;
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  text-align: center;
+  color: #b0b0b0;
+  font-size: 14px;
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 14px 20px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-logout:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
 }

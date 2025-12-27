@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Email Verification - Nurananto Scanlation</title>
+    
+    <!-- Preload CSS -->
+    <link rel="preload" href="fonts.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="fonts.css"></noscript>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/Logo 2.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header - Same as index.html & info-manga.html */
+        header {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 20px 0;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .site-logo {
+            height: 60px;
+            width: auto;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .header-icon-button {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .header-icon {
+            width: 28px;
+            height: 28px;
+            color: #fff;
+        }
+        
+        .github-button {
+            background: #24292e;
+        }
+        
+        .github-button:hover {
+            background: #1b1f23;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(36, 41, 46, 0.5);
+        }
+        
+        .facebook-button {
+            background: #1877f2;
+        }
+        
+        .facebook-button:hover {
+            background: #166fe5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(24, 119, 242, 0.5);
+        }
+        
+        .header-border {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.15);
+            margin: 0 auto;
+            max-width: 1400px;
+        }
+        
+        /* Main Container */
+        .main-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 50px 40px;
+            background: #1a1a1a;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+        
+        .logo-container {
+            margin-bottom: 30px;
+        }
+        
+        .verify-logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .loading { color: #667eea; }
+        
+        #message {
+            font-size: 16px;
+            color: #b0b0b0;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn-home {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-home:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .site-logo {
+                height: 45px;
+            }
+            
+            .header-icon-button {
+                width: 45px;
+                height: 45px;
+                border-radius: 12px;
+            }
+            
+            .header-icon {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .container {
+                padding: 40px 30px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            #message {
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .site-logo {
+                height: 40px;
+            }
+            
+            .header-icon-button {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+            }
+            
+            .header-icon {
+                width: 22px;
+                height: 22px;
+            }
+            
+            header {
+                padding: 15px 15px 0;
+            }
+            
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .verify-logo {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <a href="https://www.nuranantoscans.my.id" class="logo-link">
+                <img src="assets/logo.png" alt="Nurananto Scanlation Logo" class="site-logo">
+            </a>
+            
+            <div class="header-buttons">
+                <!-- GitHub Link -->
+                <a href="https://github.com/nurananto/NuranantoScanlation" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="header-icon-button github-button"
+                   aria-label="View source code on GitHub">
+                    <svg class="header-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a>
+                
+                <!-- Facebook Link -->
+                <a href="https://web.facebook.com/profile.php?id=61556658895013" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="header-icon-button facebook-button"
+                   aria-label="Follow on Facebook">
+                    <svg class="header-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        <div class="header-border"></div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="container">
+            <div class="logo-container">
+                <img src="assets/Logo 2.png" alt="Nurananto Scanlation" class="verify-logo">
+            </div>
+            
+            <div id="loadingState">
+                <h1 class="loading">Memverifikasi Email...</h1>
+                <div class="spinner"></div>
+                <p id="message">Mohon tunggu sebentar</p>
+            </div>
+            
+            <div id="successState" class="hidden">
+                <h1 class="success">✅ Email Berhasil Diverifikasi!</h1>
+                <p id="successMessage"></p>
+                <a href="https://www.nuranantoscans.my.id" class="btn-home">Kembali ke Beranda</a>
+            </div>
+            
+            <div id="errorState" class="hidden">
+                <h1 class="error">❌ Verifikasi Gagal</h1>
+                <p id="errorMessage"></p>
+                <a href="https://www.nuranantoscans.my.id" class="btn-home">Kembali ke Beranda</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+        
+        async function verifyEmail() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            
+            if (!token) {
+                showError('Token verifikasi tidak ditemukan di URL');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/verify?token=${token}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showSuccess(data.message || 'Email Anda berhasil diverifikasi! Sekarang Anda bisa login.');
+                } else {
+                    showError(data.error || 'Terjadi kesalahan saat verifikasi');
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                showError('Terjadi kesalahan koneksi. Silakan coba lagi nanti.');
+            }
+        }
+        
+        function showSuccess(msg) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.add('hidden');
+            document.getElementById('successState').classList.remove('hidden');
+            document.getElementById('successMessage').textContent = msg;
+        }
+        
+        function showError(msg) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('successState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = msg;
+        }
+        
+        // Auto verify on page load
+        window.addEventListener('DOMContentLoaded', verifyEmail);
+    </script>
+</body>
+</html>
