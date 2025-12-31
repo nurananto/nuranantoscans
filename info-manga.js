@@ -1,399 +1,36 @@
-/**
- * INFO-MANGA.JS - LCP OPTIMIZED dengan CDN Image Resize
- */
-
-/**
- * ✅ CDN IMAGE OPTIMIZER - Auto resize menggunakan images.weserv.nl (FREE)
- */
-/**
- * ✅ Force fresh fetch - no cache
- */
-/**
- * ✅ FIXED: No custom headers to avoid CORS preflight
- */
-// ✅ Suppress weserv.nl errors
-const originalError = console.error;
-console.error = function(...args) {
-  if (args[0]?.includes?.('images.weserv.nl')) return;
-  originalError.apply(console, args);
-};
-
-async function fetchFreshJSON(url) {
-    try {
-        const urlObj = new URL(url);
-        const isCrossOrigin = urlObj.origin !== window.location.origin;
-        
-        // For GitHub: NO query string, NO custom headers (avoid preflight)
-        if (isCrossOrigin && urlObj.hostname.includes('githubusercontent.com')) {
-            const response = await fetch(url, {
-                method: 'GET',
-                cache: 'no-store',
-                mode: 'cors',
-                credentials: 'omit'
-                // ❌ NO headers - this triggers preflight!
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            return await response.json();
-        }
-        
-        // For same-origin: can use query string
-        const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
-        const response = await fetch(url + '?t=' + cacheBuster, {
-            method: 'GET',
-            cache: 'no-store'
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        return await response.json();
-        
-    } catch (error) {
-        console.error('❌ fetchFreshJSON failed:', error);
-        throw error;
-    }
-}
-
-/**
- * ✅ CACHE HELPER - Same as script.js
- */
-function getCachedData(key, maxAge = 300000) { // 5 minutes default
-  try {
-    const cached = localStorage.getItem(key);
-    if (!cached) return null;
-    
-    const { data, timestamp } = JSON.parse(cached);
-    const age = Date.now() - timestamp;
-    
-    if (age < maxAge) {
-      console.log(`📦 Cache HIT: ${key} (${Math.floor(age/1000)}s old)`);
-      return data;
-    }
-    
-    console.log(`⏰ Cache EXPIRED: ${key}`);
-    localStorage.removeItem(key);
-    return null;
-  } catch (error) {
-    return null;
-  }
-}
-
-function setCachedData(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify({
-      data,
-      timestamp: Date.now()
-    }));
-  } catch (error) {
-    console.warn('Cache write failed:', error);
-  }
-}
-    
-function getResponsiveCDN(originalUrl) {
-  const sizes = {
-    small: 400,   // Mobile
-    medium: 600,  // Tablet
-    large: 800    // Desktop
-  };
-  
-  // Encode URL untuk weserv.nl
-  const encodeUrl = (url, width) => {
-    const encoded = encodeURIComponent(url);
-    return `https://images.weserv.nl/?url=${encoded}&w=${width}&q=85&output=webp`;
-  };
-  
-  return {
-    small: encodeUrl(originalUrl, sizes.small),
-    medium: encodeUrl(originalUrl, sizes.medium),
-    large: encodeUrl(originalUrl, sizes.large),
-    original: originalUrl
-  };
-}
-
-/**
- * INFO-MANGA.JS - CODE VALIDATION FOR WEBTOON TYPE
- * Tambahkan fungsi ini di bagian atas info-manga.js (setelah constants)
- */
-
 // ============================================
-// CODE VALIDATION MODULE
+// INFO-MANGA.JS
 // ============================================
+// Note: Uses common.js for shared utilities (DEBUG_MODE, fetchFreshJSON, cache functions, etc.)
 
-const CODE_VALIDATION_URL = 'https://manga-code-validator.nuranantoadhien.workers.dev/';
-
-/**
- * Validate chapter code via Google Apps Script
- */
-async function validateChapterCode(repoOwner, repoName, chapterFolder, userCode) {
-    try {
-        console.log('🔐 Validating code for chapter:', chapterFolder);
-        
-        const response = await fetch(CODE_VALIDATION_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'validateCode',
-                repoName: repoName,
-                chapter: chapterFolder,
-                code: userCode
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+async function showLockedChapterModal(chapterNumber = null, chapterFolder = null) {
+    dLog('🔒 showLockedChapterModal called with chapter:', chapterNumber);
+    
+    const mangaType = mangaData?.manga?.type || 'manga';
+    
+    if (!chapterFolder && chapterNumber) {
+        chapterFolder = chapterNumber;
+        if (typeof chapterNumber === 'string' && chapterNumber.toLowerCase().startsWith('chapter ')) {
+            chapterFolder = chapterNumber.replace(/^chapter\s+/i, '');
         }
-        
-        const result = await response.json();
-        
-        console.log('✅ Validation result:', result);
-        
-        return result;
-        
-    } catch (error) {
-        console.error('❌ Code validation error:', error);
-        return { valid: false, error: error.message };
-    }
-}
-
-/**
- * Check if user is blocked before showing modal
- */
-async function checkIfBlocked() {
-    try {
-        const response = await fetch(CODE_VALIDATION_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'checkBlockStatus'
-            })
-        });
-        
-        const result = await response.json();
-        return result;
-        
-    } catch (error) {
-        console.error('❌ Block check error:', error);
-        return { blocked: false, remainingAttempts: 3 };
-    }
-}
-
-/**
- * Show blocked notification (instead of modal)
- */
-function showBlockedNotification() {
-    // Create overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.display = 'flex';
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-    
-    // Create content
-    overlay.innerHTML = `
-        <div class="modal-content locked-modal-content" style="max-width: 400px;">
-            <div class="modal-header locked-modal-header">
-                <h2>🚫 Akses Diblokir</h2>
-            </div>
-            <div class="modal-body locked-modal-body">
-                <p class="locked-explanation">
-                    Anda telah melakukan <strong>3x percobaan salah</strong> dalam 24 jam terakhir.
-                </p>
-                <p class="locked-benefit">
-                    ⏰ Silakan coba lagi <strong>besok</strong> pada waktu yang sama.
-                </p>
-                <div class="locked-modal-buttons">
-                    <button class="locked-btn locked-btn-yes" id="btnBlockedOK" style="max-width: 100%;">
-                        Mengerti
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(overlay);
-    
-    // Close button
-    document.getElementById('btnBlockedOK').onclick = () => {
-        overlay.remove();
-    };
-    
-    overlay.onclick = (e) => {
-        if (e.target === overlay) {
-            overlay.remove();
-        }
-    };
-}
-
-function showCodeInputModal(chapterNumber = null, chapterFolder = null) {
-    console.log('🔐 showCodeInputModal called:', { chapterNumber, chapterFolder });
-    
-    const modal = document.getElementById('codeInputModal');
-    if (!modal) {
-        console.error('❌ codeInputModal element not found!');
-        return;
     }
     
-    // Update modal title
-    const modalHeader = modal.querySelector('.code-modal-header h2');
-    if (modalHeader && chapterNumber) {
-        const hasChapter = /^chapter\s+/i.test(chapterNumber);
-        const titleText = hasChapter ? chapterNumber : `Chapter ${chapterNumber}`;
-        modalHeader.textContent = `🔐 Masukkan Code untuk ${titleText}`;
-    }
+    const isDonatur = isDonaturFromDOM() || await checkIsDonatur();
     
-    // Clear previous input
-    const codeInput = document.getElementById('chapterCodeInput');
-    const errorMsg = document.getElementById('codeErrorMsg');
-    const successMsg = document.getElementById('codeSuccessMsg');
-    
-        if (codeInput) codeInput.value = '';
-    if (errorMsg) errorMsg.style.display = 'none';
-    if (successMsg) successMsg.style.display = 'none';
-    
-    // Show modal
-    modal.style.display = 'flex';
-    modal.classList.add('active');
-    
-    console.log('🔐 Code modal shown');
-    
-    // Setup button handlers
-    const btnSubmit = document.getElementById('btnSubmitCode');
-    const btnCancel = document.getElementById('btnCancelCode');
-    
-    const closeModal = () => {
-        modal.classList.remove('active');
-        setTimeout(() => {
-            modal.style.display = 'none';
-            
-            // ✅ RESTORE PROTECTION setelah modal tertutup
-            if (codeInput) {
-                codeInput.style.userSelect = 'none';
-                codeInput.style.webkitUserSelect = 'none';
-            }
-        }, 300);
-    };
-    
-    // Remove old event listeners
-    const newBtnSubmit = btnSubmit.cloneNode(true);
-    btnSubmit.parentNode.replaceChild(newBtnSubmit, btnSubmit);
-    
-    const newBtnCancel = btnCancel.cloneNode(true);
-    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
-    
-    // Add new event listeners
-    newBtnSubmit.onclick = async () => {
-    // ✅ STEP 1: Paste from clipboard first
-    try {
-        const clipboardText = await navigator.clipboard.readText();
-        if (clipboardText && clipboardText.trim()) {
-            codeInput.value = clipboardText.trim();
-            console.log('✅ Code pasted from clipboard');
-        }
-    } catch (err) {
-        console.log('ℹ️ Clipboard read failed or empty, using manual input');
-    }
-    
-    // ✅ STEP 2: Validate code (from clipboard or manual input)
-    const code = codeInput.value.trim();
-    
-    if (!code) {
-        showCodeError('Paste code atau masukkan code terlebih dahulu');
-        return;
-    }
-    
-    if (code.length !== 16) {
-        showCodeError('Code harus 16 karakter');
-        return;
-    }
-    
-    // Show loading
-    newBtnSubmit.disabled = true;
-    newBtnSubmit.textContent = 'Memvalidasi...';
-    
-    // Get repo info from manga data
-    const urlParams = new URLSearchParams(window.location.search);
-    const repoParam = urlParams.get('repo');
-    
-    if (!repoParam) {
-        showCodeError('Error: Repo tidak ditemukan');
-        newBtnSubmit.disabled = false;
-        newBtnSubmit.textContent = '📋 Paste & Submit Code';
-        return;
-    }
-    
-    // Get repo owner and name from manga data
-    const repoOwner = mangaData.manga.repoUrl.split('/')[3];
-    const repoName = mangaData.manga.repoUrl.split('/')[4];
-    
-    // Validate code
-    const result = await validateChapterCode(repoOwner, repoName, chapterFolder, code);
-    
-    if (result.valid) {
-        // Success - close modal and reload/open reader
-        saveValidatedChapter(repoParam, chapterFolder);
-        showCodeSuccess('Code valid! Membuka chapter...');
-        
-        setTimeout(() => {
-            closeModal();
-             // Open reader with validated chapter
+    if (isDonatur) {
+        dLog('✅ Donatur SETIA - Opening chapter directly');
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        if (repoParam && chapterFolder) {
             window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
-        }, 1000);
-        
-    } else {
-        // Error
-        showCodeError(result.message || 'Code tidak valid');
-        newBtnSubmit.disabled = false;
-        newBtnSubmit.textContent = '📋 Paste & Submit Code';
-    }
-};
-    
-    newBtnCancel.onclick = closeModal;
-    
-    // Close on overlay click
-    modal.onclick = (e) => {
-        if (e.target === modal) {
-            closeModal();
         }
-    };
-}
-
-/**
- * Show error message in code modal
- */
-function showCodeError(message) {
-    const errorMsg = document.getElementById('codeErrorMsg');
-    const successMsg = document.getElementById('codeSuccessMsg');
-    
-    if (errorMsg) {
-        errorMsg.textContent = message;
-        errorMsg.style.display = 'block';
+        return;
     }
     
-    if (successMsg) {
-        successMsg.style.display = 'none';
-    }
-}
-
-/**
- * Show success message in code modal
- */
-function showCodeSuccess(message) {
-    const successMsg = document.getElementById('codeSuccessMsg');
-    const errorMsg = document.getElementById('codeErrorMsg');
-    
-    if (successMsg) {
-        successMsg.textContent = message;
-        successMsg.style.display = 'block';
-    }
-    
-    if (errorMsg) {
-        errorMsg.style.display = 'none';
+    dLog('🔒 PEMBACA SETIA - Showing upgrade modal');
+    const upgradeModal = document.getElementById('upgradeModal');
+    if (upgradeModal) {
+        upgradeModal.style.display = 'flex';
     }
 }
 
@@ -412,7 +49,7 @@ async function trackLockedChapterView(chapter) {
             return;
         }
         
-        console.log('🔒 Locked chapter clicked:', chapter.folder);
+        dLog('🔒 Locked chapter clicked:', chapter.folder);
         
         const githubRepo = window.currentGithubRepo || repoParam;
         
@@ -453,7 +90,7 @@ function saveValidatedChapter(repoName, chapter) {
         expiry: Date.now() + SESSION_DURATION
     };
     sessionStorage.setItem(key, JSON.stringify(data));
-    console.log(`💾 Saved session for ${chapter} (expires in 1 hour)`);
+    dLog(`💾 Saved session for ${chapter} (expires in 1 hour)`);
 }
 
 /**
@@ -473,14 +110,14 @@ function isChapterValidated(repoName, chapter) {
         
         // Check if expired
         if (now > data.expiry) {
-            console.log(`⏰ Session expired for ${chapter}`);
+            dLog(`⏰ Session expired for ${chapter}`);
             sessionStorage.removeItem(key);
             return false;
         }
         
         const remainingMs = data.expiry - now;
         const remainingMin = Math.floor(remainingMs / 60000);
-        console.log(`✅ Session valid for ${chapter} (${remainingMin} min remaining)`);
+        dLog(`✅ Session valid for ${chapter} (${remainingMin} min remaining)`);
         
         return true;
         
@@ -497,7 +134,7 @@ function isChapterValidated(repoName, chapter) {
 function clearValidatedChapter(repoName, chapter) {
     const key = `validated_${repoName}_${chapter}`;
     sessionStorage.removeItem(key);
-    console.log(`🗑️  Cleared session for ${chapter}`);
+    dLog(`🗑️  Cleared session for ${chapter}`);
 }
 
 // ============================================
@@ -535,17 +172,17 @@ function clearValidatedChapter(repoName, chapter) {
                     
                     // ✅ CRITICAL: Add onload handler to mark as used
                     preloadLink.onload = () => {
-                        console.log('✅ Cover preloaded successfully');
+                        dLog('✅ Cover preloaded successfully');
                         // Mark as used to prevent warning
                         preloadLink.dataset.loaded = 'true';
                     };
                     
                     document.head.appendChild(preloadLink);
                     
-                    console.log('🚀 Cover preload initiated');
+                    dLog('🚀 Cover preload initiated');
                 }
             })
-            .catch(err => console.warn('⚠️ Preload failed:', err));
+            .catch(err => dWarn('⚠️ Preload failed:', err));
     }
 })();
 
@@ -570,8 +207,55 @@ function convertToWIB(isoString) {
 // Link Trakteer untuk chapter terkunci
 const TRAKTEER_LINK = 'https://trakteer.id/NuranantoScanlation';
 
+// ✅ Helper function untuk check status donatur
+async function checkIsDonatur() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return false;
+    
+    try {
+        const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+        const response = await fetch(`${API_URL}/donatur/status`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await response.json();
+        return data.success && data.isDonatur === true;
+    } catch (error) {
+        console.error('Error checking donatur status:', error);
+        return false;
+    }
+}
+
+// ✅ Helper function untuk check status dari DOM (faster, no API call)
+// ✅ Juga cek localStorage sebagai fallback jika DOM belum siap
+function isDonaturFromDOM() {
+    const statusText = document.getElementById('statusText');
+    
+    // ✅ Cek DOM terlebih dahulu
+    if (statusText && statusText.textContent === 'DONATUR SETIA') {
+        return true;
+    }
+    
+    // ✅ Fallback: cek localStorage jika DOM belum siap (untuk menghindari flash gembok terkunci)
+    try {
+        const stored = localStorage.getItem('userDonaturStatus');
+        if (stored) {
+            const data = JSON.parse(stored);
+            // ✅ Cache valid for 5 minutes
+            const cacheAge = Date.now() - data.timestamp;
+            if (cacheAge < 300000) { // 5 minutes
+                return data.isDonatur === true;
+            }
+        }
+    } catch (error) {
+        // Ignore error
+    }
+    
+    return false;
+}
+
 async function showLockedChapterModal(chapterNumber = null, chapterFolder = null) {
-    console.log('🔒 showLockedChapterModal called with chapter:', chapterNumber);
+    dLog('🔒 showLockedChapterModal called with chapter:', chapterNumber);
     
     // Check manga type
     const mangaType = mangaData?.manga?.type || 'manga';
@@ -585,54 +269,66 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
         }
     }
     
-    if (mangaType === 'webtoon') {
-        // ✅ CHECK IF BLOCKED FIRST
-        const blockStatus = await checkIfBlocked();
-        
-        if (blockStatus.blocked) {
-            showBlockedNotification();
-            return;
+    // ✅ CEK APAKAH USER SUDAH LOGIN
+    const token = localStorage.getItem('authToken');
+    const isLoggedIn = !!token;
+    
+    if (!isLoggedIn) {
+        // ✅ USER BELUM LOGIN - Tampilkan modal login required
+        dLog('🔒 User belum login - Showing login required modal');
+        const loginRequiredModal = document.getElementById('loginRequiredModal');
+        if (loginRequiredModal) {
+            loginRequiredModal.style.display = 'flex';
         }
-        
-        // Not blocked, show code input modal
-        showCodeInputModal(chapterNumber, chapterFolder);
         return;
     }
     
-    // Original code for manga type (Trakteer modal)
-    const modal = document.getElementById('lockedChapterModal');
-    if (!modal) return;
-    
-    const modalHeader = modal.querySelector('.locked-modal-header h2');
-    if (modalHeader && chapterNumber) {
-        const hasChapter = /^chapter\s+/i.test(chapterNumber);
-        const titleText = hasChapter ? chapterNumber : `Chapter ${chapterNumber}`;
-        modalHeader.textContent = `🔒 ${titleText} Terkunci karena RAW Berbayar`;
-    } else if (modalHeader) {
-        modalHeader.textContent = `🔒 Chapter Terkunci karena RAW Berbayar`;
+    // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
+    // Use verifyDonaturStatusStrict from common.js for security
+    let isDonatur = false;
+    try {
+        // Try to use strict verification from common.js if available
+        if (typeof verifyDonaturStatusStrict === 'function') {
+            isDonatur = await verifyDonaturStatusStrict();
+        } else {
+            // Fallback: verify with API (no cache)
+            if (token) {
+                const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+                const response = await fetch(`${API_URL}/donatur/status`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.isDonatur && data.expiresAt) {
+                        const now = new Date();
+                        const expiry = new Date(data.expiresAt);
+                        isDonatur = expiry > now;
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        dLog('⚠️ [SECURITY] Error verifying donatur status:', error);
+        isDonatur = false; // Fail-secure: deny access on error
     }
     
-    modal.style.display = 'flex';
-    
-    const btnYes = document.getElementById('btnLockedYes');
-    const btnNo = document.getElementById('btnLockedNo');
-    
-    const closeModal = () => {
-        modal.style.display = 'none';
-    };
-    
-    btnYes.onclick = () => {
-        closeModal();
-        window.open(TRAKTEER_LINK, '_blank');
-    };
-    
-    btnNo.onclick = closeModal;
-    
-    modal.onclick = (e) => {
-        if (e.target === modal) {
-            closeModal();
+    if (isDonatur) {
+        // ✅ DONATUR SETIA - Langsung buka chapter tanpa modal
+        dLog('✅ Donatur SETIA - Opening chapter directly');
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        if (repoParam && chapterFolder) {
+            window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
         }
-    };
+        return;
+    }
+    
+    // ✅ PEMBACA SETIA (sudah login tapi bukan donatur) - Show upgrade modal
+    dLog('🔒 PEMBACA SETIA - Showing upgrade modal');
+    const upgradeModal = document.getElementById('upgradeModal');
+    if (upgradeModal) {
+        upgradeModal.style.display = 'flex';
+    }
 }
 
 // Google Apps Script URL untuk view counter
@@ -642,6 +338,22 @@ let mangaData = null;
 
 // Load data saat halaman dimuat
 document.addEventListener('DOMContentLoaded', async () => {
+    // ✅ Check donatur status first (jika ada token) untuk memastikan status tersedia sebelum render chapter
+    // ✅ Note: checkDonaturStatus akan di-define di DOMContentLoaded yang lain, jadi kita cek dulu
+    const token = localStorage.getItem('authToken');
+    if (token) {
+        // ✅ Wait a bit untuk memastikan checkDonaturStatus sudah ter-define
+        // ✅ Atau langsung cek dari localStorage sebagai fallback
+        const stored = localStorage.getItem('userDonaturStatus');
+        if (!stored && window.checkDonaturStatus) {
+            try {
+                await window.checkDonaturStatus();
+            } catch (error) {
+                console.error('Error checking donatur status:', error);
+            }
+        }
+    }
+    
     await loadMangaFromRepo();
     setupShowDetailsButton();
     
@@ -670,7 +382,7 @@ function getMangaJsonUrl() {
         return null;
     }
     
-    console.log(`📚 Loading manga: ${repoParam}`);
+    dLog(`📚 Loading manga: ${repoParam}`);
     
     // Support both old format (string) and new format (object)
     if (typeof mangaConfig === 'string') {
@@ -698,7 +410,7 @@ async function loadMangaFromRepo() {
             
             if (cached) {
                 mangaData = cached;
-                console.log('✅ Manga data loaded from cache');
+                dLog('✅ Manga data loaded from cache');
                 
                 // Display immediately from cache
                 displayMangaInfo();
@@ -719,15 +431,15 @@ async function loadMangaFromRepo() {
         }
         
         // ✅ CACHE MISS - Fetch fresh
-        console.log('📡 Fetching fresh manga data...');
+        dLog('📡 Fetching fresh manga data...');
         mangaData = await fetchFreshJSON(mangaJsonUrl);
         
-        console.log('📦 Raw manga data:', mangaData);
+        dLog('📦 Raw manga data:', mangaData);
         
         // ✅ SAVE TO CACHE
         if (repoParam) {
             setCachedData(`manga_full_${repoParam}`, mangaData);
-            console.log(`💾 Cached manga data: manga_full_${repoParam}`);
+            dLog(`💾 Cached manga data: manga_full_${repoParam}`);
         }
         
         // Display manga info
@@ -745,7 +457,7 @@ async function loadMangaFromRepo() {
         // Update page title
         document.title = `${mangaData.manga.title} - Info`;
         
-        console.log('✅ Manga data loaded from repo (WIB timezone)');
+        dLog('✅ Manga data loaded from repo (WIB timezone)');
         
     } catch (error) {
         console.error('❌ Error loading manga data:', error);
@@ -757,7 +469,7 @@ async function loadMangaFromRepo() {
         if (repoParam) {
             const staleCache = getCachedData(`manga_full_${repoParam}`, Infinity);
             if (staleCache) {
-                console.warn('⚠️ Using stale cache due to error');
+                dWarn('⚠️ Using stale cache due to error');
                 mangaData = staleCache;
                 displayMangaInfo();
                 displayChapters();
@@ -813,14 +525,10 @@ function displayMangaInfo() {
     // Default src (medium size)
     coverImg.src = cdnUrls.medium;
     
-    // Fallback ke original jika gagal
-    coverImg.onerror = function() {
-        console.error('❌ Failed to load cover via CDN, using original');
-        this.src = manga.cover;
-        this.srcset = ''; // Remove srcset on error
-    };
+    // ✅ Set data-original for error handling
+    coverImg.setAttribute('data-original', manga.cover);
     
-    console.log('✅ Cover loaded with CDN optimization');
+    dLog('✅ Cover loaded with CDN optimization');
     
     // Update Views
     document.getElementById('viewsCount').textContent = manga.views || 0;
@@ -985,7 +693,7 @@ chaptersArray.sort((a, b) => {
         chapterList.appendChild(showMoreBtn);
     }
     
-    console.log(`✅ Loaded ${chaptersArray.length} chapters`);
+    dLog(`✅ Loaded ${chaptersArray.length} chapters`);
 }
 
 /**
@@ -996,14 +704,19 @@ function createChapterElement(chapter, allChapters) {
     const div = document.createElement('div');
     div.className = 'chapter-item';
     
-    if (chapter.locked) {
+    // ✅ CHECK USER STATUS - Jika DONATUR SETIA, treat locked chapter as unlocked
+    const isDonatur = isDonaturFromDOM();
+    const isActuallyLocked = chapter.locked && !isDonatur;
+    
+    if (isActuallyLocked) {
         div.classList.add('chapter-locked');
         div.onclick = () => trackLockedChapterView(chapter);
     } else {
         div.onclick = () => openChapter(chapter);
     }
     
-    const lockIcon = chapter.locked ? '🔒 ' : '';
+    // ✅ Icon: 🔒 untuk locked (PEMBACA SETIA), 🔓 untuk unlocked (DONATUR SETIA), atau kosong jika tidak locked
+    const lockIcon = isActuallyLocked ? '🔒 ' : (chapter.locked && isDonatur ? '🔓 ' : '');
     const uploadDate = getRelativeTime(chapter.uploadDate);
     const isRecent = isRecentlyUploaded(chapter.uploadDate);
     
@@ -1067,7 +780,7 @@ async function trackLockedChapterView(chapter) {
             return;
         }
         
-        console.log('🔒 Locked chapter clicked:', chapter.folder);
+        dLog('🔒 Locked chapter clicked:', chapter.folder);
         
         const githubRepo = window.currentGithubRepo || repoParam;
         
@@ -1104,7 +817,7 @@ async function incrementPendingChapterViews(repo, chapter) {
             mode: 'no-cors'
         });
         
-        console.log('✅ Chapter view increment request sent');
+        dLog('✅ Chapter view increment request sent');
         
     } catch (error) {
         console.error('❌ Error incrementing chapter views:', error);
@@ -1125,7 +838,7 @@ function openChapter(chapter) {
         return;
     }
     
-    console.log('📖 Opening chapter:', chapter.folder);
+    dLog('📖 Opening chapter:', chapter.folder);
     window.location.href = `reader.html?repo=${repoParam}&chapter=${chapter.folder}`;
 }
 
@@ -1223,7 +936,7 @@ async function trackPageView() {
         const repoParam = urlParams.get('repo');
         
         if (!repoParam) {
-            console.log('⚠️ No repo parameter, skipping view tracking');
+            dLog('⚠️ No repo parameter, skipping view tracking');
             return;
         }
         
@@ -1231,7 +944,7 @@ async function trackPageView() {
         const hasViewed = sessionStorage.getItem(viewKey);
         
         if (hasViewed) {
-            console.log('📊 Already counted in this session');
+            dLog('📊 Already counted in this session');
             return;
         }
         
@@ -1239,7 +952,7 @@ async function trackPageView() {
         await incrementPendingViews(githubRepo);
         
         sessionStorage.setItem(viewKey, 'true');
-        console.log('✅ View tracked successfully');
+        dLog('✅ View tracked successfully');
         
     } catch (error) {
         console.error('❌ Error tracking view:', error);
@@ -1264,21 +977,16 @@ async function incrementPendingViews(repo) {
             mode: 'no-cors'
         });
         
-        console.log('✅ View increment request sent');
+        dLog('✅ View increment request sent');
         
     } catch (error) {
         console.error('❌ Error incrementing views:', error);
     }
 }
 
-/**
- * Protection code
- */
-const DEBUG_MODE = false;
-
 function initProtection() {
     if (DEBUG_MODE) {
-        console.log('🔓 Debug mode enabled - protection disabled');
+        dLog('🔓 Debug mode enabled - protection disabled');
         return;
     }
     
@@ -1319,7 +1027,7 @@ function initProtection() {
         return false;
     });
     
-    console.log('🔒 Protection enabled');
+    dLog('🔒 Protection enabled');
 }
 
 initProtection();
@@ -1329,7 +1037,7 @@ async function fetchMangaDexRating() {
         const mangadexUrl = mangaData.manga.links?.mangadex;
         
         if (!mangadexUrl) {
-            console.log('⚠️ MangaDex URL tidak tersedia');
+            dLog('⚠️ MangaDex URL tidak tersedia');
             return;
         }
         
@@ -1352,18 +1060,18 @@ async function fetchMangaDexRating() {
             const CACHE_DURATION = 48 * 3600000;
             
             if (cacheAge < CACHE_DURATION) {
-                console.log(`📦 MangaDex rating from cache: ${cachedRating} (${cacheAgeHours}h old)`);
+                dLog(`📦 MangaDex rating from cache: ${cachedRating} (${cacheAgeHours}h old)`);
                 
                 document.getElementById('ratingScore').textContent = cachedRating;
                 document.getElementById('ratingScoreMobile').textContent = cachedRating;
                 
                 return;
             } else {
-                console.log(`⏰ Rating cache expired (${cacheAgeHours}h old), fetching fresh...`);
+                dLog(`⏰ Rating cache expired (${cacheAgeHours}h old), fetching fresh...`);
             }
         }
         
-        console.log(`📊 Fetching fresh rating for manga ID: ${mangaId}`);
+        dLog(`📊 Fetching fresh rating for manga ID: ${mangaId}`);
         
         const apiUrl = `https://script.google.com/macros/s/AKfycbwZ0-VeyloQxjvh-h65G0wtfAzxVq6VYzU5Bz9n1Rl0T4GAkGu9X7HmGh_3_0cJhCS1iA/exec?action=getRating&mangaId=${mangaId}`;
         
@@ -1390,7 +1098,7 @@ async function fetchMangaDexRating() {
             document.getElementById('ratingScore').textContent = roundedRating;
             document.getElementById('ratingScoreMobile').textContent = roundedRating;
             
-            console.log(`⭐ Rating MangaDex: ${roundedRating}/10`);
+            dLog(`⭐ Rating MangaDex: ${roundedRating}/10`);
         } else {
             throw new Error('No rating data');
         }
@@ -1402,7 +1110,7 @@ async function fetchMangaDexRating() {
         if (mangaIdMatch) {
             const cachedRating = localStorage.getItem(`rating_${mangaIdMatch[1]}`);
             if (cachedRating) {
-                console.log(`📦 Using old cache: ${cachedRating}`);
+                dLog(`📦 Using old cache: ${cachedRating}`);
                 document.getElementById('ratingScore').textContent = cachedRating;
                 document.getElementById('ratingScoreMobile').textContent = cachedRating;
                 return;
@@ -1422,7 +1130,7 @@ function setupReadFirstButton() {
     const btnReadFirstInside = document.getElementById('btnReadFirstInside');
     
     if (!btnReadFirstOutside && !btnReadFirstInside) {
-        console.warn('⚠️ Read First buttons not found');
+        dWarn('⚠️ Read First buttons not found');
         return;
     }
     
@@ -1447,7 +1155,7 @@ chaptersArray.sort((a, b) => {
         const firstUnlocked = chaptersArray.find(ch => !ch.locked);
         
         if (!firstUnlocked) {
-            console.warn('⚠️ All chapters are locked');
+            dWarn('⚠️ All chapters are locked');
             return null;
         }
         
@@ -1463,7 +1171,7 @@ chaptersArray.sort((a, b) => {
             return;
         }
         
-        console.log('🎬 Opening first chapter:', firstChapter.folder);
+        dLog('🎬 Opening first chapter:', firstChapter.folder);
         openChapter(firstChapter);
     }
     
@@ -1474,28 +1182,366 @@ chaptersArray.sort((a, b) => {
         btnReadFirstInside.onclick = handleReadFirstClick;
     }
     
-    console.log('✅ Read First buttons initialized');
+    dLog('✅ Read First buttons initialized');
 }
+
+// ============================================
+// UPGRADE & CODE MODAL HANDLERS (GLOBAL)
+// ============================================
+
+// Close login required modal
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnCloseLoginRequired') {
+        const loginRequiredModal = document.getElementById('loginRequiredModal');
+        if (loginRequiredModal) loginRequiredModal.style.display = 'none';
+    }
+});
+
+// Login button from login required modal
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnLoginFromRequired') {
+        const loginRequiredModal = document.getElementById('loginRequiredModal');
+        const loginModal = document.getElementById('loginModal');
+        if (loginRequiredModal) loginRequiredModal.style.display = 'none';
+        if (loginModal) {
+            loginModal.style.display = 'flex';
+            // Switch to login tab
+            const tabLogin = document.getElementById('tabLogin');
+            if (tabLogin) tabLogin.click();
+        }
+    }
+});
+
+// Close upgrade modal
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnCloseUpgrade') {
+        const upgradeModal = document.getElementById('upgradeModal');
+        if (upgradeModal) upgradeModal.style.display = 'none';
+    }
+});
+
+// Donasi button - dengan auto-refresh setelah kembali dari Trakteer
+// ✅ Store previous handler to prevent memory leak
+let trakteerFocusHandler = null;
+
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnDonasi' || e.target.closest('#btnDonasi')) {
+        // Open Trakteer in new tab
+        window.open('https://trakteer.id/NuranantoScanlation', '_blank');
+        
+        // ✅ Remove previous handler if exists (prevent multiple listeners)
+        if (trakteerFocusHandler) {
+            window.removeEventListener('focus', trakteerFocusHandler);
+        }
+        
+        // ✅ Auto-refresh status when window regains focus (user returns from Trakteer)
+        trakteerFocusHandler = () => {
+            dLog('🔄 [TRAKTEER] Window focused - checking donatur status...');
+            if (window.checkDonaturStatus) {
+                // Update immediately without delay
+                window.checkDonaturStatus().catch(err => {
+                    dWarn('Status check after Trakteer failed:', err);
+                });
+            }
+            // Remove listener after first check
+            window.removeEventListener('focus', trakteerFocusHandler);
+            trakteerFocusHandler = null; // Clear reference
+        };
+        window.addEventListener('focus', trakteerFocusHandler);
+    }
+});
+
+// VIP Code button
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnVIPCode') {
+        const upgradeModal = document.getElementById('upgradeModal');
+        const codeModal = document.getElementById('codeModal');
+        const inputVIPCode = document.getElementById('inputVIPCode');
+        const btnPaste = document.getElementById('btnPasteCode');
+        const btnRedeem = document.getElementById('btnRedeemCode');
+        const errorEl = document.getElementById('codeError');
+        
+        if (upgradeModal) upgradeModal.style.display = 'none';
+        if (codeModal) {
+            // Reset state
+            inputVIPCode.value = '';
+            errorEl.textContent = '';
+            
+            codeModal.style.display = 'flex';
+            
+            // ✅ Setup input listener untuk toggle button saat value berubah
+            setupVIPCodeInputToggle();
+            // ✅ Set state awal (input kosong = tampilkan Paste button)
+            toggleVIPCodeButton();
+        }
+    }
+});
+
+// ✅ Function untuk toggle button berdasarkan value input (bisa dipanggil langsung)
+function toggleVIPCodeButton() {
+    const inputEl = document.getElementById('inputVIPCode');
+    const btnPaste = document.getElementById('btnPasteCode');
+    const btnRedeem = document.getElementById('btnRedeemCode');
+    
+    if (!inputEl || !btnPaste || !btnRedeem) return;
+    
+    const hasValue = inputEl.value.trim().length > 0;
+    
+    if (hasValue) {
+        // Ada kode -> tampilkan Redeem, sembunyikan Paste
+        btnPaste.style.display = 'none';
+        btnRedeem.style.display = 'flex';
+        inputEl.readOnly = false; // ✅ Biarkan user bisa edit/hapus
+    } else {
+        // Kosong -> tampilkan Paste, sembunyikan Redeem
+        btnPaste.style.display = 'flex';
+        btnRedeem.style.display = 'none';
+        inputEl.readOnly = true;
+    }
+}
+
+// ✅ Function untuk setup input listener
+function setupVIPCodeInputToggle() {
+    const inputEl = document.getElementById('inputVIPCode');
+    
+    if (!inputEl) return;
+    
+    // ✅ Hapus listener lama jika ada
+    if (inputEl._toggleHandler) {
+        inputEl.removeEventListener('input', inputEl._toggleHandler);
+    }
+    
+    // ✅ Buat handler function yang memanggil toggleVIPCodeButton
+    inputEl._toggleHandler = function() {
+        toggleVIPCodeButton();
+    };
+    
+    // Tambahkan listener baru
+    inputEl.addEventListener('input', inputEl._toggleHandler);
+}
+
+// ✅ PASTE CODE Button
+document.addEventListener('click', async (e) => {
+    if (e.target.id === 'btnPasteCode' || e.target.closest('#btnPasteCode')) {
+        dLog('📋 [PASTE-BTN] Paste button clicked');
+        
+        const inputEl = document.getElementById('inputVIPCode');
+        const btnPaste = document.getElementById('btnPasteCode');
+        const btnRedeem = document.getElementById('btnRedeemCode');
+        const errorEl = document.getElementById('codeError');
+        
+        try {
+            // Read from clipboard
+            const text = await navigator.clipboard.readText();
+            dLog('📋 [PASTE-BTN] Clipboard text:', text);
+            dLog('📋 [PASTE-BTN] Text length:', text.length);
+            
+            if (text && text.trim().length > 0) {
+                inputEl.value = text.trim();
+                // ✅ Toggle button secara manual (karena set value programmatically tidak selalu trigger input event)
+                toggleVIPCodeButton();
+                errorEl.textContent = '';
+                dLog('✅ [PASTE-BTN] Code pasted successfully');
+            } else {
+                errorEl.textContent = 'Clipboard kosong';
+                console.error('❌ [PASTE-BTN] Empty clipboard');
+            }
+        } catch (error) {
+            console.error('❌ [PASTE-BTN] Error:', error);
+            errorEl.textContent = 'Gagal membaca clipboard. Paste manual (Ctrl+V)';
+            
+            // Allow manual paste
+            inputEl.readOnly = false;
+            inputEl.focus();
+            // ✅ Toggle button akan otomatis ter-handle oleh input listener ketika user paste manual
+            // ✅ Juga panggil toggle sekarang untuk memastikan state benar
+            toggleVIPCodeButton();
+        }
+    }
+});
+
+// ✅ REDEEM CODE - Submit VIP Code
+document.addEventListener('submit', async (e) => {
+    if (e.target.id === 'formVIPCode') {
+        e.preventDefault();
+        dLog('🎫 [VIP-CODE] Form submitted');
+        
+        const inputEl = document.getElementById('inputVIPCode');
+        const code = inputEl.value.trim();
+        const errorEl = document.getElementById('codeError');
+        const token = localStorage.getItem('authToken');
+        const btnRedeem = document.getElementById('btnRedeemCode');
+        
+        dLog('📝 [VIP-CODE] Code:', code);
+        dLog('📝 [VIP-CODE] Code length:', code.length);
+        
+        if (!token) {
+            console.error('❌ [VIP-CODE] No token found');
+            errorEl.textContent = 'Please login first';
+            return;
+        }
+        
+        if (!code) {
+            console.error('❌ [VIP-CODE] Empty code');
+            errorEl.textContent = 'Kode tidak boleh kosong';
+            return;
+        }
+        
+        // Disable button during request
+        btnRedeem.disabled = true;
+        btnRedeem.textContent = '⏳ PROCESSING...';
+        
+        try {
+            dLog('🌐 [VIP-CODE] Sending request...');
+            
+            const response = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/vip/redeem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ code })
+            });
+            
+            dLog('📥 [VIP-CODE] Response status:', response.status);
+            const data = await response.json();
+            dLog('📥 [VIP-CODE] Response data:', data);
+            
+            if (data.success) {
+                dLog('✅ [VIP-CODE] Success!');
+                
+                // ✅ CRITICAL: Update localStorage IMMEDIATELY with new status (before any async operations)
+                // This prevents visual delay/flash
+                if (data.expiresAt) {
+                    localStorage.setItem('userDonaturStatus', JSON.stringify({
+                        isDonatur: true,
+                        expiresAt: data.expiresAt,
+                        timestamp: Date.now()
+                    }));
+                }
+                
+                // ✅ Update DOM IMMEDIATELY (synchronously) - no delay
+                const statusBox = document.getElementById('statusBadge');
+                const statusText = document.getElementById('statusText');
+                const btnUpgrade = document.getElementById('btnUpgrade');
+                const countdownBox = document.getElementById('countdownBox');
+                const countdownText = document.getElementById('countdownText');
+                
+                if (statusBox) statusBox.className = 'status-box donatur-setia';
+                if (statusText) statusText.textContent = 'DONATUR SETIA';
+                if (btnUpgrade) btnUpgrade.style.display = 'none';
+                
+                // Show countdown immediately
+                if (data.expiresAt && countdownBox && countdownText) {
+                    try {
+                        countdownBox.style.display = 'block';
+                        // Update countdown text immediately
+                        updateCountdown(data.expiresAt, countdownText);
+                        // Start countdown interval
+                        if (window.countdownInterval) {
+                            clearInterval(window.countdownInterval);
+                        }
+                        window.countdownInterval = setInterval(() => {
+                            if (validateAndUpdateExpiredStatus()) {
+                                // Status expired, clear interval
+                                if (window.countdownInterval) {
+                                    clearInterval(window.countdownInterval);
+                                    window.countdownInterval = null;
+                                }
+                                return;
+                            }
+                            // ✅ Safety check: ensure elements still exist
+                            const currentCountdownText = document.getElementById('countdownText');
+                            if (currentCountdownText) {
+                                updateCountdown(data.expiresAt, currentCountdownText);
+                            } else {
+                                // Element removed, clear interval
+                                if (window.countdownInterval) {
+                                    clearInterval(window.countdownInterval);
+                                    window.countdownInterval = null;
+                                }
+                            }
+                        }, 1000);
+                    } catch (countdownError) {
+                        console.error('Error setting up countdown:', countdownError);
+                        // Fallback: hide countdown if error
+                        if (countdownBox) countdownBox.style.display = 'none';
+                    }
+                }
+                
+                // ✅ Refresh chapter list immediately to update locked/unlocked icons
+                if (typeof displayChapters === 'function') {
+                    displayChapters();
+                }
+                
+                alert('✅ ' + data.message);
+                
+                const codeModal = document.getElementById('codeModal');
+                if (codeModal) codeModal.style.display = 'none';
+                
+                // ✅ Then refresh from API in background (for consistency)
+                if (window.checkDonaturStatus) {
+                    // Don't await - let it run in background
+                    window.checkDonaturStatus().catch(err => {
+                        dWarn('Background status check failed:', err);
+                    });
+                }
+                
+                // Reset
+                inputEl.value = '';
+                errorEl.textContent = '';
+            } else {
+                console.error('❌ [VIP-CODE] Failed:', data.error);
+                errorEl.textContent = data.error;
+            }
+        } catch (error) {
+            console.error('❌ [VIP-CODE] Error:', error);
+            errorEl.textContent = 'Terjadi kesalahan';
+        } finally {
+            // Re-enable button
+            btnRedeem.disabled = false;
+            btnRedeem.textContent = '⚡ REDEEM CODE';
+        }
+    }
+});
+
+// Back from code modal
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnBackFromCode') {
+        const upgradeModal = document.getElementById('upgradeModal');
+        const codeModal = document.getElementById('codeModal');
+        if (codeModal) codeModal.style.display = 'none';
+        if (upgradeModal) upgradeModal.style.display = 'flex';
+    }
+});
+
+// Close code modal on overlay click
+document.addEventListener('click', (e) => {
+    const codeModal = document.getElementById('codeModal');
+    if (e.target === codeModal) {
+        codeModal.style.display = 'none';
+    }
+});
 
 /**
  * LOGIN MODAL - FULL DEBUG VERSION
  * Replace SELURUH bagian login modal di script.js DAN info-manga.js
  */
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎬 [INIT] ========================================');
-    console.log('🎬 [INIT] Login modal initialization started');
-    console.log('🎬 [INIT] ========================================');
+    dLog('🎬 [INIT] ========================================');
+    dLog('🎬 [INIT] Login modal initialization started');
+    dLog('🎬 [INIT] ========================================');
     
     const btnOpen = document.getElementById('btnOpenLogin');
     const modal = document.getElementById('loginModal');
     const profileModal = document.getElementById('profileModal');
     
-    console.log('🔍 [CHECK] ========================================');
-    console.log('🔍 [CHECK] Checking DOM elements...');
-    console.log('🔍 [CHECK] btnOpenLogin:', btnOpen);
-    console.log('🔍 [CHECK] loginModal:', modal);
-    console.log('🔍 [CHECK] profileModal:', profileModal);
-    console.log('🔍 [CHECK] ========================================');
+    dLog('🔍 [CHECK] ========================================');
+    dLog('🔍 [CHECK] Checking DOM elements...');
+    dLog('🔍 [CHECK] btnOpenLogin:', btnOpen);
+    dLog('🔍 [CHECK] loginModal:', modal);
+    dLog('🔍 [CHECK] profileModal:', profileModal);
+    dLog('🔍 [CHECK] ========================================');
     
     if (!btnOpen || !modal || !profileModal) {
         console.error('❌ [ERROR] ========================================');
@@ -1508,301 +1554,1074 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ✅ STEP 1: Check localStorage on page load
-    console.log('📦 [STORAGE] ========================================');
-    console.log('📦 [STORAGE] Checking localStorage...');
+    dLog('📦 [STORAGE] ========================================');
+    dLog('📦 [STORAGE] Checking localStorage...');
     const storedUser = localStorage.getItem('user');
     const storedToken = localStorage.getItem('authToken');
     
-    console.log('📦 [STORAGE] Raw user data:', storedUser);
-    console.log('📦 [STORAGE] Has token:', !!storedToken);
+    dLog('📦 [STORAGE] Raw user data:', storedUser);
+    dLog('📦 [STORAGE] Has token:', !!storedToken);
     
     if (storedUser) {
         try {
             const parsedUser = JSON.parse(storedUser);
-            console.log('📦 [STORAGE] Parsed user:', parsedUser);
+            dLog('📦 [STORAGE] Parsed user:', parsedUser);
         } catch (e) {
             console.error('❌ [STORAGE] JSON parse error:', e);
         }
     }
-    console.log('📦 [STORAGE] ========================================');
+    dLog('📦 [STORAGE] ========================================');
 
     // ✅ STEP 2: Profile button click handler
-    console.log('🔧 [SETUP] Adding click handler to profile button...');
-    btnOpen.addEventListener('click', () => {
-        console.log('🖱️ [CLICK] ========================================');
-        console.log('🖱️ [CLICK] Profile button clicked!');
-        console.log('🖱️ [CLICK] Time:', new Date().toISOString());
+    dLog('🔧 [SETUP] Adding click handler to profile button...');
+    btnOpen.addEventListener('click', async (e) => {
+        // ✅ Prevent multiple clicks
+        if (btnOpen.disabled) {
+            dLog('⚠️ [CLICK] Button already processing, ignoring...');
+            return;
+        }
         
-        const currentUser = localStorage.getItem('user');
-        console.log('👤 [USER] Raw user data:', currentUser);
-        
-        if (currentUser) {
-            try {
-                const parsedUser = JSON.parse(currentUser);
-                console.log('👤 [USER] Parsed user:', parsedUser);
-                console.log('➡️ [ACTION] Opening profile modal...');
-                showProfileModal(parsedUser);
-            } catch (e) {
-                console.error('❌ [USER] Parse error:', e);
-                console.log('➡️ [ACTION] Opening login modal (parse error)');
+        try {
+            dLog('🖱️ [CLICK] ========================================');
+            dLog('🖱️ [CLICK] Profile button clicked!');
+            dLog('🖱️ [CLICK] Time:', new Date().toISOString());
+            
+            // ✅ Temporarily disable button to prevent double-click
+            btnOpen.disabled = true;
+            
+            const currentUser = localStorage.getItem('user');
+            dLog('👤 [USER] Raw user data:', currentUser);
+            
+            if (currentUser) {
+                try {
+                    const parsedUser = JSON.parse(currentUser);
+                    dLog('👤 [USER] Parsed user:', parsedUser);
+                    dLog('➡️ [ACTION] Opening profile modal...');
+                    
+                    // ✅ Ensure modal elements exist before calling
+                    const profileModal = document.getElementById('profileModal');
+                    if (!profileModal) {
+                        console.error('❌ [ERROR] Profile modal not found, showing login modal instead');
+                        modal.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        return;
+                    }
+                    
+                    await showProfileModal(parsedUser);
+                } catch (e) {
+                    console.error('❌ [USER] Parse error:', e);
+                    dLog('➡️ [ACTION] Opening login modal (parse error)');
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            } else {
+                dLog('👤 [USER] No user found');
+                dLog('➡️ [ACTION] Opening login modal');
                 modal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
             }
-        } else {
-            console.log('👤 [USER] No user found');
-            console.log('➡️ [ACTION] Opening login modal');
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            dLog('🖱️ [CLICK] ========================================');
+        } catch (error) {
+            console.error('❌ [CLICK] Unexpected error:', error);
+            // ✅ Fallback: Always show login modal if something goes wrong
+            try {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            } catch (fallbackError) {
+                console.error('❌ [CLICK] Fallback error:', fallbackError);
+            }
+        } finally {
+            // ✅ Re-enable button after a short delay
+            setTimeout(() => {
+                btnOpen.disabled = false;
+            }, 300);
         }
-        console.log('🖱️ [CLICK] ========================================');
     });
-    console.log('🔧 [SETUP] Click handler added!');
+    dLog('🔧 [SETUP] Click handler added!');
 
     // ✅ STEP 3: Login modal overlay click
-    console.log('🔧 [SETUP] Adding click handler to login modal...');
+    dLog('🔧 [SETUP] Adding click handler to login modal...');
     modal.addEventListener('click', (e) => {
-        console.log('🖱️ [LOGIN-CLICK] ========================================');
-        console.log('🖱️ [LOGIN-CLICK] Login modal clicked');
-        console.log('🖱️ [LOGIN-CLICK] Target:', e.target);
-        console.log('🖱️ [LOGIN-CLICK] Target ID:', e.target.id);
-        console.log('🖱️ [LOGIN-CLICK] Target tagName:', e.target.tagName);
+        dLog('🖱️ [LOGIN-CLICK] ========================================');
+        dLog('🖱️ [LOGIN-CLICK] Login modal clicked');
+        dLog('🖱️ [LOGIN-CLICK] Target:', e.target);
+        dLog('🖱️ [LOGIN-CLICK] Target ID:', e.target.id);
+        dLog('🖱️ [LOGIN-CLICK] Target tagName:', e.target.tagName);
         
         if (e.target.id === 'loginModal') {
-            console.log('✅ [OVERLAY] Overlay clicked - closing');
+            dLog('✅ [OVERLAY] Overlay clicked - closing');
             modal.style.display = 'none';
             document.body.style.overflow = '';
-            console.log('✅ [OVERLAY] Login modal closed');
+            dLog('✅ [OVERLAY] Login modal closed');
         } else {
-            console.log('⚠️ [OVERLAY] Content clicked - ignoring');
+            dLog('⚠️ [OVERLAY] Content clicked - ignoring');
         }
-        console.log('🖱️ [LOGIN-CLICK] ========================================');
+        dLog('🖱️ [LOGIN-CLICK] ========================================');
     });
-    console.log('🔧 [SETUP] Login modal click handler added!');
+    
+    // ✅ STEP 4: Login Required modal overlay click
+    const loginRequiredModal = document.getElementById('loginRequiredModal');
+    if (loginRequiredModal) {
+        loginRequiredModal.addEventListener('click', (e) => {
+            if (e.target.id === 'loginRequiredModal') {
+                loginRequiredModal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+    }
+    dLog('🔧 [SETUP] Login modal click handler added!');
 
     // ✅ STEP 4: Show Profile Modal Function
-    function showProfileModal(user) {
-        console.log('🎭 [PROFILE] ========================================');
-        console.log('🎭 [PROFILE] showProfileModal called');
-        console.log('🎭 [PROFILE] User object:', user);
-        console.log('🎭 [PROFILE] User username:', user?.username);
-        console.log('🎭 [PROFILE] Time:', new Date().toISOString());
-        
-        const loginModal = document.getElementById('loginModal');
-        let profileModal = document.getElementById('profileModal');
-        
-        console.log('📍 [PROFILE] Elements:');
-        console.log('📍 [PROFILE] - loginModal:', loginModal);
-        console.log('📍 [PROFILE] - profileModal:', profileModal);
-        
-        // Close login modal
-        console.log('❌ [PROFILE] Closing login modal...');
-        loginModal.style.display = 'none';
-        console.log('❌ [PROFILE] Login modal closed');
-        
-        // Clone profile modal to remove old listeners
-        console.log('🔄 [PROFILE] Cloning profile modal...');
-        const newProfileModal = profileModal.cloneNode(true);
-        console.log('🔄 [PROFILE] Profile modal cloned');
-        
-        console.log('🔄 [PROFILE] Replacing in DOM...');
-        profileModal.parentNode.replaceChild(newProfileModal, profileModal);
-        profileModal = newProfileModal;
-        console.log('🔄 [PROFILE] Profile modal replaced');
-        
-        // Update username
-        console.log('📝 [PROFILE] Updating username...');
-        const usernameEl = profileModal.querySelector('#profileUsername');
-        console.log('📝 [PROFILE] Username element:', usernameEl);
-        
-        if (usernameEl) {
-            usernameEl.textContent = user.username;
-            console.log('✅ [PROFILE] Username updated to:', user.username);
-        } else {
-            console.error('❌ [PROFILE] Username element not found!');
-        }
-        
-        // Show modal
-        console.log('👁️ [PROFILE] Showing profile modal...');
-        profileModal.style.display = 'flex';
-        console.log('👁️ [PROFILE] Profile modal display set to flex');
-        console.log('👁️ [PROFILE] Profile modal visible:', profileModal.style.display);
-        
-        // ✅ CRITICAL: Profile modal overlay click
-        console.log('🔧 [PROFILE] Adding overlay click handler...');
-        profileModal.addEventListener('click', (e) => {
-            console.log('🖱️ [PROFILE-CLICK] ========================================');
-            console.log('🖱️ [PROFILE-CLICK] Profile modal clicked!');
-            console.log('🖱️ [PROFILE-CLICK] Event target:', e.target);
-            console.log('🖱️ [PROFILE-CLICK] Event target ID:', e.target.id);
-            console.log('🖱️ [PROFILE-CLICK] Event target class:', e.target.className);
-            console.log('🖱️ [PROFILE-CLICK] Event target tagName:', e.target.tagName);
-            console.log('🖱️ [PROFILE-CLICK] profileModal:', profileModal);
-            console.log('🖱️ [PROFILE-CLICK] Target === profileModal?', e.target === profileModal);
-            console.log('🖱️ [PROFILE-CLICK] Target ID === "profileModal"?', e.target.id === 'profileModal');
+    async function showProfileModal(user) {
+        try {
+            dLog('🎭 [PROFILE] ========================================');
+            dLog('🎭 [PROFILE] showProfileModal called');
+            dLog('🎭 [PROFILE] User object:', user);
+            dLog('🎭 [PROFILE] User username:', user?.username);
+            dLog('🎭 [PROFILE] Time:', new Date().toISOString());
+            
+            const loginModal = document.getElementById('loginModal');
+            let profileModal = document.getElementById('profileModal');
+            
+            // ✅ Validate elements exist
+            if (!profileModal) {
+                console.error('❌ [PROFILE] Profile modal not found!');
+                // Fallback to login modal
+                if (loginModal) {
+                    loginModal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+                return;
+            }
+            
+            dLog('📍 [PROFILE] Elements:');
+            dLog('📍 [PROFILE] - loginModal:', loginModal);
+            dLog('📍 [PROFILE] - profileModal:', profileModal);
+            
+            // Close login modal
+            dLog('❌ [PROFILE] Closing login modal...');
+            if (loginModal) loginModal.style.display = 'none';
+            dLog('❌ [PROFILE] Login modal closed');
+            
+            // ✅ CRITICAL: Show modal FIRST (before any async operations) to prevent delay
+            // This ensures the profile button doesn't show old state
+            profileModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            dLog('✅ [PROFILE] Modal shown IMMEDIATELY (before clone/update)');
+            
+            // Clone profile modal to remove old listeners
+            dLog('🔄 [PROFILE] Cloning profile modal...');
+            const newProfileModal = profileModal.cloneNode(true);
+            dLog('🔄 [PROFILE] Profile modal cloned');
+            
+            dLog('🔄 [PROFILE] Replacing in DOM...');
+            profileModal.parentNode.replaceChild(newProfileModal, profileModal);
+            profileModal = newProfileModal;
+            // ✅ Ensure modal stays visible after clone
+            profileModal.style.display = 'flex';
+            dLog('🔄 [PROFILE] Profile modal replaced and kept visible');
+            
+            // Update username
+            dLog('📝 [PROFILE] Updating username...');
+            const usernameEl = profileModal.querySelector('#profileUsername');
+            dLog('📝 [PROFILE] Username element:', usernameEl);
+            
+            if (usernameEl && user && user.username) {
+                usernameEl.textContent = user.username;
+                dLog('✅ [PROFILE] Username updated to:', user.username);
+            } else {
+                console.error('❌ [PROFILE] Username element not found or user data invalid!');
+            }
+            
+            // ✅ Setelah modal ditampilkan, check status di background
+            try {
+                // ✅ Validate cache first to ensure expired status is updated
+                validateAndUpdateExpiredStatus();
+                dLog('🔍 [PROFILE] Checking DONATUR status...');
+                await checkDonaturStatus();
+            } catch (statusError) {
+                console.error('❌ [PROFILE] Error checking status:', statusError);
+                // Continue anyway - modal already shown
+            }
+            
+            // ✅ Setelah status ready, pastikan content opacity 1
+            const profileContent = profileModal.querySelector('.profile-content');
+            if (profileContent) {
+                profileContent.style.removeProperty('opacity');
+                profileContent.style.opacity = '1';
+            }
+            
+            // ✅ CRITICAL: Profile modal overlay click
+            dLog('🔧 [PROFILE] Adding overlay click handler...');
+            profileModal.addEventListener('click', (e) => {
+            dLog('🖱️ [PROFILE-CLICK] ========================================');
+            dLog('🖱️ [PROFILE-CLICK] Profile modal clicked!');
+            dLog('🖱️ [PROFILE-CLICK] Event target:', e.target);
+            dLog('🖱️ [PROFILE-CLICK] Event target ID:', e.target.id);
+            dLog('🖱️ [PROFILE-CLICK] Event target class:', e.target.className);
+            dLog('🖱️ [PROFILE-CLICK] Event target tagName:', e.target.tagName);
+            dLog('🖱️ [PROFILE-CLICK] profileModal:', profileModal);
+            dLog('🖱️ [PROFILE-CLICK] Target === profileModal?', e.target === profileModal);
+            dLog('🖱️ [PROFILE-CLICK] Target ID === "profileModal"?', e.target.id === 'profileModal');
             
             if (e.target === profileModal) {
-                console.log('✅ [PROFILE-CLOSE] ===== OVERLAY CLICKED =====');
-                console.log('✅ [PROFILE-CLOSE] Closing profile modal...');
+                dLog('✅ [PROFILE-CLOSE] ===== OVERLAY CLICKED =====');
+                dLog('✅ [PROFILE-CLOSE] Closing profile modal...');
                 profileModal.style.display = 'none';
-                console.log('✅ [PROFILE-CLOSE] Profile modal display:', profileModal.style.display);
+                dLog('✅ [PROFILE-CLOSE] Profile modal display:', profileModal.style.display);
                 document.body.style.overflow = '';
-                console.log('✅ [PROFILE-CLOSE] Body overflow reset');
-                console.log('✅ [PROFILE-CLOSE] DONE - NO LOGIN MODAL OPENED!');
-                console.log('✅ [PROFILE-CLOSE] ===========================');
+                // Clear countdown interval when modal closes
+                if (window.countdownInterval) {
+                    clearInterval(window.countdownInterval);
+                    window.countdownInterval = null;
+                }
+                dLog('✅ [PROFILE-CLOSE] Body overflow reset');
+                dLog('✅ [PROFILE-CLOSE] DONE - NO LOGIN MODAL OPENED!');
+                dLog('✅ [PROFILE-CLOSE] ===========================');
             } else {
-                console.log('⚠️ [PROFILE-CLICK] Not overlay - ignoring click');
-                console.log('⚠️ [PROFILE-CLICK] Clicked element:', e.target);
+                dLog('⚠️ [PROFILE-CLICK] Not overlay - ignoring click');
+                dLog('⚠️ [PROFILE-CLICK] Clicked element:', e.target);
             }
-            console.log('🖱️ [PROFILE-CLICK] ========================================');
+            dLog('🖱️ [PROFILE-CLICK] ========================================');
         });
-        console.log('🔧 [PROFILE] Overlay click handler added!');
+        dLog('🔧 [PROFILE] Overlay click handler added!');
         
         // Logout button
-        console.log('🔧 [PROFILE] Setting up logout button...');
         const btnLogout = profileModal.querySelector('#btnLogout');
-        console.log('🔧 [PROFILE] Logout button:', btnLogout);
-        
         if (btnLogout) {
             btnLogout.addEventListener('click', () => {
-                console.log('🚪 [LOGOUT] ========================================');
-                console.log('🚪 [LOGOUT] Logout button clicked!');
-                console.log('🚪 [LOGOUT] Removing localStorage...');
+                dLog('🚪 [LOGOUT] Logout button clicked!');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
-                console.log('🚪 [LOGOUT] localStorage cleared');
                 
-                console.log('🚪 [LOGOUT] Closing profile modal...');
+                // Clear countdown interval on logout
+                if (window.countdownInterval) {
+                    clearInterval(window.countdownInterval);
+                    window.countdownInterval = null;
+                }
+                
                 profileModal.style.display = 'none';
-                console.log('🚪 [LOGOUT] Opening login modal...');
                 loginModal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
                 
-                console.log('✅ [LOGOUT] Logged out successfully');
-                console.log('🚪 [LOGOUT] ========================================');
                 alert('Berhasil logout');
             });
-            console.log('🔧 [PROFILE] Logout handler added');
-        } else {
-            console.error('❌ [PROFILE] Logout button not found!');
         }
         
-        console.log('🔍 [PROFILE] Checking VIP status...');
-        checkVIPStatus();
-        console.log('🎭 [PROFILE] ========================================');
+        // ✅ Upgrade button handler
+        const btnUpgrade = profileModal.querySelector('#btnUpgrade');
+        const upgradeModal = document.getElementById('upgradeModal');
+        
+        if (btnUpgrade && upgradeModal) {
+            btnUpgrade.addEventListener('click', () => {
+                dLog('💎 [UPGRADE] Upgrade button clicked');
+                profileModal.style.display = 'none';
+                upgradeModal.style.display = 'flex';
+            });
+        }
+        
+        dLog('🎭 [PROFILE] ========================================');
+        } catch (error) {
+            console.error('❌ [PROFILE] Error in showProfileModal:', error);
+            // ✅ Fallback: Show login modal if profile modal fails
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) {
+                loginModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
     }
 
-    // ✅ STEP 5: Check VIP Status
-    async function checkVIPStatus() {
-        console.log('👑 [VIP] ========================================');
-        const token = localStorage.getItem('authToken');
-        console.log('👑 [VIP] Checking VIP status...');
-        console.log('👑 [VIP] Token exists:', !!token);
+    // ✅ STEP 5: Check DONATUR Status
+    // ✅ Export function untuk digunakan di tempat lain
+    window.checkDonaturStatus = async function checkDonaturStatus() {
+        // ✅ VALIDATE CACHE FIRST - Check if cached status is expired
+        validateAndUpdateExpiredStatus();
         
+        const token = localStorage.getItem('authToken');
         if (!token) {
-            console.log('⚠️ [VIP] No token - skipping VIP check');
-            console.log('👑 [VIP] ========================================');
+            // ✅ Jika tidak ada token, set status sebagai PEMBACA SETIA di localStorage
+            const statusBox = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const btnUpgrade = document.getElementById('btnUpgrade');
+            const countdownBox = document.getElementById('countdownBox');
+            
+            if (statusBox && statusText) {
+                statusBox.className = 'status-box pembaca-setia';
+                statusText.textContent = 'PEMBACA SETIA';
+            }
+            if (btnUpgrade) btnUpgrade.style.display = 'block';
+            if (countdownBox) countdownBox.style.display = 'none';
+            
+            localStorage.setItem('userDonaturStatus', JSON.stringify({
+                isDonatur: false,
+                timestamp: Date.now()
+            }));
             return;
         }
         
         const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
         
         try {
-            console.log('🌐 [VIP] Fetching from:', `${API_URL}/vip/status`);
-            const response = await fetch(`${API_URL}/vip/status`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+            // ✅ Add timeout to fetch request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
+            const response = await fetch(`${API_URL}/donatur/status`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                signal: controller.signal
             });
             
-            console.log('📥 [VIP] Response status:', response.status);
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
-            console.log('📥 [VIP] Response data:', data);
             
-            const vipBadge = document.getElementById('vipBadge');
-            const vipText = document.getElementById('vipText');
-            const vipExpiryText = document.getElementById('vipExpiryText');
+            const statusBox = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const btnUpgrade = document.getElementById('btnUpgrade');
+            const countdownBox = document.getElementById('countdownBox');
+            const countdownText = document.getElementById('countdownText');
             
-            console.log('📍 [VIP] Elements:', {
-                vipBadge: !!vipBadge,
-                vipText: !!vipText,
-                vipExpiryText: !!vipExpiryText
-            });
-            
-            if (data.success && data.isVIP) {
-                console.log('👑 [VIP] User is VIP!');
-                if (vipBadge) {
-                    vipBadge.className = 'vip-badge vip-badge-vip';
-                    console.log('✅ [VIP] Badge class updated');
-                }
-                if (vipText) {
-                    vipText.textContent = 'DONATUR SETIA';
-                    console.log('✅ [VIP] Text updated');
+            if (data.success && data.isDonatur) {
+                // ✅ Cek apakah expiresAt sudah lewat
+                const now = new Date();
+                const expiry = data.expiresAt ? new Date(data.expiresAt) : null;
+                const isExpired = expiry && expiry <= now;
+                
+                if (isExpired) {
+                    // ✅ Status sudah berakhir - kembalikan ke PEMBACA SETIA
+                    if (statusBox) statusBox.className = 'status-box pembaca-setia';
+                    if (statusText) statusText.textContent = 'PEMBACA SETIA';
+                    
+                    if (btnUpgrade) btnUpgrade.style.display = 'block';
+                    
+                    // Sembunyikan countdown box
+                    if (countdownBox) countdownBox.style.display = 'none';
+                    if (window.countdownInterval) {
+                        clearInterval(window.countdownInterval);
+                        window.countdownInterval = null;
+                    }
+                    
+                    // ✅ Store status in localStorage FIRST (sebelum update DOM) untuk menghindari flash
+                    localStorage.setItem('userDonaturStatus', JSON.stringify({
+                        isDonatur: false,
+                        timestamp: Date.now()
+                    }));
+                } else {
+                    // ✅ DONATUR AKTIF - LANGSUNG UPDATE (TANPA FADE)
+                    if (statusBox) statusBox.className = 'status-box donatur-setia';
+                    if (statusText) statusText.textContent = 'DONATUR SETIA';
+                    
+                    if (btnUpgrade) btnUpgrade.style.display = 'none';
+                    
+                    // ✅ Tampilkan countdown jika ada expiresAt
+                    if (data.expiresAt && countdownBox && countdownText) {
+                        countdownBox.style.display = 'block';
+                        updateCountdown(data.expiresAt, countdownText);
+                        // Update countdown setiap detik
+                        if (window.countdownInterval) {
+                            clearInterval(window.countdownInterval);
+                        }
+                        window.countdownInterval = setInterval(() => {
+                            // ✅ Validate expired status every time countdown updates
+                            if (validateAndUpdateExpiredStatus()) {
+                                // Status expired, stop countdown
+                                return;
+                            }
+                            updateCountdown(data.expiresAt, countdownText);
+                        }, 1000);
+                    } else if (countdownBox) {
+                        countdownBox.style.display = 'none';
+                    }
+                    
+                    // ✅ Store status in localStorage FIRST (sebelum update DOM) untuk menghindari flash
+                    localStorage.setItem('userDonaturStatus', JSON.stringify({
+                        isDonatur: true,
+                        expiresAt: data.expiresAt,
+                        timestamp: Date.now()
+                    }));
                 }
                 
-                const expiry = new Date(data.expiresAt);
-                console.log('📅 [VIP] Expiry date:', expiry);
-                
-                if (vipExpiryText) {
-                    vipExpiryText.textContent = `VIP Sampai ${expiry.toLocaleString('id-ID', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'Asia/Jakarta'
-                    })} WIB`;
-                    console.log('✅ [VIP] Expiry text updated');
-                }
             } else {
-                console.log('👤 [VIP] User is NOT VIP');
-                if (vipBadge) vipBadge.className = 'vip-badge vip-badge-free';
-                if (vipText) vipText.textContent = 'PEMBACA SETIA';
-                if (vipExpiryText) vipExpiryText.textContent = 'FREE ACCESS ONLY';
-                console.log('✅ [VIP] Free member badges updated');
+                // ❌ NON-DONATUR - LANGSUNG UPDATE (TANPA FADE)
+                if (statusBox) statusBox.className = 'status-box pembaca-setia';
+                if (statusText) statusText.textContent = 'PEMBACA SETIA';
+                
+                if (btnUpgrade) btnUpgrade.style.display = 'block';
+                
+                // ✅ Sembunyikan countdown untuk non-donatur
+                if (countdownBox) countdownBox.style.display = 'none';
+                if (window.countdownInterval) {
+                    clearInterval(window.countdownInterval);
+                    window.countdownInterval = null;
+                }
+                
+                // ✅ Store status in localStorage FIRST (sebelum update DOM) untuk menghindari flash
+                localStorage.setItem('userDonaturStatus', JSON.stringify({
+                    isDonatur: false,
+                    timestamp: Date.now()
+                }));
+            }
+            
+            // ✅ Refresh chapter list setelah status berubah untuk update icon locked/unlocked
+            if (typeof displayChapters === 'function') {
+                displayChapters();
             }
         } catch (error) {
-            console.error('❌ [VIP] Error:', error);
-            console.error('❌ [VIP] Error stack:', error.stack);
+            // ✅ Handle network errors gracefully - use localStorage as fallback
+            if (error.name === 'AbortError') {
+                dWarn('Donatur status check timeout - using cached status');
+            } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                dWarn('Network error - using cached donatur status from localStorage');
+            } else {
+                console.error('Donatur check error:', error);
+            }
+            
+            // ✅ Fallback to localStorage if available
+            try {
+                const cachedStatus = localStorage.getItem('userDonaturStatus');
+                if (cachedStatus) {
+                    const parsed = JSON.parse(cachedStatus);
+                    const statusBox = document.getElementById('statusBadge');
+                    const statusText = document.getElementById('statusText');
+                    const btnUpgrade = document.getElementById('btnUpgrade');
+                    const countdownBox = document.getElementById('countdownBox');
+                    const countdownText = document.getElementById('countdownText');
+                    
+                    if (parsed.isDonatur && parsed.expiresAt) {
+                        // ✅ Cek apakah expiresAt sudah lewat
+                        const now = new Date();
+                        const expiry = new Date(parsed.expiresAt);
+                        const isExpired = expiry <= now;
+                        
+                        if (isExpired) {
+                            // Status sudah berakhir
+                            if (statusBox) statusBox.className = 'status-box pembaca-setia';
+                            if (statusText) statusText.textContent = 'PEMBACA SETIA';
+                            if (btnUpgrade) btnUpgrade.style.display = 'block';
+                            if (countdownBox) countdownBox.style.display = 'none';
+                            if (window.countdownInterval) {
+                                clearInterval(window.countdownInterval);
+                                window.countdownInterval = null;
+                            }
+                        } else {
+                            // Status masih aktif
+                            if (statusBox) statusBox.className = 'status-box donatur-setia';
+                            if (statusText) statusText.textContent = 'DONATUR SETIA';
+                            if (btnUpgrade) btnUpgrade.style.display = 'none';
+                            if (countdownBox && countdownText) {
+                                countdownBox.style.display = 'block';
+                                updateCountdown(parsed.expiresAt, countdownText);
+                                if (window.countdownInterval) {
+                                    clearInterval(window.countdownInterval);
+                                }
+                                window.countdownInterval = setInterval(() => {
+                                    // ✅ Validate expired status every time countdown updates
+                                    if (validateAndUpdateExpiredStatus()) {
+                                        // Status expired, stop countdown
+                                        return;
+                                    }
+                                    updateCountdown(parsed.expiresAt, countdownText);
+                                }, 1000);
+                            }
+                        }
+                    } else {
+                        // Non-donatur
+                        if (statusBox) statusBox.className = 'status-box pembaca-setia';
+                        if (statusText) statusText.textContent = 'PEMBACA SETIA';
+                        if (btnUpgrade) btnUpgrade.style.display = 'block';
+                        if (countdownBox) countdownBox.style.display = 'none';
+                        if (window.countdownInterval) {
+                            clearInterval(window.countdownInterval);
+                            window.countdownInterval = null;
+                        }
+                    }
+                } else {
+                    // No cached status - default to PEMBACA SETIA
+                    const statusBox = document.getElementById('statusBadge');
+                    const statusText = document.getElementById('statusText');
+                    const btnUpgrade = document.getElementById('btnUpgrade');
+                    const countdownBox = document.getElementById('countdownBox');
+                    
+                    if (statusBox && statusText) {
+                        statusBox.className = 'status-box pembaca-setia';
+                        statusText.textContent = 'PEMBACA SETIA';
+                    }
+                    if (btnUpgrade) btnUpgrade.style.display = 'block';
+                    if (countdownBox) countdownBox.style.display = 'none';
+                    
+                    localStorage.setItem('userDonaturStatus', JSON.stringify({
+                        isDonatur: false,
+                        timestamp: Date.now()
+                    }));
+                }
+            } catch (fallbackError) {
+                console.error('Fallback error:', fallbackError);
+            }
         }
-        console.log('👑 [VIP] ========================================');
+    };
+    
+    // ✅ Function to validate and update expired status
+    function validateAndUpdateExpiredStatus() {
+        const cachedStatus = localStorage.getItem('userDonaturStatus');
+        if (!cachedStatus) return false;
+        
+        try {
+            const parsed = JSON.parse(cachedStatus);
+            
+            // ✅ Cek jika status donatur dan ada expiresAt
+            if (parsed.isDonatur && parsed.expiresAt) {
+                const now = new Date();
+                const expiry = new Date(parsed.expiresAt);
+                const isExpired = expiry <= now;
+                
+                if (isExpired) {
+                    // ✅ Status sudah berakhir - update cache dan DOM
+                    const statusBox = document.getElementById('statusBadge');
+                    const statusText = document.getElementById('statusText');
+                    const btnUpgrade = document.getElementById('btnUpgrade');
+                    const countdownBox = document.getElementById('countdownBox');
+                    
+                    // Update DOM
+                    if (statusBox) statusBox.className = 'status-box pembaca-setia';
+                    if (statusText) statusText.textContent = 'PEMBACA SETIA';
+                    if (btnUpgrade) btnUpgrade.style.display = 'block';
+                    if (countdownBox) countdownBox.style.display = 'none';
+                    
+                    // Clear interval
+                    if (window.countdownInterval) {
+                        clearInterval(window.countdownInterval);
+                        window.countdownInterval = null;
+                    }
+                    
+                    // ✅ Update localStorage - INVALIDATE CACHE
+                    localStorage.setItem('userDonaturStatus', JSON.stringify({
+                        isDonatur: false,
+                        timestamp: Date.now()
+                    }));
+                    
+                    return true; // Status was expired and updated
+                }
+            }
+        } catch (error) {
+            console.error('Error validating cached status:', error);
+        }
+        
+        return false; // Status is still valid or not donatur
     }
 
+    // ✅ Function to update countdown timer
+    function updateCountdown(expiresAt, countdownTextElement) {
+        if (!expiresAt || !countdownTextElement) return;
+        
+        try {
+            const now = new Date();
+            const expiry = new Date(expiresAt);
+            
+            // ✅ Validate date
+            if (isNaN(expiry.getTime())) {
+                console.error('Invalid expiresAt date:', expiresAt);
+                return;
+            }
+            
+            const diff = expiry - now;
+        
+        if (diff <= 0) {
+            // ✅ Status sudah berakhir - kembalikan ke PEMBACA SETIA
+            const statusBox = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const btnUpgrade = document.getElementById('btnUpgrade');
+            const countdownBox = document.getElementById('countdownBox');
+            
+            // Update status ke PEMBACA SETIA
+            if (statusBox) statusBox.className = 'status-box pembaca-setia';
+            if (statusText) statusText.textContent = 'PEMBACA SETIA';
+            
+            // Tampilkan tombol upgrade
+            if (btnUpgrade) btnUpgrade.style.display = 'block';
+            
+            // Sembunyikan countdown box
+            if (countdownBox) countdownBox.style.display = 'none';
+            
+            // Clear interval
+            if (window.countdownInterval) {
+                clearInterval(window.countdownInterval);
+                window.countdownInterval = null;
+            }
+            
+            // Update localStorage
+            localStorage.setItem('userDonaturStatus', JSON.stringify({
+                isDonatur: false,
+                timestamp: Date.now()
+            }));
+            
+            return;
+        }
+        
+        // Format tanggal Indonesia
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Asia/Jakarta',
+            hour12: false
+        };
+        
+            const formattedDate = expiry.toLocaleDateString('id-ID', options);
+            const timeStr = formattedDate.split('pukul')[1]?.trim() || '';
+            const dateStr = formattedDate.split('pukul')[0].trim();
+            
+            countdownTextElement.textContent = `Hingga ${dateStr}, pukul ${timeStr} WIB`;
+        } catch (error) {
+            console.error('Error updating countdown:', error);
+            // Hide countdown on error
+            const countdownBox = document.getElementById('countdownBox');
+            if (countdownBox) countdownBox.style.display = 'none';
+        }
+    }
+    
+    // ✅ Also define locally for backward compatibility
+    const checkDonaturStatus = window.checkDonaturStatus;
+
+// ============================================
+// ✅ READING HISTORY FUNCTIONS
+// ============================================
+let historyCache = null;
+let historyCacheTime = 0;
+const HISTORY_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * ✅ Fetch reading history from API with limit
+ */
+async function fetchReadingHistory(limit = 3, skipCache = false) {
+  const now = Date.now();
+  
+  // ✅ Cache per limit (3 vs all)
+  const cacheKey = `history_${limit}`;
+  
+  // Return cached data if fresh (unless skipCache is true)
+  if (!skipCache && historyCache?.[cacheKey] && (now - historyCacheTime) < HISTORY_CACHE_DURATION) {
+    dLog(`📦 [HISTORY] Using cached data (limit=${limit})`);
+    return historyCache[cacheKey];
+  }
+  
+  const token = localStorage.getItem('authToken');
+  if (!token) return { history: [], total: 0, showing: 0 };
+  
+  const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+  
+  try {
+    dLog(`🌐 [HISTORY] Fetching from API (limit=${limit}, skipCache=${skipCache})...`);
+    // Add timestamp to prevent browser cache
+    const response = await fetch(`${API_URL}/reading/history?limit=${limit}&_t=${now}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Initialize cache object if needed
+      if (!historyCache) historyCache = {};
+      
+      historyCache[cacheKey] = data;
+      historyCacheTime = now;
+      dLog('✅ [HISTORY] Fetched:', data.showing, 'of', data.total, 'items');
+      return data;
+    }
+    
+    return { history: [], total: 0, showing: 0 };
+  } catch (error) {
+    console.error('[HISTORY] Fetch error:', error);
+    return { history: [], total: 0, showing: 0 };
+  }
+}
+
+/**
+ * ✅ Format relative time
+ */
+function formatRelativeTime(isoString) {
+  if (!isoString) return 'Tidak diketahui';
+  
+  // ✅ Parse waktu dari database
+  let date;
+  
+  if (isoString.includes('T') && (isoString.includes('Z') || isoString.includes('+'))) {
+    // ISO format dengan timezone (dari backend yang sudah diperbaiki)
+    date = new Date(isoString);
+  } else if (isoString.includes('T')) {
+    // ISO format tanpa timezone - assume UTC
+    date = new Date(isoString + 'Z');
+  } else if (isoString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+    // SQLite datetime format (YYYY-MM-DD HH:MM:SS) - assume UTC
+    // Convert to ISO format first
+    const isoFormat = isoString.replace(' ', 'T') + 'Z';
+    date = new Date(isoFormat);
+  } else {
+    // Try parsing as-is
+    date = new Date(isoString);
+  }
+  
+  // ✅ Validate date
+  if (isNaN(date.getTime())) {
+    dWarn('Invalid date format:', isoString);
+    return 'Tidak diketahui';
+  }
+  
+  const now = new Date();
+  const diffMs = now - date;
+  
+  // ✅ Handle negative difference (future time) - should not happen but just in case
+  if (diffMs < 0) {
+    return 'Baru saja';
+  }
+  
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffMins < 1) return 'Baru saja';
+  if (diffMins < 60) return `${diffMins} menit yang lalu`;
+  if (diffHours < 24) return `${diffHours} jam yang lalu`;
+  if (diffDays === 1) return 'Kemarin';
+  if (diffDays < 7) return `${diffDays} hari yang lalu`;
+  
+  // ✅ Format tanggal dengan timezone lokal Indonesia
+  return date.toLocaleDateString('id-ID', { 
+    day: 'numeric', 
+    month: 'short', 
+    year: 'numeric',
+    timeZone: 'Asia/Jakarta'
+  });
+}
+
+/**
+ * ✅ Get manga cover from manga-config.js
+ */
+function getMangaCover(mangaId) {
+  // ✅ Try to get from MANGA_REPOS (from manga-config.js)
+  if (typeof MANGA_REPOS !== 'undefined' && MANGA_REPOS[mangaId]) {
+    const mangaConfig = MANGA_REPOS[mangaId];
+    // If it's an object with cover property, use it
+    if (typeof mangaConfig === 'object' && mangaConfig.cover) {
+      return mangaConfig.cover;
+    }
+  }
+  
+  // ✅ Try to get from mangaList (from manga-config.js) - fallback
+  if (typeof mangaList !== 'undefined' && mangaList) {
+    const manga = mangaList.find(m => m.id === mangaId);
+    if (manga) return manga.cover;
+  }
+  
+  // ✅ Fallback to logo
+  return 'assets/Logo 2.png';
+}
+
+/**
+ * ✅ Render history list
+ */
+function renderHistoryList(history) {
+  const listEl = document.getElementById('historyList');
+  
+  if (!history || history.length === 0) {
+    return;
+  }
+  
+  listEl.innerHTML = history.map(item => {
+    const cover = getMangaCover(item.manga_id);
+    const chapterNum = item.chapter_id.replace(/^ch\.?/i, '');
+    const timeAgo = formatRelativeTime(item.read_at);
+    
+    return `
+      <div class="history-card" 
+           data-manga-id="${item.manga_id}" 
+           data-chapter="${item.chapter_id}"
+           tabindex="0"
+           role="button">
+        <img src="${cover}" 
+             alt="${item.manga_title} cover" 
+             class="history-cover"
+             loading="lazy"
+             data-original="${cover}"
+             onerror="this.onerror=null; this.src='assets/Logo 2.png';">
+        <div class="history-info">
+          <div class="history-manga-title">${item.manga_title}</div>
+          <div class="history-chapter">Chapter ${chapterNum}</div>
+          <div class="history-time">${timeAgo}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Add click handlers
+  listEl.querySelectorAll('.history-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const mangaId = card.getAttribute('data-manga-id');
+      const chapterId = card.getAttribute('data-chapter');
+      window.location.href = `reader.html?repo=${mangaId}&chapter=${chapterId}`;
+    });
+    
+    // Keyboard support
+    card.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
+      }
+    });
+  });
+}
+
+/**
+ * ✅ Show history modal with expand/collapse toggle
+ */
+let currentHistoryLimit = 3; // Track current state
+
+async function showHistoryModal(expandAll = false) {
+  dLog('📖 [HISTORY] Opening modal...', expandAll ? '(expand all)' : '(show 3)');
+  
+  const historyModal = document.getElementById('historyModal');
+  const historyLoading = document.getElementById('historyLoading');
+  const historyList = document.getElementById('historyList');
+  const historyEmpty = document.getElementById('historyEmpty');
+  const historyTitle = historyModal.querySelector('.history-title');
+  const btnCloseHistory = document.getElementById('btnCloseHistory');
+  
+  // ✅ Determine limit
+  const limit = expandAll ? 0 : 3; // 0 = fetch all
+  currentHistoryLimit = limit;
+  
+  dLog('🔢 [HISTORY] Using limit:', limit);
+  
+  // Show modal with loading
+  historyModal.style.display = 'flex';
+  historyLoading.style.display = 'block';
+  historyList.style.display = 'none';
+  historyEmpty.style.display = 'none';
+  
+  // ✅ Lock body scroll when modal is open
+  document.body.style.overflow = 'hidden';
+  
+  // Fetch history (skip cache when toggling)
+  const data = await fetchReadingHistory(limit, true);
+  const { history, total, showing } = data;
+  
+  // Hide loading
+  historyLoading.style.display = 'none';
+  
+  if (history.length === 0) {
+    historyEmpty.style.display = 'block';
+    if (historyTitle) {
+      historyTitle.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        History Baca
+      `;
+    }
+  } else {
+    historyList.style.display = 'flex';
+    renderHistoryList(history);
+    
+    // ✅ Update title with count
+    if (historyTitle) {
+      historyTitle.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        History Baca (${showing}${total > showing ? `/${total}` : ''})
+      `;
+    }
+    
+    // ✅ Add/Update toggle button
+    let btnToggle = historyModal.querySelector('#btnToggleHistory');
+    
+    if (!btnToggle && btnCloseHistory) {
+      btnToggle = document.createElement('button');
+      btnToggle.id = 'btnToggleHistory';
+      btnToggle.className = 'btn-toggle-history';
+      btnCloseHistory.parentNode.insertBefore(btnToggle, btnCloseHistory);
+    }
+    
+    // ✅ Update button text based on state
+    if (total > 3 && btnToggle) {
+      btnToggle.style.display = 'block';
+      
+      if (expandAll) {
+        // Show "collapse" button
+        btnToggle.innerHTML = `TAMPILKAN 3 TERAKHIR`;
+        btnToggle.onclick = () => showHistoryModal(false);
+      } else {
+        // Show "expand" button
+        btnToggle.innerHTML = `TAMPILKAN SEMUA (${total})`;
+        btnToggle.onclick = () => showHistoryModal(true);
+      }
+    } else {
+      // Hide toggle if total <= 3
+      if (btnToggle) btnToggle.style.display = 'none';
+    }
+  }
+}
+
+/**
+ * ✅ History button click handler
+ */
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'btnHistory' || e.target.closest('#btnHistory')) {
+    dLog('🖱️ [HISTORY] Button clicked');
+    
+    const profileModal = document.getElementById('profileModal');
+    if (profileModal) profileModal.style.display = 'none';
+    
+    showHistoryModal(false); // Start with 3 items
+  }
+});
+
+/**
+ * ✅ Close history modal helper function
+ */
+function closeHistoryModal() {
+  const historyModal = document.getElementById('historyModal');
+  if (historyModal) {
+    historyModal.style.display = 'none';
+    // ✅ Restore body scroll when modal is closed
+    document.body.style.overflow = '';
+    dLog('✅ [HISTORY] Modal closed, scroll restored');
+  }
+}
+
+/**
+ * ✅ Close history modal
+ */
+document.addEventListener('click', (e) => {
+  const historyModal = document.getElementById('historyModal');
+  
+  // Close on overlay click
+  if (e.target.id === 'historyModal') {
+    closeHistoryModal();
+  }
+  
+  // Close on button click
+  if (e.target.id === 'btnCloseHistory') {
+    closeHistoryModal();
+  }
+});
+
+// ✅ Close history modal on Escape key
+document.addEventListener('keydown', (e) => {
+  const historyModal = document.getElementById('historyModal');
+  if (historyModal && historyModal.style.display === 'flex' && e.key === 'Escape') {
+    closeHistoryModal();
+  }
+});
+
 // ✅ Don't auto-show profile modal - only show when user clicks profile button
-console.log('ℹ️ [INIT] Profile modal ready - waiting for user click');
+dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
+
+    // ✅ STEP 6: Check donatur status immediately on page load (without waiting for profile button click)
+    // ✅ Validate cache first
+    validateAndUpdateExpiredStatus();
+    dLog('🔍 [INIT] Checking donatur status on page load...');
+    checkDonaturStatus().then(() => {
+        dLog('✅ [INIT] Donatur status checked, chapter list will reflect correct lock icons');
+    });
+    
+    // ✅ Set up periodic validation (every 10 seconds) to check for expired status
+    setInterval(() => {
+        validateAndUpdateExpiredStatus();
+    }, 10000); // Check every 10 seconds
+    
+    // ✅ Validate when page becomes visible (user switches back to tab)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            dLog('👁️ [VISIBILITY] Page visible - validating expired status and refreshing');
+            // ✅ Update expired status immediately
+            validateAndUpdateExpiredStatus();
+            // ✅ Refresh status from API immediately (no delay) if user is logged in
+            const token = localStorage.getItem('authToken');
+            if (token && window.checkDonaturStatus) {
+                window.checkDonaturStatus().catch(err => {
+                    dWarn('Status check on visibility change failed:', err);
+                });
+            }
+        }
+    });
+    
+    // ✅ Validate when window gains focus (user clicks back to browser)
+    window.addEventListener('focus', () => {
+        dLog('🎯 [FOCUS] Window focused - validating expired status and refreshing');
+        // ✅ Update expired status immediately
+        validateAndUpdateExpiredStatus();
+        // ✅ Refresh status from API immediately (no delay) if user is logged in
+        const token = localStorage.getItem('authToken');
+        if (token && window.checkDonaturStatus) {
+            window.checkDonaturStatus().catch(err => {
+                dWarn('Status check on focus failed:', err);
+            });
+        }
+    });
+
     // ✅ STEP 7: Login/Register forms
     const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
 
-    console.log('🔧 [SETUP] Adding form handlers...');
+    dLog('🔧 [SETUP] Adding form handlers...');
 
     document.querySelector('#panelLogin form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        console.log('🔐 [LOGIN] ========================================');
-        console.log('🔐 [LOGIN] Form submitted');
-        console.log('🔐 [LOGIN] Time:', new Date().toISOString());
+        dLog('🔐 [LOGIN] ========================================');
+        dLog('🔐 [LOGIN] Form submitted');
+        dLog('🔐 [LOGIN] Time:', new Date().toISOString());
         
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        console.log('🔐 [LOGIN] Email:', email);
+        if (DEBUG_MODE) dLog('🔐 [LOGIN] Email:', email);
         
         try {
-            console.log('🌐 [LOGIN] Sending request to:', `${API_URL}/auth/login`);
+            dLog('🌐 [LOGIN] Sending request to:', `${API_URL}/auth/login`);
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
             
-            console.log('📥 [LOGIN] Response status:', response.status);
+            dLog('📥 [LOGIN] Response status:', response.status);
             const data = await response.json();
-            console.log('📥 [LOGIN] Response data:', data);
+            dLog('📥 [LOGIN] Response data:', data);
             
             if (data.success) {
-                console.log('✅ [LOGIN] Login successful!');
-                console.log('💾 [LOGIN] Saving to localStorage...');
+                dLog('✅ [LOGIN] Login successful!');
+                dLog('💾 [LOGIN] Saving to localStorage...');
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
-                console.log('💾 [LOGIN] Saved');
+                dLog('💾 [LOGIN] Saved');
                 
-                console.log('🎭 [LOGIN] Showing profile modal...');
-                showProfileModal(data.user);
+                // ✅ CRITICAL: Close login modal IMMEDIATELY (synchronously) before showing profile modal
+                // This prevents the old profile button from showing during delay
+                const loginModal = document.getElementById('loginModal');
+                const loginRequiredModal = document.getElementById('loginRequiredModal');
+                if (loginModal) {
+                    loginModal.style.display = 'none';
+                    loginModal.style.visibility = 'hidden'; // Extra safety
+                }
+                if (loginRequiredModal) {
+                    loginRequiredModal.style.display = 'none';
+                    loginRequiredModal.style.visibility = 'hidden'; // Extra safety
+                }
+                document.body.style.overflow = '';
+                
+                // ✅ Show profile modal immediately (don't await - let it run in background)
+                dLog('🎭 [LOGIN] Showing profile modal immediately...');
+                // Use setTimeout with 0 delay to ensure modal close happens first
+                setTimeout(() => {
+                    showProfileModal(data.user);
+                }, 0);
             } else {
                 console.error('❌ [LOGIN] Login failed:', data.error);
                 alert(data.error || 'Login gagal');
@@ -1812,21 +2631,29 @@ console.log('ℹ️ [INIT] Profile modal ready - waiting for user click');
             console.error('❌ [LOGIN] Error stack:', error.stack);
             alert('Terjadi kesalahan: ' + error.message);
         }
-        console.log('🔐 [LOGIN] ========================================');
+        dLog('🔐 [LOGIN] ========================================');
     });
 
     document.querySelector('#panelRegister form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    console.log('📝 [REGISTER] ========================================');
-    console.log('📝 [REGISTER] Form submitted');
-    console.log('📝 [REGISTER] Time:', new Date().toISOString());
+    
+    // ✅ Prevent double submission
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    if (submitButton.disabled) {
+        dLog('⚠️ [REGISTER] Already submitting, ignoring...');
+        return;
+    }
+    
+    dLog('📝 [REGISTER] ========================================');
+    dLog('📝 [REGISTER] Form submitted');
+    dLog('📝 [REGISTER] Time:', new Date().toISOString());
     
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
     const confirm = document.getElementById('registerConfirm').value;
     
-    console.log('📝 [REGISTER] Email:', email);
-    console.log('📝 [REGISTER] Password length:', password.length);
+    if (DEBUG_MODE) dLog('📝 [REGISTER] Email:', email);
+    dLog('📝 [REGISTER] Password length:', password.length);
     
     if (password !== confirm) {
         console.error('❌ [REGISTER] Password mismatch');
@@ -1840,52 +2667,66 @@ console.log('ℹ️ [INIT] Profile modal ready - waiting for user click');
         return;
     }
     
+    // ✅ Disable button dan show loading state
+    const originalButtonText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = '⏳ Registering...';
+    
     try {
-        console.log('🌐 [REGISTER] Sending request to:', `${API_URL}/auth/register`);
+        dLog('🌐 [REGISTER] Sending request to:', `${API_URL}/auth/register`);
         const response = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
         
-        console.log('📥 [REGISTER] Response status:', response.status);
-        const data = await response.json();
-        console.log('📥 [REGISTER] Response data:', data);
+        dLog('📥 [REGISTER] Response status:', response.status);
         
-        if (data.success) {
-            console.log('✅ [REGISTER] Registration successful!');
-            console.log('✅ [REGISTER] Message:', data.message);
-            console.log('✅ [REGISTER] User email:', data.email);
+        // ✅ Parse JSON response
+        const data = await response.json();
+        dLog('📥 [REGISTER] Response data:', data);
+        
+        // ✅ Check response status dan success flag
+        if (response.ok && data.success) {
+            dLog('✅ [REGISTER] Registration successful!');
+            dLog('✅ [REGISTER] Message:', data.message);
+            if (DEBUG_MODE) dLog('✅ [REGISTER] User email:', data.email);
             
             alert('✅ ' + data.message);
             
             // Tutup modal dan switch ke login tab
-            console.log('🚪 [REGISTER] Closing modal...');
+            dLog('🚪 [REGISTER] Closing modal...');
             document.getElementById('loginModal').style.display = 'none';
             document.body.style.overflow = '';
-            console.log('✅ [REGISTER] Modal closed');
+            dLog('✅ [REGISTER] Modal closed');
         } else {
-            console.error('❌ [REGISTER] Registration failed:', data.error);
-            alert('❌ ' + data.error);
+            // ✅ Handle error response (misalnya 409 Conflict - user sudah terdaftar)
+            const errorMessage = data.error || data.message || 'Registration failed';
+            console.error('❌ [REGISTER] Registration failed:', errorMessage);
+            alert('❌ ' + errorMessage);
         }
     } catch (error) {
         console.error('❌ [REGISTER] Error:', error);
         console.error('❌ [REGISTER] Error stack:', error.stack);
         alert('Terjadi kesalahan: ' + error.message);
+    } finally {
+        // ✅ Re-enable button
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
     }
-    console.log('📝 [REGISTER] ========================================');
+    dLog('📝 [REGISTER] ========================================');
 });
 
-    console.log('🔧 [SETUP] Form handlers added');
+    dLog('🔧 [SETUP] Form handlers added');
 
     // Password toggle
-    console.log('🔧 [SETUP] Adding password toggle handlers...');
+    dLog('🔧 [SETUP] Adding password toggle handlers...');
     document.querySelectorAll('.toggle-password').forEach(btn => {
         btn.addEventListener('click', () => {
             const input = btn.previousElementSibling;
             const type = input.type === 'password' ? 'text' : 'password';
             input.type = type;
-            console.log('👁️ [PASSWORD] Toggled to:', type);
+            dLog('👁️ [PASSWORD] Toggled to:', type);
             
             const svg = btn.querySelector('svg');
             if (type === 'text') {
@@ -1895,13 +2736,13 @@ console.log('ℹ️ [INIT] Profile modal ready - waiting for user click');
             }
         });
     });
-    console.log('🔧 [SETUP] Password toggle handlers added');
+    dLog('🔧 [SETUP] Password toggle handlers added');
 
     // Tab switching
-    console.log('🔧 [SETUP] Adding tab switching handlers...');
+    dLog('🔧 [SETUP] Adding tab switching handlers...');
     document.querySelectorAll('.login-tab').forEach(tab => {
         tab.addEventListener('click', () => {
-            console.log('📑 [TAB] Switched to:', tab.id);
+            dLog('📑 [TAB] Switched to:', tab.id);
             
             document.querySelectorAll('.login-tab').forEach(t => {
                 t.classList.remove('active');
@@ -1916,18 +2757,374 @@ console.log('ℹ️ [INIT] Profile modal ready - waiting for user click');
             document.getElementById(panelId)?.classList.add('active');
         });
     });
-    console.log('🔧 [SETUP] Tab switching handlers added');
+    dLog('🔧 [SETUP] Tab switching handlers added');
 
-    // Forgot password
-    console.log('🔧 [SETUP] Adding forgot password handler...');
-    document.querySelector('#panelForgot form').addEventListener('submit', (e) => {
+    // ✅ Handle Forgot Password Form
+    dLog('🔧 [SETUP] Adding forgot password handler...');
+    document.getElementById('formForgotPassword').addEventListener('submit', async (e) => {
         e.preventDefault();
-        console.log('🔑 [FORGOT] Form submitted');
-        alert('Fitur reset password segera hadir!');
+        dLog('🔑 [FORGOT] Form submitted');
+        
+        const email = document.getElementById('forgotEmail').value.trim();
+        const errorEl = document.getElementById('forgotError');
+        const btnSubmit = document.getElementById('btnSendReset');
+        
+        if (!email) {
+            errorEl.textContent = 'Email wajib diisi';
+            return;
+        }
+        
+        // Disable button
+        const originalText = btnSubmit.textContent;
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = '⏳ Mengirim...';
+        errorEl.textContent = '';
+        
+        try {
+            dLog('🌐 [FORGOT] Sending request to:', `${API_URL}/auth/request-reset`);
+            const response = await fetch(`${API_URL}/auth/request-reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            
+            dLog('📥 [FORGOT] Response status:', response.status);
+            const data = await response.json();
+            dLog('📥 [FORGOT] Response data:', data);
+            
+            if (data.success) {
+                alert('✅ ' + data.message);
+                document.getElementById('forgotEmail').value = '';
+                
+                // Switch to login tab
+                document.getElementById('tabLogin').click();
+            } else {
+                errorEl.textContent = data.error || 'Terjadi kesalahan';
+            }
+        } catch (error) {
+            console.error('❌ [FORGOT] Error:', error);
+            errorEl.textContent = 'Terjadi kesalahan koneksi';
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = originalText;
+        }
     });
-    console.log('🔧 [SETUP] Forgot password handler added');
+    dLog('🔧 [SETUP] Forgot password handler added');
 
-    console.log('✅ [INIT] ========================================');
-    console.log('✅ [INIT] Login modal fully initialized!');
-    console.log('✅ [INIT] ========================================');
+    dLog('✅ [INIT] ========================================');
+    dLog('✅ [INIT] Login modal fully initialized!');
+    dLog('✅ [INIT] ========================================');
 });
+
+// ============================================
+// HAMBURGER MENU HANDLER (INFO-MANGA SPECIFIC)
+// ============================================
+// Ensure hamburger menu works even if common.js handler fails
+function initHamburgerMenu() {
+    dLog('🍔 [HAMBURGER] ========================================');
+    dLog('🍔 [HAMBURGER] Initializing hamburger menu handler...');
+    dLog('🍔 [HAMBURGER] Document ready state:', document.readyState);
+    dLog('🍔 [HAMBURGER] Window width:', window.innerWidth);
+    
+    const btnHeaderMenu = document.getElementById('btnHeaderMenu');
+    const headerMenuDropdown = document.getElementById('headerMenuDropdown');
+    const nav = document.querySelector('nav');
+    
+    dLog('🍔 [HAMBURGER] Button element:', btnHeaderMenu);
+    dLog('🍔 [HAMBURGER] Dropdown element:', headerMenuDropdown);
+    dLog('🍔 [HAMBURGER] Nav element:', nav);
+    
+    if (!btnHeaderMenu) {
+        console.error('❌ [HAMBURGER] Button not found!');
+        console.error('❌ [HAMBURGER] Searching for button with ID: btnHeaderMenu');
+        dLog('❌ [HAMBURGER] All buttons:', document.querySelectorAll('button'));
+        dWarn('⚠️ [HAMBURGER] Retrying in 200ms...');
+        setTimeout(initHamburgerMenu, 200);
+        return;
+    }
+    
+    if (!headerMenuDropdown) {
+        console.error('❌ [HAMBURGER] Dropdown not found!');
+        console.error('❌ [HAMBURGER] Searching for dropdown with ID: headerMenuDropdown');
+        dLog('❌ [HAMBURGER] All divs with class header-menu-dropdown:', document.querySelectorAll('.header-menu-dropdown'));
+        dWarn('⚠️ [HAMBURGER] Retrying in 200ms...');
+        setTimeout(initHamburgerMenu, 200);
+        return;
+    }
+    
+    dLog('✅ [HAMBURGER] Elements found!');
+    dLog('✅ [HAMBURGER] Button styles:', {
+        display: window.getComputedStyle(btnHeaderMenu).display,
+        visibility: window.getComputedStyle(btnHeaderMenu).visibility,
+        opacity: window.getComputedStyle(btnHeaderMenu).opacity,
+        pointerEvents: window.getComputedStyle(btnHeaderMenu).pointerEvents,
+        zIndex: window.getComputedStyle(btnHeaderMenu).zIndex
+    });
+    dLog('✅ [HAMBURGER] Dropdown styles:', {
+        display: window.getComputedStyle(headerMenuDropdown).display,
+        visibility: window.getComputedStyle(headerMenuDropdown).visibility,
+        opacity: window.getComputedStyle(headerMenuDropdown).opacity,
+        position: window.getComputedStyle(headerMenuDropdown).position,
+        zIndex: window.getComputedStyle(headerMenuDropdown).zIndex
+    });
+    
+    // Check if button is visible
+    const rect = btnHeaderMenu.getBoundingClientRect();
+    dLog('✅ [HAMBURGER] Button position:', {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+        visible: rect.width > 0 && rect.height > 0
+    });
+    
+    // Check if button already has handler (prevent multiple initialization)
+    if (btnHeaderMenu.dataset.handlerAttached === 'true') {
+        dLog('⚠️ [HAMBURGER] Handler already attached, skipping...');
+        return true;
+    }
+    
+    // Mark as attached
+    btnHeaderMenu.dataset.handlerAttached = 'true';
+    
+    // Use button directly instead of cloning (to avoid breaking references)
+    const newBtn = btnHeaderMenu;
+    dLog('✅ [HAMBURGER] Using existing button');
+    
+    // Attach click handler
+    dLog('🔧 [HAMBURGER] Attaching click handler...');
+    newBtn.addEventListener('click', function(e) {
+        dLog('🖱️ [HAMBURGER] ========================================');
+        dLog('🖱️ [HAMBURGER] CLICK EVENT TRIGGERED!');
+        dLog('🖱️ [HAMBURGER] Event:', e);
+        dLog('🖱️ [HAMBURGER] Target:', e.target);
+        dLog('🖱️ [HAMBURGER] Current target:', e.currentTarget);
+        dLog('🖱️ [HAMBURGER] Time:', new Date().toISOString());
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const dropdown = document.getElementById('headerMenuDropdown');
+        if (!dropdown) {
+            console.error('❌ [HAMBURGER] Dropdown not found in click handler!');
+            return;
+        }
+        
+        const isOpen = dropdown.classList.contains('show');
+        dLog('🖱️ [HAMBURGER] Current dropdown state:', isOpen ? 'OPEN' : 'CLOSED');
+        dLog('🖱️ [HAMBURGER] Dropdown classes:', dropdown.className);
+        
+        if (isOpen) {
+            dLog('🔄 [HAMBURGER] Closing dropdown...');
+            dropdown.classList.remove('show');
+            // Remove inline styles saat close
+            dropdown.style.display = '';
+            dropdown.style.visibility = '';
+            dropdown.style.opacity = '';
+            newBtn.setAttribute('aria-expanded', 'false');
+            dLog('✅ [HAMBURGER] Dropdown closed');
+            dLog('✅ [HAMBURGER] Dropdown classes after close:', dropdown.className);
+            dLog('✅ [HAMBURGER] Computed styles after close:', {
+                display: window.getComputedStyle(dropdown).display,
+                visibility: window.getComputedStyle(dropdown).visibility,
+                opacity: window.getComputedStyle(dropdown).opacity
+            });
+        } else {
+            dLog('🔄 [HAMBURGER] Opening dropdown...');
+            dropdown.classList.add('show');
+            // Get button position
+            const btnRect = newBtn.getBoundingClientRect();
+            dLog('📊 [HAMBURGER] Button position:', btnRect);
+            
+            // Calculate position
+            const topPos = btnRect.bottom + 8;
+            const rightPos = window.innerWidth - btnRect.right;
+            dLog('📊 [HAMBURGER] Calculated positions:', { top: topPos, right: rightPos });
+            
+            // Force show dengan inline style sebagai fallback
+            dropdown.style.display = 'flex';
+            dropdown.style.visibility = 'visible';
+            dropdown.style.opacity = '1';
+            dropdown.style.position = 'fixed';
+            dropdown.style.zIndex = '10001';
+            dropdown.style.flexDirection = 'column';
+            dropdown.style.top = topPos + 'px';
+            dropdown.style.right = rightPos + 'px';
+            dropdown.style.minWidth = '200px';
+            newBtn.setAttribute('aria-expanded', 'true');
+            dLog('✅ [HAMBURGER] Dropdown opened');
+            dLog('✅ [HAMBURGER] Dropdown classes after open:', dropdown.className);
+            
+            // Check visibility after a short delay
+            setTimeout(() => {
+                const rect = dropdown.getBoundingClientRect();
+                dLog('📊 [HAMBURGER] Dropdown bounding rect:', rect);
+                dLog('📊 [HAMBURGER] Is visible?', 
+                    rect.top >= 0 && rect.top < window.innerHeight && 
+                    rect.left >= 0 && rect.left < window.innerWidth &&
+                    rect.width > 0 && rect.height > 0
+                );
+            }, 10);
+        }
+        dLog('🖱️ [HAMBURGER] ========================================');
+    }, true); // Use capture phase
+    
+    newBtn.dataset.clickHandlerAttached = 'true';
+    dLog('✅ [HAMBURGER] Direct click handler attached');
+    
+    // Also use event delegation as backup (only attach once globally)
+    if (!window.hamburgerDelegationHandlerAttached) {
+        dLog('🔧 [HAMBURGER] Attaching event delegation handler...');
+        const delegationHandler = function(e) {
+        // Check if clicked element is the button or inside the button
+        const clickedBtn = e.target.id === 'btnHeaderMenu' ? e.target : e.target.closest('#btnHeaderMenu');
+        
+        if (clickedBtn) {
+            dLog('🖱️ [HAMBURGER-DELEGATION] Click detected via delegation');
+            dLog('🖱️ [HAMBURGER-DELEGATION] Target:', e.target);
+            dLog('🖱️ [HAMBURGER-DELEGATION] Closest button:', clickedBtn);
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropdown = document.getElementById('headerMenuDropdown');
+            if (dropdown) {
+                const isOpen = dropdown.classList.contains('show');
+                dLog('🖱️ [HAMBURGER-DELEGATION] Current state:', isOpen ? 'open' : 'closed');
+                
+                if (isOpen) {
+                    dropdown.classList.remove('show');
+                    // Remove inline styles saat close
+                    dropdown.style.display = '';
+                    dropdown.style.visibility = '';
+                    dropdown.style.opacity = '';
+                    dropdown.style.position = '';
+                    dropdown.style.top = '';
+                    dropdown.style.right = '';
+                    dropdown.style.minWidth = '';
+                    dLog('✅ [HAMBURGER-DELEGATION] Closed');
+                    dLog('📊 [HAMBURGER-DELEGATION] Dropdown classes after close:', dropdown.className);
+                    dLog('📊 [HAMBURGER-DELEGATION] Computed styles after close:', {
+                        display: window.getComputedStyle(dropdown).display,
+                        visibility: window.getComputedStyle(dropdown).visibility,
+                        opacity: window.getComputedStyle(dropdown).opacity
+                    });
+                } else {
+                    dropdown.classList.add('show');
+                    // Get button position dari clickedBtn (bukan dari variable btnHeaderMenu yang sudah di-clone)
+                    const btnRect = clickedBtn.getBoundingClientRect();
+                    dLog('📊 [HAMBURGER-DELEGATION] Button position:', btnRect);
+                    dLog('📊 [HAMBURGER-DELEGATION] Window width:', window.innerWidth);
+                    
+                    // Calculate position
+                    const topPos = btnRect.bottom + 8;
+                    const rightPos = window.innerWidth - btnRect.right;
+                    
+                    dLog('📊 [HAMBURGER-DELEGATION] Calculated positions:', {
+                        top: topPos,
+                        right: rightPos
+                    });
+                    
+                    // Force show dengan inline style sebagai fallback
+                    dropdown.style.display = 'flex';
+                    dropdown.style.visibility = 'visible';
+                    dropdown.style.opacity = '1';
+                    dropdown.style.position = 'fixed'; // Use fixed instead of absolute
+                    dropdown.style.zIndex = '10001';
+                    dropdown.style.flexDirection = 'column';
+                    dropdown.style.top = topPos + 'px';
+                    dropdown.style.right = rightPos + 'px';
+                    dropdown.style.minWidth = '200px';
+                    
+                    // Check parent positioning
+                    const nav = dropdown.closest('nav');
+                    const header = dropdown.closest('header');
+                    dLog('✅ [HAMBURGER-DELEGATION] Opened');
+                    dLog('📊 [HAMBURGER-DELEGATION] Dropdown classes after open:', dropdown.className);
+                    dLog('📊 [HAMBURGER-DELEGATION] Parent nav:', nav);
+                    dLog('📊 [HAMBURGER-DELEGATION] Parent header:', header);
+                    if (nav) {
+                        dLog('📊 [HAMBURGER-DELEGATION] Nav styles:', {
+                            position: window.getComputedStyle(nav).position,
+                            zIndex: window.getComputedStyle(nav).zIndex
+                        });
+                        dLog('📊 [HAMBURGER-DELEGATION] Nav bounding rect:', nav.getBoundingClientRect());
+                    }
+                    dLog('📊 [HAMBURGER-DELEGATION] Inline styles set:', {
+                        display: dropdown.style.display,
+                        visibility: dropdown.style.visibility,
+                        opacity: dropdown.style.opacity,
+                        top: dropdown.style.top,
+                        right: dropdown.style.right
+                    });
+                    dLog('📊 [HAMBURGER-DELEGATION] Computed styles after open:', {
+                        display: window.getComputedStyle(dropdown).display,
+                        visibility: window.getComputedStyle(dropdown).visibility,
+                        opacity: window.getComputedStyle(dropdown).opacity,
+                        position: window.getComputedStyle(dropdown).position,
+                        zIndex: window.getComputedStyle(dropdown).zIndex,
+                        top: window.getComputedStyle(dropdown).top,
+                        right: window.getComputedStyle(dropdown).right
+                    });
+                    // Wait a bit then check computed styles
+                    setTimeout(() => {
+                        const rect = dropdown.getBoundingClientRect();
+                        dLog('📊 [HAMBURGER-DELEGATION] Dropdown bounding rect:', rect);
+                        dLog('📊 [HAMBURGER-DELEGATION] Viewport:', {
+                            width: window.innerWidth,
+                            height: window.innerHeight
+                        });
+                        dLog('📊 [HAMBURGER-DELEGATION] Is visible?', 
+                            rect.top >= 0 && rect.top < window.innerHeight && 
+                            rect.left >= 0 && rect.left < window.innerWidth &&
+                            rect.width > 0 && rect.height > 0
+                        );
+                    }, 10);
+                }
+            } else {
+                console.error('❌ [HAMBURGER-DELEGATION] Dropdown not found!');
+            }
+        }
+        };
+        
+        document.addEventListener('click', delegationHandler, true);
+        window.hamburgerDelegationHandlerAttached = true;
+        dLog('✅ [HAMBURGER] Event delegation handler attached');
+    } else {
+        dLog('⚠️ [HAMBURGER] Event delegation handler already attached, skipping...');
+    }
+    
+    dLog('✅ [HAMBURGER] Handler initialization complete');
+    dLog('🍔 [HAMBURGER] ========================================');
+    
+    // Return true to indicate success
+    return true;
+}
+
+// Flag to prevent multiple initialization
+let hamburgerMenuInitialized = false;
+
+// Initialize on DOM ready
+dLog('🚀 [HAMBURGER] Script loaded, checking ready state...');
+if (document.readyState === 'loading') {
+    dLog('⏳ [HAMBURGER] Document still loading, waiting for DOMContentLoaded...');
+    document.addEventListener('DOMContentLoaded', () => {
+        dLog('📄 [HAMBURGER] DOMContentLoaded fired');
+        if (!hamburgerMenuInitialized) {
+            hamburgerMenuInitialized = initHamburgerMenu();
+        }
+    });
+} else {
+    dLog('✅ [HAMBURGER] Document already ready, initializing immediately');
+    if (!hamburgerMenuInitialized) {
+        hamburgerMenuInitialized = initHamburgerMenu();
+    }
+}
+
+// Single delayed initialization as backup (only if not already initialized)
+setTimeout(() => {
+    if (!hamburgerMenuInitialized) {
+        dLog('⏰ [HAMBURGER] Delayed initialization (500ms) - backup');
+        hamburgerMenuInitialized = initHamburgerMenu();
+    }
+}, 500);

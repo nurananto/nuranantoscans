@@ -19,13 +19,15 @@ concurrency:
   group: manga-updates
   cancel-in-progress: false
 
+env:
+  DEBOUNCE_SECONDS: 15
+
 jobs:
   batch-updates:
     runs-on: ubuntu-latest
     outputs:
       should_rebuild: ${{ steps.check_rebuild.outputs.should_rebuild }}
       manga_list: ${{ steps.check_rebuild.outputs.manga_list }}
-      version: ${{ steps.version.outputs.version }}
       needs_cover_update: ${{ steps.cover_check.outputs.needs_cover_update }}
     
     steps:
@@ -47,7 +49,7 @@ jobs:
             echo '{"pending":[],"lastRebuild":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > pending-manga-updates.json
           fi
       
-      - name: 📝 Add Update to Pending
+      - name: 📝 Add Update to Pending (with retry)
         if: github.event_name == 'repository_dispatch'
         run: |
           MANGA_REPO="${{ github.event.client_payload.manga }}"
@@ -55,35 +57,99 @@ jobs:
           
           echo "📚 New update from: $MANGA_REPO"
           
-          jq --arg repo "$MANGA_REPO" --arg ts "$TIMESTAMP" \
-            '.pending |= (. + [{"repo": $repo, "timestamp": $ts}] | unique_by(.repo))' \
-            pending-manga-updates.json > temp.json && mv temp.json pending-manga-updates.json
+          MAX_RETRIES=5
+          RETRY_DELAY=3
           
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "🔄 Attempt $i/$MAX_RETRIES to add update..."
+            
+            git pull --rebase || git pull || true
+            
+            jq --arg repo "$MANGA_REPO" --arg ts "$TIMESTAMP" \
+              '.pending |= (. + [{"repo": $repo, "timestamp": $ts}] | unique_by(.repo))' \
+              pending-manga-updates.json > temp.json && mv temp.json pending-manga-updates.json
+            
+            git config --local user.name "github-actions[bot]"
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            
+            git add pending-manga-updates.json
+            git commit -m "📝 Track update from $MANGA_REPO [skip ci]" || echo "No changes"
+            
+            if git push; then
+              PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
+              PENDING_LIST=$(jq -r '.pending[].repo' pending-manga-updates.json | paste -sd ", " -)
+              echo "✅ Queued. Total pending: $PENDING_COUNT"
+              echo "📋 Pending repos: $PENDING_LIST"
+              echo "::notice title=Update Queued::Added $MANGA_REPO to pending queue (Total: $PENDING_COUNT)"
+              break
+            else
+              if [ $i -lt $MAX_RETRIES ]; then
+                echo "⚠️ Push failed, retrying in $RETRY_DELAY seconds..."
+                sleep $RETRY_DELAY
+              else
+                echo "❌ Failed after $MAX_RETRIES attempts, but continuing..."
+              fi
+            fi
+          done
+      
+      - name: ⏳ Debounce - Wait for Batch Collection
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "⏳ Waiting ${{ env.DEBOUNCE_SECONDS }} seconds to collect batch updates..."
+          echo "   (This allows multiple repos to queue their updates before processing)"
           
-          git add pending-manga-updates.json
-          git commit -m "📝 Track update from $MANGA_REPO [skip ci]" || echo "No changes"
-          git push || echo "Push failed"
+          sleep ${{ env.DEBOUNCE_SECONDS }}
           
-          PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
-          echo "✅ Queued. Total pending: $PENDING_COUNT"
+          echo "✅ Debounce complete, proceeding with batch processing"
+      
+      - name: 🔄 Sync Latest Pending Updates
+        run: |
+          echo "🔄 Pulling latest pending-manga-updates.json to get all queued updates..."
+          
+          MAX_RETRIES=3
+          for i in $(seq 1 $MAX_RETRIES); do
+            if git pull --rebase || git pull; then
+              echo "✅ Successfully synced"
+              break
+            else
+              if [ $i -lt $MAX_RETRIES ]; then
+                echo "⚠️ Sync failed, retrying in 2 seconds..."
+                sleep 2
+              else
+                echo "⚠️ Sync failed after $MAX_RETRIES attempts, continuing with local version..."
+              fi
+            fi
+          done
+          
+          if [ ! -f pending-manga-updates.json ]; then
+            echo '{"pending":[],"lastRebuild":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > pending-manga-updates.json
+          fi
       
       - name: 🔍 Check if Should Rebuild
         id: check_rebuild
         run: |
+          echo "📋 Current pending-manga-updates.json content:"
+          cat pending-manga-updates.json | jq '.'
+          echo ""
+          
           PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
+          LAST_REBUILD=$(jq -r '.lastRebuild // "never"' pending-manga-updates.json)
     
           echo "📊 Pending: $PENDING_COUNT manga"
-    
+          echo "🕐 Last rebuild: $LAST_REBUILD"
+          
           if [ "$PENDING_COUNT" -gt 0 ]; then
-          echo "should_rebuild=true" >> $GITHUB_OUTPUT
-          MANGA_LIST=$(jq -r '.pending[].repo' pending-manga-updates.json | paste -sd "," -)
-          echo "manga_list=$MANGA_LIST" >> $GITHUB_OUTPUT
-          echo "✅ Instant rebuild for: $MANGA_LIST"
+            MANGA_LIST=$(jq -r '.pending[].repo' pending-manga-updates.json | paste -sd "," -)
+            TIMESTAMPS=$(jq -r '.pending[].timestamp' pending-manga-updates.json | paste -sd "," -)
+            
+            echo "should_rebuild=true" >> $GITHUB_OUTPUT
+            echo "manga_list=$MANGA_LIST" >> $GITHUB_OUTPUT
+            echo "✅ Batch rebuild for: $MANGA_LIST"
+            echo "📅 Update timestamps: $TIMESTAMPS"
+            echo "::notice title=Batch Rebuild::Processing $PENDING_COUNT manga updates: $MANGA_LIST"
           else
-          echo "should_rebuild=false" >> $GITHUB_OUTPUT
-          echo "ℹ️ No pending updates"
+            echo "should_rebuild=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No pending updates"
           fi
       
       - name: 🖼️ Quick Cover Check
@@ -181,6 +247,10 @@ jobs:
             git commit -m "🖼️ Auto-update covers [skip ci]" || true
             git push || true
             echo "✅ Covers updated"
+            
+            # Wait for GitHub to process the commit before triggering sync
+            echo "⏳ Waiting 5 seconds for GitHub to process commit..."
+            sleep 5
           fi
       
       - name: 📤 Trigger Cover Sync to Updated Manga Repos ONLY
@@ -286,48 +356,51 @@ jobs:
             echo "ℹ️ File not found, nothing to clean"
           fi
       
-      - name: 🔄 Generate Version Bump
-        if: steps.check_rebuild.outputs.should_rebuild == 'true'
-        id: version
-        run: |
-          VERSION=$(git rev-parse --short HEAD)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 New version: $VERSION"
-          
-          echo "$VERSION" > version.txt
-          
-          sed -i "s/const CACHE_NAME = 'nurananto-v[0-9a-f]*'/const CACHE_NAME = 'nurananto-v$VERSION'/g" sw.js
-          sed -i "s/const STATIC_CACHE = 'static-v[0-9a-f]*'/const STATIC_CACHE = 'static-v$VERSION'/g" sw.js
-          sed -i "s/const IMAGE_CACHE = 'images-v[0-9a-f]*'/const IMAGE_CACHE = 'images-v$VERSION'/g" sw.js
-          sed -i "s/const DYNAMIC_CACHE = 'dynamic-v[0-9a-f]*'/const DYNAMIC_CACHE = 'dynamic-v$VERSION'/g" sw.js
-          
-          echo "✅ Cache version updated"
-      
-      - name: 💾 Commit Changes
+      - name: 💾 Commit Changes (Without Version Bump)
         if: steps.check_rebuild.outputs.should_rebuild == 'true'
         run: |
           MANGA_LIST="${{ steps.check_rebuild.outputs.manga_list }}"
-          VERSION="${{ steps.version.outputs.version }}"
           
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add version.txt sw.js
-          git commit -m "🔄 Batch rebuild: $MANGA_LIST (v$VERSION)" || echo "No changes"
-          git push
-          
-          echo "✅ Version committed"
+          # Hanya commit jika ada perubahan selain version.txt dan sw.js
+          # Version bump akan dihandle oleh auto-version.yml setelah deploy
+          if [[ -n $(git status -s) ]]; then
+            git add -A
+            git reset HEAD version.txt sw.js index.html info-manga.html reader.html || true
+            if [[ -n $(git status -s) ]]; then
+              git commit -m "🔄 Batch rebuild: $MANGA_LIST [skip ci]" || echo "No changes"
+              git push || echo "Push failed"
+              echo "✅ Changes committed (version bump will be handled by auto-version)"
+            else
+              echo "ℹ️ No changes to commit (only version files changed)"
+            fi
+          else
+            echo "ℹ️ No changes to commit"
+          fi
       
       - name: 🧹 Clear Pending
         if: steps.check_rebuild.outputs.should_rebuild == 'true'
         run: |
+          PROCESSED_COUNT=$(jq '.pending | length' pending-manga-updates.json)
+          PROCESSED_LIST=$(jq -r '.pending[].repo' pending-manga-updates.json | paste -sd ", " -)
+          
+          echo "🧹 Clearing $PROCESSED_COUNT processed updates: $PROCESSED_LIST"
+          
           jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '.pending = [] | .lastRebuild = $ts' \
             pending-manga-updates.json > temp.json && mv temp.json pending-manga-updates.json
           
+          echo "📋 After clear:"
+          cat pending-manga-updates.json | jq '.'
+          
           git add pending-manga-updates.json
-          git commit -m "🧹 Clear pending [skip ci]"
+          git commit -m "🧹 Clear $PROCESSED_COUNT pending updates: $PROCESSED_LIST [skip ci]"
           git push
+          
+          echo "✅ Pending cleared and committed"
+          echo "::notice title=Pending Cleared::Processed and cleared $PROCESSED_COUNT manga updates"
 
   # ✅ Separate job to deploy pages
   deploy-pages:
@@ -335,43 +408,5 @@ jobs:
     if: needs.batch-updates.outputs.should_rebuild == 'true'
     uses: ./.github/workflows/deploy-pages.yml
   
-  # Purge cache after deploy
-  purge-cache:
-    needs: [batch-updates, deploy-pages]
-    if: needs.batch-updates.outputs.should_rebuild == 'true'
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: 🗑️ Purge Cloudflare Cache
-        run: |
-          if [ -n "${{ secrets.CF_ZONE_ID }}" ] && [ -n "${{ secrets.CF_API_TOKEN }}" ]; then
-          echo "🌐 Purging Cloudflare cache..."
-      
-          # Purge specific files first
-          echo "🗑️ Purging critical files..."
-          curl -s -X POST \
-          "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
-          -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          --data '{
-          "files": [
-            "https://nuranantoscans.my.id/version.txt",
-            "https://nuranantoscans.my.id/sw.js",
-            "https://nuranantoscans.my.id/manga-config.js"
-            ]
-          }'
-     
-          sleep 2
-      
-          # Purge everything
-          echo "🗑️ Purging all cache..."
-          curl -s -X POST \
-          "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
-          -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          --data '{"purge_everything":true}'
-      
-          echo "✅ Cache purged!"
-          else
-             echo "⚠️ Cloudflare credentials not found, skipping purge"
-           fi
+  # ✅ Cache purge sudah dihandle oleh auto-version.yml setelah deploy
+  # Job ini dihapus untuk menghindari duplikasi

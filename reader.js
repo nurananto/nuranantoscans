@@ -18,519 +18,74 @@ const ENCRYPTION_ALGORITHM = 'AES-CBC';
 // ============================================
 // 🛡️ SMART LOGGING - PRODUCTION MODE
 // ============================================
-
-const urlParams = new URLSearchParams(window.location.search);
-const DEBUG_MODE = urlParams.get('debug') === 'true';
-const isLocalhost = window.location.hostname === 'localhost' || 
-                   window.location.hostname === '127.0.0.1';
-
-const PRODUCTION_MODE = !DEBUG_MODE && !isLocalhost;
-
-if (PRODUCTION_MODE) {
-    const noop = () => {};
-    window._originalLog = console.log;
-    window._originalWarn = console.warn;
+// Note: Uses common.js for shared utilities (DEBUG_MODE, fetchFreshJSON, cache functions, etc.)
+// For reader.js, use getCachedData(key, maxAge, true) to use sessionStorage
     
-    console.log = noop;
-    console.warn = noop;
-    console.info = noop;
-} else {
-    console.log('🔧 Debug mode enabled');
-}
-
-async function fetchFreshJSON(url) {
-    try {
-        const urlObj = new URL(url);
-        const isCrossOrigin = urlObj.origin !== window.location.origin;
-        
-        // For GitHub: NO query string, NO custom headers (avoid preflight)
-        if (isCrossOrigin && urlObj.hostname.includes('githubusercontent.com')) {
-            const response = await fetch(url, {
-                method: 'GET',
-                cache: 'no-store',
-                mode: 'cors',
-                credentials: 'omit'
-                // ❌ NO headers - this triggers preflight!
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            return await response.json();
-        }
-        
-        // For same-origin: can use query string
-        const cacheBuster = Date.now() + '_' + Math.random().toString(36).substring(7);
-        const response = await fetch(url + '?t=' + cacheBuster, {
-            method: 'GET',
-            cache: 'no-store'
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        return await response.json();
-        
-    } catch (error) {
-        console.error('❌ fetchFreshJSON failed:', error);
-        throw error;
-    }
-}
-
-/**
- * ✅ CACHE HELPER - Same as others
- */
-function getCachedData(key, maxAge = 300000) { // 5 minutes default
-  try {
-    const cached = sessionStorage.getItem(key); // ✅ Use sessionStorage for reader
-    if (!cached) return null;
-    
-    const { data, timestamp } = JSON.parse(cached);
-    const age = Date.now() - timestamp;
-    
-    if (age < maxAge) {
-      if (DEBUG_MODE) console.log(`📦 Cache HIT: ${key} (${Math.floor(age/1000)}s old)`);
-      return data;
-    }
-    
-    console.log(`⏰ Cache EXPIRED: ${key}`);
-    sessionStorage.removeItem(key);
-    return null;
-  } catch (error) {
-    return null;
-  }
-}
-
-function setCachedData(key, data) {
-  try {
-    sessionStorage.setItem(key, JSON.stringify({
-      data,
-      timestamp: Date.now()
-    }));
-  } catch (error) {
-    console.warn('Cache write failed:', error);
-  }
-}
-    
-/**
- * SESSION STORAGE HELPER - 1 HOUR EXPIRY
- * Tambahkan di reader.js dan info-manga.js (setelah constants)
- */
-
-// ============================================
-// SESSION STORAGE WITH EXPIRY
-// ============================================
-
-const SESSION_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
-
-/**
- * Save validated chapter to session storage with expiry
- */
-function saveValidatedChapter(repoName, chapter) {
-    const key = `validated_${repoName}_${chapter}`;
-    const data = {
-        validated: true,
-        expiry: Date.now() + SESSION_DURATION
-    };
-    sessionStorage.setItem(key, JSON.stringify(data));
-    console.log(`💾 Saved session for ${chapter} (expires in 1 hour)`);
-}
-
-/**
- * READER.JS - CODE VALIDATION FOR WEBTOON TYPE
- * Tambahkan fungsi ini di bagian atas reader.js (setelah decryption module)
- */
-
-// ============================================
-// CODE VALIDATION MODULE
-// ============================================
-
-const CODE_VALIDATION_URL = 'https://manga-code-validator.nuranantoadhien.workers.dev/';
-
-/**
- * Validate chapter code via Google Apps Script
- */
-async function validateChapterCode(repoOwner, repoName, chapterFolder, userCode) {
-    try {
-        console.log('🔐 Validating code for chapter:', chapterFolder);
-        
-        const response = await fetch(CODE_VALIDATION_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'validateCode',
-                repoName: repoName,
-                chapter: chapterFolder,
-                code: userCode
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const result = await response.json();
-        
-        console.log('✅ Validation result:', result);
-        
-        return result;
-        
-    } catch (error) {
-        console.error('❌ Code validation error:', error);
-        return { valid: false, error: error.message };
-    }
-}
-
-/**
- * Check if user is blocked before showing modal
- */
-async function checkIfBlocked() {
-    try {
-        const response = await fetch(CODE_VALIDATION_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'checkBlockStatus'
-            })
-        });
-        
-        const result = await response.json();
-        return result;
-        
-    } catch (error) {
-        console.error('❌ Block check error:', error);
-        return { blocked: false, remainingAttempts: 3 };
-    }
-}
-
-/**
- * Show blocked notification (instead of modal)
- */
-function showBlockedNotification() {
-    // Create overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.display = 'flex';
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-    
-    // Create content
-    overlay.innerHTML = `
-        <div class="modal-content locked-modal-content" style="max-width: 400px;">
-            <div class="modal-header locked-modal-header">
-                <h2>🚫 Akses Diblokir</h2>
-            </div>
-            <div class="modal-body locked-modal-body">
-                <p class="locked-explanation">
-                    Anda telah melakukan <strong>3x percobaan salah</strong> dalam 24 jam terakhir.
-                </p>
-                <p class="locked-benefit">
-                    ⏰ Silakan coba lagi <strong>besok</strong> pada waktu yang sama.
-                </p>
-                <div class="locked-modal-buttons">
-                    <button class="locked-btn locked-btn-yes" id="btnBlockedOK" style="max-width: 100%;">
-                        Mengerti
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(overlay);
-    
-    // Close button
-    document.getElementById('btnBlockedOK').onclick = () => {
-        overlay.remove();
-    };
-    
-    overlay.onclick = (e) => {
-        if (e.target === overlay) {
-            overlay.remove();
-        }
-    };
-}
-
-function showCodeInputModal(chapterNumber = null, chapterFolder = null) {
-    console.log('🔐 showCodeInputModal called:', { chapterNumber, chapterFolder });
-    
-    const modal = document.getElementById('codeInputModal');
-    if (!modal) {
-        console.error('❌ codeInputModal element not found!');
-        return;
-    }
-    
-    // Update modal title
-    const modalHeader = modal.querySelector('.code-modal-header h2');
-    if (modalHeader && chapterNumber) {
-        const hasChapter = /^chapter\s+/i.test(chapterNumber);
-        const titleText = hasChapter ? chapterNumber : `Chapter ${chapterNumber}`;
-        modalHeader.textContent = `🔐 Masukkan Code untuk ${titleText}`;
-    }
-    
-    // Clear previous input
-    const codeInput = document.getElementById('chapterCodeInput');
-    const errorMsg = document.getElementById('codeErrorMsg');
-    const successMsg = document.getElementById('codeSuccessMsg');
-    
-if (codeInput) codeInput.value = '';
-    if (errorMsg) errorMsg.style.display = 'none';
-    if (successMsg) successMsg.style.display = 'none';
-    
-      // Show modal
-    modal.style.display = 'flex';
-    modal.classList.add('active');
-    
-    console.log('🔐 Code modal shown');
-    
-    // Setup button handlers
-    const btnSubmit = document.getElementById('btnSubmitCode');
-    const btnCancel = document.getElementById('btnCancelCode');
-    
-    const closeModal = () => {
-        modal.classList.remove('active');
-        setTimeout(() => {
-            modal.style.display = 'none';
-            
-            // ✅ RESTORE PROTECTION setelah modal tertutup
-            if (codeInput) {
-                codeInput.style.userSelect = 'none';
-                codeInput.style.webkitUserSelect = 'none';
-            }
-        }, 300);
-    };
-    
-    // Remove old event listeners
-    const newBtnSubmit = btnSubmit.cloneNode(true);
-    btnSubmit.parentNode.replaceChild(newBtnSubmit, btnSubmit);
-    
-    const newBtnCancel = btnCancel.cloneNode(true);
-    btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
-    
-    // Add new event listeners
-    newBtnSubmit.onclick = async () => {
-    // ✅ STEP 1: Paste from clipboard first
-    try {
-        const clipboardText = await navigator.clipboard.readText();
-        if (clipboardText && clipboardText.trim()) {
-            codeInput.value = clipboardText.trim();
-            console.log('✅ Code pasted from clipboard');
-        }
-    } catch (err) {
-        console.log('ℹ️ Clipboard read failed or empty, using manual input');
-    }
-    
-    // ✅ STEP 2: Validate code (from clipboard or manual input)
-    const code = codeInput.value.trim();
-    
-    if (!code) {
-        showCodeError('Paste code atau masukkan code terlebih dahulu');
-        return;
-    }
-    
-    if (code.length !== 16) {
-        showCodeError('Code harus 16 karakter');
-        return;
-    }
-    
-    // Show loading
-    newBtnSubmit.disabled = true;
-    newBtnSubmit.textContent = 'Memvalidasi...';
-    
-    // Get repo info from manga data
-    const urlParams = new URLSearchParams(window.location.search);
-    const repoParam = urlParams.get('repo');
-    
-    if (!repoParam) {
-        showCodeError('Error: Repo tidak ditemukan');
-        newBtnSubmit.disabled = false;
-        newBtnSubmit.textContent = '📋 Paste & Submit Code';
-        return;
-    }
-    
-    // Get repo owner and name from manga data
-    const repoOwner = mangaData.manga.repoUrl.split('/')[3];
-    const repoName = mangaData.manga.repoUrl.split('/')[4];
-    
-    // Validate code
-    const result = await validateChapterCode(repoOwner, repoName, chapterFolder, code);
-    
-    if (result.valid) {
-    // Success - save session and redirect to chapter
-    saveValidatedChapter(repoParam, chapterFolder);
-    showCodeSuccess('Code valid! Membuka chapter...');
-    
-    setTimeout(() => {
-        closeModal();
-        // ✅ REDIRECT to the validated chapter
-        window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
-    }, 1000);
-        
-    } else {
-        // Error
-        showCodeError(result.message || 'Code tidak valid');
-        newBtnSubmit.disabled = false;
-        newBtnSubmit.textContent = '📋 Paste & Submit Code';
-    }
-};
-    
-    newBtnCancel.onclick = closeModal;
-    
-    // Close on overlay click
-    modal.onclick = (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    };
-}
-
-/**
- * Show error message in code modal
- */
-function showCodeError(message) {
-    const errorMsg = document.getElementById('codeErrorMsg');
-    const successMsg = document.getElementById('codeSuccessMsg');
-    
-    if (errorMsg) {
-        errorMsg.textContent = message;
-        errorMsg.style.display = 'block';
-    }
-    
-    if (successMsg) {
-        successMsg.style.display = 'none';
-    }
-}
-
-/**
- * Show success message in code modal
- */
-function showCodeSuccess(message) {
-    const successMsg = document.getElementById('codeSuccessMsg');
-    const errorMsg = document.getElementById('codeErrorMsg');
-    
-    if (successMsg) {
-        successMsg.textContent = message;
-        successMsg.style.display = 'block';
-    }
-    
-    if (errorMsg) {
-        errorMsg.style.display = 'none';
-    }
-}
+// All helper functions (saveValidatedChapter, checkIsDonatur, getUserDonaturStatus) are now in common.js
 
 async function showLockedChapterModal(chapterNumber = null, chapterFolder = null) {
-    // Check manga type
-    const mangaType = mangaData?.manga?.type || 'manga';
+    // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
+    const isDonatur = await verifyDonaturStatusStrict();
     
-    if (mangaType === 'webtoon') {
-        // ✅ CHECK IF BLOCKED FIRST
-        const blockStatus = await checkIfBlocked();
-        
-        if (blockStatus.blocked) {
-            showBlockedNotification();
-            return;
+    if (isDonatur) {
+        // ✅ DONATUR SETIA - Langsung buka chapter tanpa modal (untuk semua type: manga & webtoon)
+        console.log('✅ Donatur SETIA - Opening chapter directly');
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        if (repoParam && chapterFolder) {
+            window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
         }
-        
-        // Not blocked, show code input modal
-        showCodeInputModal(chapterNumber, chapterFolder);
         return;
     }
     
-    // Original code for manga type (Trakteer modal)
-    const modal = document.getElementById('lockedChapterModal');
-    if (!modal) {
-        console.error('❌ lockedChapterModal element not found!');
+    // ✅ PEMBACA SETIA - Show modal untuk kembali ke info page (untuk semua type: manga & webtoon)
+    console.log('🔒 PEMBACA SETIA - Showing modal to go back to info page');
+    
+    const pembacaSetiaModal = document.getElementById('pembacaSetiaModal');
+    if (!pembacaSetiaModal) {
+        console.error('❌ pembacaSetiaModal element not found!');
         return;
     }
     
-    const modalHeader = modal.querySelector('.locked-modal-header h2');
-    if (modalHeader && chapterNumber) {
-        const hasChapter = /^chapter\s+/i.test(chapterNumber);
-        const titleText = hasChapter ? chapterNumber : `Chapter ${chapterNumber}`;
-        modalHeader.textContent = `🔒 ${titleText} Terkunci karena RAW Berbayar`;
-    } else if (modalHeader) {
-        modalHeader.textContent = `🔒 Chapter Terkunci karena RAW Berbayar`;
-    }
+    pembacaSetiaModal.style.display = 'flex';
+    pembacaSetiaModal.classList.add('active');
     
-    modal.style.display = 'flex';
-    modal.classList.add('active');
+    console.log('🔒 PEMBACA SETIA modal shown');
     
-    console.log('🔒 Trakteer modal shown');
-    
-    const btnYes = document.getElementById('btnLockedYes');
-    const btnNo = document.getElementById('btnLockedNo');
+    const btnYes = document.getElementById('btnPembacaSetiaYes');
+    const btnNo = document.getElementById('btnPembacaSetiaNo');
     
     const closeModal = () => {
-        modal.classList.remove('active');
+        pembacaSetiaModal.classList.remove('active');
         setTimeout(() => {
-            modal.style.display = 'none';
+            pembacaSetiaModal.style.display = 'none';
         }, 300);
     };
     
     btnYes.onclick = () => {
         closeModal();
-        window.open(TRAKTEER_LINK, '_blank');
+        // Navigate back to info page
+        const urlParams = new URLSearchParams(window.location.search);
+        const repoParam = urlParams.get('repo');
+        if (repoParam) {
+            window.location.href = `info-manga.html?repo=${repoParam}`;
+        }
     };
     
     btnNo.onclick = closeModal;
     
-    modal.onclick = (e) => {
-        if (e.target === modal) {
+    pembacaSetiaModal.onclick = (e) => {
+        if (e.target === pembacaSetiaModal) {
             closeModal();
         }
     };
 }
 
-/**
- * Check if chapter is already validated (and not expired)
- */
-function isChapterValidated(repoName, chapter) {
-    const key = `validated_${repoName}_${chapter}`;
-    const stored = sessionStorage.getItem(key);
-
-    // ✅ DEBUG LOGS - HARUS DI SINI DULU!
-    if (DEBUG_MODE) console.log('🔍 isChapterValidated called:');
-    if (DEBUG_MODE) console.log('   Key:', key);
-    if (DEBUG_MODE) console.log('   Stored value:', stored);
-    
-    if (!stored) {
-        if (DEBUG_MODE) console.log('   ❌ No session found');
-        return false;
-    }
-    
-    try {
-        const data = JSON.parse(stored);
-        const now = Date.now();
-        
-        // ✅ TAMBAH DEBUG LOGS
-if (DEBUG_MODE) console.log('   Data:', data);
-if (DEBUG_MODE) console.log('   Now:', now);
-if (DEBUG_MODE) console.log('   Expiry:', data.expiry);
-        
-        // Check if expired
-        if (now > data.expiry) {
-            if (DEBUG_MODE) console.log(`⏰ Session expired for ${chapter}`);
-            sessionStorage.removeItem(key);
-            return false;
-        }
-        
-        const remainingMs = data.expiry - now;
-        const remainingMin = Math.floor(remainingMs / 60000);
-        if (DEBUG_MODE) console.log(`✅ Session valid for ${chapter} (${remainingMin} min remaining)`);
-        
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Error parsing session data:', error);
-        sessionStorage.removeItem(key);
-        return false;
-    }
-}
+// isChapterValidated() and saveValidatedChapter() are now in common.js
 
 /**
  * Clear validation session for a chapter
+ * Note: This function is kept for backward compatibility but delegates to common.js
  */
 function clearValidatedChapter(repoName, chapter) {
     const key = `validated_${repoName}_${chapter}`;
@@ -623,7 +178,7 @@ function isOneshotChapter(chapterFolder) {
     return lower.includes('oneshot') || lower.includes('one-shot') || lower === 'os';
 }
 
-function renderEndChapterButtons() {
+async function renderEndChapterButtons() {
     const container = document.getElementById('endChapterContainer');
     if (!container) return;
     
@@ -656,12 +211,15 @@ function renderEndChapterButtons() {
     }
     
     // ============================================
-    // 2️⃣ CEK APAKAH CHAPTER BERIKUTNYA LOCKED
+    // 2️⃣ CEK APAKAH CHAPTER BERIKUTNYA LOCKED (dengan cek status user)
     // ============================================
     const nextChapter = allChapters[currentIndex - 1];
-    const nextIsLocked = nextChapter && nextChapter.locked;
     
-    if (nextIsLocked) {
+    // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
+    const isDonatur = nextChapter && nextChapter.locked ? await verifyDonaturStatusStrict() : await getUserDonaturStatus();
+    const nextIsActuallyLocked = nextChapter && nextChapter.locked && !isDonatur;
+    
+    if (nextIsActuallyLocked) {
         container.innerHTML = `
             <button class="next-chapter-btn" id="btnNextChapterLocked">
                 Next Chapter
@@ -833,16 +391,20 @@ console.log('   Chapter locked:', chapterData.locked);
 console.log('   Is validated:', isValidated);
 console.log('   Session key:', `validated_${repoParam}_${chapterParam}`);
 
-if (chapterData.locked && !isValidated) {
-    console.log('🔒 Chapter terkunci, belum divalidasi');
+// ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
+const isDonatur = chapterData.locked ? await verifyDonaturStatusStrict() : await getUserDonaturStatus();
+const isActuallyLocked = chapterData.locked && !isValidated && !isDonatur;
+
+if (isActuallyLocked) {
+    console.log('🔒 Chapter terkunci, belum divalidasi, dan user bukan DONATUR SETIA');
     const chapterTitle = chapterData.title || chapterParam;
     showLockedChapterModal(chapterTitle, chapterParam);
     hideLoading(); // ← TAMBAH INI!
     return;
 }
 
-if (isValidated) {
-    console.log('✅ Session valid, chapter unlocked for this session');
+if (isValidated || isDonatur) {
+    console.log('✅ Session valid atau user DONATUR SETIA, chapter unlocked');
     // Don't modify chapterData - just proceed to load
 }
 
@@ -857,6 +419,9 @@ if (isValidated) {
         
         trackChapterView();
         
+        // ✅ TAMBAHKAN BARIS INI - Track reading history
+        trackReadingHistory();
+        
         console.log('✅ Reader initialized successfully');
         
     } catch (error) {
@@ -870,7 +435,7 @@ async function loadMangaData(repo) {
     try {
         // ✅ CHECK CACHE FIRST (5 minutes TTL)
         const cacheKey = `reader_manga_${repo}`;
-        const cached = getCachedData(cacheKey, 300000); // 5 min
+        const cached = getCachedData(cacheKey, 300000, true); // 5 min, use sessionStorage
         
         if (cached) {
             mangaData = cached.mangaData;
@@ -928,7 +493,7 @@ async function loadMangaData(repo) {
         console.error('❌ Error loading manga data:', error);
         
         // ✅ FALLBACK: Try stale cache
-        const staleCache = getCachedData(`reader_manga_${repo}`, Infinity);
+        const staleCache = getCachedData(`reader_manga_${repo}`, Infinity, true);
         if (staleCache) {
             console.warn('⚠️ Using stale cache due to error');
             mangaData = staleCache.mangaData;
@@ -1001,27 +566,59 @@ function setupUI() {
     
     if (DEBUG_MODE) console.log(`📖 Read mode: ${readMode}`);
     
+    // ✅ Setup Back to Info button
     const btnBack = document.getElementById('btnBackToInfo');
-    btnBack.onclick = () => {
-        window.location.href = `info-manga.html?repo=${repoParam}`;
-    };
+    if (btnBack) {
+        // Remove existing listeners
+        btnBack.onclick = null;
+        btnBack.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const urlParams = new URLSearchParams(window.location.search);
+            const repo = urlParams.get('repo') || repoParam;
+            if (repo) {
+                console.log('🔄 [BACK] Navigating to info page:', repo);
+                window.location.href = `info-manga.html?repo=${repo}`;
+            } else {
+                console.error('❌ [BACK] Repo parameter not found');
+            }
+        }, { passive: false });
+        console.log('✅ [BACK] Button handler attached');
+    } else {
+        console.error('❌ [BACK] btnBackToInfo element not found');
+    }
     
+    // ✅ Setup Chapter List button
     const btnChapterList = document.getElementById('btnChapterList');
-    btnChapterList.onclick = () => {
-        openChapterListModal();
-    };
+    if (btnChapterList) {
+        // Remove existing listeners
+        btnChapterList.onclick = null;
+        btnChapterList.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📋 [LIST] Opening chapter list modal');
+            openChapterListModal();
+        }, { passive: false });
+        console.log('✅ [LIST] Button handler attached');
+    } else {
+        console.error('❌ [LIST] btnChapterList element not found');
+    }
     
     updateNavigationButtons();
     
     const btnCloseModal = document.getElementById('btnCloseModal');
-    btnCloseModal.onclick = () => closeChapterListModal();
+    if (btnCloseModal) {
+        btnCloseModal.onclick = () => closeChapterListModal();
+    }
     
     const modalOverlay = document.getElementById('modalOverlay');
-    modalOverlay.onclick = (e) => {
-        if (e.target === modalOverlay) {
-            closeChapterListModal();
-        }
-    };
+    if (modalOverlay) {
+        modalOverlay.onclick = (e) => {
+            if (e.target === modalOverlay) {
+                closeChapterListModal();
+            }
+        };
+    }
 }
 
 function adjustTitleFontSize(element) {
@@ -1346,11 +943,11 @@ function updateProgressBar() {
     pageNavHandle.setAttribute('data-progress', `${currentPage} / ${totalPages}`);
 }
 
-function updateNavigationButtons() {
-    renderEndChapterButtons();
+async function updateNavigationButtons() {
+    await renderEndChapterButtons();
 }
 
-function navigateChapter(direction) {
+async function navigateChapter(direction) {
     const currentIndex = allChapters.findIndex(ch => ch.folder === currentChapterFolder);
     
     let targetIndex;
@@ -1366,7 +963,11 @@ function navigateChapter(direction) {
     
     const targetChapter = allChapters[targetIndex];
     
-    if (targetChapter.locked) {
+    // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
+    const isDonatur = targetChapter.locked ? await verifyDonaturStatusStrict() : await getUserDonaturStatus();
+    const isActuallyLocked = targetChapter.locked && !isDonatur;
+    
+    if (isActuallyLocked) {
         const chapterTitle = targetChapter.title || targetChapter.folder;
         const chapterFolder = targetChapter.folder;
         showLockedChapterModal(chapterTitle, chapterFolder);
@@ -1379,7 +980,7 @@ function navigateChapter(direction) {
 /**
  * Open chapter list modal - FIXED
  */
-function openChapterListModal() {
+async function openChapterListModal() {
     const modal = document.getElementById('modalOverlay');
     const modalBody = document.getElementById('chapterListModal');
     
@@ -1392,6 +993,9 @@ function openChapterListModal() {
     
     modalBody.innerHTML = '';
     
+    // ✅ Check user status for lock icons (use cache for UI display, but verify on click)
+    const isDonatur = await getUserDonaturStatus();
+    
     allChapters.forEach(chapter => {
         const item = document.createElement('div');
         item.className = 'chapter-item-modal';
@@ -1400,11 +1004,16 @@ function openChapterListModal() {
             item.classList.add('active');
         }
         
-        if (chapter.locked) {
+        // ✅ Check if chapter is actually locked based on user status
+        // Note: For UI display, we use cached status. Actual verification happens on click.
+        const isActuallyLocked = chapter.locked && !isDonatur;
+        
+        if (isActuallyLocked) {
             item.classList.add('locked');
         }
         
-        const lockIcon = chapter.locked ? '🔒 ' : '';
+        // ✅ Icon: 🔒 untuk locked (PEMBACA SETIA), 🔓 untuk unlocked (DONATUR SETIA), atau kosong jika tidak locked
+        const lockIcon = isActuallyLocked ? '🔒 ' : (chapter.locked && isDonatur ? '🔓 ' : '');
         
 // ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER (SUPPORT ONESHOT + ANGKA)
 const isEndChapter = mangaData.manga.status === 'END' && 
@@ -1439,8 +1048,12 @@ const badges = (endBadge || hiatusBadge)
             <div class="chapter-item-views">👁️ ${chapter.views}</div>
         `;
         
-        item.onclick = () => {
-            if (chapter.locked) {
+        item.onclick = async () => {
+            // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
+            const userIsDonatur = chapter.locked ? await verifyDonaturStatusStrict() : await getUserDonaturStatus();
+            const isActuallyLocked = chapter.locked && !userIsDonatur;
+            
+            if (isActuallyLocked) {
                 closeChapterListModal();
                 setTimeout(() => {
                     const chapterTitle = chapter.title || chapter.folder;
@@ -1519,6 +1132,80 @@ async function trackChapterView() {
         
     } catch (error) {
         console.error('❌ Error tracking chapter view:', error);
+    }
+}
+
+// ============================================
+// ✅ NEW FUNCTION - Track Reading History
+// ============================================
+/**
+ * ✅ Track reading history to API
+ * Called when user opens a chapter
+ */
+async function trackReadingHistory() {
+    try {
+        const token = localStorage.getItem('authToken');
+        
+        // ✅ If not logged in, skip tracking
+        if (!token) {
+            if (DEBUG_MODE) console.log('⏭️ [HISTORY] Not logged in - skipping');
+            return;
+        }
+        
+        // ✅ Check if already tracked in this session (prevent duplicate writes)
+        const historyKey = `tracked_history_${repoParam}_${currentChapterFolder}`;
+        const alreadyTracked = sessionStorage.getItem(historyKey);
+        
+        if (alreadyTracked) {
+            if (DEBUG_MODE) console.log('⏭️ [HISTORY] Already tracked in this session');
+            return;
+        }
+        
+        if (DEBUG_MODE) console.log('📖 [HISTORY] Tracking reading history...');
+        
+        // ✅ Get manga title
+        const mangaTitle = mangaData?.manga?.title || 'Unknown';
+        
+        // ✅ Get chapter number from folder (remove "ch." prefix)
+        const chapterNumber = currentChapterFolder.replace(/^ch\.?/i, '');
+        
+        // ✅ Parse chapter base (for sorting)
+        const chapterBase = parseFloat(chapterNumber) || 1;
+        
+        if (DEBUG_MODE) {
+            console.log('   Manga:', mangaTitle);
+            console.log('   Chapter ID:', currentChapterFolder);
+            console.log('   Chapter Base:', chapterBase);
+        }
+        
+        const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+        
+        const response = await fetch(`${API_URL}/reading/track`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                mangaId: repoParam,
+                mangaTitle: mangaTitle,
+                chapterId: currentChapterFolder,
+                chapterBase: chapterBase
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // ✅ Mark as tracked in this session
+            sessionStorage.setItem(historyKey, 'true');
+            if (DEBUG_MODE) console.log('✅ [HISTORY] Reading history tracked successfully');
+        } else {
+            console.error('❌ [HISTORY] Failed to track:', data.error);
+        }
+        
+    } catch (error) {
+        console.error('❌ [HISTORY] Error tracking reading history:', error);
     }
 }
 

@@ -733,6 +733,7 @@ body.show-page-nav .page-thumb {
     width: 100%;
     padding: 0 0px; /* Tambahkan spacing kiri-kanan */
     box-sizing: border-box;
+    align-items: stretch; /* ✅ Pastikan kedua tombol memiliki tinggi yang sama */
 }
 
 .back-to-info-btn-large {
@@ -774,6 +775,9 @@ body.show-page-nav .page-thumb {
     justify-content: center;
     gap: 8px;
     box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
+    height: 100%; /* ✅ Pastikan tinggi sama dengan container */
+    min-height: 60px; /* ✅ Minimum height untuk konsistensi di desktop */
+    box-sizing: border-box; /* ✅ Pastikan padding tidak mempengaruhi tinggi */
 }
 
 .back-to-info-btn-half:hover {
@@ -797,6 +801,9 @@ body.show-page-nav .page-thumb {
     justify-content: center;
     gap: 8px;
     box-shadow: 0 4px 15px rgba(190, 30, 45, 0.4);
+    height: 100%; /* ✅ Pastikan tinggi sama dengan container */
+    min-height: 60px; /* ✅ Minimum height untuk konsistensi di desktop */
+    box-sizing: border-box; /* ✅ Pastikan padding tidak mempengaruhi tinggi */
 }
 
 .trakteer-btn-half:hover {
@@ -999,16 +1006,19 @@ body.show-page-nav .page-thumb {
         flex-direction: row;
         gap: 8px;
         padding: 0 0px;
+        align-items: stretch; /* ✅ Pastikan sejajar */
     }
     
     .back-to-info-btn-half,
     .trakteer-btn-half {
         font-size: 1rem;
-        padding: 1rem 8px;
+        padding: 1rem 8px; /* ✅ Padding vertikal sama */
         gap: clamp(3px, 1vw, 6px);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        height: 100%; /* ✅ Pastikan tinggi sama */
+        min-height: 56px; /* ✅ Minimum height untuk konsistensi */
     }
     
     .trakteer-icon-small {
@@ -1111,16 +1121,19 @@ body.show-page-nav .page-thumb {
     .dual-buttons-container {
         padding: 0 0px;
         gap: 5px;
+        align-items: stretch; /* ✅ Pastikan sejajar */
     }
     
     .back-to-info-btn-half,
     .trakteer-btn-half {
         font-size: 1rem;
-        padding: 1rem 6px;
+        padding: 1rem 6px; /* ✅ Padding vertikal sama */
         gap: clamp(2px, 1vw, 4px);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        height: 100%; /* ✅ Pastikan tinggi sama */
+        min-height: 56px; /* ✅ Minimum height untuk konsistensi */
     }
     
     .trakteer-icon-small {
@@ -1160,13 +1173,16 @@ body.show-page-nav .page-thumb {
     .dual-buttons-container {
         padding: 0 0px;
         gap: 3px;
+        align-items: stretch; /* ✅ Pastikan sejajar */
     }
     
     .back-to-info-btn-half,
     .trakteer-btn-half {
-        font-size:1rem;
-        padding: 1rem 4px;
+        font-size: 1rem; /* ✅ Font size sama */
+        padding: 1rem 4px; /* ✅ Padding vertikal sama */
         gap: 2px;
+        height: 100%; /* ✅ Pastikan tinggi sama */
+        min-height: 56px; /* ✅ Minimum height untuk konsistensi */
     }
     
     .trakteer-icon-small {
