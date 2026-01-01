@@ -26,19 +26,8 @@
         <link rel="dns-prefetch" href="https://images.weserv.nl" />
         <link rel="preload" href="assets/fire.png" as="image" type="image/png" />
 
-        <!-- Preload CSS (non-blocking) -->
-        <link
-            rel="preload"
-            href="style.css?v=f7d92a3"
-            as="style"
-            onload="
-                this.onload = null;
-                this.rel = 'stylesheet';
-            "
-        />
-        <noscript
-            ><link rel="stylesheet" href="style.css?v=f7d92a3"
-        /></noscript>
+        <!-- ✅ FIX: Blocking CSS untuk prevent FOUC saat hard refresh -->
+        <link rel="stylesheet" href="style.css?v=f7d92a3" />
 
         <!-- Critical CSS inline -->
         <!-- Critical CSS inline -->
@@ -60,6 +49,9 @@
                 font-family:
                     "Rounded Mplus 1c", "M PLUS Rounded 1c", "Varela Round",
                     "Nunito", "Comfortaa", "Quicksand", "Segoe UI", sans-serif;
+                /* ✅ FIX: Prevent flash saat CSS ter-load */
+                opacity: 1;
+                transition: opacity 0.2s ease;
             }
 
             header {
@@ -126,6 +118,33 @@
                 max-width: 1400px;
                 margin: 0 auto 2.5rem;
                 padding: 0;
+            }
+
+            .manga-list-section {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0;
+            }
+
+            .manga-list-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+                padding: 0;
+            }
+
+            .manga-list-heading {
+                font-size: clamp(1.5rem, 4vw, 2rem);
+                font-weight: 700;
+                color: #fff;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin: 0;
+                padding: 0;
+                flex-shrink: 0;
+                line-height: 1;
             }
 
             #searchInput {
