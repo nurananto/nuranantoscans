@@ -3,6 +3,46 @@
 // ============================================
 // Note: Uses common.js for shared utilities (DEBUG_MODE, fetchFreshJSON, cache functions, etc.)
 
+// ✅ TEST FUNCTION: Test manga type reading
+// Usage: testMangaType('Waka-chan') or testMangaType('waka-chan')
+async function testMangaType(repoName) {
+  console.log(`🧪 Testing manga type for repo: ${repoName}`);
+  
+  try {
+    const mangaData = await fetchMangaData(repoName);
+    
+    console.log('📦 Full mangaData:', mangaData);
+    console.log('📖 mangaData.manga:', mangaData.manga);
+    console.log('🏷️ mangaData.manga.type:', mangaData.manga?.type || 'NOT SET');
+    
+    const mangaType = (mangaData.manga && mangaData.manga.type) ? mangaData.manga.type : 'manga';
+    const isWebtoon = mangaType.toLowerCase() === 'webtoon';
+    
+    console.log(`✅ Detected Type: ${mangaType}`);
+    console.log(`✅ Is Webtoon: ${isWebtoon}`);
+    console.log(`✅ Badge Text: ${isWebtoon ? 'Berwarna' : 'Hitam Putih'}`);
+    console.log(`✅ Badge Class: ${isWebtoon ? 'type-badge-webtoon' : 'type-badge-manga'}`);
+    
+    // Find manga in config
+    const manga = mangaList.find(m => m.repo === repoName || m.id === repoName.toLowerCase().replace(/\s+/g, '-'));
+    if (manga) {
+      console.log(`📚 Manga Config:`, manga);
+    }
+    
+    return {
+      repo: repoName,
+      type: mangaType,
+      isWebtoon,
+      badgeText: isWebtoon ? 'Berwarna' : 'Hitam Putih',
+      badgeClass: isWebtoon ? 'type-badge-webtoon' : 'type-badge-manga',
+      mangaData: mangaData.manga
+    };
+  } catch (error) {
+    console.error('❌ Error testing manga type:', error);
+    return null;
+  }
+}
+
 async function fetchMangaData(repo) {
   try {
     const cacheKey = `manga_${repo}`;
@@ -15,6 +55,11 @@ async function fetchMangaData(repo) {
     // ✅ CACHE MISS - Fetch fresh
     const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`;
     const data = await fetchFreshJSON(url);
+    
+    // ✅ DEBUG: Log manga type
+    if (DEBUG_MODE) {
+      dLog(`📖 [FETCH] Repo: ${repo}, Type: ${data.manga?.type || 'not set'}`);
+    }
     
     let latestUnlockedChapter = null;
     let latestUnlockedDate = null;
@@ -64,8 +109,14 @@ async function fetchMangaData(repo) {
       latestUnlockedChapter,
       latestUnlockedDate,
       latestLockedChapter,
-      latestLockedDate
+      latestLockedDate,
+      manga: data.manga || {} // ✅ Include full manga object for type access
     };
+    
+    // ✅ DEBUG: Verify type is included
+    if (DEBUG_MODE) {
+      dLog(`📖 [RESULT] Repo: ${repo}, Manga type in result: ${result.manga?.type || 'not set'}`);
+    }
     
     // ✅ SAVE TO CACHE
     setCachedData(cacheKey, result);
@@ -90,7 +141,8 @@ async function fetchMangaData(repo) {
       latestUnlockedChapter: null,
       latestUnlockedDate: null,
       latestLockedChapter: null,
-      latestLockedDate: null
+      latestLockedDate: null,
+      manga: {} // ✅ Include empty manga object for type access
     };
   }
 }
@@ -147,10 +199,12 @@ function formatViews(views) {
 function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
   const cdnUrls = getResponsiveCDN(manga.cover);
   
+  // ✅ FIX: Match srcset widths dengan actual CDN sizes untuk prevent pixelation
   const srcset = `
-    ${cdnUrls.small} 300w,
-    ${cdnUrls.medium} 400w,
-    ${cdnUrls.large} 600w
+    ${cdnUrls.small} 500w,
+    ${cdnUrls.medium} 700w,
+    ${cdnUrls.large} 900w,
+    ${cdnUrls.xlarge} 1200w
   `.trim();
   
   const sizes = '(max-width: 480px) 45vw, (max-width: 768px) 30vw, 20vw';
@@ -199,6 +253,16 @@ function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
   
   const ariaLabel = `${manga.title}, Rank ${rank}, ${statusText}, ${formatViews(mangaData.views)} views`;
   
+  // ✅ Get manga type from manga-config.js (not from manga.json)
+  const mangaType = (manga.type || 'manga').toLowerCase();
+  const isWebtoon = mangaType === 'webtoon';
+  const typeBadgeText = isWebtoon ? 'Colour' : 'B/W';
+  const typeBadgeClass = isWebtoon ? 'type-badge-colour' : 'type-badge-bw';
+  
+  if (DEBUG_MODE) {
+    dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);
+  }
+  
   return `
     <div class="top5-card" 
          role="listitem"
@@ -222,17 +286,27 @@ function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
         </div>
       </div>
       
-      <!-- KOTAK 2: Cover Image -->
-      <img 
-        src="${cdnUrls.medium}"
-        srcset="${srcset}"
-        sizes="${sizes}"
-        alt="${manga.title} cover image"
-        loading="${loadingAttr}"
-        ${fetchPriority}
-        ${decodingAttr}
-        data-original="${manga.cover}"
-        aria-hidden="true">
+      <!-- KOTAK 2: Cover Image with Type Badge -->
+      <div class="manga-cover-wrapper">
+        <img 
+          src="${cdnUrls.medium}"
+          srcset="${srcset}"
+          sizes="${sizes}"
+          alt="${manga.title} cover image"
+          loading="${loadingAttr}"
+          ${fetchPriority}
+          ${decodingAttr}
+          data-original="${manga.cover}"
+          aria-hidden="true">
+        <div class="type-badge ${typeBadgeClass}" aria-label="Type: ${typeBadgeText}">
+          <svg class="type-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            <path d="M6.5 2v20"/>
+          </svg>
+          <span class="type-badge-text">${typeBadgeText}</span>
+        </div>
+      </div>
       
       <!-- KOTAK 3: Status Badge + Chapter -->
       <div class="top5-badges-container top5-status-chapter">
@@ -309,12 +383,15 @@ function createCard(manga, mangaData, index = 0) {
   
   const cdnUrls = getResponsiveCDN(manga.cover);
   
+  // ✅ FIX: Match srcset widths dengan actual CDN sizes untuk prevent pixelation
   const srcset = `
-    ${cdnUrls.small} 300w,
-    ${cdnUrls.medium} 400w,
-    ${cdnUrls.large} 600w
+    ${cdnUrls.small} 500w,
+    ${cdnUrls.medium} 700w,
+    ${cdnUrls.large} 900w,
+    ${cdnUrls.xlarge} 1200w
   `.trim();
   
+  // ✅ FIX: Optimized sizes untuk better image selection
   const sizes = '(max-width: 480px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw';
   
   const eagerLoadCount = window.innerWidth >= 1024 ? 10 : (window.innerWidth >= 768 ? 6 : 4);
@@ -324,6 +401,16 @@ function createCard(manga, mangaData, index = 0) {
   
   const ariaLabel = `${manga.title}${chapterText ? ', ' + chapterText : ''}${isRecent ? ', recently updated' : ''}`;
   
+  // ✅ Get manga type from manga-config.js (not from manga.json)
+  const mangaType = (manga.type || 'manga').toLowerCase();
+  const isWebtoon = mangaType === 'webtoon';
+  const typeBadgeText = isWebtoon ? 'Colour' : 'B/W';
+  const typeBadgeClass = isWebtoon ? 'type-badge-colour' : 'type-badge-bw';
+  
+  if (DEBUG_MODE) {
+    dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);
+  }
+  
   return `
     <div class="manga-card ${isRecent ? 'recently-updated' : ''}" 
          role="listitem"
@@ -332,16 +419,26 @@ function createCard(manga, mangaData, index = 0) {
          aria-label="${ariaLabel}"
          onclick="window.location.href='info-manga.html?repo=${manga.id}'"
          onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
-      <img 
-        src="${cdnUrls.medium}"
-        srcset="${srcset}"
-        sizes="${sizes}"
-        alt="${manga.title} cover image"
-        loading="${loadingAttr}"
-        ${fetchPriority}
-        ${decodingAttr}
-        data-original="${manga.cover}"
-        aria-hidden="true">
+      <div class="manga-cover-wrapper">
+        <img 
+          src="${cdnUrls.medium}"
+          srcset="${srcset}"
+          sizes="${sizes}"
+          alt="${manga.title} cover image"
+          loading="${loadingAttr}"
+          ${fetchPriority}
+          ${decodingAttr}
+          data-original="${manga.cover}"
+          aria-hidden="true">
+        <div class="type-badge ${typeBadgeClass}" aria-label="Type: ${typeBadgeText}">
+          <svg class="type-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            <path d="M6.5 2v20"/>
+          </svg>
+          <span class="type-badge-text">${typeBadgeText}</span>
+        </div>
+      </div>
       ${badgeHTML}
       <div class="manga-title" aria-hidden="true">${manga.title}</div>
     </div>`;
@@ -919,7 +1016,7 @@ document.addEventListener('submit', async (e) => {
         try {
             dLog('🌐 [VIP-CODE] Sending request...');
             
-            const response = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/vip/redeem', {
+            const response = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/donatur/redeem', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1005,7 +1102,7 @@ document.addEventListener('submit', async (e) => {
             dLog('🌐 [VIP-CODE] Sending request...');
             dLog('🌐 [VIP-CODE] Code being sent:', code);
             
-            const response = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/vip/redeem', {
+            const response = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/donatur/redeem', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

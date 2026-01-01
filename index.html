@@ -55,6 +55,8 @@
                 padding-bottom: 100px;
                 background: #0a0a0a;
                 color: #fff;
+                /* ✅ FIX: Explicit font-size untuk prevent glitch */
+                font-size: 16px;
                 font-family:
                     "Rounded Mplus 1c", "M PLUS Rounded 1c", "Varela Round",
                     "Nunito", "Comfortaa", "Quicksand", "Segoe UI", sans-serif;
@@ -198,16 +200,90 @@
                 box-shadow: none;
             }
 
-            .manga-card img {
+            .manga-cover-wrapper {
+                position: relative;
                 width: 100%;
+                max-width: 100%; /* ✅ FIX: Prevent overflow */
+                overflow: hidden; /* ✅ FIX: Clip image yang overflow */
+                order: 1;
+                min-width: 0; /* ✅ FIX: Prevent flex shrink issues */
+            }
+
+            .manga-card img,
+            .manga-cover-wrapper img {
+                width: 100%;
+                max-width: 100%; /* ✅ FIX: Prevent overflow */
+                height: auto; /* ✅ FIX: Maintain aspect ratio fallback */
                 aspect-ratio: 3/4.2;
                 object-fit: cover;
+                object-position: center; /* ✅ FIX: Center image untuk better crop */
                 border-radius: 0.6rem;
                 display: block;
                 background: transparent;
                 contain-intrinsic-size: 300px 420px;
-                order: 1;
+                /* ✅ FIX: Prevent image scaling issues */
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: crisp-edges;
+                image-rendering: auto;
             }
+
+            /* Type Badge Base Styles */
+            .type-badge {
+                position: absolute;
+                bottom: clamp(6px, 1.5vw, 10px);
+                right: clamp(6px, 1.5vw, 10px);
+                padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+                border-radius: clamp(4px, 1vw, 6px);
+                /* ✅ FIX: Fallback font-size untuk prevent glitch saat hard refresh */
+                font-size: 11px; /* Fallback untuk browser yang belum support clamp() */
+                font-size: clamp(10px, 2vw, 12px); /* Preferred dengan clamp() */
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #fff;
+                z-index: 5;
+                pointer-events: none;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                line-height: 1.2;
+                white-space: nowrap;
+                display: flex;
+                align-items: center;
+                gap: clamp(4px, 1vw, 6px);
+                /* ✅ FIX: Prevent font-size glitch dengan max-width */
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* Badge untuk B/W (Manga Hitam Putih) */
+            .type-badge-bw {
+                background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            /* Badge untuk Colour (Webtoon Berwarna) */
+            .type-badge-colour {
+                background: linear-gradient(135deg, #1877f2 0%, #0d5fcc 100%);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .type-badge-icon {
+                width: 14px; /* Fallback */
+                width: clamp(12px, 2.5vw, 16px); /* Preferred */
+                height: 14px; /* Fallback */
+                height: clamp(12px, 2.5vw, 16px); /* Preferred */
+                flex-shrink: 0;
+                stroke: currentColor;
+            }
+
+            .type-badge-text {
+                line-height: 1;
+                /* ✅ FIX: Prevent text glitch dengan explicit font-size */
+                font-size: inherit;
+            }
+
 
             /* Badge container untuk manga list */
             .manga-badges-container {
@@ -225,6 +301,7 @@
                 color: #fff;
                 padding: 0.4rem 0.5rem 1.2rem;
                 text-align: center;
+                /* ✅ FIX: Fallback font-size untuk prevent glitch */
                 font-size: 0.95rem;
                 font-weight: 600;
                 line-height: 1.65;

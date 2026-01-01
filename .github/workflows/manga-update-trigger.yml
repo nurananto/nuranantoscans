@@ -258,8 +258,19 @@ jobs:
         if: |
           steps.check_rebuild.outputs.should_rebuild == 'true' &&
           steps.cover_check.outputs.needs_cover_update == 'true'
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set +e  # Don't exit on error
+          
+          # ✅ FIX: Check if PAT_TOKEN is set and not empty
+          if [ -z "${PAT_TOKEN}" ] || [ "${PAT_TOKEN}" = "" ]; then
+            echo "⚠️ PAT_TOKEN secret is not set in GitHub Secrets"
+            echo "::warning::PAT_TOKEN secret is required to trigger cover sync workflows"
+            echo "::warning::Please add PAT_TOKEN to GitHub Secrets (Settings > Secrets and variables > Actions)"
+            echo "::warning::PAT_TOKEN needs 'actions:write' permission"
+            exit 0  # Don't fail the workflow, just skip
+          fi
           
           echo "📤 Triggering cover sync to repos with updated covers ONLY..."
           
@@ -293,7 +304,7 @@ jobs:
             
             http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
               -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
+              -H "Authorization: Bearer ${PAT_TOKEN}" \
               https://api.github.com/repos/nurananto/$repo/dispatches \
               -d '{"event_type":"sync-covers"}' 2>&1 || echo "000")
             
@@ -303,6 +314,9 @@ jobs:
             elif [ "$http_code" = "404" ]; then
               echo "    ⚠️ Workflow not found (HTTP 404)"
               skipped=$((skipped + 1))
+            elif [ "$http_code" = "403" ]; then
+              echo "    ⚠️ Permission denied (HTTP 403) - PAT_TOKEN may not have 'actions:write' permission"
+              failed=$((failed + 1))
             else
               echo "    ❌ Failed (HTTP $http_code)"
               failed=$((failed + 1))
@@ -407,6 +421,11 @@ jobs:
   deploy-pages:
     needs: batch-updates
     if: needs.batch-updates.outputs.should_rebuild == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: write  # ✅ Required for trigger-auto-version job in deploy-pages.yml
     uses: ./.github/workflows/deploy-pages.yml
   
   # ✅ Cache purge sudah dihandle oleh auto-version.yml setelah deploy

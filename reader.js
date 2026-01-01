@@ -1041,12 +1041,27 @@ const badges = (endBadge || hiatusBadge)
     ? `<div class="badge-container-modal">${endBadge}${hiatusBadge}</div>` 
     : '';
         
-        item.innerHTML = `
-            <div class="chapter-item-title">
-                ${lockIcon}${chapter.title}${badges}
-            </div>
-            <div class="chapter-item-views">👁️ ${chapter.views}</div>
-        `;
+        // ✅ FIX XSS: Use createElement + textContent untuk data dinamis (lebih aman)
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'chapter-item-title';
+        
+        // ✅ lockIcon dan badges adalah HTML statis (aman), chapter.title adalah data dinamis (perlu textContent)
+        if (lockIcon || badges) {
+            const staticContent = document.createElement('span');
+            staticContent.innerHTML = lockIcon + badges; // HTML statis aman
+            titleDiv.appendChild(staticContent);
+        }
+        
+        const titleText = document.createElement('span');
+        titleText.textContent = chapter.title || chapter.folder; // ✅ XSS Protection: textContent untuk data dinamis
+        titleDiv.appendChild(titleText);
+        
+        const viewsDiv = document.createElement('div');
+        viewsDiv.className = 'chapter-item-views';
+        viewsDiv.textContent = `👁️ ${chapter.views || 0}`; // ✅ XSS Protection: textContent untuk data dinamis
+        
+        item.appendChild(titleDiv);
+        item.appendChild(viewsDiv);
         
         item.onclick = async () => {
             // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)

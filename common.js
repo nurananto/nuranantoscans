@@ -125,23 +125,35 @@ function getResponsiveCDN(originalUrl) {
             small: originalUrl,
             medium: originalUrl,
             large: originalUrl,
+            xlarge: originalUrl,
             original: originalUrl
         };
     }
     
-    const sizes = { small: 400, medium: 600, large: 800 };
+    // ✅ FIX: Optimized sizes untuk prevent pixelation di tampilan kecil
+    // Small: untuk mobile (2 kolom), Medium: untuk tablet, Large: untuk desktop, XLarge: untuk retina
+    const sizes = { 
+        small: 500,    // Increased dari 400 untuk better quality
+        medium: 700,   // Increased dari 600 untuk better quality
+        large: 900,    // Increased dari 800 untuk better quality
+        xlarge: 1200   // New: untuk retina displays
+    };
     
     // ✅ FIX: Properly encode the URL to prevent CORB errors
     const encodedUrl = encodeURIComponent(originalUrl);
     
-    const buildUrl = (width) => {
-        return `https://images.weserv.nl/?url=${encodedUrl}&w=${width}&q=85&output=webp`;
+    // ✅ FIX: Higher quality untuk ukuran kecil (q=90), standard untuk besar (q=85)
+    const buildUrl = (width, quality = 85) => {
+        // Higher quality untuk ukuran kecil untuk prevent pixelation
+        const q = width <= 500 ? 90 : quality;
+        return `https://images.weserv.nl/?url=${encodedUrl}&w=${width}&q=${q}&output=webp&fit=inside`;
     };
     
     return {
-        small: buildUrl(sizes.small),
-        medium: buildUrl(sizes.medium),
-        large: buildUrl(sizes.large),
+        small: buildUrl(sizes.small, 90),      // q=90 untuk better quality di mobile
+        medium: buildUrl(sizes.medium, 88),    // q=88 untuk tablet
+        large: buildUrl(sizes.large, 85),      // q=85 untuk desktop
+        xlarge: buildUrl(sizes.xlarge, 85),    // q=85 untuk retina
         original: originalUrl
     };
 }

@@ -743,18 +743,46 @@ function createChapterElement(chapter, allChapters) {
         ? `<div class="badge-container">${endBadge}${hiatusBadge}${updatedBadge}</div>` 
         : '';
     
-    div.innerHTML = `
-        <div class="chapter-info">
-            <div class="chapter-title-row">
-                <span class="chapter-title-text">${lockIcon}${chapter.title}</span>
-                ${badges}
-            </div>
-            ${uploadDate ? `<div class="chapter-upload-date">${uploadDate}</div>` : ''}
-        </div>
-        <div class="chapter-views">
-            <span>👁️ ${chapter.views}</span>
-        </div>
-    `;
+    // ✅ FIX XSS: Use createElement + textContent untuk data dinamis (lebih aman)
+    const chapterInfoDiv = document.createElement('div');
+    chapterInfoDiv.className = 'chapter-info';
+    
+    const titleRowDiv = document.createElement('div');
+    titleRowDiv.className = 'chapter-title-row';
+    
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'chapter-title-text';
+    
+    // ✅ lockIcon dan badges adalah HTML statis (aman), chapter.title adalah data dinamis (perlu textContent)
+    if (lockIcon || badges) {
+        const staticContent = document.createElement('span');
+        staticContent.innerHTML = lockIcon + badges; // HTML statis aman
+        titleSpan.appendChild(staticContent);
+    }
+    
+    const titleText = document.createElement('span');
+    titleText.textContent = chapter.title || chapter.folder; // ✅ XSS Protection: textContent untuk data dinamis
+    titleSpan.appendChild(titleText);
+    
+    titleRowDiv.appendChild(titleSpan);
+    chapterInfoDiv.appendChild(titleRowDiv);
+    
+    // ✅ uploadDate: textContent untuk XSS protection
+    if (uploadDate) {
+        const uploadDateDiv = document.createElement('div');
+        uploadDateDiv.className = 'chapter-upload-date';
+        uploadDateDiv.textContent = uploadDate; // ✅ XSS Protection: textContent untuk data dinamis
+        chapterInfoDiv.appendChild(uploadDateDiv);
+    }
+    
+    const viewsDiv = document.createElement('div');
+    viewsDiv.className = 'chapter-views';
+    const viewsSpan = document.createElement('span');
+    viewsSpan.textContent = `👁️ ${chapter.views || 0}`; // ✅ XSS Protection: textContent untuk data dinamis
+    viewsDiv.appendChild(viewsSpan);
+    
+    div.appendChild(chapterInfoDiv);
+    div.appendChild(viewsDiv);
     
     return div;
 }
@@ -1394,7 +1422,7 @@ document.addEventListener('submit', async (e) => {
         try {
             dLog('🌐 [VIP-CODE] Sending request...');
             
-            const response = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/vip/redeem', {
+            const response = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/donatur/redeem', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
