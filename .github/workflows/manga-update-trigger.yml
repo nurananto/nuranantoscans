@@ -14,6 +14,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  actions: write  # ✅ Required for deploy-pages.yml to trigger auto-version
 
 concurrency:
   group: manga-updates
@@ -49,7 +50,7 @@ jobs:
             echo '{"pending":[],"lastRebuild":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > pending-manga-updates.json
           fi
       
-      - name: 📝 Add Update to Pending (with retry)
+      - name: 🔍 Add Update to Pending (with retry)
         if: github.event_name == 'repository_dispatch'
         run: |
           MANGA_REPO="${{ github.event.client_payload.manga }}"
@@ -73,7 +74,7 @@ jobs:
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             
             git add pending-manga-updates.json
-            git commit -m "📝 Track update from $MANGA_REPO [skip ci]" || echo "No changes"
+            git commit -m "🔍 Track update from $MANGA_REPO [skip ci]" || echo "No changes"
             
             if git push; then
               PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
@@ -400,7 +401,7 @@ jobs:
           git push
           
           echo "✅ Pending cleared and committed"
-          echo "::notice title=Pending Cleared::Processed and cleared $PROCESSED_COUNT manga updates"
+          echo "::notice title=Pending Cleared::Processed and cleared $PENDING_COUNT manga updates"
 
   # ✅ Separate job to deploy pages
   deploy-pages:
