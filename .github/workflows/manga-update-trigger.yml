@@ -6,7 +6,7 @@ on:
       - manga-updated
   
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 2 * * *'  # Daily at 02:00 UTC (09:00 WIB) - backup only
   
   workflow_dispatch:
 
@@ -14,7 +14,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
-  actions: write
+  actions: write  # ✅ Required for deploy-pages.yml to trigger auto-version
 
 concurrency:
   group: manga-updates
@@ -249,30 +249,36 @@ jobs:
             git push || true
             echo "✅ Covers updated"
             
+            # Wait for GitHub to process the commit before triggering sync
             echo "⏳ Waiting 5 seconds for GitHub to process commit..."
             sleep 5
           fi
       
-      - name: 📤 Trigger Cover Sync
+      - name: 📤 Trigger Cover Sync to Updated Manga Repos ONLY
         if: |
           steps.check_rebuild.outputs.should_rebuild == 'true' &&
           steps.cover_check.outputs.needs_cover_update == 'true'
         run: |
-          set +e
+          set +e  # Don't exit on error
           
-          echo "📤 Triggering cover sync..."
+          echo "📤 Triggering cover sync to repos with updated covers ONLY..."
           
+          # Use updated-repo-list.txt instead of repo-list.txt
           REPO_FILE="updated-repo-list.txt"
           
           if [ ! -f "$REPO_FILE" ]; then
+            echo "ℹ️ No updated-repo-list.txt found - no repos to trigger"
             exit 0
           fi
           
           repo_count=$(wc -l < "$REPO_FILE")
           
           if [ "$repo_count" -eq 0 ]; then
+            echo "ℹ️ No repos in updated list - skipping triggers"
             exit 0
           fi
+          
+          echo "📊 Found $repo_count repos with cover updates"
           
           success=0
           failed=0
@@ -295,7 +301,7 @@ jobs:
               echo "    ✅ Success"
               success=$((success + 1))
             elif [ "$http_code" = "404" ]; then
-              echo "    ⚠️ Workflow not found"
+              echo "    ⚠️ Workflow not found (HTTP 404)"
               skipped=$((skipped + 1))
             else
               echo "    ❌ Failed (HTTP $http_code)"
@@ -305,24 +311,53 @@ jobs:
             sleep 1
           done < "$REPO_FILE"
           
-          exit 0
+          echo ""
+          echo "=========================================="
+          echo "📤 Cover Sync Trigger Summary:"
+          echo "   ✅ Success: $success repos"
+          echo "   ⚠️ Skipped: $skipped repos (workflow missing)"
+          echo "   ❌ Failed: $failed repos"
+          echo "   📊 Total Updated: $repo_count repos"
+          echo "   ℹ️  Repos will update with [skip ci]"
+          echo "=========================================="
+          
+          # Exit with success if at least one trigger succeeded
+          if [ $success -gt 0 ]; then
+            echo ""
+            echo "✅ At least $success repos triggered successfully"
+            exit 0
+          elif [ $skipped -gt 0 ]; then
+            echo ""
+            echo "⚠️ No triggers succeeded, but $skipped repos need sync-cover.yml"
+            exit 0
+          else
+            echo ""
+            echo "❌ All trigger attempts failed"
+            exit 1
+          fi
       
       - name: 🧹 Cleanup Updated Repo List
         if: |
           steps.check_rebuild.outputs.should_rebuild == 'true' &&
           steps.cover_check.outputs.needs_cover_update == 'true'
         run: |
+          echo "🧹 Cleaning up updated-repo-list.txt..."
+          
           if [ -f "updated-repo-list.txt" ]; then
             git config --local user.name "github-actions[bot]"
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             
             rm updated-repo-list.txt
             git add updated-repo-list.txt
-            git commit -m "🧹 Cleanup [skip ci]" || true
-            git push || true
+            git commit -m "🧹 Cleanup updated repo list [skip ci]" || echo "No changes to commit"
+            git push || echo "Push failed"
+            
+            echo "✅ updated-repo-list.txt removed"
+          else
+            echo "ℹ️ File not found, nothing to clean"
           fi
       
-      - name: 💾 Commit Changes
+      - name: 💾 Commit Changes (Without Version Bump)
         if: steps.check_rebuild.outputs.should_rebuild == 'true'
         run: |
           MANGA_LIST="${{ steps.check_rebuild.outputs.manga_list }}"
@@ -330,13 +365,20 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
+          # Hanya commit jika ada perubahan selain version.txt dan sw.js
+          # Version bump akan dihandle oleh auto-version.yml setelah deploy
           if [[ -n $(git status -s) ]]; then
             git add -A
             git reset HEAD version.txt sw.js index.html info-manga.html reader.html || true
             if [[ -n $(git status -s) ]]; then
               git commit -m "🔄 Batch rebuild: $MANGA_LIST [skip ci]" || echo "No changes"
               git push || echo "Push failed"
+              echo "✅ Changes committed (version bump will be handled by auto-version)"
+            else
+              echo "ℹ️ No changes to commit (only version files changed)"
             fi
+          else
+            echo "ℹ️ No changes to commit"
           fi
       
       - name: 🧹 Clear Pending
@@ -351,13 +393,21 @@ jobs:
             '.pending = [] | .lastRebuild = $ts' \
             pending-manga-updates.json > temp.json && mv temp.json pending-manga-updates.json
           
+          echo "📋 After clear:"
+          cat pending-manga-updates.json | jq '.'
+          
           git add pending-manga-updates.json
-          git commit -m "🧹 Clear $PROCESSED_COUNT pending [skip ci]"
+          git commit -m "🧹 Clear $PROCESSED_COUNT pending updates: $PROCESSED_LIST [skip ci]"
           git push
+          
+          echo "✅ Pending cleared and committed"
+          echo "::notice title=Pending Cleared::Processed and cleared $PENDING_COUNT manga updates"
 
+  # ✅ Separate job to deploy pages
   deploy-pages:
     needs: batch-updates
     if: needs.batch-updates.outputs.should_rebuild == 'true'
     uses: ./.github/workflows/deploy-pages.yml
-    secrets:
-      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+  
+  # ✅ Cache purge sudah dihandle oleh auto-version.yml setelah deploy
+  # Job ini dihapus untuk menghindari duplikasi

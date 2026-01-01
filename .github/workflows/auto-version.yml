@@ -1,7 +1,10 @@
 name: Auto Version & Cache Bust
 
 on:
+  # ✅ HANYA bisa dipanggil dari workflow lain atau manual
   workflow_call:
+  
+  # Manual trigger untuk testing
   workflow_dispatch:
 
 permissions:
@@ -17,7 +20,7 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: 🔢 Generate Version from Commit Hash
+      - name: 📢 Generate Version from Commit Hash
         id: version
         run: |
           VERSION=$(git rev-parse --short HEAD)
@@ -27,13 +30,17 @@ jobs:
       - name: 📝 Update Version File
         run: |
           VERSION=${{ steps.version.outputs.version }}
+          
+          # Create/Update version.txt with new version
           echo "$VERSION" > version.txt
+          
           echo "✅ Version file updated: $VERSION"
       
       - name: 🔄 Update Service Worker Cache Version
         run: |
           VERSION=${{ steps.version.outputs.version }}
           
+          # Update sw.js - ganti CACHE_NAME dengan version baru
           sed -i "s/const CACHE_NAME = 'nurananto-v[0-9a-f]*'/const CACHE_NAME = 'nurananto-v$VERSION'/g" sw.js
           sed -i "s/const STATIC_CACHE = 'static-v[0-9a-f]*'/const STATIC_CACHE = 'static-v$VERSION'/g" sw.js
           sed -i "s/const IMAGE_CACHE = 'images-v[0-9a-f]*'/const IMAGE_CACHE = 'images-v$VERSION'/g" sw.js
@@ -45,20 +52,26 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.version }}
           
+          # Update semua HTML files dengan query string version
           for file in index.html info-manga.html reader.html; do
             if [ -f "$file" ]; then
+              # CSS files - gunakan positive lookbehind yang lebih spesifik
               sed -i "s|\([\"']\)style\.css\?v=[^\"']*|\1style.css?v=$VERSION|g" $file
               sed -i "s|\([\"']\)info-manga\.css\?v=[^\"']*|\1info-manga.css?v=$VERSION|g" $file
               sed -i "s|\([\"']\)reader\.css\?v=[^\"']*|\1reader.css?v=$VERSION|g" $file
               
+              # ✅ FIX: JS files - hanya update yang ada attribute src=
+              # Tidak akan touch baris yang di-comment
               sed -i "s|src=\"script\.js\?v=[^\"]*\"|src=\"script.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"info-manga\.js\?v=[^\"]*\"|src=\"info-manga.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"reader\.js\?v=[^\"]*\"|src=\"reader.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"manga-config\.js\?v=[^\"]*\"|src=\"manga-config.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"auto-reload\.js\?v=[^\"]*\"|src=\"auto-reload.js?v=$VERSION\"|g" $file
               
+              # SW registration
               sed -i "s|sw\.js\?v=[^\"']*|sw.js?v=$VERSION|g" $file
               
+              # HTML files (navigasi antar halaman)
               sed -i "s|index\.html\?v=[^\"']*|index.html?v=$VERSION|g" $file
               sed -i "s|info-manga\.html\?v=[^\"']*|info-manga.html?v=$VERSION|g" $file
               sed -i "s|reader\.html\?v=[^\"']*|reader.html?v=$VERSION|g" $file

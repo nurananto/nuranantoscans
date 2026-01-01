@@ -9,6 +9,7 @@ on:
       - '**.js'
       - '**.html'
       - 'manga-config.js'
+      # Exclude files
       - '!pending-manga-updates.json'
       - '!version.txt'
       - '!sw.js'
@@ -21,7 +22,7 @@ permissions:
   actions: write
 
 jobs:
+  # ✅ Deploy Pages dulu, setelah selesai akan otomatis trigger auto-version
   deploy-pages:
     uses: ./.github/workflows/deploy-pages.yml
-    secrets:
-      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+
