@@ -3,7 +3,7 @@
 // 📅 Last updated: 2025-12-22
 
 // ✅ STABLE CACHE NAMES
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2'; // ✅ Updated to force cache refresh
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;

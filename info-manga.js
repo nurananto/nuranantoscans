@@ -1432,8 +1432,27 @@ document.addEventListener('submit', async (e) => {
             });
             
             dLog('📥 [VIP-CODE] Response status:', response.status);
-            const data = await response.json();
+            
+            // ✅ FIX: Check response status before parsing JSON
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('❌ [VIP-CODE] Failed to parse response:', parseError);
+                errorEl.textContent = response.status === 404 ? 'Endpoint tidak ditemukan. Silakan refresh halaman.' : 'Terjadi kesalahan saat memproses response';
+                return;
+            }
+            
             dLog('📥 [VIP-CODE] Response data:', data);
+            
+            // ✅ FIX: Handle both success response and error response properly
+            if (!response.ok) {
+                // Response status bukan 200-299
+                const errorMessage = data.error || data.message || `Error ${response.status}: ${response.statusText}`;
+                console.error('❌ [VIP-CODE] Failed:', errorMessage);
+                errorEl.textContent = errorMessage;
+                return;
+            }
             
             if (data.success) {
                 dLog('✅ [VIP-CODE] Success!');
@@ -1520,11 +1539,11 @@ document.addEventListener('submit', async (e) => {
                 errorEl.textContent = '';
             } else {
                 console.error('❌ [VIP-CODE] Failed:', data.error);
-                errorEl.textContent = data.error;
+                errorEl.textContent = data.error || 'Terjadi kesalahan';
             }
         } catch (error) {
             console.error('❌ [VIP-CODE] Error:', error);
-            errorEl.textContent = 'Terjadi kesalahan';
+            errorEl.textContent = error.message || 'Terjadi kesalahan koneksi';
         } finally {
             // Re-enable button
             btnRedeem.disabled = false;

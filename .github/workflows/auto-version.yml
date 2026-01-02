@@ -52,24 +52,50 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.version }}
           
+          echo "🔄 Updating cache busting version to: $VERSION"
+          
           # Update semua HTML files dengan query string version
           for file in index.html info-manga.html reader.html; do
             if [ -f "$file" ]; then
-              # CSS files - gunakan positive lookbehind yang lebih spesifik
-              sed -i "s|\([\"']\)style\.css\?v=[^\"']*|\1style.css?v=$VERSION|g" $file
-              sed -i "s|\([\"']\)info-manga\.css\?v=[^\"']*|\1info-manga.css?v=$VERSION|g" $file
-              sed -i "s|\([\"']\)reader\.css\?v=[^\"']*|\1reader.css?v=$VERSION|g" $file
+              echo "📝 Processing: $file"
               
-              # ✅ FIX: JS files - hanya update yang ada attribute src=
-              # Tidak akan touch baris yang di-comment
+              # CSS files - update semua format yang mungkin
+              sed -i "s|href=\"style\.css\?v=[^\"]*\"|href=\"style.css?v=$VERSION\"|g" $file
+              sed -i "s|href=\"info-manga\.css\?v=[^\"]*\"|href=\"info-manga.css?v=$VERSION\"|g" $file
+              sed -i "s|href=\"reader\.css\?v=[^\"]*\"|href=\"reader.css?v=$VERSION\"|g" $file
+              sed -i "s|href='style\.css\?v=[^']*'|href='style.css?v=$VERSION'|g" $file
+              sed -i "s|href='info-manga\.css\?v=[^']*'|href='info-manga.css?v=$VERSION'|g" $file
+              sed -i "s|href='reader\.css\?v=[^']*'|href='reader.css?v=$VERSION'|g" $file
+              
+              # ✅ FIX: JS files - update semua format yang mungkin (termasuk common.js)
+              sed -i "s|src=\"common\.js\?v=[^\"]*\"|src=\"common.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"script\.js\?v=[^\"]*\"|src=\"script.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"info-manga\.js\?v=[^\"]*\"|src=\"info-manga.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"reader\.js\?v=[^\"]*\"|src=\"reader.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"manga-config\.js\?v=[^\"]*\"|src=\"manga-config.js?v=$VERSION\"|g" $file
               sed -i "s|src=\"auto-reload\.js\?v=[^\"]*\"|src=\"auto-reload.js?v=$VERSION\"|g" $file
+              sed -i "s|src='common\.js\?v=[^']*'|src='common.js?v=$VERSION'|g" $file
+              sed -i "s|src='script\.js\?v=[^']*'|src='script.js?v=$VERSION'|g" $file
+              sed -i "s|src='info-manga\.js\?v=[^']*'|src='info-manga.js?v=$VERSION'|g" $file
+              sed -i "s|src='reader\.js\?v=[^']*'|src='reader.js?v=$VERSION'|g" $file
+              sed -i "s|src='manga-config\.js\?v=[^']*'|src='manga-config.js?v=$VERSION'|g" $file
+              sed -i "s|src='auto-reload\.js\?v=[^']*'|src='auto-reload.js?v=$VERSION'|g" $file
+              
+              # ✅ FIX: Handle files tanpa versi (tambahkan versi jika belum ada)
+              sed -i "s|href=\"style\.css\"|href=\"style.css?v=$VERSION\"|g" $file
+              sed -i "s|href=\"info-manga\.css\"|href=\"info-manga.css?v=$VERSION\"|g" $file
+              sed -i "s|href=\"reader\.css\"|href=\"reader.css?v=$VERSION\"|g" $file
+              sed -i "s|src=\"common\.js\"|src=\"common.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"script\.js\"|src=\"script.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"info-manga\.js\"|src=\"info-manga.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"reader\.js\"|src=\"reader.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"manga-config\.js\"|src=\"manga-config.js?v=$VERSION\"|g" $file
+              sed -i "s|src=\"auto-reload\.js\"|src=\"auto-reload.js?v=$VERSION\"|g" $file
               
               # SW registration
               sed -i "s|sw\.js\?v=[^\"']*|sw.js?v=$VERSION|g" $file
+              sed -i "s|\"sw\.js\"|\"sw.js?v=$VERSION\"|g" $file
+              sed -i "s|'sw\.js'|'sw.js?v=$VERSION'|g" $file
               
               # HTML files (navigasi antar halaman)
               sed -i "s|index\.html\?v=[^\"']*|index.html?v=$VERSION|g" $file
@@ -77,8 +103,12 @@ jobs:
               sed -i "s|reader\.html\?v=[^\"']*|reader.html?v=$VERSION|g" $file
               
               echo "✅ Updated: $file"
+            else
+              echo "⚠️ File not found: $file"
             fi
           done
+          
+          echo "✅ All HTML files updated with version: $VERSION"
       
       - name: 🔍 Check for Changes
         id: check_changes

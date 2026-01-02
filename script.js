@@ -1026,8 +1026,27 @@ document.addEventListener('submit', async (e) => {
             });
             
             dLog('📥 [VIP-CODE] Response status:', response.status);
-            const data = await response.json();
+            
+            // ✅ FIX: Check response status before parsing JSON
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('❌ [VIP-CODE] Failed to parse response:', parseError);
+                errorEl.textContent = response.status === 404 ? 'Endpoint tidak ditemukan. Silakan refresh halaman.' : 'Terjadi kesalahan saat memproses response';
+                return;
+            }
+            
             dLog('📥 [VIP-CODE] Response data:', data);
+            
+            // ✅ FIX: Handle both success response and error response properly
+            if (!response.ok) {
+                // Response status bukan 200-299
+                const errorMessage = data.error || data.message || `Error ${response.status}: ${response.statusText}`;
+                console.error('❌ [VIP-CODE] Failed:', errorMessage);
+                errorEl.textContent = errorMessage;
+                return;
+            }
             
             if (data.success) {
                 dLog('✅ [VIP-CODE] Success!');
@@ -1044,11 +1063,11 @@ document.addEventListener('submit', async (e) => {
                 errorEl.textContent = '';
             } else {
                 console.error('❌ [VIP-CODE] Failed:', data.error);
-                errorEl.textContent = data.error;
+                errorEl.textContent = data.error || 'Terjadi kesalahan';
             }
         } catch (error) {
             console.error('❌ [VIP-CODE] Error:', error);
-            errorEl.textContent = 'Terjadi kesalahan';
+            errorEl.textContent = error.message || 'Terjadi kesalahan koneksi';
         } finally {
             // Re-enable button
             btnRedeem.disabled = false;
@@ -1064,79 +1083,6 @@ document.addEventListener('click', (e) => {
         const codeModal = document.getElementById('codeModal');
         if (codeModal) codeModal.style.display = 'none';
         if (upgradeModal) upgradeModal.style.display = 'flex';
-    }
-});
-
-// Submit VIP Code dengan FULL DEBUG
-document.addEventListener('submit', async (e) => {
-    if (e.target.id === 'formVIPCode') {
-        e.preventDefault();
-        dLog('🎫 [VIP-CODE] ========================================');
-        dLog('🎫 [VIP-CODE] Form submitted');
-        dLog('🎫 [VIP-CODE] Time:', new Date().toISOString());
-        
-        const inputEl = document.getElementById('inputVIPCode');
-        const code = inputEl.value.trim();
-        const errorEl = document.getElementById('codeError');
-        const token = localStorage.getItem('authToken');
-        
-        dLog('📝 [VIP-CODE] Input element:', inputEl);
-        dLog('📝 [VIP-CODE] Raw value:', inputEl.value);
-        dLog('📝 [VIP-CODE] Trimmed value:', code);
-        dLog('📝 [VIP-CODE] Code length:', code.length);
-        dLog('📝 [VIP-CODE] Has token:', !!token);
-        
-        if (!token) {
-            console.error('❌ [VIP-CODE] No token found');
-            errorEl.textContent = 'Please login first';
-            return;
-        }
-        
-        if (!code) {
-            console.error('❌ [VIP-CODE] Empty code');
-            errorEl.textContent = 'Kode tidak boleh kosong';
-            return;
-        }
-        
-        try {
-            dLog('🌐 [VIP-CODE] Sending request...');
-            dLog('🌐 [VIP-CODE] Code being sent:', code);
-            
-            const response = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/donatur/redeem', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ code })
-            });
-            
-            dLog('📥 [VIP-CODE] Response status:', response.status);
-            const data = await response.json();
-            dLog('📥 [VIP-CODE] Response data:', data);
-            
-            if (data.success) {
-                dLog('✅ [VIP-CODE] Success!');
-                dLog('✅ [VIP-CODE] Message:', data.message);
-                alert('✅ ' + data.message);
-                
-                const codeModal = document.getElementById('codeModal');
-                if (codeModal) codeModal.style.display = 'none';
-                
-                // Clear input
-                inputEl.value = '';
-                errorEl.textContent = '';
-                dLog('🧹 [VIP-CODE] Input cleared');
-            } else {
-                console.error('❌ [VIP-CODE] Failed:', data.error);
-                errorEl.textContent = data.error;
-            }
-        } catch (error) {
-            console.error('❌ [VIP-CODE] Error:', error);
-            console.error('❌ [VIP-CODE] Error stack:', error.stack);
-            errorEl.textContent = 'Terjadi kesalahan';
-        }
-        dLog('🎫 [VIP-CODE] ========================================');
     }
 });
 

@@ -66,7 +66,7 @@ MANGA_LIST = [
   {
     id: 'karadaoarawasanai',
     title: 'Na wa Karada o Arawasanai',
-    type: 'manga',
+    type: 'webtoon',
     cover: 'https://cdn.nuranantoscans.my.id/covers/KaradaoArawasanai-Cover.webp',
     repo: 'KaradaoArawasanai'
   },
