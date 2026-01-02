@@ -15,6 +15,13 @@
 
 MANGA_LIST = [
   {
+    id: 'mutsuko',
+    title: 'Mutsuko, Seiwo Tsukemasu!',
+    type: 'manga',
+    cover: '',
+    repo: 'Mutsuko'
+  },
+  {
     id: 'tenshisenpai',
     title: 'Tenshi Senpai',
     type: 'manga',
