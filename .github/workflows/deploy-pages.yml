@@ -59,42 +59,58 @@ jobs:
       - name: 🔄 Trigger Auto Version
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # ✅ FIX: Check if PAT_TOKEN is set and not empty
-          if [ -z "${PAT_TOKEN}" ] || [ "${PAT_TOKEN}" = "" ]; then
-            echo "⚠️ PAT_TOKEN secret is not set in GitHub Secrets"
-            echo "::warning::PAT_TOKEN secret is required to trigger auto-version workflow"
-            echo "::warning::Please add PAT_TOKEN to GitHub Secrets (Settings > Secrets and variables > Actions)"
-            echo "::warning::PAT_TOKEN needs 'actions:write' permission"
-            exit 0  # Don't fail the workflow, just skip
+          # ✅ Try PAT_TOKEN first, fallback to GITHUB_TOKEN
+          TOKEN="${PAT_TOKEN}"
+          TOKEN_TYPE="PAT_TOKEN"
+          
+          if [ -z "${TOKEN}" ] || [ "${TOKEN}" = "" ]; then
+            echo "⚠️ PAT_TOKEN not found, trying GITHUB_TOKEN..."
+            TOKEN="${GITHUB_TOKEN}"
+            TOKEN_TYPE="GITHUB_TOKEN"
           fi
           
-          echo "🔄 Triggering auto-version workflow..."
+          if [ -z "${TOKEN}" ] || [ "${TOKEN}" = "" ]; then
+            echo "❌ No token available"
+            echo "::error::Please add PAT_TOKEN to GitHub Secrets (Settings > Secrets and variables > Actions)"
+            echo "::error::PAT_TOKEN needs 'repo' and 'workflow' scopes"
+            exit 0  # Don't fail deployment
+          fi
+          
+          echo "🔄 Triggering auto-version workflow using ${TOKEN_TYPE}..."
           
           HTTP_CODE=$(curl -s -o /tmp/response.json -w "%{http_code}" -X POST \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${PAT_TOKEN}" \
+            -H "Authorization: Bearer ${TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/auto-version.yml/dispatches \
             -d '{"ref":"main"}' 2>&1 || echo "000")
           
           if [ "$HTTP_CODE" = "204" ]; then
-            echo "✅ Auto-version workflow triggered successfully!"
+            echo "✅ Auto-version workflow triggered successfully using ${TOKEN_TYPE}!"
           elif [ "$HTTP_CODE" = "404" ]; then
             echo "⚠️ Auto-version workflow not found (HTTP 404)"
-            echo "::warning::Workflow 'auto-version.yml' may not exist in this repository"
-            exit 0  # Don't fail if workflow doesn't exist
+            echo "::warning::Workflow 'auto-version.yml' may not exist"
+            exit 0
           elif [ "$HTTP_CODE" = "403" ]; then
-            echo "❌ Permission denied (HTTP 403)"
-            echo "::error::PAT_TOKEN does not have 'actions:write' permission"
-            echo "::error::Please check PAT_TOKEN permissions in GitHub Personal Access Token settings"
-            exit 0  # Don't fail, just warn
+            echo "❌ Permission denied (HTTP 403) for ${TOKEN_TYPE}"
+            if [ "${TOKEN_TYPE}" = "GITHUB_TOKEN" ]; then
+              echo "::error::GITHUB_TOKEN lacks permission. Please create PAT_TOKEN:"
+              echo "::error::1. Go to GitHub Settings > Developer settings > Personal access tokens"
+              echo "::error::2. Generate new token (classic) with 'repo' and 'workflow' scopes"
+              echo "::error::3. Add as PAT_TOKEN secret in repository settings"
+            else
+              echo "::error::PAT_TOKEN lacks permission"
+              echo "::error::Please regenerate with 'repo' and 'workflow' scopes"
+            fi
+            exit 0
           else
-            echo "❌ Failed to trigger auto-version workflow (HTTP $HTTP_CODE)"
+            echo "❌ Failed to trigger (HTTP $HTTP_CODE)"
             if [ -f /tmp/response.json ]; then
               echo "Response:"
               cat /tmp/response.json
             fi
-            echo "::warning::Failed to trigger auto-version workflow. Check PAT_TOKEN and permissions."
-            exit 0  # Don't fail the deployment if trigger fails
+            echo "::warning::Failed to trigger auto-version workflow"
+            exit 0
           fi

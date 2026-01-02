@@ -743,7 +743,7 @@ function createChapterElement(chapter, allChapters) {
         ? `<div class="badge-container">${endBadge}${hiatusBadge}${updatedBadge}</div>` 
         : '';
     
-    // ✅ FIX XSS: Use createElement + textContent untuk data dinamis (lebih aman)
+// ✅ FIX XSS: Use createElement + textContent untuk data dinamis (lebih aman)
     const chapterInfoDiv = document.createElement('div');
     chapterInfoDiv.className = 'chapter-info';
     
@@ -753,16 +753,25 @@ function createChapterElement(chapter, allChapters) {
     const titleSpan = document.createElement('span');
     titleSpan.className = 'chapter-title-text';
     
-    // ✅ lockIcon dan badges adalah HTML statis (aman), chapter.title adalah data dinamis (perlu textContent)
-    if (lockIcon || badges) {
-        const staticContent = document.createElement('span');
-        staticContent.innerHTML = lockIcon + badges; // HTML statis aman
-        titleSpan.appendChild(staticContent);
+    // ✅ FIX BADGE POSITION: Lock icon FIRST, title MIDDLE, badges AFTER
+    // 1. Lock icon (if exists)
+    if (lockIcon) {
+        const lockSpan = document.createElement('span');
+        lockSpan.innerHTML = lockIcon;
+        titleSpan.appendChild(lockSpan);
     }
     
+    // 2. Chapter title (main content)
     const titleText = document.createElement('span');
-    titleText.textContent = chapter.title || chapter.folder; // ✅ XSS Protection: textContent untuk data dinamis
+    titleText.textContent = chapter.title || chapter.folder; // ✅ XSS Protection
     titleSpan.appendChild(titleText);
+    
+    // 3. Badges AFTER title (END, HIATUS, UPDATED)
+    if (badges) {
+        const badgeSpan = document.createElement('span');
+        badgeSpan.innerHTML = ' ' + badges; // Add space before badges
+        titleSpan.appendChild(badgeSpan);
+    }
     
     titleRowDiv.appendChild(titleSpan);
     chapterInfoDiv.appendChild(titleRowDiv);
