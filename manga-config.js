@@ -28,6 +28,7 @@ MANGA_LIST = [
   },
   {
     id: 'haibarakun',
+    type: 'webtoon',
     title: 'Haibara-kun no Tsuyokute Seishun New Game',
     cover: 'https://cdn.nuranantoscans.my.id/covers/haibarakun-4b90a775-bf6a-41fb-aefb-73d88720ddbc.webp',
     repo: 'Haibara-kun'
