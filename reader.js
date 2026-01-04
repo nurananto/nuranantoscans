@@ -41,41 +41,45 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     // ✅ PEMBACA SETIA - Show modal untuk kembali ke info page (untuk semua type: manga & webtoon)
     console.log('🔒 PEMBACA SETIA - Showing modal to go back to info page');
     
-    const pembacaSetiaModal = document.getElementById('pembacaSetiaModal');
-    if (!pembacaSetiaModal) {
-        console.error('❌ pembacaSetiaModal element not found!');
+    const loginRequiredModal = document.getElementById('loginRequiredModal');
+    if (!loginRequiredModal) {
+        console.error('❌ loginRequiredModal element not found!');
         return;
     }
     
-    pembacaSetiaModal.style.display = 'flex';
-    pembacaSetiaModal.classList.add('active');
+    loginRequiredModal.style.display = 'flex';
+    loginRequiredModal.classList.add('active');
     
-    console.log('🔒 PEMBACA SETIA modal shown');
+    console.log('🔒 Chapter Terkunci modal shown');
     
-    const btnYes = document.getElementById('btnPembacaSetiaYes');
-    const btnNo = document.getElementById('btnPembacaSetiaNo');
+    const btnBackToInfo = document.getElementById('btnBackToInfoFromModal');
+    const btnClose = document.getElementById('btnCloseLoginRequired');
     
     const closeModal = () => {
-        pembacaSetiaModal.classList.remove('active');
+        loginRequiredModal.classList.remove('active');
         setTimeout(() => {
-            pembacaSetiaModal.style.display = 'none';
+            loginRequiredModal.style.display = 'none';
         }, 300);
     };
     
-    btnYes.onclick = () => {
-        closeModal();
-        // Navigate back to info page
-        const urlParams = new URLSearchParams(window.location.search);
-        const repoParam = urlParams.get('repo');
-        if (repoParam) {
-            window.location.href = `info-manga.html?repo=${repoParam}`;
-        }
-    };
+    if (btnBackToInfo) {
+        btnBackToInfo.onclick = () => {
+            closeModal();
+            // Navigate back to info page
+            const urlParams = new URLSearchParams(window.location.search);
+            const repoParam = urlParams.get('repo');
+            if (repoParam) {
+                window.location.href = `info-manga.html?repo=${repoParam}`;
+            }
+        };
+    }
     
-    btnNo.onclick = closeModal;
+    if (btnClose) {
+        btnClose.onclick = closeModal;
+    }
     
-    pembacaSetiaModal.onclick = (e) => {
-        if (e.target === pembacaSetiaModal) {
+    loginRequiredModal.onclick = (e) => {
+        if (e.target === loginRequiredModal) {
             closeModal();
         }
     };

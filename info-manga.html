@@ -549,18 +549,22 @@ if ('serviceWorker' in navigator) {
 <div id="loginRequiredModal" class="modal-overlay" style="display: none;">
   <div class="login-modal-content">
     <div class="login-required-content">
-      <h2 class="login-required-title">🔒 Login Diperlukan</h2>
+      <h2 class="login-required-title">🔒 Chapter Terkunci 🔒</h2>
       <p class="login-required-message">
-        Untuk mengakses chapter terkunci, Anda perlu login terlebih dahulu.
+        Chapter terkunci karena raw berbayar, untuk mengakses chapter terkunci, anda bisa melakukan dua cara:
       </p>
       <p class="login-required-submessage">
-        Setelah login, anda harus menjadi DONATUR SETIA untuk akses penuh ke semua chapter.
+        1. Login dan menjadi DONATUR SETIA<br>
+        2. Donate trakteer dan baca locked chapter di community post trakteer.
       </p>
       
       <div class="login-required-buttons">
         <button id="btnLoginFromRequired" class="login-required-btn login-required-btn-primary">
           🔐 LOGIN / REGISTER
         </button>
+        <a href="https://trakteer.id/NuranantoScanlation" target="_blank" class="login-required-btn login-required-btn-trakteer" style="margin-top: 10px; display: block; text-align: center; text-decoration: none;">
+          💰 DONASI VIA TRAKTEER
+        </a>
       </div>
       
       <button id="btnCloseLoginRequired" class="btn-close-modal">BATAL</button>
@@ -571,28 +575,87 @@ if ('serviceWorker' in navigator) {
 <div id="upgradeModal" class="modal-overlay" style="display: none;">
   <div class="login-modal-content">
     <div class="upgrade-content">
-      <h2 class="upgrade-title">⭐ Keuntungan DONATUR SETIA ⭐</h2>
+      <h2 class="upgrade-title">⭐ UPGRADE KE DONATUR SETIA ⭐</h2>
 <div class="benefits-list">
   <div class="benefit-item">✅ Akses semua chapter terkunci (locked)</div>
   <div class="benefit-item">✅ Badge DONATUR SETIA di akun Anda</div>
-  <div class="benefit-item">✅ Durasi DONATUR: Rp 2.000 = 30 hari</div>
 </div>
-
-<p class="upgrade-note">Minimal Rp 2.000 • Otomatis aktif • Kelipatan 30 hari</p>
       
       <div class="upgrade-buttons">
+        <button id="btnPanduan" class="upgrade-btn upgrade-btn-panduan">
+          📖 PANDUAN WAJIB BACA!
+        </button>
         <button id="btnDonasi" class="upgrade-btn upgrade-btn-trakteer">
           Donasi via Trakteer
           <span class="badge-instant">INSTANT</span>
         </button>
         <button id="btnVIPCode" class="upgrade-btn upgrade-btn-code">
-          Punya VIP Code?
+          Punya DONATUR CODE?
         </button>
       </div>
       
-      <p class="upgrade-note">Minimal Rp 2.000 • Otomatis aktif</p>
-      
       <button id="btnCloseUpgrade" class="btn-close-modal">BATAL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Panduan Modal -->
+<div id="panduanModal" class="modal-overlay" style="display: none;">
+  <div class="login-modal-content">
+    <div class="panduan-content">
+      <h2 class="panduan-title">⚠️ BACA DULU ⚠️<br>Sebelum Donasi atau Input Code</h2>
+      
+      <div class="panduan-section">
+        <h3 class="panduan-section-title">Donatur Code</h3>
+        <ul class="panduan-list">
+          <li>Input CODE → Redeem</li>
+          <li>Status langsung DONATUR SETIA</li>
+          <li>Chapter terkunci langsung terbuka di website</li>
+        </ul>
+        <p class="panduan-warning">⚠️ CODE TIDAK SELALU ADA<br>Dibagikan di waktu tertentu saja</p>
+      </div>
+
+      <div class="panduan-section">
+        <h3 class="panduan-section-title">Donasi Lewat Trakteer</h3>
+        <p class="panduan-warning-red">(WAJIB DIPAHAMI)</p>
+        
+        <div class="panduan-subsection">
+          <h4 class="panduan-subtitle">✅ Donasi dengan menulis email login nuranantoscans.my.id</h4>
+          <p class="panduan-text"><strong>Caranya:</strong></p>
+          <ul class="panduan-list">
+            <li>Tulis email login nuranantoscans.my.id di Pesan Dukungan Trakteer</li>
+            <li>Pesan TIDAK DIPRIVASI (jangan aktifkan pesan privat)</li>
+          </ul>
+          <p class="panduan-text"><strong>Kekurangan:</strong></p>
+          <ul class="panduan-list">
+            <li>Email login terlihat oleh user lain</li>
+          </ul>
+          <p class="panduan-text"><strong>Kelebihan:</strong></p>
+          <ul class="panduan-list">
+            <li>Status otomatis DONATUR SETIA</li>
+            <li>Semua locked chapter bisa dibaca langsung melalui website dan community post trakteer.</li>
+          </ul>
+        </div>
+
+        <div class="panduan-subsection">
+          <h4 class="panduan-subtitle">❌ Donasi tanpa menulis email login nuranantoscans.my.id / pesan dukungan diprivasi</h4>
+          <p class="panduan-text"><strong>Kekurangan:</strong></p>
+          <ul class="panduan-list">
+            <li>Status tidak berubah (Masih Pembaca Setia)</li>
+            <li>Status locked chapter di website tidak berubah</li>
+            <li>Baca locked chapter harus lewat Community Post Trakteer</li>
+            <li>Tidak semua locked chapter tersedia<br>(Webtoon / Longstrip hanya bisa dibaca di website)</li>
+          </ul>
+          <p class="panduan-text"><strong>Kelebihan:</strong></p>
+          <ul class="panduan-list">
+            <li>Email login tidak terlihat user lain</li>
+          </ul>
+        </div>
+      </div>
+
+      <button id="btnBackToUpgrade" class="upgrade-btn upgrade-btn-primary" style="width: 100%; margin-top: 8px;">
+        ← Kembali ke Upgrade
+      </button>
     </div>
   </div>
 </div>
@@ -601,12 +664,11 @@ if ('serviceWorker' in navigator) {
 <div id="codeModal" class="modal-overlay" style="display: none;">
   <div class="login-modal-content">
     <div class="code-content">
-      <h2 class="code-title">Masukkan VIP Code</h2>
+      <h2 class="code-title">Masukkan Donatur Code</h2>
       <form id="formVIPCode">
-        <input type="text" id="inputVIPCode" placeholder="Masukkan kode VIP Anda" required readonly>
+        <input type="text" id="inputVIPCode" placeholder="Masukkan kode Donatur Anda" required readonly>
         <p id="codeError" class="code-error"></p>
         <div class="code-buttons">
-          <button type="button" id="btnBackFromCode" class="btn-secondary">BATAL</button>
           <!-- ✅ Tombol PASTE (tampil dulu) -->
           <button type="button" id="btnPasteCode" class="btn-primary">
             📋 PASTE CODE
@@ -615,6 +677,7 @@ if ('serviceWorker' in navigator) {
           <button type="submit" id="btnRedeemCode" class="btn-primary" style="display: none;">
             ⚡ REDEEM CODE
           </button>
+          <button type="button" id="btnBackFromCode" class="btn-secondary">BATAL</button>
         </div>
       </form>
     </div>

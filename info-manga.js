@@ -31,6 +31,7 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     const upgradeModal = document.getElementById('upgradeModal');
     if (upgradeModal) {
         upgradeModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 }
 
@@ -328,6 +329,7 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     const upgradeModal = document.getElementById('upgradeModal');
     if (upgradeModal) {
         upgradeModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 }
 
@@ -1253,7 +1255,10 @@ document.addEventListener('click', (e) => {
 document.addEventListener('click', (e) => {
     if (e.target.id === 'btnCloseUpgrade') {
         const upgradeModal = document.getElementById('upgradeModal');
-        if (upgradeModal) upgradeModal.style.display = 'none';
+        if (upgradeModal) {
+            upgradeModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
     }
 });
 
@@ -1288,6 +1293,40 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// Panduan button
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnPanduan') {
+        const upgradeModal = document.getElementById('upgradeModal');
+        const panduanModal = document.getElementById('panduanModal');
+        
+        if (upgradeModal) upgradeModal.style.display = 'none';
+        if (panduanModal) panduanModal.style.display = 'flex';
+    }
+});
+
+// Back to Upgrade button
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnBackToUpgrade') {
+        const upgradeModal = document.getElementById('upgradeModal');
+        const panduanModal = document.getElementById('panduanModal');
+        
+        if (panduanModal) panduanModal.style.display = 'none';
+        if (upgradeModal) {
+            upgradeModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+});
+
+// Close upgrade modal on overlay click
+document.addEventListener('click', (e) => {
+    const upgradeModal = document.getElementById('upgradeModal');
+    if (upgradeModal && e.target === upgradeModal) {
+        upgradeModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
+
 // VIP Code button
 document.addEventListener('click', (e) => {
     if (e.target.id === 'btnVIPCode') {
@@ -1298,7 +1337,10 @@ document.addEventListener('click', (e) => {
         const btnRedeem = document.getElementById('btnRedeemCode');
         const errorEl = document.getElementById('codeError');
         
-        if (upgradeModal) upgradeModal.style.display = 'none';
+        if (upgradeModal) {
+            upgradeModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
         if (codeModal) {
             // Reset state
             inputVIPCode.value = '';
@@ -1567,7 +1609,10 @@ document.addEventListener('click', (e) => {
         const upgradeModal = document.getElementById('upgradeModal');
         const codeModal = document.getElementById('codeModal');
         if (codeModal) codeModal.style.display = 'none';
-        if (upgradeModal) upgradeModal.style.display = 'flex';
+        if (upgradeModal) {
+            upgradeModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
     }
 });
 
@@ -1873,6 +1918,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dLog('💎 [UPGRADE] Upgrade button clicked');
                 profileModal.style.display = 'none';
                 upgradeModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
             });
         }
         
