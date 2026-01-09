@@ -235,7 +235,9 @@ function getMangaByRepo(repo) {
 
 // Construct URLs
 function getMangaDataURL(manga) {
-  return `https://raw.githubusercontent.com/nurananto/${manga.repo}/main/manga.json`;
+  // ✅ Use novel.json for novel type, manga.json for others
+  const jsonFile = manga.type === 'novel' ? 'novel.json' : 'manga.json';
+  return `https://raw.githubusercontent.com/nurananto/${manga.repo}/main/${jsonFile}`;
 }
 
 function getChaptersDataURL(manga) {

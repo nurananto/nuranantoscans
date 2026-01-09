@@ -415,11 +415,22 @@ if (isValidated || isDonatur) {
         
         currentChapter = chapterData;
         currentChapterFolder = chapterParam;
-        totalPages = currentChapter.pages;
+        totalPages = currentChapter.pages || 0;
         
         setupUI();
         
-        await loadChapterPages();
+        // ============================================
+        // 🆕 DETECT TYPE: manga or novel
+        // ============================================
+        const contentType = mangaData.manga.type || 'manga';
+        
+        if (contentType === 'novel') {
+            console.log('📖 Loading as novel...');
+            await loadNovelChapter();
+        } else {
+            console.log('📚 Loading as manga...');
+            await loadChapterPages();
+        }
         
         trackChapterView();
         
@@ -464,6 +475,7 @@ async function loadMangaData(repo) {
         if (typeof mangaConfig === 'string') {
             mangaJsonUrl = mangaConfig;
         } else {
+            // ✅ URL already includes correct json file (novel.json or manga.json)
             mangaJsonUrl = mangaConfig.url;
             window.currentGithubRepo = mangaConfig.githubRepo;
             console.log(`🔗 GitHub repo: ${mangaConfig.githubRepo}`);
@@ -769,6 +781,142 @@ async function loadChapterPages() {
         hideLoading();
         alert('Gagal memuat halaman chapter: ' + error.message);
     }
+}
+
+/**
+ * 🆕 Load novel chapter (Markdown format)
+ */
+async function loadNovelChapter() {
+    try {
+        console.log('📖 Loading novel chapter:', currentChapterFolder);
+        
+        // Get repo info
+        const repoOwner = mangaData.manga.repoUrl.split('/')[3];
+        const repoName = mangaData.manga.repoUrl.split('/')[4];
+        
+        // Call Worker untuk get signed URLs
+        console.log(`📞 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
+        
+        const workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                repo: `${repoOwner}/${repoName}`,
+                chapter: currentChapterFolder
+            })
+        });
+        
+        if (!workerResponse.ok) {
+            throw new Error(`Worker error: ${workerResponse.status}`);
+        }
+        
+        const workerData = await workerResponse.json();
+        
+        if (!workerData.success || !workerData.contentUrl) {
+            throw new Error('Failed to get CDN URLs');
+        }
+        
+        const { contentUrl, images } = workerData;
+        
+        console.log(`📄 Fetching content from: ${contentUrl.substring(0, 80)}...`);
+        
+        // Fetch Markdown content from CDN (direct, no signed URL needed)
+        const mdResponse = await fetch(contentUrl);
+        const markdownText = await mdResponse.text();
+        
+        console.log(`📝 Markdown size: ${markdownText.length} bytes`);
+        
+        // Check if marked.js is loaded
+        if (typeof marked === 'undefined') {
+            throw new Error('Marked.js library not loaded. Please check script tag in reader.html');
+        }
+        
+        // Parse Markdown to HTML
+        let htmlContent = marked.parse(markdownText);
+        
+        // Replace image placeholders dengan signed URLs
+        // Pattern: ![img:0](alt text) atau ![img:0] → <img src="signed-url-0" alt="alt text">
+        htmlContent = htmlContent.replace(
+            /!\[img:(\d+)\](?:\((.*?)\))?/g, 
+            (match, index, alt) => {
+                const imageUrl = images[parseInt(index)];
+                if (!imageUrl) {
+                    console.warn(`⚠️ Image ${index} not found`);
+                    return '';
+                }
+                const altText = alt || `Image ${parseInt(index) + 1}`;
+                return `<figure class="novel-illustration">
+          <img src="${imageUrl}" alt="${altText}" loading="lazy" class="novel-image-responsive">
+          <figcaption>${altText}</figcaption>
+        </figure>`;
+            }
+        );
+        
+        // Render ke container
+        readerContainer.innerHTML = `
+      <div class="novel-content">
+        ${htmlContent}
+      </div>
+    `;
+        
+        // Set mode
+        readerContainer.className = 'reader-container novel-mode';
+        
+        // Setup scroll tracking
+        setupNovelScrollTracking();
+        
+        // Show end chapter buttons
+        await renderEndChapterButtons();
+        
+        hideLoading();
+        
+        console.log('✅ Novel chapter loaded successfully');
+        
+    } catch (error) {
+        console.error('❌ Error loading novel:', error);
+        hideLoading();
+        alert('Gagal memuat chapter: ' + error.message);
+    }
+}
+
+/**
+ * 🆕 Setup scroll tracking for novel mode
+ */
+function setupNovelScrollTracking() {
+    const endChapterContainer = document.getElementById('endChapterContainer');
+    
+    if (endChapterContainer) {
+        endChapterContainer.style.display = 'none';
+        
+        // Auto-show jika chapter pendek (no scroll)
+        setTimeout(() => {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            
+            if (documentHeight <= windowHeight + 50) {
+                console.log('📄 Short chapter detected - auto-showing end buttons');
+                endChapterContainer.style.display = 'block';
+            }
+        }, 500);
+    }
+    
+    // Show end buttons when scroll near bottom
+    window.addEventListener('scroll', () => {
+        if (!endChapterContainer) return;
+        
+        const scrollTop = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        const scrollBottom = scrollTop + windowHeight;
+        
+        if (scrollBottom >= documentHeight - 200) {
+            endChapterContainer.style.display = 'block';
+        } else {
+            endChapterContainer.style.display = 'none';
+        }
+    });
 }
 
 /**

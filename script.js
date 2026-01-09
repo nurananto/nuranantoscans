@@ -53,7 +53,9 @@ async function fetchMangaData(repo) {
     }
     
     // ✅ CACHE MISS - Fetch fresh
-    const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`;
+    // ✅ Use getMangaDataURL which already handles novel.json vs manga.json
+    const manga = mangaList.find(m => m.repo === repo || m.id === repo.toLowerCase().replace(/\s+/g, '-'));
+    const url = manga ? getMangaDataURL(manga) : `https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`;
     const data = await fetchFreshJSON(url);
     
     // ✅ DEBUG: Log manga type
@@ -256,8 +258,19 @@ function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
   // ✅ Get manga type from manga-config.js (not from manga.json)
   const mangaType = (manga.type || 'manga').toLowerCase();
   const isWebtoon = mangaType === 'webtoon';
-  const typeBadgeText = isWebtoon ? 'Colour' : 'B/W';
-  const typeBadgeClass = isWebtoon ? 'type-badge-colour' : 'type-badge-bw';
+  const isNovel = mangaType === 'novel';
+  
+  let typeBadgeText, typeBadgeClass;
+  if (isNovel) {
+    typeBadgeText = 'Novel';
+    typeBadgeClass = 'type-badge-novel';
+  } else if (isWebtoon) {
+    typeBadgeText = 'Colour';
+    typeBadgeClass = 'type-badge-colour';
+  } else {
+    typeBadgeText = 'B/W';
+    typeBadgeClass = 'type-badge-bw';
+  }
   
   if (DEBUG_MODE) {
     dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);
@@ -404,8 +417,19 @@ function createCard(manga, mangaData, index = 0) {
   // ✅ Get manga type from manga-config.js (not from manga.json)
   const mangaType = (manga.type || 'manga').toLowerCase();
   const isWebtoon = mangaType === 'webtoon';
-  const typeBadgeText = isWebtoon ? 'Colour' : 'B/W';
-  const typeBadgeClass = isWebtoon ? 'type-badge-colour' : 'type-badge-bw';
+  const isNovel = mangaType === 'novel';
+  
+  let typeBadgeText, typeBadgeClass;
+  if (isNovel) {
+    typeBadgeText = 'Novel';
+    typeBadgeClass = 'type-badge-novel';
+  } else if (isWebtoon) {
+    typeBadgeText = 'Colour';
+    typeBadgeClass = 'type-badge-colour';
+  } else {
+    typeBadgeText = 'B/W';
+    typeBadgeClass = 'type-badge-bw';
+  }
   
   if (DEBUG_MODE) {
     dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);

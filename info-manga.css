@@ -197,6 +197,13 @@ header {
     flex: 1;
 }
 
+/* 🆕 Full-width button untuk novel mode */
+.sidebar-btn.full-width {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+}
+
 /* Mangadex Button - Orange khas Mangadex */
 #btnMangadex {
     background-color: #ff6740;
@@ -553,6 +560,12 @@ header {
     color: #888888;
     margin-top: 2px;
     font-weight: 400;
+}
+
+.chapter-word-count {
+    font-size: 0.85rem;
+    color: #999;
+    margin-top: 4px;
 }
 
 .chapter-meta {
