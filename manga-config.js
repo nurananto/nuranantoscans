@@ -15,13 +15,6 @@
 
 MANGA_LIST = [
   {
-    id: 'novelyuumeivtuber',
-    type: 'novel',
-    title: 'Yuumei VTuber no Ani Dakedo, Nazeka Ore ga Yuumei ni Natteita',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/CoverNovelYuumeiVtuber.webp',
-    repo: 'NovelYuumeiVtuber'
-  },
-  {
     id: 'mutsuko',
     type: 'manga',
     title: 'Mutsuko, Seiwo Tsukemasu!',
@@ -242,9 +235,7 @@ function getMangaByRepo(repo) {
 
 // Construct URLs
 function getMangaDataURL(manga) {
-  // ✅ Use novel.json for novel type, manga.json for others
-  const jsonFile = manga.type === 'novel' ? 'novel.json' : 'manga.json';
-  return `https://raw.githubusercontent.com/nurananto/${manga.repo}/main/${jsonFile}`;
+  return `https://raw.githubusercontent.com/nurananto/${manga.repo}/main/manga.json`;
 }
 
 function getChaptersDataURL(manga) {

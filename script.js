@@ -53,9 +53,7 @@ async function fetchMangaData(repo) {
     }
     
     // ✅ CACHE MISS - Fetch fresh
-    // ✅ Use getMangaDataURL which already handles novel.json vs manga.json
-    const manga = mangaList.find(m => m.repo === repo || m.id === repo.toLowerCase().replace(/\s+/g, '-'));
-    const url = manga ? getMangaDataURL(manga) : `https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`;
+    const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/manga.json`;
     const data = await fetchFreshJSON(url);
     
     // ✅ DEBUG: Log manga type
@@ -258,19 +256,8 @@ function createTop5Card(manga, mangaData, rank, index = 0, views24h = null) {
   // ✅ Get manga type from manga-config.js (not from manga.json)
   const mangaType = (manga.type || 'manga').toLowerCase();
   const isWebtoon = mangaType === 'webtoon';
-  const isNovel = mangaType === 'novel';
-  
-  let typeBadgeText, typeBadgeClass;
-  if (isNovel) {
-    typeBadgeText = 'Novel';
-    typeBadgeClass = 'type-badge-novel';
-  } else if (isWebtoon) {
-    typeBadgeText = 'Colour';
-    typeBadgeClass = 'type-badge-colour';
-  } else {
-    typeBadgeText = 'B/W';
-    typeBadgeClass = 'type-badge-bw';
-  }
+  const typeBadgeText = isWebtoon ? 'Colour' : 'B/W';
+  const typeBadgeClass = isWebtoon ? 'type-badge-colour' : 'type-badge-bw';
   
   if (DEBUG_MODE) {
     dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);
@@ -417,19 +404,8 @@ function createCard(manga, mangaData, index = 0) {
   // ✅ Get manga type from manga-config.js (not from manga.json)
   const mangaType = (manga.type || 'manga').toLowerCase();
   const isWebtoon = mangaType === 'webtoon';
-  const isNovel = mangaType === 'novel';
-  
-  let typeBadgeText, typeBadgeClass;
-  if (isNovel) {
-    typeBadgeText = 'Novel';
-    typeBadgeClass = 'type-badge-novel';
-  } else if (isWebtoon) {
-    typeBadgeText = 'Colour';
-    typeBadgeClass = 'type-badge-colour';
-  } else {
-    typeBadgeText = 'B/W';
-    typeBadgeClass = 'type-badge-bw';
-  }
+  const typeBadgeText = isWebtoon ? 'Colour' : 'B/W';
+  const typeBadgeClass = isWebtoon ? 'type-badge-colour' : 'type-badge-bw';
   
   if (DEBUG_MODE) {
     dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);
@@ -479,45 +455,28 @@ async function calculate24HourViews(repo) {
     
     // ✅ CACHE MISS - Fetch fresh
     const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/daily-views.json`;
+    const data = await fetchFreshJSON(url);
     
-    try {
-      const data = await fetchFreshJSON(url);
-      
-      if (!data || !data.dailyRecords) {
-        setCachedData(cacheKey, null);
-        return null;
-      }
-      
-      const now = new Date();
-      const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
-      
-      const todayRecord = data.dailyRecords[todayStr];
-      const result = todayRecord ? (todayRecord.manga || 0) : null;
-      
-      // ✅ SAVE TO CACHE
-      setCachedData(cacheKey, result);
-      return result;
-      
-    } catch (fetchError) {
-      // ✅ Handle 404 gracefully (file might not exist for new repos)
-      if (fetchError.message && fetchError.message.includes('404')) {
-        dLog(`ℹ️  daily-views.json not found for ${repo} (this is normal for new repos)`);
-        setCachedData(cacheKey, null);
-        return null;
-      }
-      // Re-throw other errors
-      throw fetchError;
+    if (!data || !data.dailyRecords) {
+      setCachedData(cacheKey, null);
+      return null;
     }
+    
+    const now = new Date();
+    const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
+    
+    const todayRecord = data.dailyRecords[todayStr];
+    const result = todayRecord ? (todayRecord.manga || 0) : null;
+    
+    // ✅ SAVE TO CACHE
+    setCachedData(cacheKey, result);
+    return result;
     
   } catch (error) {
     const staleCache = getCachedData(`daily_${repo}`, Infinity);
     if (staleCache !== null) {
       dWarn('⚠️ Using stale daily views cache');
       return staleCache;
-    }
-    // ✅ Don't log error for 404 (file might not exist)
-    if (!error.message || !error.message.includes('404')) {
-      dWarn('⚠️ Error fetching daily views:', error.message);
     }
     return null;
   }

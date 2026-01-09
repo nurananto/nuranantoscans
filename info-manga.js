@@ -786,14 +786,6 @@ function createChapterElement(chapter, allChapters) {
         chapterInfoDiv.appendChild(uploadDateDiv);
     }
     
-    // 🆕 Show word count untuk novel
-    if (mangaData.manga.type === 'novel' && chapter.wordCount) {
-        const wordCountDiv = document.createElement('div');
-        wordCountDiv.className = 'chapter-word-count';
-        wordCountDiv.textContent = `📖 ${chapter.wordCount} words`; // ✅ XSS Protection: textContent untuk data dinamis
-        chapterInfoDiv.appendChild(wordCountDiv);
-    }
-    
     const viewsDiv = document.createElement('div');
     viewsDiv.className = 'chapter-views';
     const viewsSpan = document.createElement('span');
@@ -928,31 +920,17 @@ function setupButtons(links) {
     const btnMangadex = document.getElementById('btnMangadex');
     const btnRaw = document.getElementById('btnRaw');
     
-    // 🆕 Hide Mangadex button untuk novel type
-    const isNovel = mangaData && mangaData.manga && mangaData.manga.type === 'novel';
-    
     if (btnMangadex) {
-        if (isNovel) {
-            // Hide tombol Mangadex untuk novel
-            btnMangadex.style.display = 'none';
-        } else {
-            btnMangadex.onclick = () => {
-                if (links && links.mangadex) {
-                    window.open(links.mangadex, '_blank');
-                } else {
-                    alert('Link Mangadex tidak tersedia');
-                }
-            };
-        }
+        btnMangadex.onclick = () => {
+            if (links && links.mangadex) {
+                window.open(links.mangadex, '_blank');
+            } else {
+                alert('Link Mangadex tidak tersedia');
+            }
+        };
     }
     
     if (btnRaw) {
-        // 🆕 Make Raw button full-width untuk novel
-        if (isNovel) {
-            btnRaw.classList.remove('half-width');
-            btnRaw.classList.add('full-width');
-        }
-        
         btnRaw.onclick = () => {
             if (links && links.raw) {
                 window.open(links.raw, '_blank');
