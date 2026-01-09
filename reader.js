@@ -822,7 +822,7 @@ async function loadNovelChapter() {
         
         console.log(`📄 Fetching content from: ${contentUrl.substring(0, 80)}...`);
         
-        // Fetch Markdown content from CDN (direct, no signed URL needed)
+        // ✅ SECURITY: Fetch Markdown content from R2-proxy (signed URL with token validation)
         const mdResponse = await fetch(contentUrl);
         const markdownText = await mdResponse.text();
         

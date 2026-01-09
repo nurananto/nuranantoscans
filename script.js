@@ -479,28 +479,45 @@ async function calculate24HourViews(repo) {
     
     // ✅ CACHE MISS - Fetch fresh
     const url = `https://raw.githubusercontent.com/nurananto/${repo}/main/daily-views.json`;
-    const data = await fetchFreshJSON(url);
     
-    if (!data || !data.dailyRecords) {
-      setCachedData(cacheKey, null);
-      return null;
+    try {
+      const data = await fetchFreshJSON(url);
+      
+      if (!data || !data.dailyRecords) {
+        setCachedData(cacheKey, null);
+        return null;
+      }
+      
+      const now = new Date();
+      const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
+      
+      const todayRecord = data.dailyRecords[todayStr];
+      const result = todayRecord ? (todayRecord.manga || 0) : null;
+      
+      // ✅ SAVE TO CACHE
+      setCachedData(cacheKey, result);
+      return result;
+      
+    } catch (fetchError) {
+      // ✅ Handle 404 gracefully (file might not exist for new repos)
+      if (fetchError.message && fetchError.message.includes('404')) {
+        dLog(`ℹ️  daily-views.json not found for ${repo} (this is normal for new repos)`);
+        setCachedData(cacheKey, null);
+        return null;
+      }
+      // Re-throw other errors
+      throw fetchError;
     }
-    
-    const now = new Date();
-    const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
-    
-    const todayRecord = data.dailyRecords[todayStr];
-    const result = todayRecord ? (todayRecord.manga || 0) : null;
-    
-    // ✅ SAVE TO CACHE
-    setCachedData(cacheKey, result);
-    return result;
     
   } catch (error) {
     const staleCache = getCachedData(`daily_${repo}`, Infinity);
     if (staleCache !== null) {
       dWarn('⚠️ Using stale daily views cache');
       return staleCache;
+    }
+    // ✅ Don't log error for 404 (file might not exist)
+    if (!error.message || !error.message.includes('404')) {
+      dWarn('⚠️ Error fetching daily views:', error.message);
     }
     return null;
   }
