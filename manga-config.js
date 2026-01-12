@@ -14,6 +14,13 @@
 // ============================================
 
 MANGA_LIST = [
+    {
+    id: 'zunoubattle',
+    type: 'manga',
+    title: 'Ore wa Gakuen Zunou Battle no Enshutsuka!',
+    cover: '',
+    repo: 'ZunouBattle'
+  },
   {
     id: 'mutsuko',
     type: 'manga',
