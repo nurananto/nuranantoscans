@@ -1,4 +1,9 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "repo": "ZunouBattle",
+      "timestamp": "2026-01-13T14:26:50Z"
+    }
+  ],
   "lastRebuild": "2026-01-13T13:16:25Z"
 }
