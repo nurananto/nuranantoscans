@@ -1,4 +1,9 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "repo": "YuumeiVTuber",
+      "timestamp": "2026-01-14T10:27:39Z"
+    }
+  ],
   "lastRebuild": "2026-01-13T16:19:25Z"
 }
