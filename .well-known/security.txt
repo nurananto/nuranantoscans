@@ -1,0 +1,19 @@
+Contact: mailto:nuranantoadhien@gmail.com
+Expires: 2026-12-31T23:59:59Z
+Preferred-Languages: id, en
+Canonical: https://nurananto.github.io/.well-known/security.txt
+
+# Fan Translation Project
+This is a non-commercial fan translation website.
+We do not claim ownership of any manga content.
+All rights belong to their respective authors and publishers.
+
+# Authentication System
+User accounts are used solely for reading progress tracking.
+Login forms connect to: manga-auth-worker.nuranantoadhien.workers.dev
+No sensitive data (credit cards, etc.) is collected.
+
+# Not a Phishing Site
+This is a legitimate fan scanlation project.
+Open source: https://github.com/nurananto/nuranantoscans
+

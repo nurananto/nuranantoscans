@@ -3,7 +3,25 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.anthropic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com https://script.google.com https://*.googleusercontent.com https://raw.githubusercontent.com https://images.weserv.nl https://manga-auth-worker.nuranantoadhien.workers.dev https://manga-code-validator.nuranantoadhien.workers.dev https://decrypt-manifest.nuranantoadhien.workers.dev;">        <meta http-equiv="X-Content-Type-Options" content="nosniff">
+        <meta http-equiv="Content-Security-Policy" 
+              content="default-src 'self'; 
+                       script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.anthropic.com; 
+                       style-src 'self' 'unsafe-inline'; 
+                       img-src 'self' data: https:; 
+                       font-src 'self' data:; 
+                       connect-src 'self' 
+                         https://manga-auth-worker.nuranantoadhien.workers.dev 
+                         https://manga-code-validator.nuranantoadhien.workers.dev 
+                         https://decrypt-manifest.nuranantoadhien.workers.dev
+                         https://script.google.com 
+                         https://*.googleusercontent.com 
+                         https://raw.githubusercontent.com 
+                         https://images.weserv.nl
+                         https://api.anthropic.com;
+                       form-action 'self' https://manga-auth-worker.nuranantoadhien.workers.dev;
+                       frame-ancestors 'none';
+                       base-uri 'self';">
+        <meta http-equiv="X-Content-Type-Options" content="nosniff">
         <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
         <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
         <meta name="robots" content="noindex, nofollow" />
@@ -775,7 +793,7 @@
   </button>
 
   <!-- GitHub Link -->
-  <a href="https://github.com/nurananto/NuranantoScanlation" 
+  <a href="https://github.com/nurananto/nuranantoscans" 
      target="_blank" 
      rel="noopener noreferrer"
      class="header-icon-button github-button"
@@ -1087,6 +1105,16 @@ navigator.serviceWorker.addEventListener(
       <!-- ✅ Login Modal -->
 <div id="loginModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
   <div class="login-modal-content">
+    <!-- ✅ Disclaimer Banner -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px; border-radius: 8px 8px 0 0; text-align: center;">
+      <div style="color: white; font-size: 13px; font-weight: 600;">
+        🔒 Secure Login - Nurananto Scanlation Web
+      </div>
+      <div style="color: rgba(255,255,255,0.9); font-size: 11px; margin-top: 4px;">
+        Akun digunakan hanya untuk melihat progress membaca saja.
+      </div>
+    </div>
+
     <!-- Tabs -->
     <div class="login-tabs" role="tablist">
       <button class="login-tab active" id="tabLogin" role="tab" aria-selected="true" aria-controls="panelLogin">
@@ -1116,15 +1144,25 @@ navigator.serviceWorker.addEventListener(
     <!-- Login Panel -->
     <div class="login-panel active" id="panelLogin" role="tabpanel" aria-labelledby="tabLogin">
       <h2 id="login-modal-title" class="login-title">Welcome Back!</h2>
-      <form class="login-form">
+      <form class="login-form" autocomplete="on" action="javascript:void(0)">
         <div class="form-group">
           <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" required>
+          <input type="email" 
+                 id="loginEmail" 
+                 name="email"
+                 placeholder="you@example.com" 
+                 autocomplete="email" 
+                 required>
         </div>
         <div class="form-group">
           <label for="loginPassword">Password</label>
           <div class="password-input-wrapper">
-            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+            <input type="password" 
+                   id="loginPassword" 
+                   name="password"
+                   placeholder="••••••••" 
+                   autocomplete="current-password" 
+                   required>
             <button type="button" class="toggle-password" aria-label="Toggle password visibility">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -1140,15 +1178,25 @@ navigator.serviceWorker.addEventListener(
     <!-- Register Panel -->
     <div class="login-panel" id="panelRegister" role="tabpanel" aria-labelledby="tabRegister">
       <h2 class="login-title">Create Account</h2>
-      <form class="login-form">
+      <form class="login-form" autocomplete="on" action="javascript:void(0)">
         <div class="form-group">
           <label for="registerEmail">Email</label>
-          <input type="email" id="registerEmail" placeholder="you@example.com" autocomplete="email" required>
+          <input type="email" 
+                 id="registerEmail" 
+                 name="email"
+                 placeholder="you@example.com" 
+                 autocomplete="email" 
+                 required>
         </div>
         <div class="form-group">
           <label for="registerPassword">Password</label>
           <div class="password-input-wrapper">
-            <input type="password" id="registerPassword" placeholder="••••••••" autocomplete="new-password" required>
+            <input type="password" 
+                   id="registerPassword" 
+                   name="new-password"
+                   placeholder="••••••••" 
+                   autocomplete="new-password" 
+                   required>
             <button type="button" class="toggle-password" aria-label="Toggle password visibility">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -1160,7 +1208,12 @@ navigator.serviceWorker.addEventListener(
         <div class="form-group">
           <label for="registerConfirm">Confirm Password</label>
           <div class="password-input-wrapper">
-            <input type="password" id="registerConfirm" placeholder="••••••••" autocomplete="new-password" required>
+            <input type="password" 
+                   id="registerConfirm" 
+                   name="confirm-password"
+                   placeholder="••••••••" 
+                   autocomplete="new-password" 
+                   required>
             <button type="button" class="toggle-password" aria-label="Toggle password visibility">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -1177,10 +1230,15 @@ navigator.serviceWorker.addEventListener(
     <div class="login-panel" id="panelForgot" role="tabpanel" aria-labelledby="tabForgot">
       <h2 class="login-title">Reset Password</h2>
       <p class="login-subtitle">Masukkan email untuk menerima link reset</p>
-      <form class="login-form" id="formForgotPassword">
+      <form class="login-form" id="formForgotPassword" autocomplete="on" action="javascript:void(0)">
         <div class="form-group">
           <label for="forgotEmail">Email</label>
-          <input type="email" id="forgotEmail" placeholder="you@example.com" autocomplete="email" required>
+          <input type="email" 
+                 id="forgotEmail" 
+                 name="email"
+                 placeholder="you@example.com" 
+                 autocomplete="email" 
+                 required>
         </div>
         <p id="forgotError" class="code-error"></p>
         <button type="submit" class="btn-login" id="btnSendReset">Kirim Link Reset</button>
