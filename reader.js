@@ -29,7 +29,7 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     
     if (isDonatur) {
         // ✅ DONATUR SETIA - Langsung buka chapter tanpa modal (untuk semua type: manga & webtoon)
-        console.log('✅ Donatur SETIA - Opening chapter directly');
+    if (DEBUG_MODE) console.log('✅ Donatur SETIA - Opening chapter directly');
         const urlParams = new URLSearchParams(window.location.search);
         const repoParam = urlParams.get('repo');
         if (repoParam && chapterFolder) {
@@ -39,18 +39,18 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     }
     
     // ✅ PEMBACA SETIA - Show modal untuk kembali ke info page (untuk semua type: manga & webtoon)
-    console.log('🔒 PEMBACA SETIA - Showing modal to go back to info page');
+    if (DEBUG_MODE) console.log('🔒 PEMBACA SETIA - Showing modal to go back to info page');
     
     const loginRequiredModal = document.getElementById('loginRequiredModal');
     if (!loginRequiredModal) {
-        console.error('❌ loginRequiredModal element not found!');
+    if (DEBUG_MODE) console.error('❌ loginRequiredModal element not found!');
         return;
     }
     
     loginRequiredModal.style.display = 'flex';
     loginRequiredModal.classList.add('active');
     
-    console.log('🔒 Chapter Terkunci modal shown');
+    if (DEBUG_MODE) console.log('🔒 Chapter Terkunci modal shown');
     
     const btnBackToInfo = document.getElementById('btnBackToInfoFromModal');
     const btnClose = document.getElementById('btnCloseLoginRequired');
@@ -182,123 +182,6 @@ function isOneshotChapter(chapterFolder) {
     return lower.includes('oneshot') || lower.includes('one-shot') || lower === 'os';
 }
 
-async function renderEndChapterButtons() {
-    const container = document.getElementById('endChapterContainer');
-    if (!container) return;
-    
-    const currentIndex = allChapters.findIndex(ch => ch.folder === currentChapterFolder);
-    const isLastChapter = currentIndex === 0;
-    const isOneshot = isOneshotChapter(currentChapterFolder);
-    
-    // ✅ NEW: Check if manga is END and this is the actual end chapter
-    const isMangaEnd = mangaData.manga.status === 'END';
-    const isActualEndChapter = isMangaEnd && 
-                                mangaData.manga.endChapter && 
-                                parseFloat(currentChapterFolder) === parseFloat(mangaData.manga.endChapter);
-    
-    // ============================================
-    // 1️⃣ JIKA BUKAN CHAPTER TERAKHIR
-    // ============================================
-    if (!isLastChapter) {
-        container.innerHTML = `
-            <button class="next-chapter-btn" id="btnNextChapterDynamic">
-                Next Chapter
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-            </button>
-        `;
-        
-        const btn = document.getElementById('btnNextChapterDynamic');
-        btn.onclick = () => navigateChapter('next');
-        return;
-    }
-    
-    // ============================================
-    // 2️⃣ CEK APAKAH CHAPTER BERIKUTNYA LOCKED (dengan cek status user)
-    // ============================================
-    const nextChapter = allChapters[currentIndex - 1];
-    
-    // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
-    const isDonatur = nextChapter && nextChapter.locked ? await verifyDonaturStatusStrict() : await getUserDonaturStatus();
-    const nextIsActuallyLocked = nextChapter && nextChapter.locked && !isDonatur;
-    
-    if (nextIsActuallyLocked) {
-        container.innerHTML = `
-            <button class="next-chapter-btn" id="btnNextChapterLocked">
-                Next Chapter
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-            </button>
-        `;
-        
-        const btn = document.getElementById('btnNextChapterLocked');
-        btn.onclick = () => {
-            const chapterTitle = nextChapter.title || nextChapter.folder;
-            const chapterFolder = nextChapter.folder;
-            showLockedChapterModal(chapterTitle, chapterFolder);
-        };
-        return;
-    }
-    
-    // ============================================
-    // 3️⃣ JIKA ONESHOT - TAMPILKAN BACK TO INFO + KOMENTAR (DALAM 1 ROW)
-    // ============================================
-if (isOneshot) {
-    container.innerHTML = `
-        <button class="back-to-info-btn-large" onclick="window.location.href='info-manga.html?repo=${repoParam}'">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            <span>Back to Info</span>
-        </button>
-    `;
-    return;
-}
-    
-    // ============================================
-    // 4️⃣ JIKA MANGA END DAN INI CHAPTER TERAKHIR
-    // ============================================
-    if (isActualEndChapter) {
-        console.log('🏁 This is the actual END chapter - hiding Trakteer button');
-        
-        // HANYA Back to Info button (FULL WIDTH)
-        container.innerHTML = `
-            <button class="back-to-info-btn-large" onclick="window.location.href='info-manga.html?repo=${repoParam}'">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                <span>Back to Info</span>
-            </button>
-        `;
-        return;
-    }
-    
-    // ============================================
-    // 5️⃣ JIKA CHAPTER TERAKHIR TAPI MANGA ONGOING
-    // ============================================
-    const predictedNext = predictNextChapter(allChapters, currentChapterFolder);
-    
-    container.innerHTML = `
-        <div class="dual-buttons-container">
-            <button class="back-to-info-btn-half" onclick="window.location.href='info-manga.html?repo=${repoParam}'">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-                <span>Back to Info</span>
-            </button>
-            <button class="trakteer-btn-half" onclick="window.open('${TRAKTEER_LINK}', '_blank')">
-                <img src="assets/trakteer-icon.png" alt="Trakteer" class="trakteer-icon-small">
-                <span>Beli Chapter ${predictedNext || 'Selanjutnya'}</span>
-            </button>
-        </div>
-    `;
-}
-
 let mangaData = null;
 let currentChapterFolder = null;
 let currentChapter = null;
@@ -309,10 +192,10 @@ let currentPage = 1;
 let totalPages = 0;
 
 const readerContainer = document.getElementById('readerContainer');
-const pageNav = document.getElementById('pageNav');
-const pageList = document.getElementById('pageList');
-const prevPageBtn = document.getElementById('prevPageBtn');
-const nextPageBtn = document.getElementById('nextPageBtn');
+const navProgressBar = document.getElementById('navProgressBar');
+const navProgressExpanded = document.getElementById('navProgressExpanded');
+const progressFill = document.getElementById('progressFill');
+const pageThumbnails = document.getElementById('pageThumbnails');
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -320,18 +203,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         await initializeReader();
         setupEnhancedEventListeners();
     } catch (error) {
-        console.error('❌ Fatal error during initialization:', error);
+    if (DEBUG_MODE) console.error('❌ Fatal error during initialization:', error);
         alert(`Terjadi kesalahan saat memuat reader:\n${error.message}\n\nSilakan refresh halaman atau kembali ke info.`);
         hideLoading();
     }
 });
 
 window.addEventListener('error', (event) => {
-    console.error('❌ Global error:', event.error);
+    if (DEBUG_MODE) console.error('❌ Global error:', event.error);
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-    console.error('❌ Unhandled promise rejection:', event.reason);
+    if (DEBUG_MODE) console.error('❌ Unhandled promise rejection:', event.reason);
 });
 
 /**
@@ -342,14 +225,14 @@ async function initializeReader() {
     try {
         showLoading();
         
-        console.log('🚀 Initializing reader...');
+    if (DEBUG_MODE) console.log('🚀 Initializing reader...');
         
         const urlParams = new URLSearchParams(window.location.search);
         const chapterParam = urlParams.get('chapter');
         repoParam = urlParams.get('repo');
         
-        console.log('📋 Parameters:', { chapter: chapterParam, repo: repoParam });
-        console.log('📋 Chapter type:', typeof chapterParam, 'Value:', JSON.stringify(chapterParam)); // ← TAMBAH INI
+    if (DEBUG_MODE) console.log('📋 Parameters:', { chapter: chapterParam, repo: repoParam });
+    if (DEBUG_MODE) console.log('📋 Chapter type:', typeof chapterParam, 'Value:', JSON.stringify(chapterParam)); // ← TAMBAH INI
         
         if (!chapterParam) {
             alert('Error: Parameter chapter tidak ditemukan.');
@@ -372,7 +255,7 @@ async function initializeReader() {
         }
 
         // ✅ TAMBAH INI (6 baris)
-        console.log('📚 Available chapters:', allChapters.map(ch => ({
+    if (DEBUG_MODE) console.log('📚 Available chapters:', allChapters.map(ch => ({
             folder: ch.folder,
             title: ch.title,
             locked: ch.locked
@@ -390,17 +273,17 @@ async function initializeReader() {
 const isValidated = isChapterValidated(repoParam, chapterParam);
 
 // ✅ TAMBAH INI (5 baris)
-console.log('🔐 Lock status check:');
-console.log('   Chapter locked:', chapterData.locked);
-console.log('   Is validated:', isValidated);
-console.log('   Session key:', `validated_${repoParam}_${chapterParam}`);
+    if (DEBUG_MODE) console.log('🔐 Lock status check:');
+    if (DEBUG_MODE) console.log('   Chapter locked:', chapterData.locked);
+    if (DEBUG_MODE) console.log('   Is validated:', isValidated);
+    if (DEBUG_MODE) console.log('   Session key:', `validated_${repoParam}_${chapterParam}`);
 
 // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
 const isDonatur = chapterData.locked ? await verifyDonaturStatusStrict() : await getUserDonaturStatus();
 const isActuallyLocked = chapterData.locked && !isValidated && !isDonatur;
 
 if (isActuallyLocked) {
-    console.log('🔒 Chapter terkunci, belum divalidasi, dan user bukan DONATUR SETIA');
+    if (DEBUG_MODE) console.log('🔒 Chapter terkunci, belum divalidasi, dan user bukan DONATUR SETIA');
     const chapterTitle = chapterData.title || chapterParam;
     showLockedChapterModal(chapterTitle, chapterParam);
     hideLoading(); // ← TAMBAH INI!
@@ -408,7 +291,7 @@ if (isActuallyLocked) {
 }
 
 if (isValidated || isDonatur) {
-    console.log('✅ Session valid atau user DONATUR SETIA, chapter unlocked');
+    if (DEBUG_MODE) console.log('✅ Session valid atau user DONATUR SETIA, chapter unlocked');
     // Don't modify chapterData - just proceed to load
 }
 
@@ -426,10 +309,10 @@ if (isValidated || isDonatur) {
         // ✅ TAMBAHKAN BARIS INI - Track reading history
         trackReadingHistory();
         
-        console.log('✅ Reader initialized successfully');
+    if (DEBUG_MODE) console.log('✅ Reader initialized successfully');
         
     } catch (error) {
-        console.error('❌ Error initializing reader:', error);
+    if (DEBUG_MODE) console.error('❌ Error initializing reader:', error);
         alert('Terjadi kesalahan saat memuat reader.');
         hideLoading();
     }
@@ -446,8 +329,8 @@ async function loadMangaData(repo) {
             allChapters = cached.allChapters;
             window.currentGithubRepo = cached.githubRepo;
             
-            console.log('✅ Manga data loaded from cache');
-            console.log(`📚 Loaded ${allChapters.length} chapters (cached)`);
+    if (DEBUG_MODE) console.log('✅ Manga data loaded from cache');
+    if (DEBUG_MODE) console.log(`📚 Loaded ${allChapters.length} chapters (cached)`);
             return;
         }
         
@@ -458,7 +341,7 @@ async function loadMangaData(repo) {
             throw new Error(`Repo "${repo}" tidak ditemukan di mapping`);
         }
         
-        console.log(`📡 Fetching fresh manga data from: ${repo}`);
+    if (DEBUG_MODE) console.log(`📡 Fetching fresh manga data from: ${repo}`);
         
         let mangaJsonUrl;
         if (typeof mangaConfig === 'string') {
@@ -466,12 +349,12 @@ async function loadMangaData(repo) {
         } else {
             mangaJsonUrl = mangaConfig.url;
             window.currentGithubRepo = mangaConfig.githubRepo;
-            console.log(`🔗 GitHub repo: ${mangaConfig.githubRepo}`);
+    if (DEBUG_MODE) console.log(`🔗 GitHub repo: ${mangaConfig.githubRepo}`);
         }
         
         mangaData = await fetchFreshJSON(mangaJsonUrl);
         
-        console.log('📦 Manga data loaded:', mangaData);
+    if (DEBUG_MODE) console.log('📦 Manga data loaded:', mangaData);
         
         allChapters = Object.values(mangaData.chapters).sort((a, b) => {
             const getSort = (folder) => {
@@ -483,7 +366,7 @@ async function loadMangaData(repo) {
             return getSort(b.folder) - getSort(a.folder);
         });
         
-        console.log(`✅ Loaded ${allChapters.length} chapters`);
+    if (DEBUG_MODE) console.log(`✅ Loaded ${allChapters.length} chapters`);
         
         // ✅ SAVE TO CACHE
         setCachedData(cacheKey, {
@@ -491,15 +374,15 @@ async function loadMangaData(repo) {
             allChapters,
             githubRepo: window.currentGithubRepo
         });
-        console.log(`💾 Cached manga data: ${cacheKey}`);
+    if (DEBUG_MODE) console.log(`💾 Cached manga data: ${cacheKey}`);
         
     } catch (error) {
-        console.error('❌ Error loading manga data:', error);
+    if (DEBUG_MODE) console.error('❌ Error loading manga data:', error);
         
         // ✅ FALLBACK: Try stale cache
         const staleCache = getCachedData(`reader_manga_${repo}`, Infinity, true);
         if (staleCache) {
-            console.warn('⚠️ Using stale cache due to error');
+    if (DEBUG_MODE) console.warn('⚠️ Using stale cache due to error');
             mangaData = staleCache.mangaData;
             allChapters = staleCache.allChapters;
             window.currentGithubRepo = staleCache.githubRepo;
@@ -525,10 +408,11 @@ function saveLastPage() {
 function loadLastPage() {
     const storageKey = `lastPage_${repoParam}_${currentChapterFolder}`;
     const savedPage = localStorage.getItem(storageKey);
+    
     if (savedPage) {
         const pageNum = parseInt(savedPage);
         if (pageNum > 0 && pageNum <= totalPages) {
-            console.log(`📖 Restoring last page: ${pageNum}`);
+    if (DEBUG_MODE) console.log(`📖 Restoring last page: ${pageNum}`);
             return pageNum;
         }
     }
@@ -556,57 +440,183 @@ function adjustChapterTitleFontSize(element) {
 }
 
 function setupUI() {
+    // ✅ Update old header (if exists - backward compatibility)
     const mangaTitleElement = document.getElementById('mangaTitle');
-    mangaTitleElement.textContent = mangaData.manga.title;
-    
-    document.title = `${mangaData.manga.title} - ${currentChapter.title}`;
-    
-    adjustTitleFontSize(mangaTitleElement);
+    if (mangaTitleElement) {
+        mangaTitleElement.textContent = mangaData.manga.title;
+        adjustTitleFontSize(mangaTitleElement);
+    }
     
     const titleElement = document.getElementById('chapterTitle');
-    titleElement.textContent = currentChapter.title;
+    if (titleElement) {
+        titleElement.textContent = currentChapter.title;
+        adjustChapterTitleFontSize(titleElement);
+    }
     
-    adjustChapterTitleFontSize(titleElement);
+    document.title = `${mangaData.manga.title} - ${currentChapter.title}`;
+
+    // ✅ Update top navbar title and chapter
+    const mangaTitleTopElement = document.getElementById('mangaTitleTop');
+    if (mangaTitleTopElement) {
+        mangaTitleTopElement.textContent = mangaData.manga.title;
+    }
+    
+    const chapterTitleTopElement = document.getElementById('chapterTitleTop');
+    if (chapterTitleTopElement) {
+        chapterTitleTopElement.textContent = currentChapter.title;
+    }
+
+    // ✅ Update bottom navbar title and chapter
+    const mangaTitleBottomElement = document.getElementById('mangaTitleBottom');
+    if (mangaTitleBottomElement) {
+        mangaTitleBottomElement.textContent = mangaData.manga.title;
+    }
+    
+    const chapterTitleBottomElement = document.getElementById('chapterTitleBottom');
+    if (chapterTitleBottomElement) {
+        chapterTitleBottomElement.textContent = currentChapter.title;
+    }
     
     if (DEBUG_MODE) console.log(`📖 Read mode: ${readMode}`);
     
-    // ✅ Setup Back to Info button
-    const btnBack = document.getElementById('btnBackToInfo');
-    if (btnBack) {
-        // Remove existing listeners
-        btnBack.onclick = null;
-        btnBack.addEventListener('click', (e) => {
+    // ✅ Old buttons removed - now using Top/Bottom navbar buttons only
+
+    // ✅ Setup TOP NAVBAR buttons (new)
+    const btnBackToInfoTop = document.getElementById('btnBackToInfoTop');
+    if (btnBackToInfoTop) {
+        btnBackToInfoTop.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             const urlParams = new URLSearchParams(window.location.search);
             const repo = urlParams.get('repo') || repoParam;
             if (repo) {
-                console.log('🔄 [BACK] Navigating to info page:', repo);
+    if (DEBUG_MODE) console.log('🔄 [BACK-TOP] Navigating to info page:', repo);
                 window.location.href = `info-manga.html?repo=${repo}`;
-            } else {
-                console.error('❌ [BACK] Repo parameter not found');
             }
         }, { passive: false });
-        console.log('✅ [BACK] Button handler attached');
-    } else {
-        console.error('❌ [BACK] btnBackToInfo element not found');
+    if (DEBUG_MODE) console.log('✅ [BACK-TOP] Button handler attached');
     }
-    
-    // ✅ Setup Chapter List button
-    const btnChapterList = document.getElementById('btnChapterList');
-    if (btnChapterList) {
-        // Remove existing listeners
-        btnChapterList.onclick = null;
-        btnChapterList.addEventListener('click', (e) => {
+
+    const btnChapterListTop = document.getElementById('btnChapterListTop');
+    if (btnChapterListTop) {
+        btnChapterListTop.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('📋 [LIST] Opening chapter list modal');
+    if (DEBUG_MODE) console.log('📋 [LIST-TOP] Opening chapter list modal');
             openChapterListModal();
         }, { passive: false });
-        console.log('✅ [LIST] Button handler attached');
-    } else {
-        console.error('❌ [LIST] btnChapterList element not found');
+    if (DEBUG_MODE) console.log('✅ [LIST-TOP] Button handler attached');
     }
+
+    const btnPrevChapterTop = document.getElementById('btnPrevChapterTop');
+    if (btnPrevChapterTop) {
+        btnPrevChapterTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+    if (DEBUG_MODE) console.log('⬅️ [PREV-TOP] Going to previous chapter');
+            navigateChapter('prev');
+        }, { passive: false });
+    if (DEBUG_MODE) console.log('✅ [PREV-TOP] Button handler attached');
+    }
+
+    const btnNextChapterTop = document.getElementById('btnNextChapterTop');
+    if (btnNextChapterTop) {
+        btnNextChapterTop.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+    if (DEBUG_MODE) console.log('➡️ [NEXT-TOP] Going to next chapter');
+            navigateChapter('next');
+        }, { passive: false });
+    if (DEBUG_MODE) console.log('✅ [NEXT-TOP] Button handler attached');
+    }
+
+    // ✅ Setup BOTTOM NAVBAR buttons (mirror dari top navbar)
+    const btnBackToInfoBottom = document.getElementById('btnBackToInfoBottom');
+    if (btnBackToInfoBottom) {
+        btnBackToInfoBottom.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const urlParams = new URLSearchParams(window.location.search);
+            const repo = urlParams.get('repo') || repoParam;
+            if (repo) {
+    if (DEBUG_MODE) console.log('🔄 [BACK-BOTTOM] Navigating to info page:', repo);
+                window.location.href = `info-manga.html?repo=${repo}`;
+            }
+        }, { passive: false });
+    if (DEBUG_MODE) console.log('✅ [BACK-BOTTOM] Button handler attached');
+    }
+
+    const btnHomeBottom = document.getElementById('btnHomeBottom');
+    if (btnHomeBottom) {
+        btnHomeBottom.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+    if (DEBUG_MODE) console.log('🏠 [HOME-BOTTOM] Navigating to index page');
+            window.location.href = 'index.html';
+        }, { passive: false });
+    if (DEBUG_MODE) console.log('✅ [HOME-BOTTOM] Button handler attached');
+    }
+
+    const btnPrevChapterBottom = document.getElementById('btnPrevChapterBottom');
+    if (btnPrevChapterBottom) {
+        btnPrevChapterBottom.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+    if (DEBUG_MODE) console.log('⬅️ [PREV-BOTTOM] Going to previous chapter');
+            navigateChapter('prev');
+        }, { passive: false });
+    if (DEBUG_MODE) console.log('✅ [PREV-BOTTOM] Button handler attached');
+    }
+
+    const btnNextChapterBottom = document.getElementById('btnNextChapterBottom');
+    if (btnNextChapterBottom) {
+        btnNextChapterBottom.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+    if (DEBUG_MODE) console.log('➡️ [NEXT-BOTTOM] Going to next chapter');
+            navigateChapter('next');
+        }, { passive: false });
+    if (DEBUG_MODE) console.log('✅ [NEXT-BOTTOM] Button handler attached');
+    }
+
+    // ✅ Setup scroll detection untuk navbar-top (bottom navbar selalu visible)
+    const navbarTop = document.getElementById('navbarTop');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    let lastScrollPosition = 0;
+    let scrollTimeout;
+    const SCROLL_THRESHOLD = 300; // Hide navbar hanya setelah scroll 300px
+
+    window.addEventListener('scroll', () => {
+        if (!navbarTop) return;
+
+        // ✅ Don't hide navbar saat loading
+        if (loadingOverlay && loadingOverlay.classList.contains('active')) {
+            return;
+        }
+
+        const currentScrollPosition = window.scrollY;
+        
+        // Clear previous timeout
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+
+        // SELALU show navbar jika di atas threshold
+        if (currentScrollPosition < SCROLL_THRESHOLD) {
+            if (navbarTop) navbarTop.classList.remove('hidden');
+        } else {
+            // Jika sudah di bawah threshold
+            if (currentScrollPosition > lastScrollPosition) {
+                // Hide navbar saat scroll down
+                if (navbarTop) navbarTop.classList.add('hidden');
+            } else {
+                // Show navbar saat scroll up
+                if (navbarTop) navbarTop.classList.remove('hidden');
+            }
+        }
+
+        lastScrollPosition = currentScrollPosition;
+    }, { passive: true });
+    
+    if (DEBUG_MODE) console.log('✅ [SCROLL] Scroll detection setup');
     
     updateNavigationButtons();
     
@@ -691,8 +701,17 @@ async function loadChapterPages() {
         // ✅ Log expiry info (only in debug mode)
         if (DEBUG_MODE) {
             const expiresIn = workerData.expiresIn;
-            console.log(`📊 Total pages: ${totalPages}`);
-            console.log(`⏰ Token expires in ${Math.floor(expiresIn / 60)} minutes`);
+    if (DEBUG_MODE) console.log(`📊 Total pages: ${totalPages}`);
+    if (DEBUG_MODE) console.log(`⏰ Token expires in ${Math.floor(expiresIn / 60)} minutes`);
+        }
+        
+        // Clear dan reset container
+        readerContainer.innerHTML = '';
+        currentPage = 1;
+        
+        // ✅ Reset progress bar to 0% at start of loading
+        if (progressFill) {
+            progressFill.style.width = '0%';
         }
         
         // Render pages dengan signed URLs
@@ -701,7 +720,7 @@ async function loadChapterPages() {
             
             // ❌ NO LOG in production
             if (DEBUG_MODE) {
-                console.log(`🖼️ Page ${pageNum}: ${signedUrl.substring(0, 80)}...`);
+    if (DEBUG_MODE) console.log(`🖼️ Page ${pageNum}: ${signedUrl.substring(0, 80)}...`);
             }
             
             const img = document.createElement('img');
@@ -742,30 +761,24 @@ async function loadChapterPages() {
             readerContainer.appendChild(img);
         });
         
+        // Setup tracking dan thumbnails
         setupPageTracking();
-        setupWebtoonScrollTracking();
-        
         renderPageThumbnails(signedPages);
         updateProgressBar();
         
-        if (DEBUG_MODE) console.log('✅ Pages container setup complete');
-        
-        currentPage = loadLastPage();
+        // Scroll ke saved page jika ada
+        const savedPage = loadLastPage();
+        if (savedPage > 1) {
+            setTimeout(() => goToPage(savedPage), 300);
+        }
         
         readerContainer.classList.add('webtoon-mode');
         readerContainer.classList.remove('manga-mode');
         
-        if (currentPage > 1) {
-            setTimeout(() => {
-                goToPage(currentPage);
-                updatePageNavigation();
-            }, 100);
-        }
-        
         hideLoading();
         
     } catch (error) {
-        console.error('❌ Error loading pages:', error);
+    if (DEBUG_MODE) console.error('❌ Error loading pages:', error);
         hideLoading();
         alert('Gagal memuat halaman chapter: ' + error.message);
     }
@@ -792,11 +805,11 @@ function renderPagesFromCache(signedPages) {
         img.setAttribute('data-page', pageNum);
         
         img.onload = () => {
-            console.log(`✅ Page ${pageNum} loaded successfully`);
+    if (DEBUG_MODE) console.log(`✅ Page ${pageNum} loaded successfully`);
         };
         
         img.onerror = () => {
-            console.error(`❌ Failed to load page ${pageNum}`);
+    if (DEBUG_MODE) console.error(`❌ Failed to load page ${pageNum}`);
             const placeholder = document.createElement('div');
             placeholder.className = 'reader-page-error';
             placeholder.style.minHeight = '600px';
@@ -827,9 +840,11 @@ function setupPageTracking() {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const pageNum = parseInt(entry.target.getAttribute('data-page'));
-                currentPage = pageNum;
-                updatePageNavigation();
-                saveLastPage();
+                if (pageNum >= 1 && pageNum <= totalPages) {
+                    currentPage = pageNum;
+                    updatePageNavigation();
+                    saveLastPage();
+                }
             }
         });
     }, options);
@@ -838,30 +853,11 @@ function setupPageTracking() {
     pages.forEach(page => observer.observe(page));
 }
 
-function setupWebtoonScrollTracking() {
-    const endChapterContainer = document.getElementById('endChapterContainer');
-    
-    if (endChapterContainer) {
-        endChapterContainer.style.display = 'none';
-        
-        // ✅ TAMBAHKAN INI - Auto-show jika chapter pendek (no scroll)
-        setTimeout(() => {
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
-            
-            // Jika tidak ada scroll atau scroll area sangat kecil
-            if (documentHeight <= windowHeight + 50) {
-                if (DEBUG_MODE) console.log('📏 Short chapter detected - auto-showing end buttons');
-                endChapterContainer.style.display = 'block';
-            }
-        }, 500); // Delay 500ms untuk memastikan semua gambar sudah di-render
-    }
-}
-
 function goToPage(pageNum) {
     if (pageNum < 1 || pageNum > totalPages) return;
     
     currentPage = pageNum;
+    updatePageNavigation();
     saveLastPage();
     
     const pages = document.querySelectorAll('.reader-page');
@@ -874,15 +870,15 @@ function goToPage(pageNum) {
 
 
 function renderPageThumbnails(pageUrls) {
-    pageList.innerHTML = '';
+    pageThumbnails.innerHTML = '';
     
     pageUrls.forEach((imageUrl, index) => {
         const pageNum = index + 1;
         
-        const thumb = document.createElement('div');
-        thumb.className = 'page-thumb';
+        const thumbItem = document.createElement('div');
+        thumbItem.className = 'page-thumb-item';
         if (pageNum === currentPage) {
-            thumb.classList.add('active');
+            thumbItem.classList.add('active');
         }
         
         const img = document.createElement('img');
@@ -894,61 +890,168 @@ function renderPageThumbnails(pageUrls) {
 		img.src = imageUrl;
         
         img.onload = () => {
-            thumb.classList.add('loaded');
+            thumbItem.classList.add('loaded');
         };
         
 		img.onerror = () => {
-			console.error(`❌ Failed to load thumbnail for page ${pageNum}`);
-			thumb.classList.add('error');
+    if (DEBUG_MODE) console.error(`❌ Failed to load thumbnail for page ${pageNum}`);
+			thumbItem.classList.add('error');
     
 			// Fallback: show page number only
 			img.style.display = 'none';
-			thumb.style.backgroundColor = 'var(--secondary-bg)';
-			thumb.style.display = 'flex';
-			thumb.style.alignItems = 'center';
-			thumb.style.justifyContent = 'center';
+			thumbItem.style.backgroundColor = 'var(--secondary-bg)';
+			thumbItem.style.display = 'flex';
+			thumbItem.style.alignItems = 'center';
+			thumbItem.style.justifyContent = 'center';
 		};
         
         const pageNumDiv = document.createElement('div');
         pageNumDiv.className = 'page-number';
-        pageNumDiv.textContent = pageNum;
+        pageNumDiv.textContent = `Page ${pageNum}`;
         
-        thumb.appendChild(img);
-        thumb.appendChild(pageNumDiv);
+        thumbItem.appendChild(img);
+        thumbItem.appendChild(pageNumDiv);
         
-        thumb.addEventListener('click', () => {
+        thumbItem.addEventListener('click', (e) => {
+            // Prevent click if user was dragging
+            if (window.thumbnailDragState && window.thumbnailDragState.hasMoved()) {
+                e.preventDefault();
+                return;
+            }
             goToPage(pageNum);
+            navProgressExpanded.classList.remove('active');
         });
         
-        pageList.appendChild(thumb);
+        pageThumbnails.appendChild(thumbItem);
     });
     
 	if (DEBUG_MODE) console.log(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);}
 
 function updatePageNavigation() {
-    document.querySelectorAll('.page-thumb').forEach((thumb, index) => {
+    document.querySelectorAll('.page-thumb-item').forEach((thumb, index) => {
         thumb.classList.toggle('active', index === currentPage - 1);
     });
     
-    const activeThumb = document.querySelector('.page-thumb.active');
-    if (activeThumb) {
-        activeThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    const activeThumb = document.querySelector('.page-thumb-item.active');
+    if (activeThumb && navProgressExpanded.classList.contains('active')) {
+        activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     
     updateProgressBar();
 }
 
 function updateProgressBar() {
-    const pageNavHandle = document.getElementById('pageNavHandle');
-    if (!pageNavHandle) return;
+    if (!progressFill || !totalPages || totalPages === 0) return;
     
-    const progress = (currentPage / totalPages) * 100;
-    pageNavHandle.style.width = `${progress}%`;
-    pageNavHandle.setAttribute('data-progress', `${currentPage} / ${totalPages}`);
+    // Simple progress: currentPage / totalPages
+    const progress = ((currentPage - 1) / Math.max(1, totalPages - 1)) * 100;
+    progressFill.style.width = `${progress}%`;
 }
 
 async function updateNavigationButtons() {
-    await renderEndChapterButtons();
+    const btnPrevChapterTop = document.getElementById('btnPrevChapterTop');
+    const btnNextChapterTop = document.getElementById('btnNextChapterTop');
+    const btnPrevChapterBottom = document.getElementById('btnPrevChapterBottom');
+    const btnNextChapterBottom = document.getElementById('btnNextChapterBottom');
+    
+    if (!btnPrevChapterTop || !btnNextChapterTop) return;
+    
+    const currentIndex = allChapters.findIndex(ch => ch.folder === currentChapterFolder);
+    const isFirstChapter = currentIndex === allChapters.length - 1; // Index terakhir = chapter pertama (karena diurutkan terbalik)
+    const isLastChapter = currentIndex === 0; // Index 0 = chapter terakhir
+    const isOneshot = isOneshotChapter(currentChapterFolder);
+    
+    // ============================================
+    // LOGIKA TOMBOL PREVIOUS
+    // ============================================
+    if (isFirstChapter || isOneshot) {
+        // Disable tombol Previous di chapter pertama atau oneshot
+        btnPrevChapterTop.disabled = true;
+        btnPrevChapterTop.classList.add('disabled');
+        btnPrevChapterTop.style.pointerEvents = 'none';
+        btnPrevChapterTop.style.opacity = '0.4';
+        btnPrevChapterTop.style.cursor = 'not-allowed';
+        
+        if (btnPrevChapterBottom) {
+            btnPrevChapterBottom.disabled = true;
+            btnPrevChapterBottom.classList.add('disabled');
+            btnPrevChapterBottom.style.pointerEvents = 'none';
+            btnPrevChapterBottom.style.opacity = '0.4';
+            btnPrevChapterBottom.style.cursor = 'not-allowed';
+        }
+    } else {
+        // Enable tombol Previous
+        btnPrevChapterTop.disabled = false;
+        btnPrevChapterTop.classList.remove('disabled');
+        btnPrevChapterTop.style.pointerEvents = 'auto';
+        btnPrevChapterTop.style.opacity = '1';
+        btnPrevChapterTop.style.cursor = 'pointer';
+        
+        if (btnPrevChapterBottom) {
+            btnPrevChapterBottom.disabled = false;
+            btnPrevChapterBottom.classList.remove('disabled');
+            btnPrevChapterBottom.style.pointerEvents = 'auto';
+            btnPrevChapterBottom.style.opacity = '1';
+            btnPrevChapterBottom.style.cursor = 'pointer';
+        }
+    }
+    
+    // ============================================
+    // LOGIKA TOMBOL NEXT
+    // ============================================
+    if (isLastChapter || isOneshot) {
+        // Ubah tombol Next menjadi tombol Donasi
+        const donateHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span>Donasi</span>
+        `;
+        btnNextChapterTop.innerHTML = donateHTML;
+        btnNextChapterTop.classList.add('donasi-btn');
+        btnNextChapterTop.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(TRAKTEER_LINK, '_blank');
+        };
+        
+        if (btnNextChapterBottom) {
+            btnNextChapterBottom.innerHTML = donateHTML;
+            btnNextChapterBottom.classList.add('donasi-btn');
+            btnNextChapterBottom.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(TRAKTEER_LINK, '_blank');
+            };
+        }
+    } else {
+        // Kembalikan tombol Next ke normal
+        const nextHTML = `
+            <span>Next</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 19l7-7-7-7"/>
+            </svg>
+        `;
+        btnNextChapterTop.innerHTML = nextHTML;
+        btnNextChapterTop.classList.remove('donasi-btn');
+        btnNextChapterTop.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+    if (DEBUG_MODE) console.log('➡️ [NEXT-TOP] Going to next chapter');
+            navigateChapter('next');
+        };
+        
+        if (btnNextChapterBottom) {
+            btnNextChapterBottom.innerHTML = nextHTML;
+            btnNextChapterBottom.classList.remove('donasi-btn');
+            btnNextChapterBottom.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+    if (DEBUG_MODE) console.log('➡️ [NEXT-BOTTOM] Going to next chapter');
+                navigateChapter('next');
+            };
+        }
+    }
 }
 
 async function navigateChapter(direction) {
@@ -977,6 +1080,15 @@ async function navigateChapter(direction) {
         showLockedChapterModal(chapterTitle, chapterFolder);
         return;
     }
+
+    // ✅ Show loading overlay sebelum navigate
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+        loadingOverlay.classList.add('active');
+    }
+
+    // ✅ Wait a moment untuk ensure loading overlay visible
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     window.location.href = `reader.html?repo=${repoParam}&chapter=${targetChapter.folder}`;
 }
@@ -991,7 +1103,7 @@ async function openChapterListModal() {
     if (DEBUG_MODE) console.log('📋 Opening chapter list modal...');
     
     if (!modal || !modalBody) {
-        console.error('❌ Modal elements not found!');
+    if (DEBUG_MODE) console.error('❌ Modal elements not found!');
         return;
     }
     
@@ -1049,16 +1161,23 @@ const badges = (endBadge || hiatusBadge)
         const titleDiv = document.createElement('div');
         titleDiv.className = 'chapter-item-title';
         
-        // ✅ lockIcon dan badges adalah HTML statis (aman), chapter.title adalah data dinamis (perlu textContent)
-        if (lockIcon || badges) {
+        // ✅ lockIcon is static HTML (safe)
+        if (lockIcon) {
             const staticContent = document.createElement('span');
-            staticContent.innerHTML = lockIcon + badges; // HTML statis aman
+            staticContent.innerHTML = lockIcon; // HTML statis aman
             titleDiv.appendChild(staticContent);
         }
         
         const titleText = document.createElement('span');
         titleText.textContent = chapter.title || chapter.folder; // ✅ XSS Protection: textContent untuk data dinamis
         titleDiv.appendChild(titleText);
+        
+        // ✅ badges setelah title (inline)
+        if (badges) {
+            const badgeContent = document.createElement('span');
+            badgeContent.innerHTML = badges; // HTML statis aman
+            titleDiv.appendChild(badgeContent);
+        }
         
         const viewsDiv = document.createElement('div');
         viewsDiv.className = 'chapter-item-views';
@@ -1150,7 +1269,7 @@ async function trackChapterView() {
         if (DEBUG_MODE) console.log('✅ Chapter view tracked successfully (WIB)');
         
     } catch (error) {
-        console.error('❌ Error tracking chapter view:', error);
+    if (DEBUG_MODE) console.error('❌ Error tracking chapter view:', error);
     }
 }
 
@@ -1192,9 +1311,9 @@ async function trackReadingHistory() {
         const chapterBase = parseFloat(chapterNumber) || 1;
         
         if (DEBUG_MODE) {
-            console.log('   Manga:', mangaTitle);
-            console.log('   Chapter ID:', currentChapterFolder);
-            console.log('   Chapter Base:', chapterBase);
+    if (DEBUG_MODE) console.log('   Manga:', mangaTitle);
+    if (DEBUG_MODE) console.log('   Chapter ID:', currentChapterFolder);
+    if (DEBUG_MODE) console.log('   Chapter Base:', chapterBase);
         }
         
         const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
@@ -1220,11 +1339,11 @@ async function trackReadingHistory() {
             sessionStorage.setItem(historyKey, 'true');
             if (DEBUG_MODE) console.log('✅ [HISTORY] Reading history tracked successfully');
         } else {
-            console.error('❌ [HISTORY] Failed to track:', data.error);
+    if (DEBUG_MODE) console.error('❌ [HISTORY] Failed to track:', data.error);
         }
         
     } catch (error) {
-        console.error('❌ [HISTORY] Error tracking reading history:', error);
+    if (DEBUG_MODE) console.error('❌ [HISTORY] Error tracking reading history:', error);
     }
 }
 
@@ -1249,7 +1368,7 @@ function hideLoading() {
 
 function initProtection() {
     if (DEBUG_MODE) {
-        console.log('🔓 Debug mode enabled - protection disabled');  // ← Tidak perlu if lagi
+    if (DEBUG_MODE) console.log('🔓 Debug mode enabled - protection disabled');  // ← Tidak perlu if lagi
         return;
     }
     
@@ -1292,92 +1411,117 @@ function initProtection() {
 }
 
 function setupEnhancedEventListeners() {
-    const pageNavHandle = document.getElementById('pageNavHandle');
-    
-    pageNavHandle.addEventListener('click', () => {
-        document.body.classList.add('show-page-nav');
-    });
-    
-    pageNavHandle.addEventListener('mouseenter', () => {
-        document.body.classList.add('show-page-nav');
-    });
-    
-    let showNavTimeout;
-    document.addEventListener('mousemove', (e) => {
-        const windowHeight = window.innerHeight;
-        const mouseY = e.clientY;
-        
-        if (mouseY > windowHeight - 80) {
-            document.body.classList.add('show-page-nav');
-            clearTimeout(showNavTimeout);
-        } else {
-            clearTimeout(showNavTimeout);
-            showNavTimeout = setTimeout(() => {
-                if (!pageNav.matches(':hover') && !pageNavHandle.matches(':hover')) {
-                    document.body.classList.remove('show-page-nav');
-                }
-            }, 300);
-        }
-    });
-    
-    pageNav.addEventListener('mouseenter', () => {
-        clearTimeout(showNavTimeout);
-        document.body.classList.add('show-page-nav');
-    });
-    
-    pageNav.addEventListener('mouseleave', () => {
-        showNavTimeout = setTimeout(() => {
-            document.body.classList.remove('show-page-nav');
-        }, 500);
-    });
-    
-    let touchTimeout;
-    let isNavShowing = false;
-    
-    pageNavHandle.addEventListener('touchstart', (e) => {
+    // Toggle expanded view on progress bar click
+    navProgressBar.addEventListener('click', (e) => {
         e.stopPropagation();
-        document.body.classList.add('show-page-nav');
-        isNavShowing = true;
-        clearTimeout(touchTimeout);
-        
-        touchTimeout = setTimeout(() => {
-            document.body.classList.remove('show-page-nav');
-            isNavShowing = false;
-        }, 5000);
+        navProgressExpanded.classList.toggle('active');
     });
     
-    document.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.page-nav')) {
-            return;
+    // Close expanded view when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!navProgressExpanded.contains(e.target) && !navProgressBar.contains(e.target)) {
+            navProgressExpanded.classList.remove('active');
         }
+    });
+    
+    // Prevent closing when clicking inside expanded view
+    navProgressExpanded.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+    
+    // ============================================
+    // DRAG TO SCROLL FOR PAGE THUMBNAILS
+    // ============================================
+    let isDown = false;
+    let startX;
+    let startY;
+    let scrollLeft;
+    let hasMoved = false; // Track if mouse has moved significantly during drag
+    const DRAG_THRESHOLD = 5; // Minimum pixels to consider it a drag
+    
+    pageThumbnails.addEventListener('mousedown', (e) => {
+        isDown = true;
+        hasMoved = false;
+        startX = e.pageX - pageThumbnails.offsetLeft;
+        startY = e.pageY;
+        scrollLeft = pageThumbnails.scrollLeft;
+        pageThumbnails.style.cursor = 'grabbing';
+    });
+    
+    pageThumbnails.addEventListener('mouseleave', () => {
+        isDown = false;
+        pageThumbnails.classList.remove('dragging');
+        pageThumbnails.style.cursor = 'grab';
+        hasMoved = false;
+    });
+    
+    pageThumbnails.addEventListener('mouseup', () => {
+        isDown = false;
+        pageThumbnails.classList.remove('dragging');
+        pageThumbnails.style.cursor = 'grab';
+        // Reset hasMoved immediately after a microtask to allow click to read it first
+        setTimeout(() => { hasMoved = false; }, 0);
+    });
+    
+    pageThumbnails.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
         
-        const windowHeight = window.innerHeight;
-        const touchY = e.touches[0].clientY;
+        const x = e.pageX - pageThumbnails.offsetLeft;
+        const distance = Math.abs(x - startX);
         
-        if (touchY > windowHeight - 50) {
-            document.body.classList.add('show-page-nav');
-            isNavShowing = true;
-            clearTimeout(touchTimeout);
-            
-            touchTimeout = setTimeout(() => {
-                document.body.classList.remove('show-page-nav');
-                isNavShowing = false;
-            }, 4000);
+        // Only start dragging if moved beyond threshold
+        if (distance > DRAG_THRESHOLD) {
+            if (!hasMoved) {
+                hasMoved = true;
+                pageThumbnails.classList.add('dragging');
+            }
+            e.preventDefault();
+            const walk = (x - startX) * 2; // Multiply by 2 for faster scrolling
+            pageThumbnails.scrollLeft = scrollLeft - walk;
+        }
+    });
+    
+    // Expose hasMoved flag to global scope for thumbnail click handler
+    window.thumbnailDragState = { hasMoved: () => hasMoved };
+    
+    // Touch support for mobile
+    let touchStartX = 0;
+    let touchScrollLeft = 0;
+    
+    pageThumbnails.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].pageX - pageThumbnails.offsetLeft;
+        touchScrollLeft = pageThumbnails.scrollLeft;
+    }, { passive: true });
+    
+    pageThumbnails.addEventListener('touchmove', (e) => {
+        const x = e.touches[0].pageX - pageThumbnails.offsetLeft;
+        const walk = (x - touchStartX) * 2;
+        pageThumbnails.scrollLeft = touchScrollLeft - walk;
+    }, { passive: true });
+    
+    // Close expanded view when user scrolls
+    const readerContainer = document.querySelector('.reader-container');
+    if (readerContainer) {
+        readerContainer.addEventListener('scroll', () => {
+            if (navProgressExpanded.classList.contains('active')) {
+                navProgressExpanded.classList.remove('active');
+            }
+        }, { passive: true });
+    }
+    
+    // Also close on window scroll for webtoon mode
+    window.addEventListener('scroll', () => {
+        if (navProgressExpanded.classList.contains('active')) {
+            navProgressExpanded.classList.remove('active');
         }
     }, { passive: true });
     
-    pageNav.addEventListener('touchstart', () => {
-        clearTimeout(touchTimeout);
-        document.body.classList.add('show-page-nav');
-        isNavShowing = true;
-        
-        touchTimeout = setTimeout(() => {
-            document.body.classList.remove('show-page-nav');
-            isNavShowing = false;
-        }, 5000);
-    });
-    
+    // Close on escape key and arrow navigation
     document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && navProgressExpanded.classList.contains('active')) {
+            navProgressExpanded.classList.remove('active');
+        }
+        
         if (e.ctrlKey || e.shiftKey) return;
         
         switch(e.key) {
@@ -1406,55 +1550,7 @@ function setupEnhancedEventListeners() {
 }
 
 // ============================================
-// HIDE NAVBAR ON SCROLL & UPDATE HEADER TITLE
-// ============================================
-
-let lastScrollTop = 0;
-const navbar = document.querySelector('.navbar');
-const header = document.querySelector('.header');
-
-window.addEventListener('scroll', () => {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const mangaTitleElement = document.getElementById('mangaTitle');
-    
-    if (scrollTop === 0) {
-        if (mangaData) {
-            mangaTitleElement.textContent = mangaData.manga.title;
-        }
-    } else {
-        if (mangaData && currentChapter) {
-            mangaTitleElement.textContent = `${mangaData.manga.title} - ${currentChapter.title}`;
-        }
-    }
-    
-    if (scrollTop > lastScrollTop && scrollTop > 100) {
-        navbar.style.transform = 'translateY(-100%)';
-        navbar.style.opacity = '0';
-    } else {
-        navbar.style.transform = 'translateY(0)';
-        navbar.style.opacity = '1';
-    }
-    
-    // ✅ TAMBAHKAN INI - Show end chapter buttons saat scroll ke bawah
-    if (readMode === 'webtoon') {
-        const endChapterContainer = document.getElementById('endChapterContainer');
-        if (endChapterContainer) {
-            const windowHeight = window.innerHeight;
-            const documentHeight = document.documentElement.scrollHeight;
-            const scrollBottom = scrollTop + windowHeight;
-            
-            if (scrollBottom >= documentHeight - 200) {
-                endChapterContainer.style.display = 'block';
-            } else {
-                endChapterContainer.style.display = 'none';
-            }
-        }
-    }
-
-    lastScrollTop = scrollTop;
-});
-// ============================================
-// SCROLL TO TOP BUTTON - TAMBAHKAN DI SINI!
+// SCROLL TO TOP BUTTON
 // ============================================
 
 const scrollToTopBtn = document.getElementById('scrollToTopBtn');

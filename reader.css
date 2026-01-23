@@ -91,17 +91,6 @@ img {
     font-weight: 600;
 }
 
-/* Header */
-.header {
-    background-color: var(--secondary-bg);
-    padding: 1.5rem;
-    text-align: center;
-    border-bottom: none;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-}
-
 .manga-title {
     font-size: clamp(0.9rem, 4vw, 1.8rem);
     font-weight: 700;
@@ -115,11 +104,11 @@ img {
     max-height: 4.68rem;
 }
 
-/* Navigation Bar */
+/* Navigation Bar - HIDDEN */
 .navbar {
     background-color: var(--secondary-bg);
     padding: 1rem;
-    display: flex;
+    display: none;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
@@ -132,11 +121,11 @@ img {
 }
 
 .nav-btn {
-    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
-    color: var(--text-color);
-    border: 2px solid var(--accent-color);
+    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%) !important;
+    color: #ffffff !important;
+    border: 3px solid rgba(255, 255, 255, 0.3) !important;
     padding: 0.6rem 1.2rem;
-    border-radius: 8px;
+    border-radius: 12px !important;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -144,12 +133,13 @@ img {
     gap: 0.5rem;
     font-size: 0.95rem;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     min-height: 44px;
     white-space: nowrap;
     box-sizing: border-box;
     text-align: center;
-    box-shadow: 0 4px 20px rgba(24, 119, 242, 0.4);
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4) !important;
+    letter-spacing: 0.3px;
 }
 
 .back-btn {
@@ -158,10 +148,19 @@ img {
 }
 
 .nav-btn:hover {
-    background: linear-gradient(135deg, #4d9ff5 0%, #1877f2 100%);
-    color: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 30px rgba(24, 119, 242, 0.6);
+    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%) !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ✅ Hover effects untuk tombol di navbar-top */
+.navbar-top .nav-btn:hover {
+    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .nav-btn svg {
@@ -183,6 +182,292 @@ img {
     overflow: hidden;
     display: flex;
     align-items: center;
+    flex: 1;
+}
+
+/* TOP NAVBAR - NEW SECTION */
+.navbar-top {
+    background-color: var(--primary-bg);
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem; /* Gap sangat besar agar jarak sangat jelas terlihat */
+    border-bottom: none;
+    position: relative;
+    z-index: 999;
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+    visibility: visible;
+    opacity: 1;
+}
+
+.navbar-top.hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* BOTTOM NAVBAR - Mirror dari TOP NAVBAR */
+.navbar-bottom {
+    background-color: var(--primary-bg);
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    border-top: none;
+    position: relative;
+    z-index: 998;
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+    visibility: visible;
+    opacity: 1;
+}
+
+.navbar-bottom.hidden {
+    transform: translateY(100%);
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* ✅ Hover effects untuk tombol di navbar-bottom */
+.navbar-bottom .nav-btn:hover {
+    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Tombol judul panjang */
+.nav-title-btn {
+    width: 100%;
+    font-size: 1.2rem;
+    padding: 0.8rem 1.5rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    /* ✅ Biru full gradient dengan border putih tebal */
+    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%) !important;
+    color: #ffffff !important;
+    border: 3px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+}
+
+.nav-title-btn:hover {
+    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6) !important;
+}
+
+/* Ensure span inside button also has ellipsis */
+.nav-title-btn span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+/* Container untuk 3 tombol */
+.nav-buttons-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+}
+
+/* Tombol prev, chapter, next - Equal width */
+.nav-prev-btn,
+.nav-chapter-btn,
+.nav-next-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.7rem 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    line-height: 1.3;
+}
+
+/* Tombol chapter di tengah - larger */
+.nav-chapter-btn {
+    font-size: 0.95rem;
+    white-space: normal;
+    line-height: 1.3;
+    padding: 0.8rem 1rem;
+}
+
+/* ✅ Style untuk tombol disabled */
+.nav-btn.disabled,
+.nav-btn:disabled {
+    opacity: 0.3 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    background: #0a0a0a !important;
+    border-color: rgba(77, 208, 225, 0.3) !important;
+    box-shadow: none !important;
+}
+
+.nav-btn.disabled:hover,
+.nav-btn:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background: #0a0a0a !important;
+}
+
+/* ✅ Style untuk tombol donasi di navbar - Accent MERAH dengan border putih tebal */
+.nav-btn.donasi-btn {
+    background: linear-gradient(135deg, #be1e2d 0%, #d32f2f 100%) !important;
+    border: 3px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 4px 15px rgba(190, 30, 45, 0.4) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.6rem 1.2rem !important;
+    color: #ffffff !important;
+}
+
+.nav-btn.donasi-btn:hover {
+    background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(190, 30, 45, 0.6) !important;
+}
+
+.nav-btn.donasi-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    stroke: currentColor;
+    fill: currentColor;
+}
+
+.nav-btn.donasi-btn span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* ✅ RESPONSIVE: Navbar Top untuk device kecil */
+@media (max-width: 768px) {
+    .navbar-top {
+        padding: 1rem 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .navbar-bottom {
+        padding: 1rem 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .nav-title-btn {
+        font-size: 1rem;
+        padding: 0.6rem 1rem;
+        min-height: 44px;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .nav-buttons-row {
+        gap: 0.2rem;
+    }
+
+    .nav-prev-btn,
+    .nav-chapter-btn,
+    .nav-next-btn {
+        padding: 0.6rem 0.6rem;
+        font-size: 0.75rem;
+        gap: 0.3rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .nav-chapter-btn {
+        font-size: 0.85rem;
+        padding: 0.6rem 0.8rem;
+    }
+
+    .nav-prev-btn svg,
+    .nav-next-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-top {
+        padding: 0.8rem 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .navbar-bottom {
+        padding: 0.8rem 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .nav-title-btn {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+        min-height: 40px;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .nav-buttons-row {
+        gap: 0.1rem;
+    }
+
+    .nav-prev-btn,
+    .nav-chapter-btn,
+    .nav-next-btn {
+        padding: 0.5rem 0.4rem;
+        font-size: 0.65rem;
+        gap: 0.2rem;
+        min-width: 60px;
+    }
+
+    .nav-chapter-btn {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.5rem;
+    }
+
+    .nav-prev-btn svg,
+    .nav-next-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .nav-prev-btn span,
+    .nav-next-btn span {
+        display: none;
+    }
+    
+    /* Sembunyikan teks Home hanya di bottom navbar */
+    .navbar-bottom .nav-chapter-btn span {
+        display: none;
+    }
 }
 
 /* Reader Container */
@@ -284,11 +569,11 @@ img {
 }
 
 .next-chapter-btn {
-    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
     color: white;
     border: none;
-    padding: 1.2rem 2rem;
-    border-radius: 20px;
+    padding: 1.2rem 2.5rem;
+    border-radius: 25px;
     font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
@@ -297,17 +582,19 @@ img {
     justify-content: center;
     gap: 0.8rem;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.5);
     width: 100%;
     max-width: 1200px;
     position: relative;
     z-index: 100;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .next-chapter-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #4d9ff5 0%, #1877f2 100%);  /* ← GANTI */
-    transform: translateY(-2px);                                      /* ← GANTI dari -3px */
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.5);                 /* ← GANTI */
+    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(24, 119, 242, 0.7);
 }
 
 .next-chapter-btn:disabled {
@@ -315,209 +602,171 @@ img {
     cursor: not-allowed;
 }
 
-/* Page Navigation */
-.page-nav {
+/* ========================================
+   NAVIGATION AND PROGRESS BAR - NEW DESIGN
+   ======================================== */
+
+/* Progress Bar - Sticky di bawah dengan background blur hitam */
+.nav-progress-bar {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(to top, var(--secondary-bg) 0%, var(--secondary-bg) 80%, transparent 100%);
-    padding: 1.5rem 1rem 1rem;
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
-    z-index: 998;
-    border-top: none;
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.8rem 1rem;
+    padding-bottom: max(0.8rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+    z-index: 1001;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: none;
+    opacity: 1;
 }
 
-.page-nav:hover {
-    transform: translateY(0);
+.progress-track {
+    width: calc(100% - 2rem);
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    margin: 0 1rem;
 }
 
-body.show-page-nav .page-nav {
-    transform: translateY(0);
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1877f2 0%, #0a5bd6 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(24, 119, 242, 0.6);
+    border-radius: 10px;
 }
 
-.page-nav-handle {
+.progress-percentage {
+    display: none;
+}
+
+/* Expanded View dengan Thumbnails */
+.nav-progress-expanded {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: 0%;
-    height: 5px;
-    background: linear-gradient(90deg, var(--accent-color), var(--accent-hover));
-    cursor: pointer;
-    z-index: 999;
-    transition: width 0.3s ease, height 0.3s ease;
-}
-
-.page-nav-handle:hover {
-    height: 8px;
-}
-
-.page-nav-handle::after {
-    content: attr(data-progress);
-    position: absolute;
-    right: 10px;
-    top: -25px;
-    background: var(--secondary-bg);
-    color: #ffffff;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    white-space: nowrap;
-    border: 1px solid var(--accent-color);
-}
-
-.page-nav-handle:hover::after {
-    opacity: 1;
-}
-
-body.show-page-nav .page-nav-handle {
-    opacity: 0.3;
-}
-
-.page-nav-content {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.page-nav-btn {
-    display: none;
-    background-color: #ffffff;
-    color: var(--primary-bg);
-    border: none;
-    padding: 0.8rem;
-    border-radius: 50%;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.page-nav-btn:hover:not(:disabled) {
-    background-color: var(--accent-hover);
-    transform: scale(1.1);
-}
-
-.page-nav-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.page-list {
-    display: flex;
-    gap: 0.8rem;
-    overflow-x: auto;
-    padding: 0.5rem 1.5rem;
-    scroll-behavior: smooth;
-    flex: 1;
-    min-height: 140px;
-    align-items: center;
-    justify-content: flex-start;
-    scroll-padding: 1.5rem;
-    scroll-snap-type: x proximity;
-}
-
-.page-list::-webkit-scrollbar {
-    height: 6px;
-}
-
-.page-list::-webkit-scrollbar-track {
-    background: var(--primary-bg);
-    border-radius: 3px;
-}
-
-.page-list::-webkit-scrollbar-thumb {
-    background: var(--accent-color);
-    border-radius: 3px;
-}
-
-.page-thumb {
-    min-width: 80px;
-    height: 120px;
-    border: 2px solid transparent;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
+    right: 0;
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 1.5rem 1rem;
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
+    z-index: 1000;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 60vh;
     overflow: hidden;
-    background-color: var(--primary-bg);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(20px);
-    scroll-snap-align: center;
-    flex-shrink: 0;
+    box-shadow: none;
+    opacity: 1;
 }
 
-.page-nav:hover .page-thumb,
-.page-list:hover .page-thumb,
-body.show-page-nav .page-thumb {
-    opacity: 1;
-    visibility: visible;
+.nav-progress-expanded.active {
     transform: translateY(0);
 }
 
-.page-thumb img {
+/* Progress bar (z-index: 1001) sekarang di depan expanded view (z-index: 1000) */
+
+.page-thumbnails {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    padding: 0.5rem 0;
+    max-width: 1400px;
+    margin: 0 auto;
+    scrollbar-width: none;
+    cursor: grab;
+    user-select: none;
+}
+
+.page-thumbnails:active {
+    cursor: grabbing;
+}
+
+.page-thumbnails.dragging {
+    cursor: grabbing;
+    scroll-behavior: auto;
+}
+
+.page-thumbnails.dragging .page-thumb-item {
+    pointer-events: none;
+}
+
+.page-thumbnails::-webkit-scrollbar {
+    display: none;
+}
+
+.page-thumb-item {
+    position: relative;
+    min-width: 100px;
+    width: 100px;
+    height: 150px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    background: var(--secondary-bg);
+    flex-shrink: 0;
+}
+
+.page-thumb-item:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-color);
+    box-shadow: 0 8px 20px rgba(24, 119, 242, 0.4);
+}
+
+.page-thumb-item.active {
+    border-color: #ffffff;
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.5);
+}
+
+.page-thumb-item img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    pointer-events: none;
-    background-color: var(--secondary-bg);
+    background: var(--primary-bg);
 }
 
-.page-thumb:not(.loaded) img {
-    opacity: 0.3;
-}
-
-.page-thumb.loaded img {
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.page-thumb.error {
-    background-color: var(--border-color);
-}
-
-.page-thumb.error::before {
-    content: '✕';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--text-secondary);
-    font-size: 1.5rem;
-    z-index: 1;
-}
-
-.page-thumb.active {
-    border-color: #ffffff;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-    transform: scale(1.05);
-}
-
-.page-thumb:hover:not(.active) {
-    border-color: var(--accent-hover);
-    transform: scale(1.03);
-}
-
-.page-number {
+.page-thumb-item .page-number {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(10, 10, 10, 0.9);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
     color: #ffffff;
     text-align: center;
-    padding: 0.3rem;
+    padding: 0.5rem 0.3rem;
     font-size: 0.75rem;
     font-weight: 600;
+}
+
+/* Scrollbar untuk Expanded View */
+.nav-progress-expanded::-webkit-scrollbar {
+    width: 8px;
+}
+
+.nav-progress-expanded::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-progress-expanded::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+.nav-progress-expanded::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hover);
 }
 
 /* Modal Styles - FIXED */
@@ -542,37 +791,44 @@ body.show-page-nav .page-thumb {
   align-items: center;
   gap: 8px;
   margin-left: 8px;
+  vertical-align: middle;
 }
 
 .chapter-end-badge-modal {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
   color: white;
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 2px 6px;
+  padding: 3px 6px;
   border-radius: 4px;
   white-space: nowrap;
   flex-shrink: 0;
   box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+  line-height: 1;
 }
 
 /* Badge HIATUS - Abu-abu */
 .chapter-hiatus-badge-modal {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #757575 0%, #616161 100%);
   color: white;
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 2px 6px;
+  padding: 3px 6px;
   border-radius: 4px;
   white-space: nowrap;
   flex-shrink: 0;
   box-shadow: 0 2px 4px rgba(117, 117, 117, 0.3);
+  line-height: 1;
 }
 
 /* Responsive mobile */
@@ -584,18 +840,21 @@ body.show-page-nav .page-thumb {
 }
 
 .chapter-updated-badge-modal {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
   color: white;
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 2px 6px;
+  padding: 3px 6px;
   border-radius: 4px;
   white-space: nowrap;
   flex-shrink: 0;
   box-shadow: 0 2px 4px rgba(24, 119, 242, 0.3);
+  line-height: 1;
 }
 
 /* Responsive */
@@ -632,20 +891,21 @@ body.show-page-nav .page-thumb {
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 32px rgba(77, 208, 225, 0.3);
+    box-shadow: none;
 }
 
 .modal-header {
     padding: 1.5rem;
     border-bottom: 2px solid var(--border-color);
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
 }
 
 .modal-header h2 {
     color: #ffffff;
     font-size: 1.5rem;
+    text-align: center;
 }
 
 .btn-close-modal {
@@ -723,22 +983,13 @@ body.show-page-nav .page-thumb {
     font-size: 0.9rem;
 }
 
-/* End Chapter Buttons */
-.end-chapter-container {
-    max-width: 800px;
-    margin: 15px auto;
-    padding: 0 20px;
-    position: relative;  /* ← TAMBAHKAN */
-    z-index: 10;  /* ← TAMBAHKAN (lebih tinggi dari giscus) */
-}
-
 .dual-buttons-container {
     display: flex;
     gap: 10px;
     width: 100%;
-    padding: 0 0px; /* Tambahkan spacing kiri-kanan */
+    padding: 0 0px;
     box-sizing: border-box;
-    align-items: stretch; /* ✅ Pastikan kedua tombol memiliki tinggi yang sama */
+    align-items: stretch;
 }
 
 .back-to-info-btn-large {
@@ -1017,15 +1268,15 @@ body.show-page-nav .page-thumb {
 }
 
 .login-required-btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
 }
 
 .login-required-btn-primary:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
 }
 
 .login-required-btn-trakteer {
@@ -1042,11 +1293,6 @@ body.show-page-nav .page-thumb {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .header {
-        padding: 1rem;
-        top: 0;
-    }
-
     .manga-title {
         font-size: clamp(0.85rem, 3.5vw, 1.3rem);
         max-height: 3.38rem;
@@ -1064,6 +1310,11 @@ body.show-page-nav .page-thumb {
         min-height: 40px;
         flex: 1 1 0;
         min-width: 0;
+    }
+    
+    .nav-btn.donasi-btn {
+        padding: 0.5rem 0.6rem !important;
+        font-size: 0.85rem;
     }
 
     .chapter-selector {
@@ -1158,6 +1409,11 @@ body.show-page-nav .page-thumb {
         font-size: 0.75rem;
         min-height: 44px;
     }
+    
+    .nav-btn.donasi-btn {
+        padding: 0.5rem 0.6rem !important;
+        font-size: 0.75rem;
+    }
 
     .back-btn {
         flex: 0 0 auto;
@@ -1190,18 +1446,41 @@ body.show-page-nav .page-thumb {
         object-fit: contain;
     }
 
-    .page-nav {
-        padding: 1rem 0.5rem 0.5rem;
-        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    .nav-progress-bar {
+        padding: 0.6rem 0;
+        padding-bottom: max(0.6rem, calc(env(safe-area-inset-bottom) + 0.5rem));
     }
 
-    .page-list {
-        min-height: 100px;
-        padding: 0.5rem 1.5rem;
+    .progress-track {
+        width: 100%;
+        height: 4px;
     }
 
-    .page-thumb {
-        min-width: 50px;
+    .progress-percentage {
+        display: none;
+    }
+
+    .nav-progress-expanded {
+        padding: 1rem 0.5rem;
+        padding-bottom: calc(35px + env(safe-area-inset-bottom));
+        max-height: 50vh;
+    }
+
+    .page-thumbnails {
+        gap: 0.8rem;
+    }
+
+    .page-thumb-item {
+        min-width: 80px;
+        width: 80px;
+        height: 120px;
+        border-radius: 6px;
+    }
+
+    .page-thumb-item .page-number {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.2rem;
+    }
         height: 75px;
     }
 
@@ -1338,8 +1617,8 @@ body.show-page-nav .page-thumb {
 }
 
 .code-modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-bottom: 2px solid #8b5cf6;
+    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
+    border-bottom: 2px solid #0052a3;
     text-align: center;
     justify-content: center;
     border-radius: 16px 16px 0 0;
@@ -1388,9 +1667,9 @@ body.show-page-nav .page-thumb {
 
 .code-input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #1877f2;
     background: #333333;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.2);
 }
 
 .code-input::placeholder {
@@ -1468,14 +1747,14 @@ body.show-page-nav .page-thumb {
 }
 
 .code-btn-submit {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
     color: white;
 }
 
 .code-btn-submit:hover:not(:disabled) {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.5);
 }
 
 .code-btn-submit:disabled {
@@ -1549,7 +1828,7 @@ body.show-page-nav .page-thumb {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    z-index: 1000;
+    z-index: 1002;
     backdrop-filter: blur(4px);  /* dari: blur(10px) - blur dikurangi biar lebih tembus pandang */
     -webkit-backdrop-filter: blur(4px);
 }
