@@ -29,7 +29,7 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     
     if (isDonatur) {
         // ✅ DONATUR SETIA - Langsung buka chapter tanpa modal (untuk semua type: manga & webtoon)
-    if (DEBUG_MODE) console.log('✅ Donatur SETIA - Opening chapter directly');
+    if (DEBUG_MODE) dLog('✅ Donatur SETIA - Opening chapter directly');
         const urlParams = new URLSearchParams(window.location.search);
         const repoParam = urlParams.get('repo');
         if (repoParam && chapterFolder) {
@@ -39,7 +39,7 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     }
     
     // ✅ PEMBACA SETIA - Show modal untuk kembali ke info page (untuk semua type: manga & webtoon)
-    if (DEBUG_MODE) console.log('🔒 PEMBACA SETIA - Showing modal to go back to info page');
+    if (DEBUG_MODE) dLog('🔒 PEMBACA SETIA - Showing modal to go back to info page');
     
     const loginRequiredModal = document.getElementById('loginRequiredModal');
     if (!loginRequiredModal) {
@@ -50,7 +50,7 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     loginRequiredModal.style.display = 'flex';
     loginRequiredModal.classList.add('active');
     
-    if (DEBUG_MODE) console.log('🔒 Chapter Terkunci modal shown');
+    if (DEBUG_MODE) dLog('🔒 Chapter Terkunci modal shown');
     
     const btnBackToInfo = document.getElementById('btnBackToInfoFromModal');
     const btnClose = document.getElementById('btnCloseLoginRequired');
@@ -94,7 +94,7 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
 function clearValidatedChapter(repoName, chapter) {
     const key = `validated_${repoName}_${chapter}`;
     sessionStorage.removeItem(key);
-    if (DEBUG_MODE) console.log(`🗑️  Cleared session for ${chapter}`);
+    if (DEBUG_MODE) dLog(`🗑️  Cleared session for ${chapter}`);
 }
 
 // ============================================
@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initProtection();
         await initializeReader();
         setupEnhancedEventListeners();
+        initGlobalLoginButton(); // Setup redirect to info-manga
     } catch (error) {
     if (DEBUG_MODE) console.error('❌ Fatal error during initialization:', error);
         alert(`Terjadi kesalahan saat memuat reader:\n${error.message}\n\nSilakan refresh halaman atau kembali ke info.`);
@@ -225,14 +226,14 @@ async function initializeReader() {
     try {
         showLoading();
         
-    if (DEBUG_MODE) console.log('🚀 Initializing reader...');
+    if (DEBUG_MODE) dLog('🚀 Initializing reader...');
         
         const urlParams = new URLSearchParams(window.location.search);
         const chapterParam = urlParams.get('chapter');
         repoParam = urlParams.get('repo');
         
-    if (DEBUG_MODE) console.log('📋 Parameters:', { chapter: chapterParam, repo: repoParam });
-    if (DEBUG_MODE) console.log('📋 Chapter type:', typeof chapterParam, 'Value:', JSON.stringify(chapterParam)); // ← TAMBAH INI
+    if (DEBUG_MODE) dLog('📋 Parameters:', { chapter: chapterParam, repo: repoParam });
+    if (DEBUG_MODE) dLog('📋 Chapter type:', typeof chapterParam, 'Value:', JSON.stringify(chapterParam)); // ← TAMBAH INI
         
         if (!chapterParam) {
             alert('Error: Parameter chapter tidak ditemukan.');
@@ -255,7 +256,7 @@ async function initializeReader() {
         }
 
         // ✅ TAMBAH INI (6 baris)
-    if (DEBUG_MODE) console.log('📚 Available chapters:', allChapters.map(ch => ({
+    if (DEBUG_MODE) dLog('📚 Available chapters:', allChapters.map(ch => ({
             folder: ch.folder,
             title: ch.title,
             locked: ch.locked
@@ -273,17 +274,17 @@ async function initializeReader() {
 const isValidated = isChapterValidated(repoParam, chapterParam);
 
 // ✅ TAMBAH INI (5 baris)
-    if (DEBUG_MODE) console.log('🔐 Lock status check:');
-    if (DEBUG_MODE) console.log('   Chapter locked:', chapterData.locked);
-    if (DEBUG_MODE) console.log('   Is validated:', isValidated);
-    if (DEBUG_MODE) console.log('   Session key:', `validated_${repoParam}_${chapterParam}`);
+    if (DEBUG_MODE) dLog('🔐 Lock status check:');
+    if (DEBUG_MODE) dLog('   Chapter locked:', chapterData.locked);
+    if (DEBUG_MODE) dLog('   Is validated:', isValidated);
+    if (DEBUG_MODE) dLog('   Session key:', `validated_${repoParam}_${chapterParam}`);
 
 // ✅ SECURITY: Always verify with backend for locked chapters (NO CACHE)
 const isDonatur = chapterData.locked ? await verifyDonaturStatusStrict() : await getUserDonaturStatus();
 const isActuallyLocked = chapterData.locked && !isValidated && !isDonatur;
 
 if (isActuallyLocked) {
-    if (DEBUG_MODE) console.log('🔒 Chapter terkunci, belum divalidasi, dan user bukan DONATUR SETIA');
+    if (DEBUG_MODE) dLog('🔒 Chapter terkunci, belum divalidasi, dan user bukan DONATUR SETIA');
     const chapterTitle = chapterData.title || chapterParam;
     showLockedChapterModal(chapterTitle, chapterParam);
     hideLoading(); // ← TAMBAH INI!
@@ -291,7 +292,7 @@ if (isActuallyLocked) {
 }
 
 if (isValidated || isDonatur) {
-    if (DEBUG_MODE) console.log('✅ Session valid atau user DONATUR SETIA, chapter unlocked');
+    if (DEBUG_MODE) dLog('✅ Session valid atau user DONATUR SETIA, chapter unlocked');
     // Don't modify chapterData - just proceed to load
 }
 
@@ -309,7 +310,7 @@ if (isValidated || isDonatur) {
         // ✅ TAMBAHKAN BARIS INI - Track reading history
         trackReadingHistory();
         
-    if (DEBUG_MODE) console.log('✅ Reader initialized successfully');
+    if (DEBUG_MODE) dLog('✅ Reader initialized successfully');
         
     } catch (error) {
     if (DEBUG_MODE) console.error('❌ Error initializing reader:', error);
@@ -329,8 +330,8 @@ async function loadMangaData(repo) {
             allChapters = cached.allChapters;
             window.currentGithubRepo = cached.githubRepo;
             
-    if (DEBUG_MODE) console.log('✅ Manga data loaded from cache');
-    if (DEBUG_MODE) console.log(`📚 Loaded ${allChapters.length} chapters (cached)`);
+    if (DEBUG_MODE) dLog('✅ Manga data loaded from cache');
+    if (DEBUG_MODE) dLog(`📚 Loaded ${allChapters.length} chapters (cached)`);
             return;
         }
         
@@ -341,7 +342,7 @@ async function loadMangaData(repo) {
             throw new Error(`Repo "${repo}" tidak ditemukan di mapping`);
         }
         
-    if (DEBUG_MODE) console.log(`📡 Fetching fresh manga data from: ${repo}`);
+    if (DEBUG_MODE) dLog(`📡 Fetching fresh manga data from: ${repo}`);
         
         let mangaJsonUrl;
         if (typeof mangaConfig === 'string') {
@@ -349,12 +350,12 @@ async function loadMangaData(repo) {
         } else {
             mangaJsonUrl = mangaConfig.url;
             window.currentGithubRepo = mangaConfig.githubRepo;
-    if (DEBUG_MODE) console.log(`🔗 GitHub repo: ${mangaConfig.githubRepo}`);
+    if (DEBUG_MODE) dLog(`🔗 GitHub repo: ${mangaConfig.githubRepo}`);
         }
         
         mangaData = await fetchFreshJSON(mangaJsonUrl);
         
-    if (DEBUG_MODE) console.log('📦 Manga data loaded:', mangaData);
+    if (DEBUG_MODE) dLog('📦 Manga data loaded:', mangaData);
         
         allChapters = Object.values(mangaData.chapters).sort((a, b) => {
             const getSort = (folder) => {
@@ -366,7 +367,7 @@ async function loadMangaData(repo) {
             return getSort(b.folder) - getSort(a.folder);
         });
         
-    if (DEBUG_MODE) console.log(`✅ Loaded ${allChapters.length} chapters`);
+    if (DEBUG_MODE) dLog(`✅ Loaded ${allChapters.length} chapters`);
         
         // ✅ SAVE TO CACHE
         setCachedData(cacheKey, {
@@ -374,7 +375,7 @@ async function loadMangaData(repo) {
             allChapters,
             githubRepo: window.currentGithubRepo
         });
-    if (DEBUG_MODE) console.log(`💾 Cached manga data: ${cacheKey}`);
+    if (DEBUG_MODE) dLog(`💾 Cached manga data: ${cacheKey}`);
         
     } catch (error) {
     if (DEBUG_MODE) console.error('❌ Error loading manga data:', error);
@@ -382,7 +383,7 @@ async function loadMangaData(repo) {
         // ✅ FALLBACK: Try stale cache
         const staleCache = getCachedData(`reader_manga_${repo}`, Infinity, true);
         if (staleCache) {
-    if (DEBUG_MODE) console.warn('⚠️ Using stale cache due to error');
+    if (DEBUG_MODE) dWarn('⚠️ Using stale cache due to error');
             mangaData = staleCache.mangaData;
             allChapters = staleCache.allChapters;
             window.currentGithubRepo = staleCache.githubRepo;
@@ -402,7 +403,7 @@ function findChapterByFolder(folder) {
 function saveLastPage() {
     const storageKey = `lastPage_${repoParam}_${currentChapterFolder}`;
     localStorage.setItem(storageKey, currentPage);
-    if (DEBUG_MODE) console.log(`💾 Saved page ${currentPage} for ${currentChapterFolder}`);
+    if (DEBUG_MODE) dLog(`💾 Saved page ${currentPage} for ${currentChapterFolder}`);
 }
 
 function loadLastPage() {
@@ -412,7 +413,7 @@ function loadLastPage() {
     if (savedPage) {
         const pageNum = parseInt(savedPage);
         if (pageNum > 0 && pageNum <= totalPages) {
-    if (DEBUG_MODE) console.log(`📖 Restoring last page: ${pageNum}`);
+    if (DEBUG_MODE) dLog(`📖 Restoring last page: ${pageNum}`);
             return pageNum;
         }
     }
@@ -436,7 +437,7 @@ function adjustChapterTitleFontSize(element) {
         element.style.fontSize = `${fontSize}px`;
     }
     
-    if (DEBUG_MODE) console.log(`📏 Chapter title font adjusted to: ${fontSize}px`);
+    if (DEBUG_MODE) dLog(`📏 Chapter title font adjusted to: ${fontSize}px`);
 }
 
 function setupUI() {
@@ -477,7 +478,7 @@ function setupUI() {
         chapterTitleBottomElement.textContent = currentChapter.title;
     }
     
-    if (DEBUG_MODE) console.log(`📖 Read mode: ${readMode}`);
+    if (DEBUG_MODE) dLog(`📖 Read mode: ${readMode}`);
     
     // ✅ Old buttons removed - now using Top/Bottom navbar buttons only
 
@@ -490,11 +491,11 @@ function setupUI() {
             const urlParams = new URLSearchParams(window.location.search);
             const repo = urlParams.get('repo') || repoParam;
             if (repo) {
-    if (DEBUG_MODE) console.log('🔄 [BACK-TOP] Navigating to info page:', repo);
+    if (DEBUG_MODE) dLog('🔄 [BACK-TOP] Navigating to info page:', repo);
                 window.location.href = `info-manga.html?repo=${repo}`;
             }
         }, { passive: false });
-    if (DEBUG_MODE) console.log('✅ [BACK-TOP] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [BACK-TOP] Button handler attached');
     }
 
     const btnChapterListTop = document.getElementById('btnChapterListTop');
@@ -502,10 +503,10 @@ function setupUI() {
         btnChapterListTop.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-    if (DEBUG_MODE) console.log('📋 [LIST-TOP] Opening chapter list modal');
+    if (DEBUG_MODE) dLog('📋 [LIST-TOP] Opening chapter list modal');
             openChapterListModal();
         }, { passive: false });
-    if (DEBUG_MODE) console.log('✅ [LIST-TOP] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [LIST-TOP] Button handler attached');
     }
 
     const btnPrevChapterTop = document.getElementById('btnPrevChapterTop');
@@ -513,10 +514,10 @@ function setupUI() {
         btnPrevChapterTop.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-    if (DEBUG_MODE) console.log('⬅️ [PREV-TOP] Going to previous chapter');
+    if (DEBUG_MODE) dLog('⬅️ [PREV-TOP] Going to previous chapter');
             navigateChapter('prev');
         }, { passive: false });
-    if (DEBUG_MODE) console.log('✅ [PREV-TOP] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [PREV-TOP] Button handler attached');
     }
 
     const btnNextChapterTop = document.getElementById('btnNextChapterTop');
@@ -524,10 +525,10 @@ function setupUI() {
         btnNextChapterTop.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-    if (DEBUG_MODE) console.log('➡️ [NEXT-TOP] Going to next chapter');
+    if (DEBUG_MODE) dLog('➡️ [NEXT-TOP] Going to next chapter');
             navigateChapter('next');
         }, { passive: false });
-    if (DEBUG_MODE) console.log('✅ [NEXT-TOP] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [NEXT-TOP] Button handler attached');
     }
 
     // ✅ Setup BOTTOM NAVBAR buttons (mirror dari top navbar)
@@ -539,11 +540,11 @@ function setupUI() {
             const urlParams = new URLSearchParams(window.location.search);
             const repo = urlParams.get('repo') || repoParam;
             if (repo) {
-    if (DEBUG_MODE) console.log('🔄 [BACK-BOTTOM] Navigating to info page:', repo);
+    if (DEBUG_MODE) dLog('🔄 [BACK-BOTTOM] Navigating to info page:', repo);
                 window.location.href = `info-manga.html?repo=${repo}`;
             }
         }, { passive: false });
-    if (DEBUG_MODE) console.log('✅ [BACK-BOTTOM] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [BACK-BOTTOM] Button handler attached');
     }
 
     const btnHomeBottom = document.getElementById('btnHomeBottom');
@@ -551,10 +552,17 @@ function setupUI() {
         btnHomeBottom.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-    if (DEBUG_MODE) console.log('🏠 [HOME-BOTTOM] Navigating to index page');
-            window.location.href = 'index.html';
+    if (DEBUG_MODE) dLog('🏠 [HOME-BOTTOM] Navigating to info-manga page');
+            const urlParams = new URLSearchParams(window.location.search);
+            const repo = urlParams.get('repo');
+            if (repo) {
+                window.location.href = `info-manga.html?repo=${repo}`;
+            } else {
+                // Fallback ke index jika tidak ada repo parameter
+                window.location.href = 'index.html';
+            }
         }, { passive: false });
-    if (DEBUG_MODE) console.log('✅ [HOME-BOTTOM] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [HOME-BOTTOM] Button handler attached');
     }
 
     const btnPrevChapterBottom = document.getElementById('btnPrevChapterBottom');
@@ -562,10 +570,10 @@ function setupUI() {
         btnPrevChapterBottom.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-    if (DEBUG_MODE) console.log('⬅️ [PREV-BOTTOM] Going to previous chapter');
+    if (DEBUG_MODE) dLog('⬅️ [PREV-BOTTOM] Going to previous chapter');
             navigateChapter('prev');
         }, { passive: false });
-    if (DEBUG_MODE) console.log('✅ [PREV-BOTTOM] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [PREV-BOTTOM] Button handler attached');
     }
 
     const btnNextChapterBottom = document.getElementById('btnNextChapterBottom');
@@ -573,10 +581,10 @@ function setupUI() {
         btnNextChapterBottom.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-    if (DEBUG_MODE) console.log('➡️ [NEXT-BOTTOM] Going to next chapter');
+    if (DEBUG_MODE) dLog('➡️ [NEXT-BOTTOM] Going to next chapter');
             navigateChapter('next');
         }, { passive: false });
-    if (DEBUG_MODE) console.log('✅ [NEXT-BOTTOM] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [NEXT-BOTTOM] Button handler attached');
     }
 
     // ✅ Setup scroll detection untuk navbar-top (bottom navbar selalu visible)
@@ -616,7 +624,7 @@ function setupUI() {
         lastScrollPosition = currentScrollPosition;
     }, { passive: true });
     
-    if (DEBUG_MODE) console.log('✅ [SCROLL] Scroll detection setup');
+    if (DEBUG_MODE) dLog('✅ [SCROLL] Scroll detection setup');
     
     updateNavigationButtons();
     
@@ -648,7 +656,7 @@ function adjustTitleFontSize(element) {
         const maxHeight = initialFontSize * lineHeight * maxLines;
         
         if (scrollHeight <= maxHeight) {
-            if (DEBUG_MODE) console.log(`📏 Title fits: ${initialFontSize}px`);
+            if (DEBUG_MODE) dLog(`📏 Title fits: ${initialFontSize}px`);
             return;
         }
         
@@ -657,7 +665,7 @@ function adjustTitleFontSize(element) {
         
         requestAnimationFrame(() => {
             element.style.fontSize = `${newFontSize}px`;
-            if (DEBUG_MODE) console.log(`📏 Title font adjusted: ${initialFontSize}px → ${newFontSize}px`);
+            if (DEBUG_MODE) dLog(`📏 Title font adjusted: ${initialFontSize}px → ${newFontSize}px`);
         });
     });
 }
@@ -672,7 +680,7 @@ async function loadChapterPages() {
         const repoName = mangaData.manga.repoUrl.split('/')[4];
         
         // Call Worker untuk decrypt manifest
-        if (DEBUG_MODE) console.log(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
+        if (DEBUG_MODE) dLog(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
         
         const workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
             method: 'POST',
@@ -701,8 +709,8 @@ async function loadChapterPages() {
         // ✅ Log expiry info (only in debug mode)
         if (DEBUG_MODE) {
             const expiresIn = workerData.expiresIn;
-    if (DEBUG_MODE) console.log(`📊 Total pages: ${totalPages}`);
-    if (DEBUG_MODE) console.log(`⏰ Token expires in ${Math.floor(expiresIn / 60)} minutes`);
+    if (DEBUG_MODE) dLog(`📊 Total pages: ${totalPages}`);
+    if (DEBUG_MODE) dLog(`⏰ Token expires in ${Math.floor(expiresIn / 60)} minutes`);
         }
         
         // Clear dan reset container
@@ -720,7 +728,7 @@ async function loadChapterPages() {
             
             // ❌ NO LOG in production
             if (DEBUG_MODE) {
-    if (DEBUG_MODE) console.log(`🖼️ Page ${pageNum}: ${signedUrl.substring(0, 80)}...`);
+    if (DEBUG_MODE) dLog(`🖼️ Page ${pageNum}: ${signedUrl.substring(0, 80)}...`);
             }
             
             const img = document.createElement('img');
@@ -737,7 +745,7 @@ async function loadChapterPages() {
             img.setAttribute('data-page', pageNum);
             
             img.onload = () => {
-                if (DEBUG_MODE) console.log(`✅ Page ${pageNum} loaded successfully`);
+                if (DEBUG_MODE) dLog(`✅ Page ${pageNum} loaded successfully`);
             };
             
             img.onerror = () => {
@@ -765,6 +773,18 @@ async function loadChapterPages() {
         setupPageTracking();
         renderPageThumbnails(signedPages);
         updateProgressBar();
+        
+        // Initialize Rating & Comments
+        const urlParams = new URLSearchParams(window.location.search);
+        const repo = urlParams.get('repo');
+        const chapter = urlParams.get('chapter');
+        
+        if (repo && chapter && typeof RatingCommentsHandler !== 'undefined') {
+            const ratingCommentsHandler = new RatingCommentsHandler();
+            ratingCommentsHandler.init(repo, chapter).catch(err => {
+                console.error('[RATING-COMMENTS] Init failed:', err);
+            });
+        }
         
         // Scroll ke saved page jika ada
         const savedPage = loadLastPage();
@@ -805,7 +825,7 @@ function renderPagesFromCache(signedPages) {
         img.setAttribute('data-page', pageNum);
         
         img.onload = () => {
-    if (DEBUG_MODE) console.log(`✅ Page ${pageNum} loaded successfully`);
+    if (DEBUG_MODE) dLog(`✅ Page ${pageNum} loaded successfully`);
         };
         
         img.onerror = () => {
@@ -925,7 +945,7 @@ function renderPageThumbnails(pageUrls) {
         pageThumbnails.appendChild(thumbItem);
     });
     
-	if (DEBUG_MODE) console.log(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);}
+	if (DEBUG_MODE) dLog(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);}
 
 function updatePageNavigation() {
     document.querySelectorAll('.page-thumb-item').forEach((thumb, index) => {
@@ -1037,7 +1057,7 @@ async function updateNavigationButtons() {
         btnNextChapterTop.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-    if (DEBUG_MODE) console.log('➡️ [NEXT-TOP] Going to next chapter');
+    if (DEBUG_MODE) dLog('➡️ [NEXT-TOP] Going to next chapter');
             navigateChapter('next');
         };
         
@@ -1047,7 +1067,7 @@ async function updateNavigationButtons() {
             btnNextChapterBottom.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-    if (DEBUG_MODE) console.log('➡️ [NEXT-BOTTOM] Going to next chapter');
+    if (DEBUG_MODE) dLog('➡️ [NEXT-BOTTOM] Going to next chapter');
                 navigateChapter('next');
             };
         }
@@ -1100,7 +1120,7 @@ async function openChapterListModal() {
     const modal = document.getElementById('modalOverlay');
     const modalBody = document.getElementById('chapterListModal');
     
-    if (DEBUG_MODE) console.log('📋 Opening chapter list modal...');
+    if (DEBUG_MODE) dLog('📋 Opening chapter list modal...');
     
     if (!modal || !modalBody) {
     if (DEBUG_MODE) console.error('❌ Modal elements not found!');
@@ -1211,7 +1231,7 @@ const badges = (endBadge || hiatusBadge)
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
     
-    if (DEBUG_MODE) console.log('✅ Chapter list modal opened');}
+    if (DEBUG_MODE) dLog('✅ Chapter list modal opened');}
 
 /**
  * Close chapter list modal - FIXED
@@ -1219,7 +1239,7 @@ const badges = (endBadge || hiatusBadge)
 function closeChapterListModal() {
     const modal = document.getElementById('modalOverlay');
     
-    if (DEBUG_MODE) console.log('❌ Closing chapter list modal...');
+    if (DEBUG_MODE) dLog('❌ Closing chapter list modal...');
     
     modal.classList.remove('active');
     
@@ -1229,7 +1249,7 @@ function closeChapterListModal() {
         document.body.style.overflow = '';
     }, 300);
     
-    if (DEBUG_MODE) console.log('✅ Chapter list modal closed');
+    if (DEBUG_MODE) dLog('✅ Chapter list modal closed');
 }
 
 async function trackChapterView() {
@@ -1238,17 +1258,17 @@ async function trackChapterView() {
         const hasViewed = sessionStorage.getItem(viewKey);
         
         if (hasViewed) {
-            if (DEBUG_MODE) console.log('👁️ Already counted in this session');
+            if (DEBUG_MODE) dLog('👁️ Already counted in this session');
             return;
         }
         
-        if (DEBUG_MODE) console.log('📤 Tracking chapter view...');
+        if (DEBUG_MODE) dLog('📤 Tracking chapter view...');
         
         const githubRepo = window.currentGithubRepo || repoParam;
         
-        if (DEBUG_MODE) console.log(`   URL param: ${repoParam}`);
-        if (DEBUG_MODE) console.log(`   GitHub repo: ${githubRepo}`);
-        if (DEBUG_MODE) console.log(`   Chapter: ${currentChapterFolder}`);
+        if (DEBUG_MODE) dLog(`   URL param: ${repoParam}`);
+        if (DEBUG_MODE) dLog(`   GitHub repo: ${githubRepo}`);
+        if (DEBUG_MODE) dLog(`   Chapter: ${currentChapterFolder}`);
         
         await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
@@ -1266,7 +1286,7 @@ async function trackChapterView() {
         
         sessionStorage.setItem(viewKey, 'true');
         
-        if (DEBUG_MODE) console.log('✅ Chapter view tracked successfully (WIB)');
+        if (DEBUG_MODE) dLog('✅ Chapter view tracked successfully (WIB)');
         
     } catch (error) {
     if (DEBUG_MODE) console.error('❌ Error tracking chapter view:', error);
@@ -1286,7 +1306,7 @@ async function trackReadingHistory() {
         
         // ✅ If not logged in, skip tracking
         if (!token) {
-            if (DEBUG_MODE) console.log('⏭️ [HISTORY] Not logged in - skipping');
+            if (DEBUG_MODE) dLog('⏭️ [HISTORY] Not logged in - skipping');
             return;
         }
         
@@ -1295,11 +1315,11 @@ async function trackReadingHistory() {
         const alreadyTracked = sessionStorage.getItem(historyKey);
         
         if (alreadyTracked) {
-            if (DEBUG_MODE) console.log('⏭️ [HISTORY] Already tracked in this session');
+            if (DEBUG_MODE) dLog('⏭️ [HISTORY] Already tracked in this session');
             return;
         }
         
-        if (DEBUG_MODE) console.log('📖 [HISTORY] Tracking reading history...');
+        if (DEBUG_MODE) dLog('📖 [HISTORY] Tracking reading history...');
         
         // ✅ Get manga title
         const mangaTitle = mangaData?.manga?.title || 'Unknown';
@@ -1311,9 +1331,9 @@ async function trackReadingHistory() {
         const chapterBase = parseFloat(chapterNumber) || 1;
         
         if (DEBUG_MODE) {
-    if (DEBUG_MODE) console.log('   Manga:', mangaTitle);
-    if (DEBUG_MODE) console.log('   Chapter ID:', currentChapterFolder);
-    if (DEBUG_MODE) console.log('   Chapter Base:', chapterBase);
+    if (DEBUG_MODE) dLog('   Manga:', mangaTitle);
+    if (DEBUG_MODE) dLog('   Chapter ID:', currentChapterFolder);
+    if (DEBUG_MODE) dLog('   Chapter Base:', chapterBase);
         }
         
         const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
@@ -1337,7 +1357,7 @@ async function trackReadingHistory() {
         if (data.success) {
             // ✅ Mark as tracked in this session
             sessionStorage.setItem(historyKey, 'true');
-            if (DEBUG_MODE) console.log('✅ [HISTORY] Reading history tracked successfully');
+            if (DEBUG_MODE) dLog('✅ [HISTORY] Reading history tracked successfully');
         } else {
     if (DEBUG_MODE) console.error('❌ [HISTORY] Failed to track:', data.error);
         }
@@ -1351,7 +1371,7 @@ function showLoading() {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
         overlay.classList.add('active');
-        if (DEBUG_MODE) console.log('📄 Loading overlay shown');
+        if (DEBUG_MODE) dLog('📄 Loading overlay shown');
     }
 }
 
@@ -1362,13 +1382,13 @@ function hideLoading() {
         overlay.style.display = 'none';
         overlay.style.opacity = '0';
         overlay.style.visibility = 'hidden';
-        if (DEBUG_MODE) console.log('✅ Loading overlay hidden');
+        if (DEBUG_MODE) dLog('✅ Loading overlay hidden');
     }
 }
 
 function initProtection() {
     if (DEBUG_MODE) {
-    if (DEBUG_MODE) console.log('🔓 Debug mode enabled - protection disabled');  // ← Tidak perlu if lagi
+    if (DEBUG_MODE) dLog('🔓 Debug mode enabled - protection disabled');  // ← Tidak perlu if lagi
         return;
     }
     
@@ -1571,3 +1591,23 @@ scrollToTopBtn.addEventListener('click', () => {
         behavior: 'smooth'
     });
 });
+
+// ============================================
+// GLOBAL LOGIN BUTTON - REDIRECT TO INFO-MANGA
+// ============================================
+
+function initGlobalLoginButton() {
+    const btnGlobalLogin = document.getElementById('btnGlobalLogin');
+    if (btnGlobalLogin) {
+        btnGlobalLogin.addEventListener('click', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const repo = urlParams.get('repo');
+            if (repo) {
+                window.location.href = `info-manga.html?repo=${repo}`;
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+    }
+}
+

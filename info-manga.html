@@ -195,6 +195,34 @@
         <h1 id="mainTitle" class="main-title">Loading...</h1>
         <p id="subtitle" class="subtitle"></p>
 
+        <!-- Rating Section (Simple) -->
+        <div class="manga-rating-box">
+          <span class="label-text">RATING MANGA:</span>
+          <span class="rating-value-compact">
+            <span id="mangaRatingScore">8.0</span>
+            <span class="rating-star-compact">★</span>
+            <span class="rating-count-compact">(<span id="mangaRatingCount">0</span> rating)</span>
+          </span>
+        </div>
+
+        <!-- Rating Input (for logged-in users who haven't rated) -->
+        <div class="rating-input-compact" id="mangaRatingInput" style="display: none;">
+          <p class="rating-instruction-compact">Berikan rating Anda:</p>
+          <div class="rating-stars-input-compact">
+            <span class="star-input-compact" data-value="1">☆</span>
+            <span class="star-input-compact" data-value="2">☆</span>
+            <span class="star-input-compact" data-value="3">☆</span>
+            <span class="star-input-compact" data-value="4">☆</span>
+            <span class="star-input-compact" data-value="5">☆</span>
+            <span class="star-input-compact" data-value="6">☆</span>
+            <span class="star-input-compact" data-value="7">☆</span>
+            <span class="star-input-compact" data-value="8">☆</span>
+            <span class="star-input-compact" data-value="9">☆</span>
+            <span class="star-input-compact" data-value="10">☆</span>
+          </div>
+          <button class="btn-submit-rating-compact" id="btnSubmitMangaRating">Kirim Rating</button>
+        </div>
+
         <!-- Author & Artist -->
         <div class="author-artist-container">
           <div class="author-box">
@@ -288,9 +316,39 @@
 
     <!-- Comment Container -->
     <div class="comment-container">
-      <h2 class="comment-heading">Komentar</h2>
-      <div class="comment-placeholder">
-        <p>Akan Segera Dibuat</p>
+      <div class="comment-header-section">
+        <h2 class="comment-heading">Komentar</h2>
+        
+        <!-- Login Button (shown when not logged in) -->
+        <button class="btn-login-comment" id="btnLoginComment">
+          <svg class="login-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          Login untuk Berkomentar
+        </button>
+      </div>
+
+      <!-- Comment Input Section (for logged-in users) -->
+      <div class="comment-input-section" id="commentInputSection" style="display: none;">
+        <textarea 
+          class="comment-textarea" 
+          id="commentTextarea" 
+          placeholder="Tulis komentar Anda... (max 500 karakter)"
+          maxlength="500"></textarea>
+        <div class="comment-input-footer">
+          <span class="comment-char-count">
+            <span id="commentCharCount">0</span>/500
+          </span>
+          <button class="btn-submit-comment" id="btnSubmitComment">Kirim Komentar</button>
+        </div>
+      </div>
+
+      <!-- Comments List -->
+      <div class="comments-list" id="commentsList">
+        <div class="comment-placeholder">
+          <p>Belum ada komentar. Jadilah yang pertama!</p>
+        </div>
       </div>
     </div>
   </main>
@@ -339,32 +397,27 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
             // ✅ STEP 1: Unregister old SW with query string
-            console.log('🔍 Checking for old SW...');
+            // Silent operation - no console logs
             const regs = await navigator.serviceWorker.getRegistrations();
             
             for (const reg of regs) {
                 // If SW has query string in URL, unregister it
                 if (reg.active && reg.active.scriptURL.includes('?v=')) {
-                    console.log('🗑️ Unregistering old SW with query string:', reg.active.scriptURL);
                     await reg.unregister();
                     
                     // ✅ Clear all caches after unregistering
                     if ('caches' in window) {
                         const cacheNames = await caches.keys();
                         await Promise.all(cacheNames.map(name => caches.delete(name)));
-                        console.log('🗑️ All caches cleared');
                     }
                 }
             }
             
             // ✅ STEP 2: Register new SW (NO query string)
-            console.log('📝 Registering new SW...');
             const registration = await navigator.serviceWorker.register('./sw.js', {
                 updateViaCache: 'none',
                 scope: './'
             });
-            
-            console.log('✅ SW registered:', registration.scope);
             
             // ✅ STEP 3: Check for updates immediately
             registration.update();
@@ -372,11 +425,9 @@ if ('serviceWorker' in navigator) {
             // ✅ STEP 4: Listen for updates
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
-                console.log('🔄 New SW installing...');
                 
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        console.log('✅ New SW installed, reload recommended');
                         
                         // Optional: Show update notification
                         // You can uncomment this to notify users
@@ -400,30 +451,8 @@ if ('serviceWorker' in navigator) {
             });
             
         } catch (err) {
+            // Silent error handling - only show critical errors
             console.error('❌ SW registration failed:', err);
-            
-            // ✅ If registration fails, try to clear everything and retry once
-            if (err.name === 'SecurityError') {
-                console.warn('⚠️ SW blocked by security policy (HTTPS required)');
-            } else {
-                console.log('🔄 Attempting to recover...');
-                
-                try {
-                    // Unregister all
-                    const allRegs = await navigator.serviceWorker.getRegistrations();
-                    await Promise.all(allRegs.map(reg => reg.unregister()));
-                    
-                    // Clear all caches
-                    if ('caches' in window) {
-                        const cacheNames = await caches.keys();
-                        await Promise.all(cacheNames.map(name => caches.delete(name)));
-                    }
-                    
-                    console.log('🗑️ Cleanup completed, please refresh page');
-                } catch (cleanupErr) {
-                    console.error('❌ Cleanup failed:', cleanupErr);
-                }
-            }
         }
     });
 }

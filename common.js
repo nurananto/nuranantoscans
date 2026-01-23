@@ -320,9 +320,9 @@ async function checkIsDonatur() {
     } catch (error) {
         // ✅ Handle network errors gracefully
         if (error.name === 'AbortError') {
-            console.warn('Donatur status check timeout - using cached status');
+            dWarn('Donatur status check timeout - using cached status');
         } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            console.warn('Network error - using cached donatur status from localStorage');
+            dWarn('Network error - using cached donatur status from localStorage');
         } else {
             console.error('Donatur check error:', error);
         }

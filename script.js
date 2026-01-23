@@ -6,27 +6,27 @@
 // ✅ TEST FUNCTION: Test manga type reading
 // Usage: testMangaType('Waka-chan') or testMangaType('waka-chan')
 async function testMangaType(repoName) {
-  console.log(`🧪 Testing manga type for repo: ${repoName}`);
+  dLog(`🧪 Testing manga type for repo: ${repoName}`);
   
   try {
     const mangaData = await fetchMangaData(repoName);
     
-    console.log('📦 Full mangaData:', mangaData);
-    console.log('📖 mangaData.manga:', mangaData.manga);
-    console.log('🏷️ mangaData.manga.type:', mangaData.manga?.type || 'NOT SET');
+    dLog('📦 Full mangaData:', mangaData);
+    dLog('📖 mangaData.manga:', mangaData.manga);
+    dLog('🏷️ mangaData.manga.type:', mangaData.manga?.type || 'NOT SET');
     
     const mangaType = (mangaData.manga && mangaData.manga.type) ? mangaData.manga.type : 'manga';
     const isWebtoon = mangaType.toLowerCase() === 'webtoon';
     
-    console.log(`✅ Detected Type: ${mangaType}`);
-    console.log(`✅ Is Webtoon: ${isWebtoon}`);
-    console.log(`✅ Badge Text: ${isWebtoon ? 'Berwarna' : 'Hitam Putih'}`);
-    console.log(`✅ Badge Class: ${isWebtoon ? 'type-badge-webtoon' : 'type-badge-manga'}`);
+    dLog(`✅ Detected Type: ${mangaType}`);
+    dLog(`✅ Is Webtoon: ${isWebtoon}`);
+    dLog(`✅ Badge Text: ${isWebtoon ? 'Berwarna' : 'Hitam Putih'}`);
+    dLog(`✅ Badge Class: ${isWebtoon ? 'type-badge-webtoon' : 'type-badge-manga'}`);
     
     // Find manga in config
     const manga = mangaList.find(m => m.repo === repoName || m.id === repoName.toLowerCase().replace(/\s+/g, '-'));
     if (manga) {
-      console.log(`📚 Manga Config:`, manga);
+      dLog(`📚 Manga Config:`, manga);
     }
     
     return {
@@ -1567,9 +1567,9 @@ const codeModal = document.getElementById('codeModal');
     } catch (error) {
         // ✅ Handle network errors gracefully - use localStorage as fallback
         if (error.name === 'AbortError') {
-            console.warn('Donatur status check timeout - using cached status');
+            dWarn('Donatur status check timeout - using cached status');
         } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            console.warn('Network error - using cached donatur status from localStorage');
+            dWarn('Network error - using cached donatur status from localStorage');
         } else {
             console.error('Donatur check error:', error);
         }
@@ -2117,7 +2117,7 @@ function formatRelativeTime(isoString) {
   
   // ✅ Validate date
   if (isNaN(date.getTime())) {
-    console.warn('Invalid date format:', isoString);
+    dWarn('Invalid date format:', isoString);
     return 'Tidak diketahui';
   }
   

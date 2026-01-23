@@ -386,24 +386,24 @@ function getMangaJsonUrl() {
     dLog(`📚 Loading manga: ${repoParam}`);
     
     // ✅ Set early title from MANGA_LIST if available
-    console.log('🔍 [TITLE DEBUG] Checking MANGA_LIST...');
-    console.log('🔍 [TITLE DEBUG] MANGA_LIST defined?', typeof MANGA_LIST !== 'undefined');
+    dLog('🔍 [TITLE DEBUG] Checking MANGA_LIST...');
+    dLog('🔍 [TITLE DEBUG] MANGA_LIST defined?', typeof MANGA_LIST !== 'undefined');
     
     if (typeof MANGA_LIST !== 'undefined') {
-        console.log('🔍 [TITLE DEBUG] MANGA_LIST length:', MANGA_LIST.length);
-        console.log('🔍 [TITLE DEBUG] Looking for repo:', repoParam);
+        dLog('🔍 [TITLE DEBUG] MANGA_LIST length:', MANGA_LIST.length);
+        dLog('🔍 [TITLE DEBUG] Looking for repo:', repoParam);
         
         // ✅ Try to find by id first (URL param usually uses id), then by repo field
         const mangaInfo = MANGA_LIST.find(m => m.id === repoParam || m.repo === repoParam);
-        console.log('🔍 [TITLE DEBUG] Found manga info?', mangaInfo);
+        dLog('🔍 [TITLE DEBUG] Found manga info?', mangaInfo);
         
         if (mangaInfo && mangaInfo.title) {
-            console.log('🔍 [TITLE DEBUG] Setting title to:', mangaInfo.title);
+            dLog('🔍 [TITLE DEBUG] Setting title to:', mangaInfo.title);
             document.title = `${mangaInfo.title} - Info`;
-            console.log('✅ [TITLE DEBUG] Title updated! Current title:', document.title);
+            dLog('✅ [TITLE DEBUG] Title updated! Current title:', document.title);
             dLog(`✅ Early title set: ${mangaInfo.title}`);
         } else {
-            console.warn('⚠️ [TITLE DEBUG] No manga info or title found!');
+            dWarn('⚠️ [TITLE DEBUG] No manga info or title found!');
         }
     } else {
         console.error('❌ [TITLE DEBUG] MANGA_LIST is undefined!');
@@ -420,10 +420,10 @@ function getMangaJsonUrl() {
 }
 
 async function loadMangaFromRepo() {
-    console.log('🚀 [TITLE DEBUG] loadMangaFromRepo() started');
+    dLog('🚀 [TITLE DEBUG] loadMangaFromRepo() started');
     try {
         const mangaJsonUrl = getMangaJsonUrl();
-        console.log('🔍 [TITLE DEBUG] mangaJsonUrl:', mangaJsonUrl);
+        dLog('🔍 [TITLE DEBUG] mangaJsonUrl:', mangaJsonUrl);
         if (!mangaJsonUrl) {
             console.error('❌ [TITLE DEBUG] No manga JSON URL!');
             return;
@@ -542,11 +542,11 @@ function updateStatusBadge(elementId, status) {
  * Update last update info based on latest chapter
  */
 function updateLastUpdate(elementId, chapters) {
-    console.log('🕐 updateLastUpdate called with:', { elementId, chapters });
+    dLog('🕐 updateLastUpdate called with:', { elementId, chapters });
     
     const element = document.getElementById(elementId);
     if (!element || !chapters) {
-        console.warn('⚠️ Element or chapters missing:', { element: !!element, chapters: !!chapters });
+        dWarn('⚠️ Element or chapters missing:', { element: !!element, chapters: !!chapters });
         if (element) element.textContent = 'Last Update: -';
         return;
     }
@@ -554,10 +554,10 @@ function updateLastUpdate(elementId, chapters) {
     try {
         // Convert chapters object to array
         const chaptersArray = Object.values(chapters);
-        console.log('📦 Chapters array:', chaptersArray);
+        dLog('📦 Chapters array:', chaptersArray);
         
         if (chaptersArray.length === 0) {
-            console.warn('⚠️ No chapters found');
+            dWarn('⚠️ No chapters found');
             element.textContent = 'Last Update: -';
             return;
         }
@@ -573,14 +573,14 @@ function updateLastUpdate(elementId, chapters) {
             return getSort(b.folder) - getSort(a.folder);
         });
         
-        console.log('📋 Sorted chapters:', chaptersArray.slice(0, 3));
+        dLog('📋 Sorted chapters:', chaptersArray.slice(0, 3));
         
         // Get latest chapter (first after sorting)
         const latestChapter = chaptersArray[0];
-        console.log('🔝 Latest chapter:', latestChapter);
+        dLog('🔝 Latest chapter:', latestChapter);
         
         if (latestChapter.uploadDate) {
-            console.log('✅ uploadDate found:', latestChapter.uploadDate);
+            dLog('✅ uploadDate found:', latestChapter.uploadDate);
             
             // Parse ISO date and format to "DD MMM YYYY"
             const date = new Date(latestChapter.uploadDate);
@@ -590,14 +590,14 @@ function updateLastUpdate(elementId, chapters) {
             const year = date.getFullYear();
             
             const formattedDate = `${day} ${month} ${year}`;
-            console.log('📅 Formatted date:', formattedDate);
+            dLog('📅 Formatted date:', formattedDate);
             
             element.textContent = `Last Update: ${formattedDate}`;
         } else if (latestChapter.date) {
-            console.log('✅ date property found:', latestChapter.date);
+            dLog('✅ date property found:', latestChapter.date);
             element.textContent = `Last Update: ${latestChapter.date}`;
         } else {
-            console.warn('⚠️ No date or uploadDate property found in latest chapter');
+            dWarn('⚠️ No date or uploadDate property found in latest chapter');
             element.textContent = 'Last Update: -';
         }
     } catch (error) {
@@ -625,18 +625,18 @@ function displayMangaInfo() {
     updateLastUpdate('lastUpdateDesktop', mangaData.chapters);
     
     // Update Title - Desktop
-    console.log('🔍 [TITLE DEBUG] displayMangaInfo() called');
+    dLog('🔍 [TITLE DEBUG] displayMangaInfo() called');
     const mainTitle = document.getElementById('mainTitle');
     const subtitle = document.getElementById('subtitle');
     
-    console.log('🔍 [TITLE DEBUG] mainTitle element:', mainTitle);
-    console.log('🔍 [TITLE DEBUG] Current mainTitle text:', mainTitle?.textContent);
-    console.log('🔍 [TITLE DEBUG] Setting mainTitle to:', manga.title);
+    dLog('🔍 [TITLE DEBUG] mainTitle element:', mainTitle);
+    dLog('🔍 [TITLE DEBUG] Current mainTitle text:', mainTitle?.textContent);
+    dLog('🔍 [TITLE DEBUG] Setting mainTitle to:', manga.title);
     
     mainTitle.textContent = manga.title;
     subtitle.textContent = manga.alternativeTitle || '';
     
-    console.log('✅ [TITLE DEBUG] mainTitle updated! New text:', mainTitle.textContent);
+    dLog('✅ [TITLE DEBUG] mainTitle updated! New text:', mainTitle.textContent);
     
     // Add class untuk judul panjang
     adjustTitleSize(mainTitle, manga.title);
@@ -1074,16 +1074,119 @@ function createChapterElement(chapter, allChapters) {
         chapterInfoDiv.appendChild(uploadDateDiv);
     }
     
-    const viewsDiv = document.createElement('div');
-    viewsDiv.className = 'chapter-views';
+    // ✅ STATS: Rating, Comment Count, Views
+    const statsDiv = document.createElement('div');
+    statsDiv.className = 'chapter-stats';
+    
+    // Rating (will be loaded async)
+    const ratingSpan = document.createElement('span');
+    ratingSpan.className = 'chapter-stat-item chapter-rating';
+    ratingSpan.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color: #ffd700;">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        <span class="rating-value">-</span>
+    `;
+    statsDiv.appendChild(ratingSpan);
+    
+    // Comment Count (will be loaded async)
+    const commentSpan = document.createElement('span');
+    commentSpan.className = 'chapter-stat-item chapter-comments';
+    commentSpan.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #888;">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <span class="comment-value">-</span>
+    `;
+    statsDiv.appendChild(commentSpan);
+    
+    // Views
     const viewsSpan = document.createElement('span');
-    viewsSpan.textContent = `👁️ ${chapter.views || 0}`; // ✅ XSS Protection: textContent untuk data dinamis
-    viewsDiv.appendChild(viewsSpan);
+    viewsSpan.className = 'chapter-stat-item chapter-views';
+    viewsSpan.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #888;">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span class="view-value">${chapter.views || 0}</span>
+    `;
+    statsDiv.appendChild(viewsSpan);
     
     div.appendChild(chapterInfoDiv);
-    div.appendChild(viewsDiv);
+    div.appendChild(statsDiv);
+    
+    // Load rating and comment count asynchronously
+    loadChapterStats(chapter, ratingSpan, commentSpan);
     
     return div;
+}
+
+/**
+ * Load chapter rating and comment count from API
+ */
+async function loadChapterStats(chapter, ratingEl, commentEl) {
+    // Try to get mangaId from multiple sources
+    let mangaId = mangaData?.manga?.id;
+    
+    // Fallback: get from URL parameter
+    if (!mangaId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        mangaId = urlParams.get('repo')?.toLowerCase();
+    }
+    
+    dLog('[CHAPTER-STATS] Loading stats for chapter:', chapter.folder, 'mangaId:', mangaId);
+    
+    if (!mangaId) {
+        dWarn('[CHAPTER-STATS] mangaId not found, skipping stats load');
+        return;
+    }
+    
+    const chapterId = `${mangaId}-${chapter.folder}`;
+    dLog('[CHAPTER-STATS] chapterId:', chapterId);
+    
+    try {
+        // Fetch rating and comments in parallel
+        // For ratings: backend needs /ratings/chapter/:mangaId/:chapterId (2 path segments)
+        // For comments: backend needs ?mangaId=xxx&chapterId=yyy (2 query params)
+        const [ratingRes, commentsRes] = await Promise.all([
+            fetch(`https://manga-auth-worker.nuranantoadhien.workers.dev/ratings/chapter/${mangaId}/${chapter.folder}`),
+            fetch(`https://manga-auth-worker.nuranantoadhien.workers.dev/comments?mangaId=${mangaId}&chapterId=${chapter.folder}`)
+        ]);
+        
+        const ratingData = await ratingRes.json();
+        const commentsData = await commentsRes.json();
+        
+        dLog(`[CHAPTER-STATS] ${chapter.folder}:`, { rating: ratingData, comments: commentsData });
+        
+        // Update rating - always show, default 8.0 if no ratings yet
+        const ratingValue = ratingEl.querySelector('.rating-value');
+        if (ratingValue) {
+            if (ratingData.success) {
+                // Use bayesianAverage if has ratings, otherwise default 8.0
+                const rating = ratingData.totalRatings > 0 ? ratingData.bayesianAverage : 8.0;
+                ratingValue.textContent = rating.toFixed(1);
+            } else {
+                ratingValue.textContent = '8.0'; // Default if API fails
+            }
+        }
+        
+        // Update comment count - always show including 0
+        const commentValue = commentEl.querySelector('.comment-value');
+        if (commentValue) {
+            if (commentsData.success) {
+                commentValue.textContent = commentsData.total || 0;
+            } else {
+                commentValue.textContent = '0'; // Default if API fails
+            }
+        }
+    } catch (error) {
+        console.error('[CHAPTER-STATS] Error loading stats for', chapter.folder, ':', error);
+        // Set defaults on error
+        const ratingValue = ratingEl.querySelector('.rating-value');
+        const commentValue = commentEl.querySelector('.comment-value');
+        if (ratingValue) ratingValue.textContent = '8.0';
+        if (commentValue) commentValue.textContent = '0';
+    }
 }
 
 /**
@@ -1335,8 +1438,9 @@ async function fetchMangaDexRating() {
             if (cacheAge < CACHE_DURATION) {
                 dLog(`📦 MangaDex rating from cache: ${cachedRating} (${cacheAgeHours}h old)`);
                 
-                document.getElementById('ratingScore').textContent = cachedRating;
-                document.getElementById('ratingScoreMobile').textContent = cachedRating;
+                // Elements removed - rating now handled by InfoMangaRatingComments
+                // document.getElementById('ratingScore')?.textContent = cachedRating;
+                // document.getElementById('ratingScoreMobile')?.textContent = cachedRating;
                 
                 return;
             } else {
@@ -1368,8 +1472,9 @@ async function fetchMangaDexRating() {
             localStorage.setItem(`rating_${mangaId}`, roundedRating);
             localStorage.setItem(`rating_time_${mangaId}`, Date.now());
             
-            document.getElementById('ratingScore').textContent = roundedRating;
-            document.getElementById('ratingScoreMobile').textContent = roundedRating;
+            // Elements removed - rating now handled by InfoMangaRatingComments
+            // document.getElementById('ratingScore')?.textContent = roundedRating;
+            // document.getElementById('ratingScoreMobile')?.textContent = roundedRating;
             
             dLog(`⭐ Rating MangaDex: ${roundedRating}/10`);
         } else {
@@ -1384,14 +1489,16 @@ async function fetchMangaDexRating() {
             const cachedRating = localStorage.getItem(`rating_${mangaIdMatch[1]}`);
             if (cachedRating) {
                 dLog(`📦 Using old cache: ${cachedRating}`);
-                document.getElementById('ratingScore').textContent = cachedRating;
-                document.getElementById('ratingScoreMobile').textContent = cachedRating;
+                // Elements removed - rating now handled by InfoMangaRatingComments
+                // document.getElementById('ratingScore')?.textContent = cachedRating;
+                // document.getElementById('ratingScoreMobile')?.textContent = cachedRating;
                 return;
             }
         }
         
-        document.getElementById('ratingScore').textContent = '-';
-        document.getElementById('ratingScoreMobile').textContent = '-';
+        // Elements removed - rating now handled by InfoMangaRatingComments
+        // document.getElementById('ratingScore')?.textContent = '-';
+        // document.getElementById('ratingScoreMobile')?.textContent = '-';
     }
 }
 
@@ -1437,18 +1544,18 @@ function setupReadFirstButton() {
     }
     
     function handleReadFirstClick(e) {
-        console.log('🖱️ Button clicked!', e);
+        dLog('🖱️ Button clicked!', e);
         
         const firstChapter = getFirstUnlockedChapter();
         
         if (!firstChapter) {
-            console.log('⚠️ No unlocked chapters found');
+            dLog('⚠️ No unlocked chapters found');
             alert('Tidak ada chapter yang tersedia. Semua chapter terkunci.');
             openTrakteer();
             return;
         }
         
-        console.log('🎬 Opening first chapter:', firstChapter.folder);
+        dLog('🎬 Opening first chapter:', firstChapter.folder);
         openChapter(firstChapter);
     }
     
@@ -1456,8 +1563,8 @@ function setupReadFirstButton() {
     btnStartReading.addEventListener('click', handleReadFirstClick);
     
     // Test if button is clickable
-    console.log('🔍 Button styles:', window.getComputedStyle(btnStartReading).pointerEvents);
-    console.log('🔍 Button disabled:', btnStartReading.disabled);
+    dLog('🔍 Button styles:', window.getComputedStyle(btnStartReading).pointerEvents);
+    dLog('🔍 Button disabled:', btnStartReading.disabled);
     
     dLog('✅ Start Reading button initialized with event listener');
 }
@@ -3505,3 +3612,484 @@ setTimeout(() => {
         hamburgerMenuInitialized = initHamburgerMenu();
     }
 }, 500);
+
+// ============================================
+// RATING & COMMENTS HANDLER FOR INFO-MANGA
+// ============================================
+
+class InfoMangaRatingComments {
+    constructor() {
+        this.mangaId = null;
+        this.isLoggedIn = false;
+        this.selectedRating = 0;
+        this.API_BASE = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+    }
+
+    async init(mangaId) {
+        this.mangaId = mangaId;
+        dLog('[INFO-RATING] Initializing for manga:', mangaId);
+        
+        // Setup event listeners FIRST
+        this.setupEventListeners();
+        
+        // Check login status
+        await this.checkLoginStatus();
+        
+        // Load data
+        await this.loadMangaRating();
+        await this.loadComments();
+    }
+
+    async checkLoginStatus() {
+        const token = localStorage.getItem('authToken');
+        dLog('[INFO-RATING] Checking login status, token exists:', !!token);
+        
+        if (!token) {
+            this.isLoggedIn = false;
+            this.showLoginButton();
+            dLog('[INFO-RATING] No token, showing login button');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.API_BASE}/donatur/status`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            dLog('[INFO-RATING] Status check response:', response.status);
+
+            if (response.ok) {
+                const data = await response.json();
+                this.isLoggedIn = true;
+                this.showRatingInput();
+                this.showCommentInput();
+                dLog('[INFO-RATING] User is logged in, showing inputs');
+            } else {
+                this.isLoggedIn = false;
+                this.showLoginButton();
+                dLog('[INFO-RATING] Token invalid, showing login button');
+            }
+        } catch (error) {
+            console.error('[INFO-RATING] Login check error:', error);
+            this.isLoggedIn = false;
+            this.showLoginButton();
+        }
+    }
+
+    showLoginButton() {
+        const btnLogin = document.getElementById('btnLoginComment');
+        const inputSection = document.getElementById('commentInputSection');
+        const ratingInput = document.getElementById('mangaRatingInput');
+        
+        if (btnLogin) {
+            btnLogin.style.display = 'flex';
+            dLog('[INFO-RATING] Login button shown');
+        }
+        if (inputSection) inputSection.style.display = 'none';
+        if (ratingInput) ratingInput.style.display = 'none';
+    }
+
+    showRatingInput() {
+        const ratingInput = document.getElementById('mangaRatingInput');
+        if (ratingInput) {
+            ratingInput.style.display = 'block';
+            dLog('[INFO-RATING] Rating input shown');
+        }
+    }
+
+    showCommentInput() {
+        const btnLogin = document.getElementById('btnLoginComment');
+        const inputSection = document.getElementById('commentInputSection');
+        
+        if (btnLogin) {
+            btnLogin.style.display = 'none';
+            dLog('[INFO-RATING] Login button hidden');
+        }
+        if (inputSection) {
+            inputSection.style.display = 'block';
+            dLog('[INFO-RATING] Comment input shown');
+        }
+    }
+
+    async loadMangaRating() {
+        if (!this.mangaId) return;
+
+        try {
+            const token = localStorage.getItem('authToken');
+            const headers = {};
+            
+            // Include token if logged in so backend can return userRating
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            // Force fresh data with cache-busting timestamp
+            const response = await fetch(
+                `${this.API_BASE}/ratings/manga/${this.mangaId}?_t=${Date.now()}`,
+                { headers }
+            );
+            const data = await response.json();
+
+            dLog('[INFO-RATING] Raw API response:', data);
+            dLog('[INFO-RATING] bayesianAverage:', data.bayesianAverage);
+            dLog('[INFO-RATING] totalRatings:', data.totalRatings);
+            dLog('[INFO-RATING] userRating:', data.userRating);
+
+            if (data.success) {
+                // Backend returns: bayesianAverage, totalRatings, userRating
+                const ratingData = {
+                    averageRating: data.bayesianAverage || 8.0,
+                    totalRatings: data.totalRatings || 0,
+                    userRating: data.userRating // null jika belum rating, number jika sudah
+                };
+                dLog('[INFO-RATING] Parsed rating data:', ratingData);
+                this.displayMangaRating(ratingData);
+                
+                // Hide rating input if user already rated
+                if (data.userRating !== null) {
+                    const ratingInput = document.getElementById('mangaRatingInput');
+                    if (ratingInput) {
+                        ratingInput.style.display = 'none';
+                        dLog('[INFO-RATING] Rating input hidden - user already rated:', data.userRating);
+                    }
+                }
+            } else {
+                this.displayMangaRating({ averageRating: 8.0, totalRatings: 0, userRating: null });
+            }
+        } catch (error) {
+            console.error('[INFO-RATING] Load error:', error);
+            this.displayMangaRating({ averageRating: 8.0, totalRatings: 0 });
+        }
+    }
+
+    displayMangaRating(rating) {
+        const scoreEl = document.getElementById('mangaRatingScore');
+        const countEl = document.getElementById('mangaRatingCount');
+
+        const score = rating.averageRating || 8.0;
+        const count = rating.totalRatings || 0;
+
+        dLog('[INFO-RATING] Displaying rating:', score, 'Count:', count);
+        dLog('[INFO-RATING] Rating object:', rating);
+
+        if (scoreEl) {
+            scoreEl.textContent = score.toFixed(1);
+            dLog('[INFO-RATING] Score element updated to:', score.toFixed(1));
+        } else {
+            console.error('[INFO-RATING] mangaRatingScore element not found');
+        }
+        
+        if (countEl) {
+            countEl.textContent = count;
+            dLog('[INFO-RATING] Count element updated to:', count);
+        } else {
+            console.error('[INFO-RATING] mangaRatingCount element not found');
+        }
+    }
+
+    async loadComments() {
+        if (!this.mangaId) return;
+
+        try {
+            const response = await fetch(
+                `${this.API_BASE}/comments?mangaId=${this.mangaId}&limit=50&offset=0&_t=${Date.now()}`
+            );
+            const data = await response.json();
+
+            dLog('[INFO-COMMENTS] Loaded:', data);
+
+            if (data.success && data.comments && data.comments.length > 0) {
+                this.displayComments(data.comments);
+            } else {
+                this.showNoComments();
+            }
+        } catch (error) {
+            console.error('[INFO-COMMENTS] Load error:', error);
+            this.showNoComments();
+        }
+    }
+
+    displayComments(comments) {
+        const listEl = document.getElementById('commentsList');
+        if (!listEl) return;
+
+        listEl.innerHTML = comments.map(comment => this.renderComment(comment)).join('');
+    }
+
+    renderComment(comment) {
+        const token = localStorage.getItem('authToken');
+        const isOwner = this.isLoggedIn && comment.user_id === this.getUserIdFromToken(token);
+        
+        const date = new Date(comment.created_at);
+        const formattedDate = date.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `
+            <div class="comment-item" data-id="${comment.id}">
+                <div class="comment-header">
+                    <span class="comment-user">@${comment.username}</span>
+                    <span class="comment-date">${formattedDate}</span>
+                </div>
+                <div class="comment-content">${this.escapeHtml(comment.content)}</div>
+                <div class="comment-actions">
+                    ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${comment.username}">Reply</button>` : ''}
+                    ${isOwner ? `<button class="btn-delete-comment" data-id="${comment.id}">Hapus</button>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    showNoComments() {
+        const listEl = document.getElementById('commentsList');
+        if (!listEl) return;
+
+        listEl.innerHTML = `
+            <div class="comment-placeholder">
+                <p>Belum ada komentar. Jadilah yang pertama!</p>
+            </div>
+        `;
+    }
+
+    getUserIdFromToken(token) {
+        if (!token) return null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.userId;
+        } catch {
+            return null;
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    setupEventListeners() {
+        // Login button - trigger existing login modal
+        const btnLogin = document.getElementById('btnLoginComment');
+        if (btnLogin) {
+            btnLogin.addEventListener('click', () => {
+                dLog('[INFO-RATING] Login button clicked');
+                const btnOpenLogin = document.getElementById('btnOpenLogin');
+                if (btnOpenLogin) {
+                    dLog('[INFO-RATING] Triggering header login button');
+                    btnOpenLogin.click();
+                } else {
+                    console.error('[INFO-RATING] Header login button not found');
+                }
+            });
+            dLog('[INFO-RATING] Login button event listener attached');
+        } else {
+            console.error('[INFO-RATING] btnLoginComment not found');
+        }
+
+        // Rating stars
+        const stars = document.querySelectorAll('.star-input-compact');
+        stars.forEach((star, index) => {
+            star.addEventListener('click', () => {
+                this.selectedRating = index + 1;
+                this.highlightStars(this.selectedRating);
+            });
+        });
+
+        // Submit rating
+        const btnSubmitRating = document.getElementById('btnSubmitMangaRating');
+        if (btnSubmitRating) {
+            btnSubmitRating.addEventListener('click', () => this.submitRating());
+        }
+
+        // Comment textarea char count
+        const textarea = document.getElementById('commentTextarea');
+        if (textarea) {
+            textarea.addEventListener('input', (e) => {
+                const charCount = document.getElementById('commentCharCount');
+                if (charCount) charCount.textContent = e.target.value.length;
+            });
+        }
+
+        // Submit comment
+        const btnSubmitComment = document.getElementById('btnSubmitComment');
+        if (btnSubmitComment) {
+            btnSubmitComment.addEventListener('click', () => this.submitComment());
+        }
+
+        // Reply & Delete (event delegation)
+        const commentsList = document.getElementById('commentsList');
+        if (commentsList) {
+            commentsList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-reply-comment')) {
+                    const username = e.target.dataset.username;
+                    this.replyToComment(username);
+                } else if (e.target.classList.contains('btn-delete-comment')) {
+                    const commentId = e.target.dataset.id;
+                    this.deleteComment(commentId);
+                }
+            });
+        }
+    }
+
+    highlightStars(count) {
+        const stars = document.querySelectorAll('.star-input-compact');
+        stars.forEach((star, index) => {
+            if (index < count) {
+                star.textContent = '★';
+                star.classList.add('active');
+            } else {
+                star.textContent = '☆';
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    async submitRating() {
+        if (!this.isLoggedIn) {
+            alert('Silakan login terlebih dahulu');
+            return;
+        }
+
+        if (this.selectedRating === 0) {
+            alert('Pilih rating 1-10 terlebih dahulu');
+            return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        try {
+            const response = await fetch(`${this.API_BASE}/ratings/manga`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    mangaId: this.mangaId,
+                    rating: this.selectedRating
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('Rating berhasil dikirim!');
+                this.selectedRating = 0;
+                this.highlightStars(0);
+                
+                // Hide rating input (one-time rating)
+                const ratingInput = document.getElementById('mangaRatingInput');
+                if (ratingInput) ratingInput.style.display = 'none';
+                
+                // Wait a bit for server to update, then reload
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await this.loadMangaRating();
+                
+                dLog('[INFO-RATING] Rating submitted and refreshed');
+            } else {
+                alert(data.error || 'Gagal mengirim rating');
+            }
+        } catch (error) {
+            console.error('[INFO-RATING] Submit error:', error);
+            alert('Terjadi kesalahan saat mengirim rating');
+        }
+    }
+
+    async submitComment() {
+        if (!this.isLoggedIn) {
+            alert('Silakan login terlebih dahulu');
+            return;
+        }
+
+        const textarea = document.getElementById('commentTextarea');
+        const content = textarea.value.trim();
+
+        if (!content) {
+            alert('Komentar tidak boleh kosong');
+            return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        try {
+            const response = await fetch(`${this.API_BASE}/comments/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    mangaId: this.mangaId,
+                    content: content
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                textarea.value = '';
+                document.getElementById('commentCharCount').textContent = '0';
+                await this.loadComments();
+            } else {
+                alert(data.error || 'Gagal mengirim komentar');
+            }
+        } catch (error) {
+            console.error('[INFO-COMMENTS] Submit error:', error);
+            alert('Terjadi kesalahan saat mengirim komentar');
+        }
+    }
+
+    replyToComment(username) {
+        const textarea = document.getElementById('commentTextarea');
+        if (textarea) {
+            textarea.value = `@${username} `;
+            textarea.focus();
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    async deleteComment(commentId) {
+        if (!confirm('Yakin ingin menghapus komentar ini?')) return;
+
+        const token = localStorage.getItem('authToken');
+        try {
+            const response = await fetch(`${this.API_BASE}/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert(data.message || 'Komentar berhasil dihapus');
+                await this.loadComments();
+            } else {
+                alert(data.error || 'Gagal menghapus komentar');
+            }
+        } catch (error) {
+            console.error('[INFO-COMMENTS] Delete error:', error);
+            alert('Terjadi kesalahan saat menghapus komentar');
+        }
+    }
+}
+
+// Initialize rating & comments on DOMContentLoaded
+window.infoMangaRatingComments = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Get repo param from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const repoParam = urlParams.get('repo');
+    
+    if (repoParam) {
+        dLog('[INFO-RATING] Initializing with repo:', repoParam);
+        window.infoMangaRatingComments = new InfoMangaRatingComments();
+        window.infoMangaRatingComments.init(repoParam);
+    } else {
+        dWarn('[INFO-RATING] No repo parameter found');
+    }
+});
