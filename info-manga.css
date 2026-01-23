@@ -271,7 +271,7 @@ header {
     align-self: flex-start;
     background: linear-gradient(135deg, #1877f2 0%, #166fe5 100%);
     color: #ffffff;
-    border: none;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     padding: clamp(10px, 1.5vw, 14px) clamp(24px, 4vw, 40px);
     font-size: clamp(13px, 1.75vw, 16px);
     font-weight: 700;
@@ -399,6 +399,35 @@ header {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     overflow: hidden;
+}
+
+/* Comment Container */
+.comment-container {
+    margin: 0 auto 30px;
+    max-width: 1400px;
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: clamp(20px, 3vw, 30px);
+}
+
+.comment-heading {
+    font-size: clamp(18px, 2.5vw, 24px);
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: clamp(16px, 2.5vw, 20px);
+    text-align: center;
+}
+
+.comment-placeholder {
+    text-align: center;
+    padding: clamp(30px, 5vw, 50px) clamp(20px, 3vw, 30px);
+}
+
+.comment-placeholder p {
+    font-size: clamp(14px, 2vw, 16px);
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
 }
 
 /* Tab Navigation */
@@ -626,6 +655,11 @@ header {
         margin-bottom: 20px;
     }
     
+    .comment-container {
+        display: block !important;
+        margin-bottom: 20px;
+    }
+    
     .tab-content {
         padding: 16px;
     }
@@ -799,13 +833,6 @@ header {
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     padding: clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px);
-    transition: all 0.3s ease;
-}
-
-.author-box:hover,
-.artist-box:hover {
-    border-color: rgba(255, 255, 255, 0.25);
-    background-color: #1a1a1a;
 }
 
 .label-text {
@@ -2768,14 +2795,14 @@ nav {
 .login-required-buttons {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 0px;
 }
 
 .login-required-btn {
   width: 100%;
-  padding: 16px 20px;
-  border: none;
+  padding: 13px 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
@@ -2938,10 +2965,10 @@ nav {
 
 .btn-close-modal {
   width: 100%;
-  padding: 14px 20px;
+  padding: 13px 20px;
   background: #3a3a3a;
   color: #fff;
-  border: none;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
@@ -2949,7 +2976,7 @@ nav {
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .btn-close-modal:hover {

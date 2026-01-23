@@ -192,7 +192,7 @@
         </div>
 
         <!-- Title -->
-        <h1 id="mainTitle" class="main-title"></h1>
+        <h1 id="mainTitle" class="main-title">Loading...</h1>
         <p id="subtitle" class="subtitle"></p>
 
         <!-- Author & Artist -->
@@ -210,9 +210,10 @@
         <!-- Read Button -->
         <button class="btn-start-reading" id="btnStartReading">
           <svg class="btn-read-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
           </svg>
-          <span>MULAI BACA</span>
+          <span>BACA DARI AWAL</span>
         </button>
       </div>
     </div>
@@ -222,10 +223,10 @@
       <!-- Tab Navigation -->
       <div class="tab-navigation" role="tablist">
         <button class="tab-button active" role="tab" aria-selected="true" aria-controls="about-panel" id="about-tab">
-          <span>About</span>
+          <span>Tentang Bacaan</span>
         </button>
         <button class="tab-button" role="tab" aria-selected="false" aria-controls="chapters-panel" id="chapters-tab">
-          <span>Chapters</span>
+          <span>Daftar Chapter</span>
         </button>
       </div>
 
@@ -284,6 +285,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Comment Container -->
+    <div class="comment-container">
+      <h2 class="comment-heading">Komentar</h2>
+      <div class="comment-placeholder">
+        <p>Akan Segera Dibuat</p>
+      </div>
+    </div>
   </main>
 
   <!-- FOOTER -->
@@ -306,7 +315,10 @@
        rel="noopener noreferrer"
        class="trakteer-button"
        aria-label="Support us on Trakteer - Donate to buy RAW chapters (opens in new tab)">
-      <img src="assets/trakteer-icon.png" alt="" class="trakteer-icon" aria-hidden="true">
+      <svg class="trakteer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v12M9 9h6M9 15h6"/>
+      </svg>
       <span>Donasi untuk Beli RAW Chapter</span>
     </a>
   </footer>
@@ -618,7 +630,7 @@ if ('serviceWorker' in navigator) {
         <button id="btnLoginFromRequired" class="login-required-btn login-required-btn-primary">
           🔐 LOGIN / REGISTER
         </button>
-        <a href="https://trakteer.id/NuranantoScanlation" target="_blank" class="login-required-btn login-required-btn-trakteer" style="margin-top: 10px; display: block; text-align: center; text-decoration: none;">
+        <a href="https://trakteer.id/NuranantoScanlation" target="_blank" class="login-required-btn login-required-btn-trakteer" style="display: block; text-align: center; text-decoration: none;">
           💰 DONASI VIA TRAKTEER
         </a>
       </div>

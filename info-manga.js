@@ -385,6 +385,30 @@ function getMangaJsonUrl() {
     
     dLog(`📚 Loading manga: ${repoParam}`);
     
+    // ✅ Set early title from MANGA_LIST if available
+    console.log('🔍 [TITLE DEBUG] Checking MANGA_LIST...');
+    console.log('🔍 [TITLE DEBUG] MANGA_LIST defined?', typeof MANGA_LIST !== 'undefined');
+    
+    if (typeof MANGA_LIST !== 'undefined') {
+        console.log('🔍 [TITLE DEBUG] MANGA_LIST length:', MANGA_LIST.length);
+        console.log('🔍 [TITLE DEBUG] Looking for repo:', repoParam);
+        
+        // ✅ Try to find by id first (URL param usually uses id), then by repo field
+        const mangaInfo = MANGA_LIST.find(m => m.id === repoParam || m.repo === repoParam);
+        console.log('🔍 [TITLE DEBUG] Found manga info?', mangaInfo);
+        
+        if (mangaInfo && mangaInfo.title) {
+            console.log('🔍 [TITLE DEBUG] Setting title to:', mangaInfo.title);
+            document.title = `${mangaInfo.title} - Info`;
+            console.log('✅ [TITLE DEBUG] Title updated! Current title:', document.title);
+            dLog(`✅ Early title set: ${mangaInfo.title}`);
+        } else {
+            console.warn('⚠️ [TITLE DEBUG] No manga info or title found!');
+        }
+    } else {
+        console.error('❌ [TITLE DEBUG] MANGA_LIST is undefined!');
+    }
+    
     // Support both old format (string) and new format (object)
     if (typeof mangaConfig === 'string') {
         return mangaConfig;
@@ -396,9 +420,14 @@ function getMangaJsonUrl() {
 }
 
 async function loadMangaFromRepo() {
+    console.log('🚀 [TITLE DEBUG] loadMangaFromRepo() started');
     try {
         const mangaJsonUrl = getMangaJsonUrl();
-        if (!mangaJsonUrl) return;
+        console.log('🔍 [TITLE DEBUG] mangaJsonUrl:', mangaJsonUrl);
+        if (!mangaJsonUrl) {
+            console.error('❌ [TITLE DEBUG] No manga JSON URL!');
+            return;
+        }
         
         // ✅ GET REPO PARAM untuk cache key
         const urlParams = new URLSearchParams(window.location.search);
@@ -596,10 +625,18 @@ function displayMangaInfo() {
     updateLastUpdate('lastUpdateDesktop', mangaData.chapters);
     
     // Update Title - Desktop
+    console.log('🔍 [TITLE DEBUG] displayMangaInfo() called');
     const mainTitle = document.getElementById('mainTitle');
     const subtitle = document.getElementById('subtitle');
+    
+    console.log('🔍 [TITLE DEBUG] mainTitle element:', mainTitle);
+    console.log('🔍 [TITLE DEBUG] Current mainTitle text:', mainTitle?.textContent);
+    console.log('🔍 [TITLE DEBUG] Setting mainTitle to:', manga.title);
+    
     mainTitle.textContent = manga.title;
     subtitle.textContent = manga.alternativeTitle || '';
+    
+    console.log('✅ [TITLE DEBUG] mainTitle updated! New text:', mainTitle.textContent);
     
     // Add class untuk judul panjang
     adjustTitleSize(mainTitle, manga.title);
@@ -902,7 +939,13 @@ function isRecentlyUploaded(uploadDateStr) {
  * ⚠️ KEEP HANYA fungsi ini
  */
 function displayChapters() {
-    const chapterList = document.getElementById('chapterList');
+    const chapterList = document.getElementById('chapterListInfo');
+    
+    if (!chapterList) {
+        console.error('❌ Chapter list container not found');
+        return;
+    }
+    
     chapterList.innerHTML = '';
     
     const chaptersArray = Object.values(mangaData.chapters);
@@ -1130,12 +1173,7 @@ function openChapter(chapter) {
  * Get initial chapter limit
  */
 function getInitialChapterLimit() {
-    const width = window.innerWidth;
-    
-    if (width <= 480) return 2;
-    else if (width <= 768) return 4;
-    else if (width <= 1024) return 7;
-    else return 10;
+    return 5;
 }
 
 /**
@@ -1368,6 +1406,8 @@ function setupReadFirstButton() {
         return;
     }
     
+    dLog('🔵 Button element found:', btnStartReading);
+    
     function getFirstUnlockedChapter() {
         if (!mangaData || !mangaData.chapters) {
             console.error('❌ Manga data not loaded');
@@ -1376,15 +1416,15 @@ function setupReadFirstButton() {
         
         const chaptersArray = Object.values(mangaData.chapters);
         
-chaptersArray.sort((a, b) => {
-    const getSort = (folder) => {
-        const parts = folder.split('.');
-        const int = parseInt(parts[0]) || 0;
-        const dec = parts[1] ? parseInt(parts[1]) : 0;
-        return int + (dec / 1000);
-    };
-    return getSort(a.folder) - getSort(b.folder);  // ascending (awal duluan)
-});
+        chaptersArray.sort((a, b) => {
+            const getSort = (folder) => {
+                const parts = folder.split('.');
+                const int = parseInt(parts[0]) || 0;
+                const dec = parts[1] ? parseInt(parts[1]) : 0;
+                return int + (dec / 1000);
+            };
+            return getSort(a.folder) - getSort(b.folder);  // ascending (awal duluan)
+        });
         
         const firstUnlocked = chaptersArray.find(ch => !ch.locked);
         
@@ -1396,22 +1436,30 @@ chaptersArray.sort((a, b) => {
         return firstUnlocked;
     }
     
-    function handleReadFirstClick() {
+    function handleReadFirstClick(e) {
+        console.log('🖱️ Button clicked!', e);
+        
         const firstChapter = getFirstUnlockedChapter();
         
         if (!firstChapter) {
+            console.log('⚠️ No unlocked chapters found');
             alert('Tidak ada chapter yang tersedia. Semua chapter terkunci.');
             openTrakteer();
             return;
         }
         
-        dLog('🎬 Opening first chapter:', firstChapter.folder);
+        console.log('🎬 Opening first chapter:', firstChapter.folder);
         openChapter(firstChapter);
     }
     
-    btnStartReading.onclick = handleReadFirstClick;
+    // Add click listener
+    btnStartReading.addEventListener('click', handleReadFirstClick);
     
-    dLog('✅ Start Reading button initialized');
+    // Test if button is clickable
+    console.log('🔍 Button styles:', window.getComputedStyle(btnStartReading).pointerEvents);
+    console.log('🔍 Button disabled:', btnStartReading.disabled);
+    
+    dLog('✅ Start Reading button initialized with event listener');
 }
 
 // ============================================
