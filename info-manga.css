@@ -26,6 +26,13 @@ header {
     border-bottom: none;
 }
 
+.header-border {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
 .header-content {
     display: flex;
     justify-content: space-between;
@@ -83,7 +90,7 @@ header {
 
 /* Info Box - AREA PEMBATAS untuk Author, Artist, Genre */
 .info-box {
-    background-color: #2a2a2a;
+    background-color: #0a0a0a;
     border: 1px solid #3a3a3a;
     border-radius: 4px;
     padding: 12px 20px;
@@ -111,7 +118,7 @@ header {
 }
 
 .sinopsis-text::-webkit-scrollbar-track {
-    background: #1a1a1a;
+    background: #0a0a0a;
     border-radius: 3px;
 }
 
@@ -169,7 +176,7 @@ header {
 
 /* Sidebar Buttons - TOMBOL hanya untuk link eksternal */
 .sidebar-btn {
-    background-color: #2a2a2a;
+    background-color: #0a0a0a;
     color: #e4e6eb;
     border: 1px solid #3a3a3a;
     padding: 12px 20px;
@@ -222,6 +229,475 @@ header {
 }
 
 /* ==================== RIGHT SECTION ==================== */
+
+/* Main Container - Desktop Only */
+.main-container {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 30px;
+    margin: 0 auto 30px;
+    padding: 20px;
+    max-width: 1400px;
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+.hero-cover {
+    width: 100%;
+}
+
+.hero-cover .manga-cover {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3/4.2;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+}
+
+.hero-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: clamp(0px, 1vw, 4px);
+}
+
+/* Read Button in Main Container */
+.btn-start-reading {
+    margin-top: auto;
+    width: auto;
+    min-width: 280px;
+    align-self: flex-start;
+    background: linear-gradient(135deg, #1877f2 0%, #166fe5 100%);
+    color: #ffffff;
+    border: none;
+    padding: clamp(10px, 1.5vw, 14px) clamp(24px, 4vw, 40px);
+    font-size: clamp(13px, 1.75vw, 16px);
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+}
+
+.btn-start-reading:hover {
+    background: linear-gradient(135deg, #166fe5 0%, #1565d8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.5);
+}
+
+.btn-start-reading:active {
+    transform: translateY(0);
+}
+
+.btn-start-reading .btn-read-icon {
+    width: clamp(16px, 2.25vw, 22px);
+    height: clamp(16px, 2.25vw, 22px);
+    stroke: currentColor;
+    stroke-width: 2.5;
+}
+
+/* Mobile Layout for Main Container */
+@media (max-width: 767px) {
+    .main-container {
+        display: flex !important;
+        flex-direction: column;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 16px;
+    }
+    
+    .hero-cover {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .hero-info {
+        gap: 12px;
+    }
+    
+    /* Show status update on mobile */
+    .status-update-container {
+        display: flex !important;
+        gap: 12px;
+        margin-bottom: 8px;
+        justify-content: center;
+    }
+    
+    /* Increase font size for status badge on mobile */
+    .status-badge-info {
+        font-size: 13px;
+        padding: 6px 14px;
+    }
+    
+    /* Increase font size for last update on mobile */
+    .last-update-info {
+        font-size: 13px;
+    }
+    
+    .clock-icon {
+        width: 16px;
+        height: 16px;
+    }
+    
+    /* Title styles - center aligned */
+    .main-title {
+        font-size: clamp(20px, 5vw, 28px);
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    
+    .subtitle {
+        font-size: clamp(14px, 3.5vw, 18px);
+        margin-bottom: 12px;
+        text-align: center;
+    }
+    
+    /* Author & Artist in 1 row */
+    .author-artist-container {
+        flex-direction: row;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .author-box,
+    .artist-box {
+        flex: 1;
+        padding: 10px 12px;
+    }
+    
+    .label-text {
+        font-size: 11px;
+        min-width: auto;
+    }
+    
+    .value-text {
+        font-size: 12px;
+    }
+    
+    /* Button full width on mobile */
+    .btn-start-reading {
+        width: 100%;
+        min-width: auto;
+        align-self: stretch;
+        padding: 14px 24px;
+        font-size: 15px;
+    }
+}
+
+/* ==================== INFORMATION CONTAINER ==================== */
+.information-container {
+    margin: 0 auto 30px;
+    max-width: 1400px;
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.tab-button {
+    flex: 1;
+    padding: clamp(12px, 2.5vw, 16px) clamp(16px, 3vw, 24px);
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: clamp(12px, 1.75vw, 16px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-button:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tab-button.active {
+    color: #ffffff;
+    background-color: rgba(24, 119, 242, 0.1);
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #1877f2 0%, #166fe5 100%);
+}
+
+/* Tab Content */
+.tab-content {
+    padding: clamp(16px, 3vw, 24px);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+/* Info Stats */
+.info-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(12px, 2vw, 16px);
+    margin-bottom: clamp(16px, 2.5vw, 20px);
+}
+
+.stat-item {
+    background-color: rgba(255, 255, 255, 0.03);
+    padding: clamp(12px, 2.5vw, 16px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+    font-size: clamp(10px, 1.5vw, 13px);
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: clamp(14px, 2.25vw, 18px);
+    font-weight: 600;
+    color: #ffffff;
+}
+
+/* Genre Tags Info */
+.info-box-section {
+    margin-bottom: 20px;
+}
+
+.genre-box-wrapper {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.genre-box-header {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.genre-box-label {
+    font-size: clamp(12px, 1.75vw, 16px);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.genre-tags-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(6px, 1.25vw, 8px);
+    padding: clamp(12px, 2.5vw, 16px);
+    justify-content: center;
+}
+
+.genre-tags-info .genre-tag {
+    padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2.5vw, 16px);
+    background-color: #1877f2;
+    color: #ffffff;
+    border-radius: 6px;
+    font-size: clamp(12px, 1.75vw, 15px);
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.genre-tags-info .genre-tag:hover {
+    background-color: #166fe5;
+}
+
+/* External Links Info */
+.external-links-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* When Mangadex button is hidden, Source Web takes full width */
+.external-links-info #btnMangadexInfo.hidden {
+    display: none;
+}
+
+.external-links-info #btnMangadexInfo.hidden + #btnRawInfo {
+    grid-column: 1 / -1;
+}
+
+.info-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 1.5vw, 10px);
+    padding: clamp(10px, 1.75vw, 14px) clamp(14px, 2.5vw, 20px);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: clamp(12px, 1.75vw, 15px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.info-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #1877f2;
+    transform: translateY(-2px);
+}
+
+.info-btn .btn-icon {
+    width: clamp(16px, 2.25vw, 22px);
+    height: clamp(16px, 2.25vw, 22px);
+    object-fit: contain;
+}
+
+/* Globe SVG icon styling */
+.info-btn svg.btn-icon {
+    stroke: #ffffff;
+    flex-shrink: 0;
+}
+
+/* Details Section */
+.details-section {
+    background-color: rgba(255, 255, 255, 0.03);
+    padding: clamp(16px, 3vw, 20px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.details-heading {
+    font-size: clamp(15px, 2.25vw, 20px);
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: clamp(12px, 2.25vw, 16px);
+    text-align: center;
+}
+
+.details-introduction {
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.synopsis-text {
+    margin: 0;
+    white-space: pre-wrap;
+    text-align: justify;
+    font-size: clamp(12px, 1.75vw, 15px);
+    line-height: 1.7;
+}
+
+/* Chapter List Info */
+.chapter-list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Mobile Layout for Information Container */
+@media (max-width: 767px) {
+    .information-container {
+        display: block !important;
+        margin-bottom: 20px;
+    }
+    
+    .tab-content {
+        padding: 16px;
+    }
+    
+    .tab-button {
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+    
+    /* Stats grid on mobile */
+    .info-stats {
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .stat-item {
+        padding: 12px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+    }
+    
+    .stat-value {
+        font-size: 16px;
+    }
+    
+    /* Genre box - allow 2 rows on mobile */
+    .genre-box-label {
+        font-size: 12px;
+    }
+    
+    .genre-tags-info {
+        padding: 12px;
+        gap: 8px;
+        max-height: none;
+    }
+    
+    .genre-tags-info .genre-tag {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    /* External links on mobile */
+    .external-links-info {
+        gap: 10px;
+    }
+    
+    .info-btn {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+    
+    .info-btn .btn-icon {
+        width: 18px;
+        height: 18px;
+    }
+    
+    /* Details section on mobile */
+    .details-section {
+        padding: 16px;
+    }
+    
+    .details-heading {
+        font-size: 17px;
+        margin-bottom: 12px;
+    }
+    
+    .synopsis-text {
+        font-size: 13px;
+    }
+}
 
 .right-section {
     display: flex;
@@ -278,7 +754,7 @@ header {
 
 /* UPDATED: Dynamic font sizes for titles */
 .main-title {
-    font-size: clamp(28px, 5vw, 42px);
+    font-size: clamp(22px, 3.5vw, 42px);
     font-weight: 700;
     color: #ffffff;
     margin-bottom: 10px;
@@ -288,7 +764,7 @@ header {
 }
 
 .subtitle {
-    font-size: clamp(16px, 3vw, 20px);
+    font-size: clamp(14px, 2.25vw, 20px);
     font-weight: 300;
     color: #b0b0b0;
     line-height: 1.4;
@@ -299,16 +775,153 @@ header {
 
 /* Auto-adjust untuk judul yang sangat panjang */
 .main-title.long-title {
-    font-size: clamp(24px, 4vw, 32px);
+    font-size: clamp(18px, 3vw, 32px);
 }
 
 .subtitle.long-subtitle {
-    font-size: clamp(14px, 2.5vw, 18px);
+    font-size: clamp(12px, 2vw, 18px);
+}
+
+/* Author & Artist Container */
+.author-artist-container {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.5vw, 10px);
+    margin-bottom: clamp(16px, 2.5vw, 20px);
+}
+
+.author-box,
+.artist-box {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 2vw, 12px);
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px);
+    transition: all 0.3s ease;
+}
+
+.author-box:hover,
+.artist-box:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: #1a1a1a;
+}
+
+.label-text {
+    font-size: clamp(11px, 1.5vw, 14px);
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: clamp(60px, 10vw, 70px);
+}
+
+.value-text {
+    font-size: clamp(13px, 1.75vw, 16px);
+    font-weight: 500;
+    color: #e4e6eb;
+}
+
+/* Genre Box Desktop */
+.genre-box-desktop {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 15px;
+}
+
+.genre-tags-desktop {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+}
+
+.genre-tags-desktop .genre-tag {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #1877f2;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color 0.3s ease;
+}
+
+.genre-tags-desktop .genre-tag:hover {
+    background-color: #166fe5;
+}
+
+/* External Links Desktop */
+.external-links-desktop {
+    display: flex;
+    gap: 12px;
+    margin-top: 5px;
+}
+
+.external-links-desktop .sidebar-btn {
+    flex: 1;
+}
+
+/* Status Badge & Last Update Container */
+.status-update-container {
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 2.5vw, 16px);
+    margin-bottom: clamp(10px, 2vw, 12px);
+    flex-wrap: wrap;
+}
+
+.status-badge-info {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: clamp(11px, 1.5vw, 15px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.status-badge-info.ongoing {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.75) 0%, rgba(22, 163, 74, 0.75) 100%);
+}
+
+.status-badge-info.hiatus {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.75) 0%, rgba(75, 85, 99, 0.75) 100%);
+}
+
+.status-badge-info.tamat {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.75) 0%, rgba(185, 28, 28, 0.75) 100%);
+}
+
+.last-update-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: clamp(11px, 1.5vw, 15px);
+    font-weight: 400;
+    color: #b0b0b0;
+}
+
+.clock-icon {
+    width: clamp(13px, 1.5vw, 18px);
+    height: clamp(13px, 1.5vw, 18px);
+    color: #b0b0b0;
+    flex-shrink: 0;
 }
 
 /* Content Boxes - AREA PEMBATAS */
 .description-box {
-    background-color: #2a2a2a;
+    background-color: #0a0a0a;
     border: 1px solid #3a3a3a;
     border-radius: 8px;
     padding: 30px;
@@ -318,7 +931,7 @@ header {
 }
 
 .chapters-box {
-    background-color: #2a2a2a;
+    background-color: #0a0a0a;
     border: 1px solid #3a3a3a;
     border-radius: 8px;
     padding: 30px;
@@ -353,7 +966,7 @@ header {
 }
 
 .content-text::-webkit-scrollbar-track {
-    background: #1a1a1a;
+    background: #0a0a0a;
     border-radius: 4px;
 }
 
@@ -377,8 +990,8 @@ header {
 
 /* Chapter Item - TOMBOL */
 .chapter-item {
-    background-color: #333333;
-    border: 1px solid #444444;
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 4px;
     padding: 15px 20px;
     display: flex;
@@ -389,8 +1002,8 @@ header {
 }
 
 .chapter-item:hover {
-    background-color: #3a3a3a;
-    border-color: #555555;
+    background-color: #1a1a1a;
+    border-color: rgba(255, 255, 255, 0.25);
     transform: translateX(5px);
 }
 
@@ -400,15 +1013,15 @@ header {
 
 /* Locked Chapter - UPDATED: Tambah visual yang lebih jelas */
 .chapter-locked {
-    background-color: #2a2a2a;
-    border-color: #dc143c;
+    background-color: #0a0a0a;
+    border-color: #1877f2;
     opacity: 0.7;
     cursor: pointer;
 }
 
 .chapter-locked:hover {
     background-color: #2f2f2f;
-    border-color: #ff1744;
+    border-color: #166fe5;
     opacity: 0.85;
     transform: translateX(5px);
 }
@@ -437,7 +1050,7 @@ header {
 /* Show More Button */
 .btn-show-more {
     width: 100%;
-    background-color: #2a2a2a;
+    background-color: #0a0a0a;
     color: #e4e6eb;
     border: 1px solid #3a3a3a;
     padding: 12px 20px;
@@ -589,7 +1202,7 @@ header {
 /* Baca dari Awal Button - Purple gradient */
 .btn-read-first {
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1877f2;
     color: #ffffff;
     border: none;
     padding: 14px 20px;
@@ -605,13 +1218,13 @@ header {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
 }
 
 .btn-read-first:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: #166fe5;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
 }
 
 .btn-read-first:active {
@@ -1351,50 +1964,49 @@ input:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 10px;
+    padding: 0;
     border-radius: 16px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     cursor: pointer;
     transition: all 0.3s ease;
     flex-shrink: 0;
+    background: #0a0a0a;
+}
+
+/* Profile button with text - wider */
+.profile-button {
+    width: auto;
+    min-width: 52px;
+    padding: 0 18px;
 }
 
 .header-icon {
     width: 28px;
     height: 28px;
     color: #fff;
+    flex-shrink: 0;
 }
 
-/* GitHub Button - Dark Gray */
-.github-button {
-    background: #24292e;
+/* Button Text - Hidden on mobile, shown on desktop */
+.button-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    display: none;
 }
 
-.github-button:hover {
-    background: #1b1f23;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(36, 41, 46, 0.5);
-}
-
-/* Facebook Button - Blue */
+/* Unified styling for all buttons */
+.github-button,
 .facebook-button {
-    background: #1877f2;
+    background: #0a0a0a;
 }
 
-.facebook-button:hover {
-    background: #166fe5;
+.header-icon-button:hover {
+    background: #333;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.5);
-}
-
-/* Profile Button - Gradient */
-.profile-button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.profile-button:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 4px 15px rgba(42, 42, 42, 0.5);
 }
 
 .profile-button .header-icon {
@@ -1453,7 +2065,7 @@ input:focus-visible {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    background: #2a2a2a;
+    background: #0a0a0a;
     border-radius: 16px;
     border: 2px solid #3a3a3a;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
@@ -1533,26 +2145,31 @@ nav {
     .header-buttons {
         display: flex !important;
     }
+    
+    /* Show button text on desktop */
+    .button-text {
+        display: inline !important;
+    }
 }
 
 /* ============================================
    LOGIN MODAL
    ============================================ */
 .login-modal-content {
-    background: #2a2a2a;
+    background: #0a0a0a;
     border-radius: 24px;
     max-width: 420px;
     width: 90%;
     position: relative;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-    border: 2px solid #667eea; /* ← TAMBAH INI */
+    border: 2px solid #1877f2;
 }
 
 /* Tabs */
 .login-tabs {
     display: flex;
-    background: #1a1a1a;
+    background: #0a0a0a;
     border-bottom: 1px solid #3a3a3a;
 }
 
@@ -1579,7 +2196,7 @@ nav {
 
 .login-tab.active {
     color: #fff;
-    background: #2a2a2a;
+    background: #0a0a0a;
 }
 
 .login-tab.active::after {
@@ -1589,12 +2206,12 @@ nav {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1877f2;
 }
 
 .login-tab:hover:not(.active) {
     color: #b0b0b0;
-    background: #222;
+    background: #0a0a0a;
 }
 
 /* Panels */
@@ -1656,7 +2273,7 @@ nav {
 .form-group input {
     width: 100%;
     padding: 14px 16px;
-    background: #1a1a1a;
+    background: #0a0a0a;
     border: 2px solid #3a3a3a;
     border-radius: 12px;
     color: #fff;
@@ -1666,9 +2283,9 @@ nav {
 
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
-    background: #222;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #1877f2;
+    background: #0a0a0a;
+    box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
 }
 
 .form-group input::placeholder {
@@ -1737,7 +2354,7 @@ nav {
 .btn-login {
     width: 100%;
     padding: 14px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1877f2;
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -1750,9 +2367,9 @@ nav {
 }
 
 .btn-login:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: #166fe5;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
 /* ============================================
@@ -1884,7 +2501,7 @@ nav {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  border: 3px solid #667eea;
+  border: 3px solid #1877f2;
   object-fit: cover;
   margin-bottom: 4px;
 }
@@ -1940,8 +2557,8 @@ nav {
 .countdown-box {
   width: 100%;
   padding: 12px 18px;
-  background: linear-gradient(135deg, #556B2F 0%, #6B8E23 100%);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: #0a0a0a;
+  border: 2px solid #FFD700;
   border-radius: 12px;
   text-align: center;
   font-size: 13px;
@@ -1961,7 +2578,7 @@ nav {
 .access-box {
   width: 100%;
   padding: 14px 18px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border: 1px solid #3a3a3a;
   border-radius: 12px;
   text-align: center;
@@ -2169,15 +2786,15 @@ nav {
 }
 
 .login-required-btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
 }
 
 .login-required-btn-primary:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
 }
 
 .login-required-btn-secondary {
@@ -2283,15 +2900,15 @@ nav {
 }
 
 .upgrade-btn-code {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
 }
 
 .upgrade-btn-code:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
 }
 
 .upgrade-btn-panduan {
@@ -2351,7 +2968,7 @@ nav {
 .code-content input[type="text"] {
   width: 100%;
   padding: 14px 16px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border: 2px solid #3a3a3a;
   border-radius: 12px;
   color: #fff;
@@ -2363,9 +2980,9 @@ nav {
 
 .code-content input[type="text"]:focus {
   outline: none;
-  border-color: #667eea;
-  background: #222;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #1877f2;
+  background: #0a0a0a;
+  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
 }
 
 .code-content input[type="text"]::placeholder {
@@ -2411,7 +3028,7 @@ nav {
 .btn-primary {
   flex: 2;
   padding: 14px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -2428,9 +3045,9 @@ nav {
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
 .btn-primary:disabled {
@@ -2480,7 +3097,7 @@ nav {
 .panduan-subsection {
   margin-bottom: 16px;
   padding: 12px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border-radius: 8px;
   border-left: 3px solid #3a3a3a;
 }
@@ -2551,15 +3168,15 @@ nav {
 }
 
 .upgrade-btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
 }
 
 .upgrade-btn-primary:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
 }
 
 /* Responsive */
@@ -2642,7 +3259,7 @@ nav {
 .btn-history {
   width: 100%;
   padding: 14px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -2660,9 +3277,9 @@ nav {
 }
 
 .btn-history:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
 .btn-history:active {
@@ -2717,7 +3334,7 @@ nav {
   display: flex;
   gap: 14px;
   padding: 14px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border: 1px solid #3a3a3a;
   border-radius: 12px;
   cursor: pointer;
@@ -2731,10 +3348,10 @@ nav {
 }
 
 .history-card:hover {
-  background: #222;
-  border-color: #667eea;
+  background: #0a0a0a;
+  border-color: #1877f2;
   transform: translateX(4px);
-  box-shadow: 0 0 0 1px #667eea, 0 2px 8px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 0 0 1px #1877f2, 0 2px 8px rgba(24, 119, 242, 0.2);
   z-index: 1;
 }
 
@@ -2835,7 +3452,7 @@ nav {
 .btn-toggle-history {
   width: 100%;
   padding: 14px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -2854,9 +3471,9 @@ nav {
 }
 
 .btn-toggle-history:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
 .btn-toggle-history:active {
@@ -2892,7 +3509,7 @@ nav {
 }
 
 .history-list::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #0a0a0a;
   border-radius: 3px;
 }
 

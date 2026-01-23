@@ -1165,11 +1165,38 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // ✅ STEP 1: Check localStorage on page load
+    // ✅ Function to update profile button text
+    function updateProfileButtonText() {
+        const storedUser = localStorage.getItem('user');
+        const isLoggedIn = !!storedUser;
+        
+        // Update desktop button
+        const desktopButtonText = btnOpen.querySelector('.button-text');
+        if (desktopButtonText) {
+            desktopButtonText.textContent = isLoggedIn ? 'Profile' : 'Login';
+        }
+        
+        // Update mobile button
+        const btnOpenMobile = document.getElementById('btnOpenLoginMobile');
+        if (btnOpenMobile) {
+            const mobileButtonText = btnOpenMobile.querySelector('span');
+            if (mobileButtonText) {
+                mobileButtonText.textContent = isLoggedIn ? 'Profile' : 'Login';
+            }
+        }
+        
+        dLog('🔄 [UPDATE] Profile button updated:', isLoggedIn ? 'Profile' : 'Login');
+    }
+    
+    // ✅ Make function globally accessible
+    window.updateProfileButtonText = updateProfileButtonText;
+
+    // ✅ STEP 1: Check localStorage on page load and update button
     dLog('📦 [STORAGE] ========================================');
     dLog('📦 [STORAGE] Checking localStorage...');
     const storedUser = localStorage.getItem('user');
     const storedToken = localStorage.getItem('authToken');
+    updateProfileButtonText();
     
     dLog('📦 [STORAGE] Raw user data:', storedUser);
     dLog('📦 [STORAGE] Has token:', !!storedToken);
@@ -1356,6 +1383,11 @@ document.addEventListener('DOMContentLoaded', () => {
             dLog('🚪 [LOGOUT] Logout button clicked!');
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
+            
+            // ✅ Update profile button text
+            if (window.updateProfileButtonText) {
+                window.updateProfileButtonText();
+            }
             
             // Clear countdown interval on logout
             if (window.countdownInterval) {
@@ -1801,6 +1833,11 @@ const codeModal = document.getElementById('codeModal');
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 dLog('💾 [LOGIN] Saved');
+                
+                // ✅ Update profile button text
+                if (window.updateProfileButtonText) {
+                    window.updateProfileButtonText();
+                }
                 
                 dLog('🎭 [LOGIN] Showing profile modal...');
                 showProfileModal(data.user);

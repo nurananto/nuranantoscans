@@ -357,7 +357,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     await loadMangaFromRepo();
-    setupShowDetailsButton();
     
     // Track page view
     trackPageView();
@@ -486,10 +485,115 @@ async function loadMangaFromRepo() {
 }
 
 /**
+ * Update status badge (Ongoing/Hiatus/Tamat)
+ */
+function updateStatusBadge(elementId, status) {
+    const badge = document.getElementById(elementId);
+    if (!badge) return;
+    
+    const normalizedStatus = (status || 'ongoing').toLowerCase();
+    
+    // Remove all status classes
+    badge.classList.remove('ongoing', 'hiatus', 'tamat');
+    
+    // Add appropriate class and text
+    if (normalizedStatus.includes('hiatus')) {
+        badge.classList.add('hiatus');
+        badge.textContent = 'HIATUS';
+    } else if (normalizedStatus.includes('tamat') || normalizedStatus.includes('completed')) {
+        badge.classList.add('tamat');
+        badge.textContent = 'TAMAT';
+    } else {
+        badge.classList.add('ongoing');
+        badge.textContent = 'ONGOING';
+    }
+}
+
+/**
+ * Update last update info based on latest chapter
+ */
+function updateLastUpdate(elementId, chapters) {
+    console.log('🕐 updateLastUpdate called with:', { elementId, chapters });
+    
+    const element = document.getElementById(elementId);
+    if (!element || !chapters) {
+        console.warn('⚠️ Element or chapters missing:', { element: !!element, chapters: !!chapters });
+        if (element) element.textContent = 'Last Update: -';
+        return;
+    }
+    
+    try {
+        // Convert chapters object to array
+        const chaptersArray = Object.values(chapters);
+        console.log('📦 Chapters array:', chaptersArray);
+        
+        if (chaptersArray.length === 0) {
+            console.warn('⚠️ No chapters found');
+            element.textContent = 'Last Update: -';
+            return;
+        }
+        
+        // Sort chapters to get the latest one
+        chaptersArray.sort((a, b) => {
+            const getSort = (folder) => {
+                const parts = folder.split('.');
+                const int = parseInt(parts[0]) || 0;
+                const dec = parts[1] ? parseInt(parts[1]) : 0;
+                return int + (dec / 1000);
+            };
+            return getSort(b.folder) - getSort(a.folder);
+        });
+        
+        console.log('📋 Sorted chapters:', chaptersArray.slice(0, 3));
+        
+        // Get latest chapter (first after sorting)
+        const latestChapter = chaptersArray[0];
+        console.log('🔝 Latest chapter:', latestChapter);
+        
+        if (latestChapter.uploadDate) {
+            console.log('✅ uploadDate found:', latestChapter.uploadDate);
+            
+            // Parse ISO date and format to "DD MMM YYYY"
+            const date = new Date(latestChapter.uploadDate);
+            const day = date.getDate();
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = monthNames[date.getMonth()];
+            const year = date.getFullYear();
+            
+            const formattedDate = `${day} ${month} ${year}`;
+            console.log('📅 Formatted date:', formattedDate);
+            
+            element.textContent = `Last Update: ${formattedDate}`;
+        } else if (latestChapter.date) {
+            console.log('✅ date property found:', latestChapter.date);
+            element.textContent = `Last Update: ${latestChapter.date}`;
+        } else {
+            console.warn('⚠️ No date or uploadDate property found in latest chapter');
+            element.textContent = 'Last Update: -';
+        }
+    } catch (error) {
+        console.error('❌ Error updating last update:', error);
+        element.textContent = 'Last Update: -';
+    }
+}
+
+/**
  * Display informasi manga
  */
 function displayMangaInfo() {
     const manga = mangaData.manga;
+    
+    // Update Status Badge & Last Update - Desktop
+    updateStatusBadge('statusBadgeInfo', manga.status);
+    updateLastUpdate('lastUpdateText', mangaData.chapters);
+    
+    // Update Status Badge & Last Update - Mobile
+    updateStatusBadge('statusBadgeInfoMobile', manga.status);
+    updateLastUpdate('lastUpdateTextMobile', mangaData.chapters);
+    
+    // Update Status Badge & Last Update - Desktop Old (title-section-desktop)
+    updateStatusBadge('statusBadgeDesktop', manga.status);
+    updateLastUpdate('lastUpdateDesktop', mangaData.chapters);
     
     // Update Title - Desktop
     const mainTitle = document.getElementById('mainTitle');
@@ -500,15 +604,6 @@ function displayMangaInfo() {
     // Add class untuk judul panjang
     adjustTitleSize(mainTitle, manga.title);
     adjustTitleSize(subtitle, manga.alternativeTitle, true);
-    
-    // Update Title - Mobile
-    const mainTitleMobile = document.getElementById('mainTitleMobile');
-    const subtitleMobile = document.getElementById('subtitleMobile');
-    mainTitleMobile.textContent = manga.title;
-    subtitleMobile.textContent = manga.alternativeTitle || '';
-    
-    adjustTitleSize(mainTitleMobile, manga.title);
-    adjustTitleSize(subtitleMobile, manga.alternativeTitle, true);
     
     // ✅ Update Cover dengan responsive CDN
     const coverImg = document.getElementById('mangaCover');
@@ -532,28 +627,14 @@ function displayMangaInfo() {
     
     dLog('✅ Cover loaded with CDN optimization');
     
-    // Update Views
-    document.getElementById('viewsCount').textContent = manga.views || 0;
-    document.getElementById('viewsCountMobile').textContent = manga.views || 0;
+    // Update Author & Artist (Main Container - Hero Info)
+    const authorDesktop = document.getElementById('authorNameDesktop');
+    const artistDesktop = document.getElementById('artistNameDesktop');
+    if (authorDesktop) authorDesktop.textContent = manga.author;
+    if (artistDesktop) artistDesktop.textContent = manga.artist;
     
-    // Update Description
-    document.getElementById('descriptionContent').textContent = manga.description;
-    
-    // Update mobile sinopsis in details container
-    const synopsisMobile = document.getElementById('synopsisMobile');
-    if (synopsisMobile) {
-        synopsisMobile.textContent = manga.description;
-    }
-    
-    // Update Author & Artist
-    document.getElementById('authorName').textContent = manga.author;
-    document.getElementById('artistName').textContent = manga.artist;
-    
-    // Update Genre
-    displayGenres(manga.genre);
-    
-    // Setup Buttons
-    setupButtons(manga.links);
+    // Populate Information Container
+    populateInformationContainer(manga, mangaData.chapters);
 }
 
 /**
@@ -577,23 +658,187 @@ function adjustTitleSize(element, text, isSubtitle = false) {
     }
 }
 
+
+
 /**
- * Display genre tags
+ * Populate Information Container (About & Chapters tabs)
  */
-function displayGenres(genres) {
-    const genreList = document.getElementById('genreList');
-    genreList.innerHTML = '';
+function populateInformationContainer(manga, chapters) {
+    // Total Chapters
+    const chaptersArray = Object.entries(chapters || {}).map(([folder, chapter]) => ({
+        folder,
+        ...chapter
+    }));
     
-    if (!genres || genres.length === 0) {
-        genreList.innerHTML = '<span class="genre-tag">Unknown</span>';
+    const totalChaptersEl = document.getElementById('totalChapters');
+    let isOneshot = false;
+    
+    if (totalChaptersEl) {
+        // Check if it's a oneshot
+        if (chaptersArray.length === 1) {
+            const chapterFolder = chaptersArray[0].folder.toString().toLowerCase();
+            if (chapterFolder.includes('oneshot') || chapterFolder.includes('one-shot') || chapterFolder === '0') {
+                totalChaptersEl.textContent = 'Oneshot';
+                isOneshot = true;
+            } else {
+                totalChaptersEl.textContent = `${chaptersArray.length} Chapters`;
+            }
+        } else {
+            totalChaptersEl.textContent = `${chaptersArray.length} Chapters`;
+        }
+    }
+    
+    // Update status badge to TAMAT if it's a oneshot
+    if (isOneshot) {
+        updateStatusBadge('statusBadgeInfo', 'TAMAT');
+    }
+    
+    // Jumlah Pembaca
+    const totalViewerEl = document.getElementById('totalViewer');
+    if (totalViewerEl) {
+        const views = manga.views || 0;
+        // Display full number with thousand separator and "Pembaca" text
+        totalViewerEl.textContent = `${views.toLocaleString('id-ID')} Pembaca`;
+    }
+    
+    // Genre Tags Info
+    const genreListInfo = document.getElementById('genreListInfo');
+    if (genreListInfo) {
+        genreListInfo.innerHTML = '';
+        
+        if (!manga.genre || manga.genre.length === 0) {
+            genreListInfo.innerHTML = '<span class="genre-tag">Unknown</span>';
+        } else {
+            manga.genre.forEach(genre => {
+                const tag = document.createElement('span');
+                tag.className = 'genre-tag';
+                tag.textContent = genre;
+                genreListInfo.appendChild(tag);
+            });
+        }
+    }
+    
+    // Sinopsis
+    const synopsisInfo = document.getElementById('synopsisInfo');
+    if (synopsisInfo) {
+        synopsisInfo.textContent = manga.description || 'No description available.';
+    }
+    
+    // External Links Buttons
+    setupInformationButtons(manga.links);
+    
+    // Chapters List in Chapters Tab
+    populateChapterListInfo(chaptersArray);
+    
+    // Setup Tab Switching
+    setupTabSwitching();
+}
+
+/**
+ * Setup buttons in Information Container
+ */
+function setupInformationButtons(links) {
+    const btnMangadexInfo = document.getElementById('btnMangadexInfo');
+    const btnRawInfo = document.getElementById('btnRawInfo');
+    
+    // Check if Mangadex link exists
+    const hasMangadexLink = links && links.mangadex;
+    
+    if (btnMangadexInfo) {
+        if (!hasMangadexLink) {
+            // Hide Mangadex button if no link
+            btnMangadexInfo.classList.add('hidden');
+            btnMangadexInfo.style.display = 'none';
+        } else {
+            // Show and setup click handler
+            btnMangadexInfo.classList.remove('hidden');
+            btnMangadexInfo.style.display = 'flex';
+            btnMangadexInfo.onclick = () => {
+                window.open(links.mangadex, '_blank');
+            };
+        }
+    }
+    
+    if (btnRawInfo) {
+        btnRawInfo.onclick = () => {
+            if (links && links.raw) {
+                window.open(links.raw, '_blank');
+            } else {
+                alert('Link Source Web tidak tersedia');
+            }
+        };
+    }
+}
+
+/**
+ * Populate chapter list in Chapters tab
+ */
+function populateChapterListInfo(chapters) {
+    const chapterListInfo = document.getElementById('chapterListInfo');
+    if (!chapterListInfo) return;
+    
+    chapterListInfo.innerHTML = '';
+    
+    if (!chapters || chapters.length === 0) {
+        chapterListInfo.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5); padding: 40px 0;">No chapters available</p>';
         return;
     }
     
-    genres.forEach(genre => {
-        const tag = document.createElement('span');
-        tag.className = 'genre-tag';
-        tag.textContent = genre;
-        genreList.appendChild(tag);
+    // Sort chapters by folder number (descending - newest first)
+    chapters.sort((a, b) => {
+        const getSort = (folder) => parseFloat(folder.toString().replace(/[^\d.]/g, ''));
+        return getSort(b.folder) - getSort(a.folder);
+    });
+    
+    // Mark last chapter for hiatus badge
+    if (chapters.length > 0) {
+        chapters[0].isLastChapter = true;
+    }
+    
+    // Render all chapters using existing createChapterElement function
+    chapters.forEach((chapter, index) => {
+        const chapterElement = createChapterElement(chapter, chapters);
+        chapterListInfo.appendChild(chapterElement);
+    });
+}
+
+/**
+ * Setup tab switching functionality
+ */
+function setupTabSwitching() {
+    const aboutTab = document.getElementById('about-tab');
+    const chaptersTab = document.getElementById('chapters-tab');
+    const aboutPanel = document.getElementById('about-panel');
+    const chaptersPanel = document.getElementById('chapters-panel');
+    
+    if (!aboutTab || !chaptersTab || !aboutPanel || !chaptersPanel) return;
+    
+    aboutTab.addEventListener('click', () => {
+        // Switch tabs
+        aboutTab.classList.add('active');
+        chaptersTab.classList.remove('active');
+        
+        // Switch panels
+        aboutPanel.classList.add('active');
+        chaptersPanel.classList.remove('active');
+        
+        // Update ARIA
+        aboutTab.setAttribute('aria-selected', 'true');
+        chaptersTab.setAttribute('aria-selected', 'false');
+    });
+    
+    chaptersTab.addEventListener('click', () => {
+        // Switch tabs
+        chaptersTab.classList.add('active');
+        aboutTab.classList.remove('active');
+        
+        // Switch panels
+        chaptersPanel.classList.add('active');
+        aboutPanel.classList.remove('active');
+        
+        // Update ARIA
+        chaptersTab.setAttribute('aria-selected', 'true');
+        aboutTab.setAttribute('aria-selected', 'false');
     });
 }
 
@@ -913,58 +1158,9 @@ function createShowMoreButton(hiddenCount) {
     return btn;
 }
 
-/**
- * Setup buttons
- */
-function setupButtons(links) {
-    const btnMangadex = document.getElementById('btnMangadex');
-    const btnRaw = document.getElementById('btnRaw');
-    
-    if (btnMangadex) {
-        btnMangadex.onclick = () => {
-            if (links && links.mangadex) {
-                window.open(links.mangadex, '_blank');
-            } else {
-                alert('Link Mangadex tidak tersedia');
-            }
-        };
-    }
-    
-    if (btnRaw) {
-        btnRaw.onclick = () => {
-            if (links && links.raw) {
-                window.open(links.raw, '_blank');
-            } else {
-                alert('Link Raw tidak tersedia');
-            }
-        };
-    }
-}
 
-/**
- * Setup show details button
- */
-function setupShowDetailsButton() {
-    const btn = document.getElementById('btnShowDetails');
-    const container = document.getElementById('detailsContainer');
-    const btnText = document.getElementById('detailsButtonText');
-    
-    if (!btn || !container) return;
-    
-    let isShown = false;
 
-    btn.onclick = () => {
-        isShown = !isShown;
-        
-        if (isShown) {
-            container.classList.add('show');
-            btnText.textContent = 'Hide Details';
-        } else {
-            container.classList.remove('show');
-            btnText.textContent = 'Show Details';
-        }
-    };
-}
+
 
 /**
  * Track page view
@@ -1165,11 +1361,10 @@ async function fetchMangaDexRating() {
  * Setup Read First button
  */
 function setupReadFirstButton() {
-    const btnReadFirstOutside = document.getElementById('btnReadFirstOutside');
-    const btnReadFirstInside = document.getElementById('btnReadFirstInside');
+    const btnStartReading = document.getElementById('btnStartReading');
     
-    if (!btnReadFirstOutside && !btnReadFirstInside) {
-        dWarn('⚠️ Read First buttons not found');
+    if (!btnStartReading) {
+        dWarn('⚠️ Start Reading button not found');
         return;
     }
     
@@ -1214,14 +1409,9 @@ chaptersArray.sort((a, b) => {
         openChapter(firstChapter);
     }
     
-    if (btnReadFirstOutside) {
-        btnReadFirstOutside.onclick = handleReadFirstClick;
-    }
-    if (btnReadFirstInside) {
-        btnReadFirstInside.onclick = handleReadFirstClick;
-    }
+    btnStartReading.onclick = handleReadFirstClick;
     
-    dLog('✅ Read First buttons initialized');
+    dLog('✅ Start Reading button initialized');
 }
 
 // ============================================
@@ -1654,10 +1844,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // ✅ STEP 1: Check localStorage on page load
+    // ✅ Function to update profile button text
+    function updateProfileButtonText() {
+        const storedUser = localStorage.getItem('user');
+        const isLoggedIn = !!storedUser;
+        
+        // Update desktop button
+        const desktopButtonText = btnOpen.querySelector('.button-text');
+        if (desktopButtonText) {
+            desktopButtonText.textContent = isLoggedIn ? 'Profile' : 'Login';
+        }
+        
+        // Update mobile button
+        const btnOpenMobile = document.getElementById('btnOpenLoginMobile');
+        if (btnOpenMobile) {
+            const mobileButtonText = btnOpenMobile.querySelector('span');
+            if (mobileButtonText) {
+                mobileButtonText.textContent = isLoggedIn ? 'Profile' : 'Login';
+            }
+        }
+        
+        dLog('🔄 [UPDATE] Profile button updated:', isLoggedIn ? 'Profile' : 'Login');
+    }
+    
+    // ✅ Make function globally accessible
+    window.updateProfileButtonText = updateProfileButtonText;
+
+    // ✅ STEP 1: Check localStorage on page load and update button
     dLog('📦 [STORAGE] ========================================');
     dLog('📦 [STORAGE] Checking localStorage...');
     const storedUser = localStorage.getItem('user');
+    updateProfileButtonText();
     const storedToken = localStorage.getItem('authToken');
     
     dLog('📦 [STORAGE] Raw user data:', storedUser);
@@ -1894,6 +2111,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 dLog('🚪 [LOGOUT] Logout button clicked!');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
+                
+                // ✅ Update profile button text
+                if (window.updateProfileButtonText) {
+                    window.updateProfileButtonText();
+                }
                 
                 // Clear countdown interval on logout
                 if (window.countdownInterval) {
@@ -2703,6 +2925,11 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 dLog('💾 [LOGIN] Saved');
+                
+                // ✅ Update profile button text
+                if (window.updateProfileButtonText) {
+                    window.updateProfileButtonText();
+                }
                 
                 // ✅ CRITICAL: Close login modal IMMEDIATELY (synchronously) before showing profile modal
                 // This prevents the old profile button from showing during delay

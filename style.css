@@ -5,7 +5,7 @@
     font-size: 16px;
     --primary-color: #1877f2;
     --bg-dark: #111;
-    --bg-card: #1a1a1a;
+    --bg-card: #0a0a0a;
     --text-primary: #fff;
     --text-secondary: #888;
     --border-color: rgba(255, 255, 255, 0.1);
@@ -105,7 +105,7 @@ header {
     border-radius: 8px;
     border: 2px solid rgba(255, 255, 255, 0.1);
     outline: none;
-    background: #222;
+    background: #0a0a0a;
     color: #fff;
     transition:
         border-color 0.3s ease,
@@ -279,7 +279,7 @@ header {
 
 /* Badge untuk B/W (Manga Hitam Putih) */
 .type-badge-bw {
-    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+    background: linear-gradient(135deg, #0a0a0a 0%, #0a0a0a 100%);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -1679,50 +1679,49 @@ input:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 10px;
+    padding: 0;
     border-radius: 16px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     cursor: pointer;
     transition: all 0.3s ease;
     flex-shrink: 0;
+    background: #0a0a0a;
+}
+
+/* Profile button with text - wider */
+.profile-button {
+    width: auto;
+    min-width: 52px;
+    padding: 0 18px;
 }
 
 .header-icon {
     width: 28px;
     height: 28px;
     color: #fff;
+    flex-shrink: 0;
 }
 
-/* GitHub Button - Dark Gray */
-.github-button {
-    background: #24292e;
+/* Button Text - Hidden on mobile, shown on desktop */
+.button-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    display: none;
 }
 
-.github-button:hover {
-    background: #1b1f23;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(36, 41, 46, 0.5);
-}
-
-/* Facebook Button - Blue */
+/* Unified styling for all buttons */
+.github-button,
 .facebook-button {
-    background: #1877f2;
+    background: #0a0a0a;
 }
 
-.facebook-button:hover {
-    background: #166fe5;
+.header-icon-button:hover {
+    background: #333;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.5);
-}
-
-/* Profile Button - Gradient */
-.profile-button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.profile-button:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 4px 15px rgba(42, 42, 42, 0.5);
 }
 
 .profile-button .header-icon {
@@ -1777,7 +1776,7 @@ input:focus-visible {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    background: #2a2a2a;
+    background: #0a0a0a;
     border-radius: 16px;
     border: 2px solid #3a3a3a;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
@@ -1854,6 +1853,11 @@ nav {
     .header-buttons {
         display: flex !important;
     }
+    
+    /* Show button text on desktop */
+    .button-text {
+        display: inline !important;
+    }
 }
 
 /* ============================================
@@ -1877,20 +1881,20 @@ nav {
    ============================================ */
 /* Border untuk Login Modal & Profile Modal */
 .login-modal-content {
-    background: #2a2a2a;
+    background: #0a0a0a;
     border-radius: 24px;
     max-width: 420px;
     width: 90%;
     position: relative;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-    border: 2px solid #667eea; /* ← TAMBAH INI */
+    border: 2px solid #1877f2;
 }
 
 /* Tabs */
 .login-tabs {
     display: flex;
-    background: #1a1a1a;
+    background: #0a0a0a;
     border-bottom: 1px solid #3a3a3a;
 }
 
@@ -1917,7 +1921,7 @@ nav {
 
 .login-tab.active {
     color: #fff;
-    background: #2a2a2a;
+    background: #0a0a0a;
 }
 
 .login-tab.active::after {
@@ -1927,12 +1931,12 @@ nav {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1877f2;
 }
 
 .login-tab:hover:not(.active) {
     color: #b0b0b0;
-    background: #222;
+    background: #0a0a0a;
 }
 
 /* Panels */
@@ -1994,7 +1998,7 @@ nav {
 .form-group input {
     width: 100%;
     padding: 14px 16px;
-    background: #1a1a1a;
+    background: #0a0a0a;
     border: 2px solid #3a3a3a;
     border-radius: 12px;
     color: #fff;
@@ -2004,9 +2008,9 @@ nav {
 
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
-    background: #222;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #1877f2;
+    background: #0a0a0a;
+    box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
 }
 
 .form-group input::placeholder {
@@ -2075,7 +2079,7 @@ nav {
 .btn-login {
     width: 100%;
     padding: 14px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #1877f2;
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -2088,9 +2092,9 @@ nav {
 }
 
 .btn-login:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: #166fe5;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
 /* ============================================
@@ -2161,7 +2165,7 @@ nav {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  border: 3px solid #667eea;
+  border: 3px solid #1877f2;
   object-fit: cover;
   margin-bottom: 4px;
 }
@@ -2217,8 +2221,8 @@ nav {
 .countdown-box {
   width: 100%;
   padding: 12px 18px;
-  background: linear-gradient(135deg, #556B2F 0%, #6B8E23 100%);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: #0a0a0a;
+  border: 2px solid #FFD700;
   border-radius: 12px;
   text-align: center;
   font-size: 13px;
@@ -2238,7 +2242,7 @@ nav {
 .access-box {
   width: 100%;
   padding: 14px 18px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border: 1px solid #3a3a3a;
   border-radius: 12px;
   text-align: center;
@@ -2467,15 +2471,15 @@ opacity: 1;
 }
 
 .upgrade-btn-code {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
 }
 
 .upgrade-btn-code:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
 }
 
 .upgrade-btn-panduan {
@@ -2535,7 +2539,7 @@ opacity: 1;
 .code-content input[type="text"] {
   width: 100%;
   padding: 14px 16px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border: 2px solid #3a3a3a;
   border-radius: 12px;
   color: #fff;
@@ -2547,9 +2551,9 @@ opacity: 1;
 
 .code-content input[type="text"]:focus {
   outline: none;
-  border-color: #667eea;
-  background: #222;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #1877f2;
+  background: #0a0a0a;
+  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
 }
 
 .code-content input[type="text"]::placeholder {
@@ -2595,7 +2599,7 @@ opacity: 1;
 .btn-primary {
   flex: 2;
   padding: 14px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -2612,9 +2616,9 @@ opacity: 1;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
 /* ✅ TAMBAH: Disabled state */
@@ -2665,7 +2669,7 @@ opacity: 1;
 .panduan-subsection {
   margin-bottom: 16px;
   padding: 12px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border-radius: 8px;
   border-left: 3px solid #3a3a3a;
 }
@@ -2736,15 +2740,15 @@ opacity: 1;
 }
 
 .upgrade-btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
 }
 
 .upgrade-btn-primary:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
 }
 
 /* Responsive */
@@ -2807,7 +2811,7 @@ opacity: 1;
 .btn-history {
   width: 100%;
   padding: 14px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -2825,9 +2829,9 @@ opacity: 1;
 }
 
 .btn-history:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
 .btn-history:active {
@@ -2882,7 +2886,7 @@ opacity: 1;
   display: flex;
   gap: 14px;
   padding: 14px;
-  background: #1a1a1a;
+  background: #0a0a0a;
   border: 1px solid #3a3a3a;
   border-radius: 12px;
   cursor: pointer;
@@ -2896,10 +2900,10 @@ opacity: 1;
 }
 
 .history-card:hover {
-  background: #222;
-  border-color: #667eea;
+  background: #0a0a0a;
+  border-color: #1877f2;
   transform: translateX(4px);
-  box-shadow: 0 0 0 1px #667eea, 0 2px 8px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 0 0 1px #1877f2, 0 2px 8px rgba(24, 119, 242, 0.2);
   z-index: 1;
 }
 
@@ -3000,7 +3004,7 @@ opacity: 1;
 .btn-toggle-history {
   width: 100%;
   padding: 14px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1877f2;
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -3019,9 +3023,9 @@ opacity: 1;
 }
 
 .btn-toggle-history:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
 .btn-toggle-history:active {
@@ -3057,7 +3061,7 @@ opacity: 1;
 }
 
 .history-list::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #0a0a0a;
   border-radius: 3px;
 }
 

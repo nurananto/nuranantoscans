@@ -72,13 +72,12 @@
   <header role="banner">
     <div class="header-content">
       <a href="https://www.nuranantoscans.my.id" class="logo-link" aria-label="Nurananto Scanlation Home">
-        <img src="assets/logo.png" alt="Nurananto Scanlation Logo" class="site-logo">
+        <img src="assets/logo.png" alt="Nurananto Scanlation Logo" class="site-logo" width="200" height="60">
       </a>
-      
 
-
-      <!-- Desktop: Show all buttons -->
-      <div class="header-buttons">
+      <nav aria-label="Social media links">
+        <!-- Desktop: Show all buttons -->
+        <div class="header-buttons">
   <!-- Profile/Login Button - FIRST -->
   <button class="header-icon-button profile-button" 
           id="btnOpenLogin"
@@ -87,6 +86,7 @@
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
       <circle cx="12" cy="7" r="4"/>
     </svg>
+    <span class="button-text">Login</span>
   </button>
 
   <!-- GitHub Link -->
@@ -158,130 +158,129 @@
           <span>Facebook</span>
         </a>
       </div>
+      </nav>
     </div>
+    <div class="header-border"></div>
   </header>
 
   <!-- MAIN content -->
   <main role="main" id="main-content">
-    <div class="container">
-      <!-- Left Section - FIXED: Use <div> instead of <aside> -->
-      <div class="left-section" role="complementary" aria-label="Manga information sidebar">
-        <div class="cover-container">
-          <img id="mangaCover" 
-               src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='450'%3E%3Crect width='300' height='450' fill='%23f5f5f5'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='16' font-family='Arial'%3ELoading...%3C/text%3E%3C/svg%3E" 
-               alt="Manga Cover" 
-               class="manga-cover"
-               loading="eager"
-               fetchpriority="high">
-        </div>
+    <!-- Main Container - Cover + Info (Desktop Only) -->
+    <div class="main-container">
+      <!-- Cover Section -->
+      <div class="hero-cover">
+        <img id="mangaCover" 
+             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='450'%3E%3Crect width='300' height='450' fill='%23f5f5f5'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='16' font-family='Arial'%3ELoading...%3C/text%3E%3C/svg%3E" 
+             alt="Manga Cover" 
+             class="manga-cover"
+             loading="eager"
+             fetchpriority="high">
+      </div>
 
-        <!-- Title Section Mobile -->
-        <div class="title-section-mobile">
-          <h1 id="mainTitleMobile" class="main-title"></h1>
-          <p id="subtitleMobile" class="subtitle"></p>
-          
-          <!-- Badges Container Mobile -->
-          <div class="badges-container">
-            <div class="views-badge" id="viewsBadgeMobile" role="img" aria-label="Total views">
-              <span id="viewsCountMobile" class="views-number">0</span>
-              <span class="views-text">Views</span>
-            </div>
-            
-            <div class="rating-badge" id="ratingBadgeMobile" role="img" aria-label="MangaDex rating">
-              <img src="assets/star.png" alt="" class="star-icon" aria-hidden="true">
-              <span id="ratingScoreMobile" class="rating-number">-</span>
-              <span class="rating-text">/10</span>
-            </div>
+      <!-- Info Section -->
+      <div class="hero-info">
+        <!-- Status Badge & Last Update -->
+        <div class="status-update-container">
+          <div id="statusBadgeInfo" class="status-badge-info">ONGOING</div>
+          <div class="last-update-info">
+            <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span id="lastUpdateText">Last Update: -</span>
           </div>
-
-          <button class="btn-show-details" id="btnShowDetails" aria-expanded="false">
-            <span class="info-icon" aria-hidden="true">ℹ</span>
-            <span id="detailsButtonText">Show Details</span>
-          </button>
         </div>
 
-        <!-- Baca dari Awal Button (Mobile - Outside) -->
-        <button class="btn-read-first btn-read-outside" id="btnReadFirstOutside">
+        <!-- Title -->
+        <h1 id="mainTitle" class="main-title"></h1>
+        <p id="subtitle" class="subtitle"></p>
+
+        <!-- Author & Artist -->
+        <div class="author-artist-container">
+          <div class="author-box">
+            <span class="label-text">AUTHOR:</span>
+            <span id="authorNameDesktop" class="value-text">-</span>
+          </div>
+          <div class="artist-box">
+            <span class="label-text">ARTIST:</span>
+            <span id="artistNameDesktop" class="value-text">-</span>
+          </div>
+        </div>
+
+        <!-- Read Button -->
+        <button class="btn-start-reading" id="btnStartReading">
           <svg class="btn-read-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
           </svg>
-          <span>BACA DARI AWAL</span>
+          <span>MULAI BACA</span>
         </button>
+      </div>
+    </div>
 
-        <!-- Details Container -->
-        <div class="details-container" id="detailsContainer">
-          <div class="info-box">
-            <div class="info-label">AUTHOR</div>
-            <div id="authorName" class="info-value"></div>
-          </div>
-
-          <div class="info-box">
-            <div class="info-label">ARTIST</div>
-            <div id="artistName" class="info-value"></div>
-          </div>
-
-          <div class="info-box">
-            <div class="info-label">GENRE</div>
-            <div id="genreList" class="genre-tags" role="list"></div>
-          </div>
-
-          <div class="info-box sinopsis-box-mobile">
-            <div class="info-label info-label-center">SINOPSIS</div>
-            <div id="synopsisMobile" class="info-value sinopsis-text"></div>
-          </div>
-
-          <div class="external-links-container" role="navigation" aria-label="External links">
-            <button class="sidebar-btn half-width" id="btnMangadex" aria-label="View on MangaDex">
-              <img src="assets/mangadex-logo.png" alt="" class="btn-icon" aria-hidden="true">
-              <span>MANGADEX</span>
-            </button>
-            <button class="sidebar-btn half-width" id="btnRaw" aria-label="View RAW chapters">
-              <img src="assets/book.png" alt="" class="btn-icon" aria-hidden="true">
-              <span>RAW</span>
-            </button>
-          </div>
-
-          <button class="btn-read-first btn-read-inside" id="btnReadFirstInside">
-            <svg class="btn-read-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-            <span>BACA DARI AWAL</span>
-          </button>
-        </div>
+    <!-- Information Container with Tabs (Desktop Only) -->
+    <div class="information-container">
+      <!-- Tab Navigation -->
+      <div class="tab-navigation" role="tablist">
+        <button class="tab-button active" role="tab" aria-selected="true" aria-controls="about-panel" id="about-tab">
+          <span>About</span>
+        </button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="chapters-panel" id="chapters-tab">
+          <span>Chapters</span>
+        </button>
       </div>
 
-      <!-- Right Section - FIXED: Use <div> instead of <article> -->
-      <div class="right-section" role="article">
-        <!-- Title Section Desktop -->
-        <div class="title-section-desktop">
-          <h1 id="mainTitle" class="main-title"></h1>
-          <p id="subtitle" class="subtitle"></p>
-          
-          <!-- Badges Container Desktop -->
-          <div class="badges-container">
-            <div class="views-badge" id="viewsBadgeDesktop" role="img" aria-label="Total views">
-              <span id="viewsCount" class="views-number">0</span>
-              <span class="views-text">Views</span>
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- About Panel -->
+        <div class="tab-panel active" role="tabpanel" id="about-panel" aria-labelledby="about-tab">
+          <!-- Chapters Count -->
+          <div class="info-stats">
+            <div class="stat-item">
+              <div class="stat-label">Banyak Chapter</div>
+              <div class="stat-value" id="totalChapters">0 Chapters</div>
             </div>
-            
-            <div class="rating-badge" id="ratingBadgeDesktop" role="img" aria-label="MangaDex rating">
-              <img src="assets/star.png" alt="" class="star-icon" aria-hidden="true">
-              <span id="ratingScore" class="rating-number">-</span>
-              <span class="rating-text">/10</span>
+            <div class="stat-item">
+              <div class="stat-label">Jumlah Pembaca</div>
+              <div class="stat-value" id="totalViewer">0</div>
+            </div>
+          </div>
+
+          <!-- Genre Tags -->
+          <div class="info-box-section genre-box-wrapper">
+            <div class="genre-box-header">
+              <span class="genre-box-label">GENRE</span>
+            </div>
+            <div id="genreListInfo" class="genre-tags-info" role="list"></div>
+          </div>
+
+          <!-- External Links -->
+          <div class="external-links-info">
+            <button class="info-btn" id="btnMangadexInfo" aria-label="View alternative reading link">
+              <img src="assets/mangadex-logo.png" alt="" class="btn-icon" aria-hidden="true">
+              <span>Alternatif Link</span>
+            </button>
+            <button class="info-btn" id="btnRawInfo" aria-label="View source website">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              <span>Source Web</span>
+            </button>
+          </div>
+
+          <!-- Details / Sinopsis -->
+          <div class="details-section">
+            <h3 class="details-heading">Sinopsis Manga</h3>
+            <div class="details-introduction">
+              <p id="synopsisInfo" class="synopsis-text"></p>
             </div>
           </div>
         </div>
 
-        <!-- Description -->
-        <div class="description-box" role="region" aria-labelledby="description-heading">
-          <h2 id="description-heading" class="section-title">SINOPSIS MANGA</h2>
-          <div id="descriptionContent" class="content-text"></div>
-        </div>
-
-        <!-- Chapters -->
-        <div class="chapters-box" role="region" aria-labelledby="chapters-heading">
-          <h2 id="chapters-heading" class="section-title">DAFTAR CHAPTER</h2>
-          <div id="chapterList" class="chapter-list" role="list"></div>
+        <!-- Chapters Panel -->
+        <div class="tab-panel" role="tabpanel" id="chapters-panel" aria-labelledby="chapters-tab">
+          <div id="chapterListInfo" class="chapter-list-info" role="list"></div>
         </div>
       </div>
     </div>
@@ -421,7 +420,7 @@ if ('serviceWorker' in navigator) {
 <div id="loginModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
   <div class="login-modal-content">
     <!-- ✅ Disclaimer Banner -->
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px; border-radius: 8px 8px 0 0; text-align: center;">
+    <div style="background: linear-gradient(135deg, #1877f2 0%, #166fe5 100%); padding: 12px; border-radius: 8px 8px 0 0; text-align: center;">
       <div style="color: white; font-size: 13px; font-weight: 600;">
         🔒 Secure Login - Nurananto Scanlation Web
       </div>
