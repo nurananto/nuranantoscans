@@ -149,7 +149,7 @@ MANGA_LIST = [
   {
     id: 'madogiwa',
     title: 'Madogiwa Henshuu to Baka ni Sareta Ore ga, Futago JK to Doukyo suru Koto ni Natta',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/madogiwa-ce74d132-81f0-491a-bb19-83de73746c8e.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/madogiwa-dabd3374-d273-4146-bf89-6171a14f8756.webp',
     repo: 'MadogiwaHenshuu'
   },
   {
