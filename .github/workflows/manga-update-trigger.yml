@@ -50,7 +50,7 @@ jobs:
             echo '{"pending":[],"lastRebuild":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > pending-manga-updates.json
           fi
       
-      - name: 🔍 Add Update to Pending (with retry)
+      - name: 📝 Add Update to Pending (with retry)
         if: github.event_name == 'repository_dispatch'
         run: |
           MANGA_REPO="${{ github.event.client_payload.manga }}"
@@ -74,7 +74,7 @@ jobs:
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             
             git add pending-manga-updates.json
-            git commit -m "🔍 Track update from $MANGA_REPO [skip ci]" || echo "No changes"
+            git commit -m "📝 Track update from $MANGA_REPO [skip ci]" || echo "No changes"
             
             if git push; then
               PENDING_COUNT=$(jq '.pending | length' pending-manga-updates.json)
@@ -262,7 +262,7 @@ jobs:
               
             } catch (err) {
               console.log(`   ❌ Error: ${err.message}`);
-              console.log(`   📝 Stack: ${err.stack}`);
+              console.log(`   🔍 Stack: ${err.stack}`);
               return null;
             }
           }
@@ -312,7 +312,7 @@ jobs:
             echo "needs_cover_update=false" >> $GITHUB_OUTPUT
           fi
       
-      - name: 🔄 Update Covers (If Needed)
+      - name: 🖼️ Update Covers (If Needed)
         if: |
           steps.check_rebuild.outputs.should_rebuild == 'true' &&
           steps.cover_check.outputs.needs_cover_update == 'true'
@@ -327,7 +327,13 @@ jobs:
           node download-covers-r2.js || echo "Cover update failed, continuing..."
           
           if [[ -n $(git status -s manga-config.js) ]]; then
-            git add manga-config.js updated-repo-list.txt
+            git add manga-config.js
+            
+            # ✅ Only add updated-repo-list.txt if it exists
+            if [ -f updated-repo-list.txt ]; then
+              git add updated-repo-list.txt
+            fi
+            
             git commit -m "🖼️ Auto-update covers [skip ci]" || true
             git push || true
             echo "✅ Covers updated"
@@ -466,9 +472,17 @@ jobs:
           # Version bump akan dihandle oleh auto-version.yml setelah deploy
           if [[ -n $(git status -s) ]]; then
             git add -A
-            git reset HEAD version.txt sw.js index.html info-manga.html reader.html || true
+            
+            # ✅ FIX: Hanya reset file yang benar-benar ada di staging area
+            FILES_TO_RESET="version.txt sw.js index.html info-manga.html reader.html updated-repo-list.txt"
+            for file in $FILES_TO_RESET; do
+              if git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+                git reset HEAD "$file" 2>/dev/null || true
+              fi
+            done
+            
             if [[ -n $(git status -s) ]]; then
-              git commit -m "🔄 Batch rebuild: $MANGA_LIST [skip ci]" || echo "No changes"
+              git commit -m "📦 Batch rebuild: $MANGA_LIST [skip ci]" || echo "No changes"
               git push || echo "Push failed"
               echo "✅ Changes committed (version bump will be handled by auto-version)"
             else
@@ -498,7 +512,7 @@ jobs:
           git push
           
           echo "✅ Pending cleared and committed"
-          echo "::notice title=Pending Cleared::Processed and cleared $PENDING_COUNT manga updates"
+          echo "::notice title=Pending Cleared::Processed and cleared $PROCESSED_COUNT manga updates"
 
   # ✅ Separate job to deploy pages
   deploy-pages:
