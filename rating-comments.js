@@ -259,18 +259,36 @@ class RatingCommentsHandler {
       });
 
       if (response.ok) {
-        // Success - reload rating display
+        // Success - show success state
+        if (btnSubmitRating) {
+          btnSubmitRating.classList.add('success');
+          btnSubmitRating.textContent = '✅ Rating Berhasil Disimpan!';
+          btnSubmitRating.disabled = true;
+        }
+        
         this.hasRated = true;
-        await this.loadRating();
-        alert('✅ Rating berhasil disimpan!');
+        
+        // Wait 2 seconds to show success state, then reload and hide
+        setTimeout(async () => {
+          await this.loadRating();
+          const ratingInput = document.getElementById('ratingInput');
+          if (ratingInput) {
+            ratingInput.style.display = 'none';
+          }
+        }, 2000);
       } else {
         const error = await response.json();
         alert('❌ ' + (error.error || 'Gagal menyimpan rating'));
+        
+        if (btnSubmitRating) {
+          btnSubmitRating.disabled = false;
+          btnSubmitRating.textContent = 'Submit Rating';
+        }
       }
     } catch (error) {
       console.error('[RATING] Error submitting rating:', error);
       alert('❌ Terjadi kesalahan saat menyimpan rating');
-    } finally {
+      
       if (btnSubmitRating) {
         btnSubmitRating.disabled = false;
         btnSubmitRating.textContent = 'Submit Rating';

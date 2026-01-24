@@ -3963,6 +3963,14 @@ class InfoMangaRatingComments {
         }
 
         const token = localStorage.getItem('authToken');
+        const btnSubmit = document.getElementById('btnSubmitMangaRating');
+        
+        // Show submitting state
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Mengirim...';
+        }
+        
         try {
             const response = await fetch(`${this.API_BASE}/ratings/manga`, {
                 method: 'POST',
@@ -3978,25 +3986,41 @@ class InfoMangaRatingComments {
 
             const data = await response.json();
             if (data.success) {
-                alert('Rating berhasil dikirim!');
+                // Show success state
+                if (btnSubmit) {
+                    btnSubmit.classList.add('success');
+                    btnSubmit.textContent = '✅ Rating Berhasil Dikirim!';
+                }
+                
                 this.selectedRating = 0;
                 this.highlightStars(0);
                 
-                // Hide rating input (one-time rating)
-                const ratingInput = document.getElementById('mangaRatingInput');
-                if (ratingInput) ratingInput.style.display = 'none';
-                
-                // Wait a bit for server to update, then reload
-                await new Promise(resolve => setTimeout(resolve, 500));
-                await this.loadMangaRating();
-                
-                dLog('[INFO-RATING] Rating submitted and refreshed');
+                // Wait 2 seconds to show success, then hide input and reload
+                setTimeout(async () => {
+                    const ratingInput = document.getElementById('mangaRatingInput');
+                    if (ratingInput) ratingInput.style.display = 'none';
+                    
+                    await this.loadMangaRating();
+                    dLog('[INFO-RATING] Rating submitted and refreshed');
+                }, 2000);
             } else {
                 alert(data.error || 'Gagal mengirim rating');
+                
+                // Reset button on error
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Kirim Rating';
+                }
             }
         } catch (error) {
             console.error('[INFO-RATING] Submit error:', error);
             alert('Terjadi kesalahan saat mengirim rating');
+            
+            // Reset button on error
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Kirim Rating';
+            }
         }
     }
 

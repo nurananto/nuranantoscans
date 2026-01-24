@@ -1070,6 +1070,25 @@ header {
     box-shadow: 0 4px 12px rgba(77, 208, 225, 0.3);
 }
 
+.btn-submit-rating-compact:disabled {
+    background: #2f3336;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-submit-rating-compact.success {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    color: #ffffff;
+    cursor: default;
+    animation: successPulse 0.6s ease;
+}
+
+@keyframes successPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
 /* Author & Artist Container */
 .author-artist-container {
     display: flex;
