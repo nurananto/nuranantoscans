@@ -1,4 +1,9 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "repo": "ChikasugiruFutari",
+      "timestamp": "2026-01-24T23:29:15Z"
+    }
+  ],
   "lastRebuild": "2026-01-24T14:30:52Z"
 }
