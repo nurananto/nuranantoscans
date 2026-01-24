@@ -15,6 +15,12 @@
 
 MANGA_LIST = [
   {
+    id: 'chikasugirufutari',
+    title: 'Chikasugiru Futari',
+    cover: '',
+    repo: 'ChikasugiruFutari'
+  },
+  {
     id: 'zunoubattle',
     title: 'Ore wa Gakuen Zunou Battle no Enshutsuka!',
     cover: 'https://cdn.nuranantoscans.my.id/covers/zunoubattle-e57c025c-a8b2-4e1c-8868-48f109d9e194.webp',
