@@ -27,18 +27,6 @@ MANGA_LIST = [
     repo: 'Mutsuko'
   },
   {
-    id: 'tenshisenpai',
-    title: 'Tenshi Senpai',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/tenshisenpai-cover.webp',
-    repo: 'TenshiSenpai'
-  },
-  {
-    id: 'haibarakun',
-    title: 'Haibara-kun no Tsuyokute Seishun New Game',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/haibarakun-4b90a775-bf6a-41fb-aefb-73d88720ddbc.webp',
-    repo: 'Haibara-kun'
-  },
-  {
     id: 'kiminisasayaku',
     title: 'Kimi ni Sasayaku',
     cover: 'https://cdn.nuranantoscans.my.id/covers/KiminiSasayaku-cover.webp',
@@ -57,22 +45,10 @@ MANGA_LIST = [
     repo: 'Gotou-san'
   },
   {
-    id: 'yuurikuntochihirochan',
-    title: 'Yuuri-kun to Chihiro-chan',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/yuurikuntochihirochan-8235d341-4f78-4d32-a747-08ba7c4afa58.webp',
-    repo: 'YuurikuntoChihirochan'
-  },
-  {
     id: 'teisougyakuten',
     title: 'Teisou Gyakuten Sekai Nara Moteru to Omotte Itara',
     cover: 'https://cdn.nuranantoscans.my.id/covers/teisougyakuten-bdb1f782-3cad-4938-919f-0035c38e641a.webp',
     repo: 'TeisouGyakuten'
-  },
-  {
-    id: 'karadaoarawasanai',
-    title: 'Na wa Karada o Arawasanai',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/KaradaoArawasanai-Cover.webp',
-    repo: 'KaradaoArawasanai'
   },
   {
     id: 'yuureigahatsukoi',
