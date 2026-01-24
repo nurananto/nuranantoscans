@@ -17,7 +17,7 @@ MANGA_LIST = [
   {
     id: 'chikasugirufutari',
     title: 'Chikasugiru Futari',
-    cover: '',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/chikasugirufutari-673e858e-f661-42ca-a6c9-ce0c671de9b3.webp',
     repo: 'ChikasugiruFutari'
   },
   {

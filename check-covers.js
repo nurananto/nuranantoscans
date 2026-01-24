@@ -80,7 +80,7 @@ async function checkCover(repoName) {
     
   } catch (err) {
     console.log(`   ❌ Error: ${err.message}`);
-    console.log(`   📝 Stack: ${err.stack}`);
+    console.log(`   🔍 Stack: ${err.stack}`);
     return null;
   }
 }
