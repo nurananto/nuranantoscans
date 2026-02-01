@@ -190,6 +190,7 @@ let repoParam = null;
 let readMode = 'webtoon';
 let currentPage = 1;
 let totalPages = 0;
+let hasUserScrolled = false; // Track if user has scrolled
 
 const readerContainer = document.getElementById('readerContainer');
 const navProgressBar = document.getElementById('navProgressBar');
@@ -230,7 +231,7 @@ async function initializeReader() {
         
         const urlParams = new URLSearchParams(window.location.search);
         const chapterParam = urlParams.get('chapter');
-        repoParam = urlParams.get('repo');
+        repoParam = urlParams.get('repo') || urlParams.get('manga'); // Support both repo and manga params
         
     if (DEBUG_MODE) dLog('📋 Parameters:', { chapter: chapterParam, repo: repoParam });
     if (DEBUG_MODE) dLog('📋 Chapter type:', typeof chapterParam, 'Value:', JSON.stringify(chapterParam)); // ← TAMBAH INI
@@ -242,7 +243,7 @@ async function initializeReader() {
         }
         
         if (!repoParam) {
-            alert('Error: Parameter repo tidak ditemukan.');
+            alert('Error: Parameter repo atau manga tidak ditemukan.');
             hideLoading();
             return;
         }
@@ -721,6 +722,7 @@ async function loadChapterPages() {
         if (progressFill) {
             progressFill.style.width = '0%';
         }
+        hasUserScrolled = false; // Reset scroll flag for new chapter
         
         // Render pages dengan signed URLs
         signedPages.forEach((signedUrl, index) => {
@@ -770,19 +772,21 @@ async function loadChapterPages() {
         });
         
         // Setup tracking dan thumbnails
+        // Initialize progress bar to 0% first
+        if (progressFill) progressFill.style.width = '0%';
         setupPageTracking();
         renderPageThumbnails(signedPages);
         updateProgressBar();
         
-        // Initialize Rating & Comments
+        // Initialize Comments (tanpa rating)
         const urlParams = new URLSearchParams(window.location.search);
-        const repo = urlParams.get('repo');
+        const repo = urlParams.get('repo') || urlParams.get('manga'); // Support both parameters
         const chapter = urlParams.get('chapter');
         
-        if (repo && chapter && typeof RatingCommentsHandler !== 'undefined') {
-            const ratingCommentsHandler = new RatingCommentsHandler();
-            ratingCommentsHandler.init(repo, chapter).catch(err => {
-                console.error('[RATING-COMMENTS] Init failed:', err);
+        if (repo && chapter) {
+            const readerComments = new ReaderComments();
+            readerComments.init(repo, chapter).catch(err => {
+                if (DEBUG_MODE) console.error('[READER-COMMENTS] Init failed:', err);
             });
         }
         
@@ -856,21 +860,51 @@ function setupPageTracking() {
         threshold: 0.5
     };
     
+    let updateTimeout;
     const observer = new IntersectionObserver((entries) => {
+        // Find the most visible page (highest intersectionRatio)
+        let mostVisibleEntry = null;
+        let highestRatio = 0;
+        
         entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const pageNum = parseInt(entry.target.getAttribute('data-page'));
-                if (pageNum >= 1 && pageNum <= totalPages) {
-                    currentPage = pageNum;
-                    updatePageNavigation();
-                    saveLastPage();
-                }
+            if (entry.isIntersecting && entry.intersectionRatio > highestRatio) {
+                highestRatio = entry.intersectionRatio;
+                mostVisibleEntry = entry;
             }
         });
+        
+        // Only update to the most visible page
+        if (mostVisibleEntry) {
+            const pageNum = parseInt(mostVisibleEntry.target.getAttribute('data-page'));
+            if (pageNum >= 1 && pageNum <= totalPages) {
+                currentPage = pageNum;
+                // Only update UI if user has scrolled (prevent initial 100% flash)
+                if (hasUserScrolled) {
+                    // Debounce updates to prevent rapid changes
+                    clearTimeout(updateTimeout);
+                    updateTimeout = setTimeout(() => {
+                        updatePageNavigation();
+                        saveLastPage();
+                    }, 50);
+                }
+            }
+        }
     }, options);
     
     const pages = document.querySelectorAll('.reader-page');
     pages.forEach(page => observer.observe(page));
+    
+    // Set flag when user scrolls
+    const scrollTarget = readMode === 'manga' ? readerContainer : window;
+    scrollTarget.addEventListener('scroll', () => {
+        if (!hasUserScrolled) {
+            hasUserScrolled = true;
+            // Force update progress bar after first scroll with slight delay
+            setTimeout(() => {
+                updateProgressBar();
+            }, 100);
+        }
+    }, { passive: true });
 }
 
 function goToPage(pageNum) {
@@ -961,7 +995,11 @@ function updatePageNavigation() {
 }
 
 function updateProgressBar() {
-    if (!progressFill || !totalPages || totalPages === 0) return;
+    if (!progressFill || !totalPages || totalPages === 0) {
+        // Set to 0% if not ready yet
+        if (progressFill) progressFill.style.width = '0%';
+        return;
+    }
     
     // Simple progress: currentPage / totalPages
     const progress = ((currentPage - 1) / Math.max(1, totalPages - 1)) * 100;
@@ -1611,3 +1649,437 @@ function initGlobalLoginButton() {
     }
 }
 
+// ============================================
+// READER COMMENTS CLASS (tanpa rating)
+// ============================================
+
+class ReaderComments {
+    constructor() {
+        this.repo = null;
+        this.chapter = null;
+        this.chapterId = null;
+        this.isLoggedIn = false;
+        this.API_BASE = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
+    }
+
+    async init(repo, chapter) {
+        this.repo = repo;
+        this.chapter = chapter;
+        this.chapterId = `${repo}-${chapter}`;
+        
+        dLog('[READER-COMMENTS] ========================================');
+        dLog('[READER-COMMENTS] Initializing for chapter:', this.chapterId);
+        dLog('[READER-COMMENTS] repo (mangaId):', this.repo);
+        dLog('[READER-COMMENTS] chapter:', this.chapter);
+        dLog('[READER-COMMENTS] chapterId format:', this.chapterId);
+        dLog('[READER-COMMENTS] ========================================');
+        
+        // Setup event listeners FIRST
+        this.setupEventListeners();
+        
+        // Check login status
+        await this.checkLoginStatus();
+        
+        // Load comments
+        await this.loadComments();
+        
+        // Listen for login/logout events via storage
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'authToken') {
+                dLog('[READER-COMMENTS] Auth token changed, re-checking login status');
+                this.checkLoginStatus();
+            }
+        });
+        
+        // Listen for window focus (user might login in another tab)
+        window.addEventListener('focus', () => {
+            dLog('[READER-COMMENTS] Window focused, re-checking login status');
+            this.checkLoginStatus();
+        });
+        
+        // Listen for custom login event (if exists)
+        window.addEventListener('userLoggedIn', () => {
+            dLog('[READER-COMMENTS] User logged in event received');
+            this.checkLoginStatus();
+            this.loadComments();
+        });
+        
+        window.addEventListener('userLoggedOut', () => {
+            dLog('[READER-COMMENTS] User logged out event received');
+            this.checkLoginStatus();
+        });
+        
+        // Listen for profile modal closed (re-check status after user interaction)
+        window.addEventListener('profileModalClosed', () => {
+            dLog('[READER-COMMENTS] Profile modal closed, re-checking status');
+            this.checkLoginStatus();
+            this.loadComments();
+        });
+    }
+
+    async checkLoginStatus() {
+        const token = localStorage.getItem('authToken');
+        dLog('[READER-COMMENTS] Checking login status, token exists:', !!token);
+        
+        if (!token) {
+            this.isLoggedIn = false;
+            this.showLoginButton();
+            dLog('[READER-COMMENTS] No token, showing login button');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.API_BASE}/donatur/status`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            dLog('[READER-COMMENTS] Status check response:', response.status);
+
+            if (response.ok) {
+                this.isLoggedIn = true;
+                this.showCommentInput();
+                dLog('[READER-COMMENTS] User is logged in, showing comment input');
+            } else {
+                this.isLoggedIn = false;
+                this.showLoginButton();
+                dLog('[READER-COMMENTS] Token invalid, showing login button');
+            }
+        } catch (error) {
+            if (DEBUG_MODE) console.error('[READER-COMMENTS] Login check error:', error);
+            this.isLoggedIn = false;
+            this.showLoginButton();
+        }
+    }
+
+    showLoginButton() {
+        const btnLogin = document.getElementById('btnLoginComment');
+        const inputSection = document.getElementById('commentInputSection');
+        
+        if (btnLogin) {
+            btnLogin.style.display = 'flex';
+            dLog('[READER-COMMENTS] Login button shown');
+        }
+        if (inputSection) {
+            inputSection.style.display = 'none';
+        }
+    }
+
+    showCommentInput() {
+        const btnLogin = document.getElementById('btnLoginComment');
+        const inputSection = document.getElementById('commentInputSection');
+        
+        if (btnLogin) {
+            btnLogin.style.display = 'none';
+            dLog('[READER-COMMENTS] Login button hidden');
+        }
+        if (inputSection) {
+            inputSection.style.display = 'block';
+            dLog('[READER-COMMENTS] Comment input shown');
+        }
+    }
+
+    async loadComments() {
+        if (!this.chapterId) return;
+
+        try {
+            const url = `${this.API_BASE}/comments?mangaId=${this.repo}&chapterId=${this.chapterId}&limit=50&offset=0&_t=${Date.now()}`;
+            
+            dLog('[READER-COMMENTS] ========================================');
+            dLog('[READER-COMMENTS] Loading comments...');
+            dLog('[READER-COMMENTS] API URL:', url);
+            dLog('[READER-COMMENTS] mangaId:', this.repo);
+            dLog('[READER-COMMENTS] chapterId:', this.chapterId);
+            dLog('[READER-COMMENTS] ========================================');
+            
+            const response = await fetch(url);
+            
+            dLog('[READER-COMMENTS] Response status:', response.status);
+            
+            if (!response.ok) {
+                if (DEBUG_MODE) console.error('[READER-COMMENTS] Response not OK:', response.status, response.statusText);
+                this.showNoComments();
+                return;
+            }
+            
+            const data = await response.json();
+            dLog('[READER-COMMENTS] Loaded data:', data);
+            dLog('[READER-COMMENTS] Comments array:', data.comments);
+            dLog('[READER-COMMENTS] Comments count:', data.comments?.length);
+
+            // Check if comments exist and is an array
+            if (data.comments && Array.isArray(data.comments)) {
+                if (data.comments.length > 0) {
+                    dLog('[READER-COMMENTS] Displaying', data.comments.length, 'comments');
+                    this.displayComments(data.comments);
+                } else {
+                    dLog('[READER-COMMENTS] No comments found (empty array)');
+                    dLog('[READER-COMMENTS] Trying alternative chapterId format...');
+                    
+                    // Try alternative format: without hyphen (chapter only)
+                    await this.tryAlternativeChapterFormat();
+                }
+            } else {
+                if (DEBUG_MODE) console.error('[READER-COMMENTS] Invalid comments data:', data);
+                this.showNoComments();
+            }
+        } catch (error) {
+            if (DEBUG_MODE) console.error('[READER-COMMENTS] Load error:', error);
+            this.showNoComments();
+        }
+    }
+    
+    async tryAlternativeChapterFormat() {
+        // Try dengan format: repo/chapter atau hanya chapter
+        const alternativeFormats = [
+            `${this.repo}/${this.chapter}`,  // Format: repo/chapter
+            this.chapter,                      // Format: chapter only
+            `${this.repo}_${this.chapter}`,   // Format: repo_chapter
+        ];
+        
+        for (const altChapterId of alternativeFormats) {
+            dLog('[READER-COMMENTS] Trying alternative chapterId:', altChapterId);
+            
+            try {
+                const url = `${this.API_BASE}/comments?mangaId=${this.repo}&chapterId=${altChapterId}&limit=50&offset=0&_t=${Date.now()}`;
+                const response = await fetch(url);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.comments && data.comments.length > 0) {
+                        dLog('[READER-COMMENTS] ✅ Found', data.comments.length, 'comments with format:', altChapterId);
+                        this.displayComments(data.comments);
+                        return;
+                    }
+                }
+            } catch (err) {
+                dLog('[READER-COMMENTS] Alternative format failed:', altChapterId, err);
+            }
+        }
+        
+        dLog('[READER-COMMENTS] No comments found in any format');
+        this.showNoComments();
+    }
+
+    displayComments(comments) {
+        const listEl = document.getElementById('commentsList');
+        if (!listEl) return;
+
+        dLog('[READER-COMMENTS] Displaying', comments.length, 'comments');
+        dLog('[READER-COMMENTS] First comment sample:', comments[0]);
+        
+        listEl.innerHTML = comments.map(comment => this.renderComment(comment)).join('');
+    }
+
+    renderComment(comment) {
+        const token = localStorage.getItem('authToken');
+        const isOwner = this.isLoggedIn && comment.user_id === this.getUserIdFromToken(token);
+        
+        // Handle different date formats
+        const date = new Date(comment.created_at || comment.createdAt);
+        const formattedDate = date.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Handle different username formats
+        const displayUsername = comment.username || comment.user?.username || 'Unknown User';
+        
+        // Handle different content formats
+        const content = comment.content || comment.text || '';
+
+        return `
+            <div class="comment-item" data-id="${comment.id}">
+                <div class="comment-header">
+                    <span class="comment-user">@${this.escapeHtml(displayUsername)}</span>
+                    <span class="comment-date">${formattedDate}</span>
+                </div>
+                <div class="comment-content">${this.escapeHtml(content)}</div>
+                <div class="comment-actions">
+                    ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${displayUsername}">Reply</button>` : ''}
+                    ${isOwner ? `<button class="btn-delete-comment" data-id="${comment.id}">Hapus</button>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    showNoComments() {
+        const listEl = document.getElementById('commentsList');
+        if (!listEl) return;
+
+        listEl.innerHTML = `
+            <div class="comment-placeholder">
+                <p>Belum ada komentar. Jadilah yang pertama!</p>
+            </div>
+        `;
+    }
+
+    getUserIdFromToken(token) {
+        if (!token) return null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.userId;
+        } catch {
+            return null;
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    setupEventListeners() {
+        // Login button - trigger login modal if available
+        const btnLogin = document.getElementById('btnLoginComment');
+        if (btnLogin) {
+            btnLogin.addEventListener('click', () => {
+                dLog('[READER-COMMENTS] Login button clicked');
+                // Check if login modal exists (from common.js or other script)
+                const loginModal = document.getElementById('loginModal');
+                const btnOpenLogin = document.getElementById('btnOpenLogin');
+                
+                if (loginModal && btnOpenLogin) {
+                    dLog('[READER-COMMENTS] Triggering login modal');
+                    btnOpenLogin.click();
+                } else {
+                    // Fallback: redirect to info-manga with autoLogin parameter
+                    dLog('[READER-COMMENTS] No login modal, redirecting to info-manga with autoLogin');
+                    if (this.repo) {
+                        window.location.href = `info-manga.html?repo=${this.repo}&autoLogin=true`;
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }
+            });
+            dLog('[READER-COMMENTS] Login button event listener attached');
+        }
+
+        // Comment textarea char count
+        const textarea = document.getElementById('commentTextarea');
+        if (textarea) {
+            textarea.addEventListener('input', (e) => {
+                const charCount = document.getElementById('commentCharCount');
+                if (charCount) charCount.textContent = e.target.value.length;
+            });
+        }
+
+        // Submit comment
+        const btnSubmitComment = document.getElementById('btnSubmitComment');
+        if (btnSubmitComment) {
+            btnSubmitComment.addEventListener('click', () => this.submitComment());
+        }
+
+        // Reply & Delete (event delegation)
+        const commentsList = document.getElementById('commentsList');
+        if (commentsList) {
+            commentsList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-reply-comment')) {
+                    const username = e.target.dataset.username;
+                    this.replyToComment(username);
+                } else if (e.target.classList.contains('btn-delete-comment')) {
+                    const commentId = e.target.dataset.id;
+                    this.deleteComment(commentId);
+                }
+            });
+        }
+    }
+
+    async submitComment() {
+        if (!this.isLoggedIn) {
+            alert('Silakan login terlebih dahulu');
+            return;
+        }
+
+        const textarea = document.getElementById('commentTextarea');
+        const content = textarea.value.trim();
+
+        if (!content) {
+            alert('Komentar tidak boleh kosong');
+            return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        const btnSubmit = document.getElementById('btnSubmitComment');
+        
+        // Disable button during submission
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Mengirim...';
+        }
+        
+        try {
+            const response = await fetch(`${this.API_BASE}/comments/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    mangaId: this.repo,
+                    chapterId: this.chapterId,
+                    content: content
+                })
+            });
+
+            const data = await response.json();
+            if (data.success || response.ok) {
+                textarea.value = '';
+                document.getElementById('commentCharCount').textContent = '0';
+                alert('✅ Komentar berhasil dikirim!');
+                await this.loadComments();
+            } else {
+                alert(data.error || 'Gagal mengirim komentar');
+            }
+        } catch (error) {
+            if (DEBUG_MODE) console.error('[READER-COMMENTS] Submit error:', error);
+            alert('Terjadi kesalahan saat mengirim komentar');
+        } finally {
+            // Re-enable button
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Kirim Komentar';
+            }
+        }
+    }
+
+    replyToComment(username) {
+        const textarea = document.getElementById('commentTextarea');
+        if (textarea) {
+            textarea.value = `@${username} `;
+            textarea.focus();
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    async deleteComment(commentId) {
+        if (!confirm('Yakin ingin menghapus komentar ini?')) return;
+
+        const token = localStorage.getItem('authToken');
+        try {
+            const response = await fetch(`${this.API_BASE}/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('Komentar berhasil dihapus');
+                await this.loadComments();
+            } else {
+                alert(data.error || 'Gagal menghapus komentar');
+            }
+        } catch (error) {
+            if (DEBUG_MODE) console.error('[READER-COMMENTS] Delete error:', error);
+            alert('Terjadi kesalahan saat menghapus komentar');
+        }
+    }
+}

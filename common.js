@@ -23,6 +23,7 @@ if (PRODUCTION_MODE) {
     console.log = noop;
     console.warn = noop;
     console.info = noop;
+    // Keep console.error active for production debugging
 } else if (DEBUG_MODE) {
     dLog('🔧 Debug mode enabled');
 }
@@ -701,3 +702,459 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
+// ============================================
+// 🔔 NOTIFICATION SYSTEM
+// ============================================
+const NOTIFICATION_API = 'https://manga-auth-worker.nuranantoadhien.workers.dev/notifications';
+
+/**
+ * Initialize notification system
+ */
+function initNotificationSystem() {
+    dLog('🔔 [NOTIF] Initializing notification system...');
+    const btnNotification = document.getElementById('btnNotification');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    
+    if (!btnNotification || !notificationDropdown) {
+        dWarn('⚠️ [NOTIF] Button atau dropdown tidak ditemukan');
+        return;
+    }
+    
+    // Toggle dropdown
+    btnNotification.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = notificationDropdown.style.display === 'block';
+        
+        if (isVisible) {
+            notificationDropdown.style.display = 'none';
+        } else {
+            notificationDropdown.style.display = 'block';
+            loadNotifications();
+        }
+    });
+    
+    // Sync button handler
+    const btnSync = document.getElementById('btnSyncNotifications');
+    if (btnSync) {
+        btnSync.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            
+            try {
+                const authToken = localStorage.getItem('authToken');
+                if (!authToken) {
+                    alert('Anda harus login terlebih dahulu');
+                    return;
+                }
+                
+                const response = await fetch(`${NOTIFICATION_API}/reprocess-mentions`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ Berhasil!\n\n${data.message}`);
+                    loadNotifications();
+                    updateNotificationBadge();
+                } else {
+                    alert(`❌ Gagal: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('[NOTIF SYNC] Error:', error);
+                alert('❌ Terjadi kesalahan saat sync notifikasi');
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!notificationDropdown.contains(e.target) && e.target !== btnNotification) {
+            notificationDropdown.style.display = 'none';
+        }
+    });
+    
+    // Load initial notification count
+    dLog('🔔 [NOTIF] Loading initial badge...');
+    updateNotificationBadge();
+    
+    // Poll for new notifications every 30 seconds
+    setInterval(() => {
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
+            dLog('🔔 [NOTIF] Polling for updates...');
+            updateNotificationBadge();
+        }
+    }, 30000);
+}
+
+/**
+ * Load notifications
+ */
+async function loadNotifications() {
+    dLog('🔔 [NOTIF] loadNotifications() called');
+    const content = document.getElementById('notificationContent');
+    if (!content) {
+        dWarn('⚠️ [NOTIF] notificationContent element not found');
+        return;
+    }
+    
+    const token = localStorage.getItem('authToken');
+    dLog('🔔 [NOTIF] Auth token exists:', !!token);
+    
+    if (!token) {
+        // Show login required state
+        content.innerHTML = `
+            <div class="notification-login-required">
+                <p>Silahkan login untuk melihat notifikasimu.</p>
+                <small>Untuk melihat dan mengelola notifikasi, silahkan login ke akunmu.</small>
+                <div class="notification-login-buttons">
+                    <button class="notification-login-btn primary" onclick="document.getElementById('btnOpenLogin').click(); document.getElementById('notificationDropdown').style.display='none';">
+                        Login / Register
+                    </button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show loading
+    content.innerHTML = `
+        <div class="notification-empty">
+            <div class="spinner" style="width: 40px; height: 40px; margin: 20px auto;"></div>
+            <p>Loading notifications...</p>
+        </div>
+    `;
+    
+    try {
+        dLog('🔔 [NOTIF] Fetching notifications from:', NOTIFICATION_API);
+        // Add timestamp to URL to prevent caching
+        const cacheBuster = `?_=${Date.now()}`;
+        const response = await fetch(NOTIFICATION_API + cacheBuster, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            cache: 'no-store'
+        });
+        
+        dLog('🔔 [NOTIF] Response status:', response.status);
+        
+        if (!response.ok) {
+            // Handle 404 gracefully - API endpoint might not be available yet
+            if (response.status === 404) {
+                content.innerHTML = `
+                    <div class="notification-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        <p>Notifikasi belum tersedia</p>
+                        <small>Fitur ini akan segera aktif</small>
+                    </div>
+                `;
+                return;
+            }
+            throw new Error('Failed to fetch notifications');
+        }
+        
+        const data = await response.json();
+        dLog('🔔 [NOTIF] API response data:', data);
+        const notifications = data.notifications || [];
+        dLog('🔔 [NOTIF] Notifications count:', notifications.length);
+        
+        if (notifications.length === 0) {
+            content.innerHTML = `
+                <div class="notification-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <p>Tidak ada Notifikasi</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Render notifications
+        content.innerHTML = notifications.map(notif => {
+            const timeAgo = getTimeAgo(notif.created_at);
+            const unreadClass = notif.is_read ? '' : 'unread';
+            
+            // Parse comment_url untuk mendapatkan mangaId, chapterId, commentId
+            let mangaId = '';
+            let chapterId = '';
+            let commentId = '';
+            
+            if (notif.comment_url) {
+                // Format bisa: reader.html?manga=X&chapter=Y#comment-Z atau info-manga.html?repo=X#comment-Z
+                const urlParts = notif.comment_url.split('?');
+                if (urlParts.length > 1) {
+                    const params = new URLSearchParams(urlParts[1].split('#')[0]);
+                    mangaId = params.get('manga') || params.get('repo') || params.get('id') || '';
+                    chapterId = params.get('chapter') || '';
+                }
+                const hashParts = notif.comment_url.split('#comment-');
+                if (hashParts.length > 1) {
+                    commentId = hashParts[1];
+                }
+            }
+            
+            return `
+                <div class="notification-item ${unreadClass}" data-notification-id="${notif.id}">
+                    <div class="notification-item-content" onclick="handleNotificationClick('${notif.id}', '${mangaId}', '${chapterId}', '${commentId}')">
+                        <div class="notification-item-header">
+                            <p class="notification-item-manga">Komentar Baru</p>
+                            <span class="notification-item-time">${timeAgo}</span>
+                        </div>
+                        <p class="notification-item-text">
+                            ${escapeHtml(notif.content)}
+                        </p>
+                    </div>
+                    <button class="notification-delete-btn" onclick="event.stopPropagation(); deleteNotification('${notif.id}')" title="Hapus notifikasi">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            <line x1="10" y1="11" x2="10" y2="17"/>
+                            <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('❌ [NOTIF] Error loading notifications:', error);
+        // Show user-friendly error message without console logging
+        content.innerHTML = `
+            <div class="notification-empty">
+                <p>Failed to load notifications</p>
+                <small>Please try again later</small>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Update notification badge
+ */
+async function updateNotificationBadge() {
+    dLog('🔔 [NOTIF] updateNotificationBadge() called');
+    const badge = document.getElementById('notificationBadge');
+    if (!badge) {
+        dWarn('⚠️ [NOTIF] Badge element not found');
+        return;
+    }
+    
+    const authToken = localStorage.getItem('authToken');
+    dLog('🔔 [NOTIF] Auth token exists:', !!authToken);
+    if (!authToken) {
+        badge.style.display = 'none';
+        return;
+    }
+    
+    try {
+        dLog('🔔 [NOTIF] Fetching unread count from:', NOTIFICATION_API + '/unread-count');
+        const response = await fetch(NOTIFICATION_API + '/unread-count', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        dLog('🔔 [NOTIF] Response status:', response.status);
+        
+        if (!response.ok) {
+            dWarn('⚠️ [NOTIF] Failed to fetch unread count');
+            badge.style.display = 'none';
+            return;
+        }
+        
+        const data = await response.json();
+        dLog('🔔 [NOTIF] Unread count data:', data);
+        const unreadCount = data.unreadCount || 0;
+        dLog('🔔 [NOTIF] Unread count:', unreadCount);
+        
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+            badge.style.display = 'block';
+            dLog('✅ [NOTIF] Badge displayed with count:', unreadCount);
+        } else {
+            badge.style.display = 'none';
+            dLog('ℹ️ [NOTIF] No unread notifications, badge hidden');
+        }
+        
+    } catch (error) {
+        console.error('❌ [NOTIF] Error fetching unread count:', error);
+        // Silently hide badge on error (API might not be available)
+        badge.style.display = 'none';
+    }
+}
+
+/**
+ * Delete notification (dengan Optimistic Update)
+ */
+async function deleteNotification(notificationId) {
+    console.log('🗑️ [NOTIF] Deleting notification:', notificationId);
+    
+    // ✅ OPTIMISTIC UPDATE: Hapus dari DOM dulu (immediate feedback)
+    const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"]`);
+    if (notificationItem) {
+        notificationItem.style.opacity = '0.5';
+        notificationItem.style.pointerEvents = 'none';
+        console.log('✨ [NOTIF] Optimistic: Item faded out');
+    }
+    
+    try {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            console.warn('⚠️ [NOTIF] No auth token for delete');
+            // Restore item jika gagal
+            if (notificationItem) {
+                notificationItem.style.opacity = '1';
+                notificationItem.style.pointerEvents = 'auto';
+            }
+            return;
+        }
+        
+        const response = await fetch(`https://manga-auth-worker.nuranantoadhien.workers.dev/notifications/${notificationId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok || response.status === 404) {
+            // 200-299: sukses, 404: sudah terhapus sebelumnya
+            if (response.status === 404) {
+                console.log('ℹ️ [NOTIF] Notification already deleted from D1');
+            } else {
+                console.log('✅ [NOTIF] Notification deleted successfully');
+            }
+            
+            // ✅ Optimistic: Hapus dari DOM dulu (immediate feedback)
+            if (notificationItem) {
+                notificationItem.remove();
+                console.log('✨ [NOTIF] Item removed from DOM (optimistic)');
+            }
+            
+            // ✅ Delay 1500ms untuk kasih waktu D1 propagate delete
+            console.log('⏳ [NOTIF] Waiting for D1 to sync...');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // ✅ Reload dari server untuk sync dengan D1
+            console.log('🔄 [NOTIF] Reloading from server to sync...');
+            await loadNotifications();
+            await updateNotificationBadge();
+        } else {
+            console.error('❌ [NOTIF] Failed to delete notification:', response.status);
+            // Restore item jika gagal
+            if (notificationItem) {
+                notificationItem.style.opacity = '1';
+                notificationItem.style.pointerEvents = 'auto';
+            }
+        }
+    } catch (error) {
+        console.error('❌ [NOTIF] Error deleting notification:', error);
+        // Restore item jika error
+        if (notificationItem) {
+            notificationItem.style.opacity = '1';
+            notificationItem.style.pointerEvents = 'auto';
+        }
+    }
+}
+
+/**
+ * Handle notification click
+ */
+async function handleNotificationClick(notificationId, mangaId, chapterId, commentId) {
+    const token = localStorage.getItem('authToken');
+    
+    // Mark as read
+    if (token) {
+        try {
+            await fetch(`https://manga-auth-worker.nuranantoadhien.workers.dev/notifications/mark-read/${notificationId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    }
+    
+    // Navigate to the comment
+    if (chapterId) {
+        // Jika ada chapter, buka di reader
+        window.location.href = `reader.html?manga=${mangaId}&chapter=${chapterId}#comment-${commentId}`;
+    } else {
+        // Jika tidak ada chapter, buka di info-manga
+        window.location.href = `info-manga.html?repo=${mangaId}#comment-${commentId}`;
+    }
+}
+
+/**
+ * Get time ago string
+ */
+function getTimeAgo(timestamp) {
+    const now = Date.now();
+    const time = new Date(timestamp).getTime();
+    const diff = now - time;
+    
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (days > 7) {
+        return new Date(timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    } else if (days > 0) {
+        return `${days} hari lalu`;
+    } else if (hours > 0) {
+        return `${hours} jam lalu`;
+    } else if (minutes > 0) {
+        return `${minutes} menit lalu`;
+    } else {
+        return 'Baru saja';
+    }
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize on DOM load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNotificationSystem);
+} else {
+    initNotificationSystem();
+}
+// Update badge when user logs in/out
+window.addEventListener('storage', (e) => {
+    if (e.key === 'authToken') {
+        updateNotificationBadge();
+    }
+});
+
+// Export functions for use in other scripts
+window.updateNotificationBadge = updateNotificationBadge;
+window.loadNotifications = loadNotifications;

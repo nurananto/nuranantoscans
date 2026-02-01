@@ -215,6 +215,7 @@ header {
     display: flex;
     flex-direction: column;
     z-index: 1; /* ← TAMBAHKAN: default z-index */
+    height: 100%; /* ✅ FIX: Fill grid cell completely */
 }
 
 /* Manga card cover wrapper */
@@ -328,6 +329,9 @@ header {
     word-wrap: break-word;
     overflow-wrap: break-word;
     padding-top: 0.6rem;
+    /* ✅ FIX: Max height untuk konsistensi (2 baris + padding) */
+    max-height: calc(1em * 1.65 * 2 + 1.8rem);
+    flex-shrink: 0; /* ✅ FIX: Prevent shrinking */
 }
 
 .manga-badges-container {
@@ -338,7 +342,8 @@ header {
     background: transparent;
     border-radius: 0;
     gap: 8px;
-    min-height: 50px;
+    height: 50px; /* ✅ FIX: Fixed height instead of min-height */
+    flex-shrink: 0; /* ✅ FIX: Prevent shrinking */
     order: 2;
 }
 
@@ -501,7 +506,7 @@ header {
         font-weight: 600;
         padding: 0.5rem 0.4rem 1.3rem;
         line-height: 1.65;
-        max-height: calc(0.8rem * 1.65 * 2 + 0.7rem);
+        max-height: calc(0.8rem * 1.65 * 2 + 1.8rem); /* ✅ FIX: Consistent height */
     }
 
     .manga-card.recently-updated .manga-title {
@@ -517,7 +522,7 @@ header {
         font-weight: 500;
         padding: 0.45rem 0.35rem 1.2rem;
         line-height: 1.65;
-        max-height: calc(0.75rem * 1.65 * 2 + 0.65rem);
+        max-height: calc(0.75rem * 1.65 * 2 + 1.65rem); /* ✅ FIX: Consistent height */
     }
 
     .manga-card.recently-updated .manga-title {
@@ -874,630 +879,6 @@ input:focus-visible {
 }
 
 /* ============================================
-   TOP 5 MOST VIEWED SECTION
-   Tambahkan CSS ini di AKHIR file style.css
-   ============================================ */
-
-.top5-section {
-    max-width: 1400px;
-    margin: 0 auto 1rem;
-    padding: 0;
-    overflow: visible; /* ← TAMBAHKAN */
-}
-
-.top5-heading {
-    text-align: center;
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 700;
-    margin-bottom: 1rem;
-    padding-top: 0;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(0.5rem, 2vw, 1rem);
-}
-
-/* Class untuk text heading */
-.heading-text {
-    white-space: nowrap;
-}
-
-/* Base style fire icon */
-.fire-icon {
-    flex-shrink: 0;
-    width: clamp(24px, 5vw, 40px);
-    height: clamp(24px, 5vw, 40px);
-    object-fit: contain;
-}
-
-/* Animasi untuk fire kiri */
-.fire-icon-left {
-    animation: fireFlickerLeft 1.5s ease-in-out infinite;
-}
-
-/* Animasi untuk fire kanan */
-.fire-icon-right {
-    animation: fireFlickerRight 1.5s ease-in-out infinite;
-}
-
-@keyframes fireFlickerLeft {
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1) rotate(-3deg);
-    }
-    50% {
-        opacity: 0.85;
-        transform: scale(1.1) rotate(3deg);
-    }
-}
-
-@keyframes fireFlickerRight {
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1) rotate(3deg);
-    }
-    50% {
-        opacity: 0.85;
-        transform: scale(1.1) rotate(-3deg);
-    }
-}
-
-.top5-badges-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    background: transparent;
-    border-radius: 20px 20px 0 0;
-    gap: 10px;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    margin-bottom: 0;
-}
-
-.top5-container {
-    display: flex;
-    gap: 1.5rem;
-    overflow-x: auto;
-    overflow-y: visible; /* ← UBAH dari hidden jadi visible */
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
-    padding: 15px;
-    margin: 0 -15px;
-    -webkit-overflow-scrolling: touch;
-    cursor: grab; /* ← TAMBAHKAN */
-    user-select: none; /* ← TAMBAHKAN */
-}
-
-/* ← TAMBAHKAN: Disable hover saat dragging */
-.top5-container.is-dragging .top5-card {
-    pointer-events: none;
-}
-
-.top5-container.is-dragging .top5-card:hover {
-    transform: none;
-    z-index: 1;
-}
-
-.top5-container:active {
-    cursor: grabbing; /* ← TAMBAHKAN */
-}
-
-.top5-container::-webkit-scrollbar {
-    display: none; /* ← GANTI height dengan display: none */
-}
-
-.top5-card {
-    position: relative;
-    flex: 0 0 45%;
-    background-color: transparent;
-    border-radius: 0.8rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 0.5rem;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
-    transition:
-        transform 0.3s ease,
-        z-index 0s 0.3s; /* ← TAMBAHKAN */
-    cursor: pointer;
-    scroll-snap-align: start;
-    overflow: visible;
-    z-index: 1; /* ← TAMBAHKAN */
-    pointer-events: auto; /* ✅ TAMBAH INI */
-}
-
-/* ✅ Hanya nonaktifkan untuk elemen yang mengganggu */
-.top5-card img,
-.top5-card svg {
-    pointer-events: none;
-}
-
-.top5-card:hover {
-    box-shadow: none; /* HAPUS shadow */
-    /* ← HAPUS transform: scale(1.05); */
-}
-
-.top5-card:hover {
-    transform: scale(1.03);
-    box-shadow: none;
-    z-index: 10; /* ← TAMBAHKAN */
-    transition:
-        transform 0.3s ease,
-        z-index 0s; /* ← TAMBAHKAN */
-}
-
-/* Top 5 cover wrapper */
-.top5-card .manga-cover-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.top5-card img,
-.top5-card .manga-cover-wrapper img {
-    width: 100%;
-    aspect-ratio: 3/4.2;
-    object-fit: cover;
-    display: block;
-    background-color: transparent;
-    border-radius: 0.6rem;
-}
-
-/* Ranking Badge */
-.rank-badge {
-    position: static; /* ← UBAH dari absolute */
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-weight: 800;
-    font-size: 1rem;
-    display: inline-flex; /* ← UBAH dari flex */
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    /* ← HAPUS: top, left, z-index, backdrop-filter */
-}
-
-.rank-number {
-    font-size: 1.1rem;
-    line-height: 1;
-}
-
-.rank-emoji {
-    font-size: 1.2rem;
-    line-height: 1;
-}
-
-/* Views Badge for Top 5 */
-.views-badge-top5 {
-    position: static; /* ← UBAH dari absolute */
-    background: transparent; /* ← UBAH */
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: inline-flex; /* ← UBAH dari flex */
-    align-items: center;
-    gap: 6px;
-    box-shadow: none; /* ← UBAH */
-    /* ← HAPUS: top, left, right, z-index, backdrop-filter */
-}
-
-.views-badge-top5 svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
-
-.top5-card .manga-title {
-    color: #fff;
-    padding: 0.8rem 0.6rem 1.2rem;
-    text-align: center;
-    background: transparent;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-break: break-word;
-    font-size: 0.95rem;
-    font-weight: 600;
-    line-height: 1.65;
-    max-height: calc(0.95rem * 1.65 * 2 + 0.7rem);
-}
-
-/* Loading State */
-.loading-top5 {
-    text-align: center;
-    padding: 40px;
-    color: var(--text-secondary);
-    font-size: 1rem;
-}
-
-/* Manga List Section Header */
-.manga-list-section {
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-/* Top 5 Badges - Row 1: Rank + Views */
-.top5-rank-views {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    gap: 10px;
-    order: 1;
-}
-
-/* Top 5 Badges - Row 2: Status + Chapter */
-.top5-status-chapter {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 8px 0;
-    order: 3;
-}
-
-/* Views Badge for Top 5 - Restore original style */
-.views-badge-top5 {
-    position: static;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(10px);
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.views-badge-top5 svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
-
-/* Status Badge for Top 5 - SAMA DENGAN MANGA LIST */
-.status-badge-top5 {
-    backdrop-filter: blur(10px) saturate(180%);
-    -webkit-backdrop-filter: blur(10px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: #fff;
-    padding: 6px 8px;
-    border-radius: 0.6rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    line-height: 1.2;
-}
-
-.status-badge-top5-end,
-.status-badge-top5-completed {
-    background: linear-gradient(
-        135deg,
-        rgba(220, 38, 38, 0.75) 0%,
-        rgba(185, 28, 28, 0.75) 100%
-    );
-    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-}
-
-.status-badge-top5-ongoing {
-    background: linear-gradient(
-        135deg,
-        rgba(34, 197, 94, 0.75) 0%,
-        rgba(22, 163, 74, 0.75) 100%
-    );
-    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-}
-
-.status-badge-top5-hiatus {
-    background: linear-gradient(
-        135deg,
-        rgba(107, 114, 128, 0.75) 0%,
-        rgba(75, 85, 99, 0.75) 100%
-    );
-    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
-}
-
-.status-text {
-    display: block;
-    font-size: clamp(0.75rem, 2.2vw, 0.95rem);
-    font-weight: 800;
-    letter-spacing: 1px;
-}
-
-.status-chapter {
-    display: block;
-    font-size: clamp(0.55rem, 2vw, 0.75rem);
-    font-weight: 600;
-    text-transform: none;
-    letter-spacing: 0.3px;
-    opacity: 0.95;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ============================================
-   RESPONSIVE - DESKTOP BESAR (5 kolom)
-   ============================================ */
-@media (min-width: 1400px) {
-    .top5-container {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 1.25rem;
-        overflow-x: visible;
-        scroll-snap-type: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .fire-icon {
-        width: 40px;
-        height: 40px;
-    }
-
-    .top5-card {
-        flex: none;
-        width: auto;
-    }
-
-    .top5-badges-container {
-        padding: 12px 14px;
-    }
-
-    .rank-badge {
-        padding: 10px 14px;
-        font-size: 1.1rem;
-    }
-
-    .rank-number {
-        font-size: 1.2rem;
-    }
-
-    .rank-emoji {
-        font-size: 1.3rem;
-    }
-
-    .views-badge-top5 {
-        font-size: 0.9rem;
-        padding: 8px 12px;
-    }
-
-    .top5-card .manga-title {
-        font-size: 0.95rem;
-        font-weight: 600;
-        line-height: 1.65;
-        max-height: calc(0.95rem * 1.65 * 2 + 0.7rem);
-    }
-}
-
-/* ============================================
-   RESPONSIVE - DESKTOP SEDANG & TABLET
-   (Horizontal scroll - ukuran sama dengan grid)
-   ============================================ */
-@media (min-width: 768px) and (max-width: 1399px) {
-    .top5-card {
-        flex: 0 0 calc((100% - 1.25rem * 2) / 3); /* 3 kolom width */
-        max-width: calc((100% - 1.25rem * 2) / 3);
-    }
-    
-    .fire-icon {
-        width: 32px;
-        height: 32px;
-    }
-
-    .top5-badges-container {
-        padding: 9px 11px;
-    }
-
-    .rank-badge {
-        padding: 8px 12px;
-        font-size: 1rem;
-    }
-
-    .views-badge-top5 {
-        font-size: 0.85rem;
-    }
-
-    .top5-card .manga-title {
-        font-size: 0.875rem;
-        font-weight: 600;
-        line-height: 1.65;
-        max-height: calc(0.875rem * 1.65 * 2 + 0.65rem);
-    }
-}
-
-/* Desktop Sedang - card sedikit lebih besar */
-@media (min-width: 1024px) and (max-width: 1399px) {
-    .top5-card {
-        flex: 0 0 calc((100% - 1.25rem * 3) / 4); /* 4 kolom width */
-        max-width: calc((100% - 1.25rem * 3) / 4);
-    }
-}
-
-/* ============================================
-   RESPONSIVE - MOBILE
-   ============================================ */
-@media (max-width: 767px) {
-    .header-border {
-        margin-top: 0.75rem;
-        margin-bottom: 1rem;
-    }
-
-    .fire-icon {
-        width: 28px;
-        height: 28px;
-    }
-
-    .top5-heading {
-        gap: 0.5rem;
-    }
-
-    .top5-section {
-        margin-bottom: 1rem;
-    }
-
-    .top5-heading {
-        font-size: 1.3rem;
-        margin-bottom: 0.75rem;
-        padding-top: 0;
-    }
-
-    .top5-container {
-        gap: 0.875rem;
-        padding: 15px; /* ← DARI 10px JADI 15px */
-        margin: 0 -15px; /* ← DARI -10px JADI -15px */
-    }
-
-    .top5-card {
-        flex: 0 0 45%;
-        border-radius: 0.6rem;
-    }
-
-    .top5-badges-container {
-        padding: 8px 10px;
-    }
-
-    .rank-badge {
-        padding: 6px 10px;
-        font-size: 0.9rem;
-        gap: 4px;
-    }
-
-    .rank-number {
-        font-size: 1rem;
-    }
-
-    .rank-emoji {
-        font-size: 1.1rem;
-    }
-
-    .views-badge-top5 {
-        padding: 5px 8px;
-        font-size: 0.75rem;
-        gap: 4px;
-    }
-
-    .views-badge-top5 svg {
-        width: 14px;
-        height: 14px;
-    }
-
-    .top5-card .manga-title {
-        font-size: 0.8rem;
-        font-weight: 600;
-        padding: 0.5rem 0.4rem 1.3rem;
-        line-height: 1.65;
-        max-height: calc(0.8rem * 1.65 * 2 + 0.7rem);
-    }
-
-    .manga-list-heading {
-        font-size: 1.3rem;
-        margin-bottom: 1rem;
-    }
-}
-
-/* ============================================
-   RESPONSIVE - SMALL MOBILE
-   ============================================ */
-@media (max-width: 480px) {
-    .header-border {
-        margin-top: 0.5rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .fire-icon {
-        width: 24px;
-        height: 24px;
-    }
-
-    .top5-heading {
-        gap: 0.4rem;
-    }
-
-    .top5-section {
-        margin-bottom: 0.75rem;
-    }
-
-    .top5-heading {
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-        padding-top: 0;
-    }
-
-    .manga-list-header {
-        margin-top: 0;
-        margin-bottom: 0.75rem;
-    }
-
-    .top5-card {
-        flex: 0 0 45%;
-    }
-
-    .top5-badges-container {
-        padding: 7px 9px;
-    }
-
-    .rank-badge {
-        padding: 5px 8px;
-        font-size: 0.85rem;
-    }
-
-    .rank-number {
-        font-size: 0.95rem;
-    }
-
-    .rank-emoji {
-        font-size: 1rem;
-    }
-
-    .views-badge-top5 {
-        padding: 4px 7px;
-        font-size: 0.7rem;
-    }
-
-    .top5-card .manga-title {
-        font-size: 0.75rem;
-        font-weight: 500;
-        padding: 0.45rem 0.35rem 1.2rem;
-        line-height: 1.65;
-        max-height: calc(0.75rem * 1.65 * 2 + 0.65rem);
-    }
-
-    .manga-list-heading {
-        font-size: 1.1rem;
-    }
-}
-
-/* ============================================
-   FOCUS STATES - NO BORDER
-   ============================================ */
-.top5-card:focus {
-    outline: none;
-    transform: scale(1.03);
-    z-index: 10;
-}
-
-.top5-card:focus-visible {
-    outline: none;
-    transform: scale(1.03);
-    z-index: 10;
-}
-
-/* ============================================
    RESPONSIVE - MANGA LIST HEADER
    ============================================ */
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -1527,9 +908,9 @@ input:focus-visible {
 }
 
 @media (max-width: 767px) {
-    /* Hide desktop buttons on mobile */
+    /* Keep buttons visible on mobile */
     .header-buttons {
-        display: none !important;
+        display: flex !important;
     }
     
     /* Show hamburger menu on mobile */
@@ -1732,6 +1113,331 @@ input:focus-visible {
 .header-icon-button:focus-visible {
     outline: 3px solid #ffffff;
     outline-offset: 2px;
+}
+
+/* ============================================
+   NOTIFICATION BUTTON & DROPDOWN
+   ============================================ */
+.notification-wrapper {
+    position: relative;
+}
+
+.notification-button {
+    position: relative;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 10px;
+    height: 10px;
+    background: #dc2626;
+    border-radius: 50%;
+    border: 2px solid #0a0a0a;
+    animation: notificationPulse 2s ease-in-out infinite;
+}
+
+@keyframes notificationPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
+    }
+}
+
+.notification-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 420px;
+    max-width: 90vw;
+    background: #0a0a0a;
+    border: 1px solid #3a3a3a;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    z-index: 10001;
+    overflow: hidden;
+}
+
+.notification-header {
+    padding: 16px 20px;
+    background: #0a0a0a;
+    border-bottom: 1px solid #3a3a3a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notification-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Sync button in notification header */
+.btn-sync-notif {
+    background: transparent;
+    border: none;
+    color: #1877f2;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-sync-notif:hover {
+    background: rgba(24, 119, 242, 0.1);
+    transform: rotate(180deg);
+}
+
+.btn-sync-notif:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.notification-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Limit "Komentar Baru" section to 3 items with scroll */
+.notification-content > div:has(.notification-item-manga) {
+    max-height: none;
+}
+
+.notification-item:nth-of-type(n+4) {
+    max-height: 80px;
+}
+
+/* Container untuk batch notifikasi yang banyak */
+.notification-content:has(.notification-item:nth-of-type(4)) {
+    max-height: 320px;
+}
+
+.notification-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-content::-webkit-scrollbar-track {
+    background: #242526;
+}
+
+.notification-content::-webkit-scrollbar-thumb {
+    background: #3a3a3a;
+    border-radius: 3px;
+}
+
+.notification-content::-webkit-scrollbar-thumb:hover {
+    background: #4a4a4a;
+}
+
+/* Login Required State */
+.notification-login-required {
+    padding: 40px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.notification-login-required p {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e4e6eb;
+    margin: 0 0 8px 0;
+}
+
+.notification-login-required small {
+    font-size: 13px;
+    color: #b0b3b8;
+    display: block;
+    margin-bottom: 16px;
+}
+
+.notification-login-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.notification-login-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.notification-login-btn.primary {
+    background: #1877f2;
+    color: #fff;
+}
+
+.notification-login-btn.primary:hover {
+    background: #166fe5;
+    transform: translateY(-2px);
+}
+
+.notification-login-btn.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.notification-login-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Notification Item */
+.notification-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid #3a3a3a;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+    background: transparent;
+    position: relative;
+}
+
+.notification-item-content {
+    flex: 1;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notification-delete-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b0b3b8;
+    transition: all 0.2s ease;
+    margin-top: 4px;
+}
+
+.notification-delete-btn:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.notification-delete-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.notification-item:hover {
+    background: #242526;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+/* Unread notification - more visible */
+.notification-item.unread {
+    background: rgba(24, 119, 242, 0.08);
+    border-left: 3px solid #1877f2;
+    padding-left: 17px; /* 20px - 3px border */
+}
+
+.notification-item.unread:hover {
+    background: rgba(24, 119, 242, 0.12);
+}
+
+/* Add unread indicator dot */
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background: #1877f2;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(24, 119, 242, 0.6);
+}
+
+.notification-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.notification-item-manga {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1877f2;
+    margin: 0;
+}
+
+.notification-item-time {
+    font-size: 12px;
+    color: #b0b3b8;
+    flex-shrink: 0;
+}
+
+.notification-item-text {
+    font-size: 13px;
+    color: #e4e6eb;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.notification-item-mention {
+    color: #1877f2;
+    font-weight: 600;
+}
+
+.notification-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #b0b3b8;
+}
+
+.notification-empty svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.notification-empty p {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+    .notification-dropdown {
+        width: calc(100vw - 40px);
+        right: -12px;
+    }
 }
 
 /* ============================================
@@ -2195,14 +1901,14 @@ nav {
 
 .status-box.pembaca-setia {
   background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
-  border-color: #6B7280;
+  border-color: #4B5563;
   color: #fff;
   box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
 }
 
 .status-box.donatur-setia {
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  border-color: #FFC700;
+  border-color: #FFA500;
   color: #000;
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
   animation: statusGlow 2s ease-in-out infinite;
@@ -2275,16 +1981,26 @@ opacity: 1;
   padding: 14px 20px;
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
   color: #000;
-  border: none;
+  border: 2px solid #FFA500;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.5);
   margin-top: 8px;
+  animation: upgradeGlow 2s ease-in-out infinite;
+}
+
+@keyframes upgradeGlow {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 255, 255, 0.8);
+  }
 }
 
 .btn-upgrade-profile:hover {
@@ -2303,7 +2019,7 @@ opacity: 1;
   padding: 14px 20px;
   background: #dc2626;
   color: #fff;
-  border: none;
+  border: 2px solid #b91c1c;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
@@ -2813,7 +2529,7 @@ opacity: 1;
   padding: 14px 20px;
   background: #1877f2;
   color: #fff;
-  border: none;
+  border: 2px solid #166fe5;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
@@ -2821,7 +2537,6 @@ opacity: 1;
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-top: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2836,6 +2551,43 @@ opacity: 1;
 
 .btn-history:active {
   transform: translateY(0);
+}
+
+/* Re-process Mentions Button (testing/migration) */
+.btn-reprocess-mentions {
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #9333ea 0%, #7928ca 100%);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-reprocess-mentions:hover {
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
+}
+
+.btn-reprocess-mentions:active {
+  transform: translateY(0);
+}
+
+.btn-reprocess-mentions:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* History Modal */
@@ -3167,7 +2919,7 @@ opacity: 1;
 }
 
 .footer-disclaimer {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  background: #0a0a0a;
   border: 1px solid rgba(102, 126, 234, 0.3);
   border-radius: 16px;
   padding: 1.5rem;

@@ -1074,20 +1074,13 @@ function createChapterElement(chapter, allChapters) {
         chapterInfoDiv.appendChild(uploadDateDiv);
     }
     
-    // ✅ STATS: Rating, Comment Count, Views
+    // ✅ STATS: Comment Count, Views (Rating dihilangkan)
     const statsDiv = document.createElement('div');
     statsDiv.className = 'chapter-stats';
     
-    // Rating (will be loaded async)
-    const ratingSpan = document.createElement('span');
-    ratingSpan.className = 'chapter-stat-item chapter-rating';
-    ratingSpan.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color: #ffd700;">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-        <span class="rating-value">-</span>
-    `;
-    statsDiv.appendChild(ratingSpan);
+    // Rating dihilangkan - tidak ada rating untuk chapter
+    // const ratingSpan = document.createElement('span');
+    // statsDiv.appendChild(ratingSpan);
     
     // Comment Count (will be loaded async)
     const commentSpan = document.createElement('span');
@@ -1115,16 +1108,16 @@ function createChapterElement(chapter, allChapters) {
     div.appendChild(chapterInfoDiv);
     div.appendChild(statsDiv);
     
-    // Load rating and comment count asynchronously
-    loadChapterStats(chapter, ratingSpan, commentSpan);
+    // Load comment count asynchronously (rating sudah dihapus)
+    loadChapterStats(chapter, commentSpan);
     
     return div;
 }
 
 /**
- * Load chapter rating and comment count from API
+ * Load chapter comment count from API
  */
-async function loadChapterStats(chapter, ratingEl, commentEl) {
+async function loadChapterStats(chapter, commentEl) {
     // Try to get mangaId from multiple sources
     let mangaId = mangaData?.manga?.id;
     
@@ -1145,30 +1138,14 @@ async function loadChapterStats(chapter, ratingEl, commentEl) {
     dLog('[CHAPTER-STATS] chapterId:', chapterId);
     
     try {
-        // Fetch rating and comments in parallel
-        // For ratings: backend needs /ratings/chapter/:mangaId/:chapterId (2 path segments)
-        // For comments: backend needs ?mangaId=xxx&chapterId=yyy (2 query params)
-        const [ratingRes, commentsRes] = await Promise.all([
-            fetch(`https://manga-auth-worker.nuranantoadhien.workers.dev/ratings/chapter/${mangaId}/${chapter.folder}`),
-            fetch(`https://manga-auth-worker.nuranantoadhien.workers.dev/comments?mangaId=${mangaId}&chapterId=${chapter.folder}`)
-        ]);
+        // Fetch comments only (rating dihilangkan)
+        const commentsRes = await fetch(
+            `https://manga-auth-worker.nuranantoadhien.workers.dev/comments?mangaId=${mangaId}&chapterId=${chapter.folder}`
+        );
         
-        const ratingData = await ratingRes.json();
         const commentsData = await commentsRes.json();
         
-        dLog(`[CHAPTER-STATS] ${chapter.folder}:`, { rating: ratingData, comments: commentsData });
-        
-        // Update rating - always show, default 8.0 if no ratings yet
-        const ratingValue = ratingEl.querySelector('.rating-value');
-        if (ratingValue) {
-            if (ratingData.success) {
-                // Use bayesianAverage if has ratings, otherwise default 8.0
-                const rating = ratingData.totalRatings > 0 ? ratingData.bayesianAverage : 8.0;
-                ratingValue.textContent = rating.toFixed(1);
-            } else {
-                ratingValue.textContent = '8.0'; // Default if API fails
-            }
-        }
+        dLog(`[CHAPTER-STATS] ${chapter.folder}:`, { comments: commentsData });
         
         // Update comment count - always show including 0
         const commentValue = commentEl.querySelector('.comment-value');
@@ -1181,10 +1158,8 @@ async function loadChapterStats(chapter, ratingEl, commentEl) {
         }
     } catch (error) {
         console.error('[CHAPTER-STATS] Error loading stats for', chapter.folder, ':', error);
-        // Set defaults on error
-        const ratingValue = ratingEl.querySelector('.rating-value');
+        // Set default on error
         const commentValue = commentEl.querySelector('.comment-value');
-        if (ratingValue) ratingValue.textContent = '8.0';
         if (commentValue) commentValue.textContent = '0';
     }
 }
@@ -1999,6 +1974,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Check if autoLogin parameter is present (from reader page)
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoLogin = urlParams.get('autoLogin');
+    if (autoLogin === 'true') {
+        dLog('🔓 [AUTO-LOGIN] autoLogin parameter detected, opening login modal');
+        // Wait a bit for all DOM elements to be ready
+        setTimeout(() => {
+            const isLoggedIn = !!localStorage.getItem('authToken');
+            if (!isLoggedIn) {
+                dLog('🔓 [AUTO-LOGIN] User not logged in, triggering login modal');
+                btnOpen.click();
+                // Remove autoLogin parameter from URL to avoid reopening on refresh
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.delete('autoLogin');
+                window.history.replaceState({}, '', newUrl);
+            } else {
+                dLog('🔓 [AUTO-LOGIN] User already logged in, skipping modal');
+            }
+        }, 300);
+    }
+
     // ✅ Function to update profile button text
     function updateProfileButtonText() {
         const storedUser = localStorage.getItem('user');
@@ -2143,6 +2139,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     dLog('🔧 [SETUP] Login modal click handler added!');
+    
+    // ✅ Monitor profile modal untuk trigger re-check saat ditutup
+    if (profileModal) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const isHidden = profileModal.style.display === 'none';
+                    if (isHidden) {
+                        // Profile modal ditutup, trigger re-check untuk comment section
+                        dLog('🔄 [PROFILE-MODAL] Modal closed, triggering refresh');
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('profileModalClosed'));
+                        }, 100);
+                    }
+                }
+            });
+        });
+        
+        observer.observe(profileModal, {
+            attributes: true,
+            attributeFilter: ['style']
+        });
+        dLog('👁️ [PROFILE-MODAL] MutationObserver attached');
+    }
 
     // ✅ STEP 4: Show Profile Modal Function
     async function showProfileModal(user) {
@@ -2266,6 +2286,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 dLog('🚪 [LOGOUT] Logout button clicked!');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
+                
+                // ✅ Dispatch custom event untuk notify rating/comments section
+                window.dispatchEvent(new CustomEvent('userLoggedOut'));
+                dLog('📢 [LOGOUT] Dispatched userLoggedOut event');
                 
                 // ✅ Update profile button text
                 if (window.updateProfileButtonText) {
@@ -3086,6 +3110,11 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                     window.updateProfileButtonText();
                 }
                 
+                // ✅ Update notification badge
+                if (window.updateNotificationBadge) {
+                    window.updateNotificationBadge();
+                }
+                
                 // ✅ CRITICAL: Close login modal IMMEDIATELY (synchronously) before showing profile modal
                 // This prevents the old profile button from showing during delay
                 const loginModal = document.getElementById('loginModal');
@@ -3099,6 +3128,12 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                     loginRequiredModal.style.visibility = 'hidden'; // Extra safety
                 }
                 document.body.style.overflow = '';
+                
+                // ✅ Dispatch custom event untuk notify rating/comments section
+                window.dispatchEvent(new CustomEvent('userLoggedIn', {
+                    detail: { user: data.user, token: data.token }
+                }));
+                dLog('📢 [LOGIN] Dispatched userLoggedIn event');
                 
                 // ✅ Show profile modal immediately (don't await - let it run in background)
                 dLog('🎭 [LOGIN] Showing profile modal immediately...');
@@ -3588,30 +3623,31 @@ function initHamburgerMenu() {
 // Flag to prevent multiple initialization
 let hamburgerMenuInitialized = false;
 
+// Hamburger menu removed - no longer needed
 // Initialize on DOM ready
-dLog('🚀 [HAMBURGER] Script loaded, checking ready state...');
-if (document.readyState === 'loading') {
-    dLog('⏳ [HAMBURGER] Document still loading, waiting for DOMContentLoaded...');
-    document.addEventListener('DOMContentLoaded', () => {
-        dLog('📄 [HAMBURGER] DOMContentLoaded fired');
-        if (!hamburgerMenuInitialized) {
-            hamburgerMenuInitialized = initHamburgerMenu();
-        }
-    });
-} else {
-    dLog('✅ [HAMBURGER] Document already ready, initializing immediately');
-    if (!hamburgerMenuInitialized) {
-        hamburgerMenuInitialized = initHamburgerMenu();
-    }
-}
+// dLog('🚀 [HAMBURGER] Script loaded, checking ready state...');
+// if (document.readyState === 'loading') {
+//     dLog('⏳ [HAMBURGER] Document still loading, waiting for DOMContentLoaded...');
+//     document.addEventListener('DOMContentLoaded', () => {
+//         dLog('📄 [HAMBURGER] DOMContentLoaded fired');
+//         if (!hamburgerMenuInitialized) {
+//             hamburgerMenuInitialized = initHamburgerMenu();
+//         }
+//     });
+// } else {
+//     dLog('✅ [HAMBURGER] Document already ready, initializing immediately');
+//     if (!hamburgerMenuInitialized) {
+//         hamburgerMenuInitialized = initHamburgerMenu();
+//     }
+// }
 
 // Single delayed initialization as backup (only if not already initialized)
-setTimeout(() => {
-    if (!hamburgerMenuInitialized) {
-        dLog('⏰ [HAMBURGER] Delayed initialization (500ms) - backup');
-        hamburgerMenuInitialized = initHamburgerMenu();
-    }
-}, 500);
+// setTimeout(() => {
+//     if (!hamburgerMenuInitialized) {
+//         dLog('⏰ [HAMBURGER] Delayed initialization (500ms) - backup');
+//         hamburgerMenuInitialized = initHamburgerMenu();
+//     }
+// }, 500);
 
 // ============================================
 // RATING & COMMENTS HANDLER FOR INFO-MANGA
@@ -3638,6 +3674,41 @@ class InfoMangaRatingComments {
         // Load data
         await this.loadMangaRating();
         await this.loadComments();
+        
+        // Listen for login/logout events via storage
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'authToken') {
+                dLog('[INFO-RATING] Auth token changed, re-checking login status');
+                this.checkLoginStatus();
+            }
+        });
+        
+        // Listen for window focus (user might login in another tab or modal)
+        window.addEventListener('focus', () => {
+            dLog('[INFO-RATING] Window focused, re-checking login status');
+            this.checkLoginStatus();
+        });
+        
+        // Listen for custom login event (if exists)
+        window.addEventListener('userLoggedIn', () => {
+            dLog('[INFO-RATING] User logged in event received');
+            this.checkLoginStatus();
+            this.loadMangaRating();
+            this.loadComments();
+        });
+        
+        window.addEventListener('userLoggedOut', () => {
+            dLog('[INFO-RATING] User logged out event received');
+            this.checkLoginStatus();
+        });
+        
+        // Listen for profile modal closed (re-check status after user interaction)
+        window.addEventListener('profileModalClosed', () => {
+            dLog('[INFO-RATING] Profile modal closed, re-checking status');
+            this.checkLoginStatus();
+            this.loadMangaRating();
+            this.loadComments();
+        });
     }
 
     async checkLoginStatus() {
@@ -3664,9 +3735,11 @@ class InfoMangaRatingComments {
             if (response.ok) {
                 const data = await response.json();
                 this.isLoggedIn = true;
-                this.showRatingInput();
+                // ✅ FIX: Jangan tampilkan rating input di sini
+                // Biarkan loadMangaRating() yang menentukan apakah rating input ditampilkan
+                // this.showRatingInput(); // REMOVED
                 this.showCommentInput();
-                dLog('[INFO-RATING] User is logged in, showing inputs');
+                dLog('[INFO-RATING] User is logged in, showing comment input only');
             } else {
                 this.isLoggedIn = false;
                 this.showLoginButton();
@@ -3748,12 +3821,21 @@ class InfoMangaRatingComments {
                 dLog('[INFO-RATING] Parsed rating data:', ratingData);
                 this.displayMangaRating(ratingData);
                 
-                // Hide rating input if user already rated
-                if (data.userRating !== null) {
-                    const ratingInput = document.getElementById('mangaRatingInput');
-                    if (ratingInput) {
+                // ✅ FIX: Show or hide rating input based on userRating and login status
+                const ratingInput = document.getElementById('mangaRatingInput');
+                if (ratingInput) {
+                    if (this.isLoggedIn && data.userRating === null) {
+                        // User logged in and hasn't rated yet - show input
+                        ratingInput.style.display = 'block';
+                        dLog('[INFO-RATING] Rating input shown - user not rated yet');
+                    } else {
+                        // User already rated or not logged in - hide input
                         ratingInput.style.display = 'none';
-                        dLog('[INFO-RATING] Rating input hidden - user already rated:', data.userRating);
+                        if (data.userRating !== null) {
+                            dLog('[INFO-RATING] Rating input hidden - user already rated:', data.userRating);
+                        } else {
+                            dLog('[INFO-RATING] Rating input hidden - user not logged in');
+                        }
                     }
                 }
             } else {
@@ -3995,14 +4077,18 @@ class InfoMangaRatingComments {
                 this.selectedRating = 0;
                 this.highlightStars(0);
                 
-                // Wait 2 seconds to show success, then hide input and reload
+                // Immediately hide rating input
+                const ratingInput = document.getElementById('mangaRatingInput');
+                if (ratingInput) {
+                    ratingInput.style.display = 'none';
+                    dLog('[INFO-RATING] Rating input hidden immediately after submit');
+                }
+                
+                // Wait 1 second to show success, then reload rating data
                 setTimeout(async () => {
-                    const ratingInput = document.getElementById('mangaRatingInput');
-                    if (ratingInput) ratingInput.style.display = 'none';
-                    
                     await this.loadMangaRating();
                     dLog('[INFO-RATING] Rating submitted and refreshed');
-                }, 2000);
+                }, 1000);
             } else {
                 alert(data.error || 'Gagal mengirim rating');
                 

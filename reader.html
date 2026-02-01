@@ -26,9 +26,6 @@
     <link rel="preload" href="reader.css?v=2.0.5" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="reader.css?v=2.0.5"></noscript>
     
-    <!-- Rating & Comments CSS -->
-    <link rel="stylesheet" href="rating-comments.css?v=1.0.0">
-    
     <!-- Critical CSS -->
     <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a0a0a;color:#fff;font-family:"Rounded Mplus 1c","M PLUS Rounded 1c","Varela Round","Nunito","Comfortaa","Quicksand","Segoe UI",sans-serif}.navbar-top,.navbar-bottom{background:#18191a;padding:1.5rem 1rem;display:flex;flex-direction:column;gap:1rem;position:relative;z-index:999}.nav-title-btn{width:100%;font-size:1.2rem;padding:0.8rem 1.5rem;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:50px;display:flex;align-items:center;justify-content:center;border:2px solid #4dd0e1;border-radius:12px;background:#0a0a0a;color:#fff;cursor:pointer}.nav-title-btn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.nav-buttons-row{display:flex;gap:0.6rem;justify-content:space-between;align-items:center;width:100%}.nav-btn{padding:0.6rem 1.2rem;background:#0a0a0a;border:2px solid #4dd0e1;border-radius:12px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-size:0.95rem;font-weight:600}.loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a0a;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999}.loading-spinner{width:50px;height:50px;border:4px solid rgba(255,255,255,.1);border-top-color:#4dd0e1;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.loading-overlay p{margin-top:20px;font-size:16px;color:rgba(255,255,255,.7)}.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);display:none;justify-content:center;align-items:center;z-index:10000;opacity:0;pointer-events:none;transition:opacity .3s ease}.modal-overlay.active{display:flex;opacity:1;pointer-events:auto}.modal-content{background:#18191a;border-radius:12px;width:90%;max-width:600px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;transform:scale(.9);transition:transform .3s ease}.modal-overlay.active .modal-content{transform:scale(1)}.modal-header{padding:20px;border-bottom:1px solid #2f3336;display:flex;justify-content:space-between;align-items:center}.modal-header h2{margin:0;font-size:1.2rem}.modal-header .btn-close-modal{background:transparent;border:none;color:#fff;cursor:pointer;padding:5px;display:flex;align-items:center}.modal-body{padding:20px;overflow-y:auto}.locked-modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);display:none;justify-content:center;align-items:center;z-index:10001}@media(max-width:768px){.nav-title-btn{font-size:1rem;padding:0.6rem 1rem;min-height:44px}.nav-title-btn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.nav-btn{padding:0.5rem 0.6rem;font-size:0.85rem;min-height:40px}}@media(max-width:480px){.nav-title-btn{font-size:0.85rem;padding:0.5rem 0.75rem;min-height:40px}.nav-title-btn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}}</style>
 </head>
@@ -97,119 +94,41 @@
         </div>
     </nav>
 
-    <!-- ============= CONTAINER RATING DAN KOMENTAR ============= -->
-    <section class="rating-comments-container" id="ratingCommentsContainer">
-        <!-- Global Login Button (for non-logged in users) -->
-        <div class="global-login-required" id="globalLoginRequired" style="display: none;">
-            <button class="btn-global-login" id="btnGlobalLogin">
-                🔒 Login untuk memberikan Rating dan Berkomentar
+    <!-- ============= CONTAINER KOMENTAR ============= -->
+    <section class="comment-container" id="readerCommentContainer">
+        <div class="comment-header-section">
+            <h2 class="comment-heading">💬 Komentar</h2>
+            <button class="btn-login-comment" id="btnLoginComment" style="display: none;">
+                <svg class="login-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Login untuk Berkomentar
             </button>
         </div>
         
-        <!-- RATING SECTION -->
-        <div class="rating-section" id="ratingSection">
-            <h3 class="section-title">⭐ Rating Chapter</h3>
-            
-            <!-- Loading State -->
-            <div class="rating-loading" id="ratingLoading" style="display: none;">
-                <div class="spinner-small"></div>
-                <p>Loading rating...</p>
-            </div>
-            
-            <!-- Rating Display (untuk semua user) -->
-            <div class="rating-display" id="ratingDisplay" style="display: none;">
-                <div class="rating-stats">
-                    <div class="rating-score">
-                        <span class="score-number" id="ratingScore">8.0</span><span class="score-label">/10</span>
-                    </div>
-                    <div class="rating-info">
-                        <div class="rating-stars-display" id="ratingStarsDisplay">
-                            ⭐⭐⭐⭐⭐⭐⭐⭐☆☆
-                        </div>
-                        <p class="rating-count"><span id="ratingCount">0</span> ratings</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Rating Input (hanya untuk user login) -->
-            <div class="rating-input" id="ratingInput" style="display: none;">
-                <p class="rating-prompt">Berikan rating untuk chapter ini:</p>
-                <div class="rating-stars-input" id="ratingStarsInput">
-                    <span class="star" data-value="1">☆</span>
-                    <span class="star" data-value="2">☆</span>
-                    <span class="star" data-value="3">☆</span>
-                    <span class="star" data-value="4">☆</span>
-                    <span class="star" data-value="5">☆</span>
-                    <span class="star" data-value="6">☆</span>
-                    <span class="star" data-value="7">☆</span>
-                    <span class="star" data-value="8">☆</span>
-                    <span class="star" data-value="9">☆</span>
-                    <span class="star" data-value="10">☆</span>
-                </div>
-                <div class="rating-value-display">
-                    <span id="ratingValueText">Pilih rating (1-10)</span>
-                </div>
-                <div class="rating-actions">
-                    <button class="btn-submit-rating" id="btnSubmitRating" disabled>
-                        Submit Rating
-                    </button>
-                </div>
-            </div>
-            
-        </div>
-        
-        <!-- DIVIDER -->
-        <div class="section-divider"></div>
-        
-        <!-- COMMENTS SECTION -->
-        <div class="comments-section" id="commentsSection">
-            <h3 class="section-title">💬 Komentar</h3>
-            
-            <!-- Comment Input (hanya untuk user login) -->
-            <div class="comment-input-container" id="commentInputContainer" style="display: none;">
-                <div class="comment-input-wrapper">
-                    <textarea 
-                        class="comment-textarea" 
-                        id="commentTextarea" 
-                        placeholder="Tulis komentar Anda... (max 500 karakter, max 3 @mentions)"
-                        maxlength="500"
-                        rows="3"
-                    ></textarea>
-                    <div class="comment-input-footer">
-                        <span class="comment-char-count">
-                            <span id="commentCharCount">0</span>/500
-                        </span>
-                        <button class="btn-submit-comment" id="btnSubmitComment">
-                            Post Comment
-                        </button>
-                    </div>
-                </div>
-                <p class="comment-hint">
-                    💡 Tip: Gunakan @username untuk mention user lain (max 3)
-                </p>
-            </div>
-            
-            <!-- Comments Loading -->
-            <div class="comments-loading" id="commentsLoading" style="display: none;">
-                <div class="spinner-small"></div>
-                <p>Loading comments...</p>
-            </div>
-            
-            <!-- Comments List -->
-            <div class="comments-list" id="commentsList">
-                <!-- Comments will be loaded here dynamically -->
-            </div>
-            
-            <!-- Load More Button -->
-            <div class="comments-load-more" id="commentsLoadMore" style="display: none;">
-                <button class="btn-load-more" id="btnLoadMoreComments">
-                    Load More Comments
+        <!-- Comment Input Section (hanya untuk user login) -->
+        <div class="comment-input-section" id="commentInputSection" style="display: none;">
+            <textarea 
+                class="comment-textarea" 
+                id="commentTextarea" 
+                placeholder="Tulis komentar Anda... (max 500 karakter)"
+                maxlength="500"
+            ></textarea>
+            <div class="comment-input-footer">
+                <span class="comment-char-count">
+                    <span id="commentCharCount">0</span>/500
+                </span>
+                <button class="btn-submit-comment" id="btnSubmitComment">
+                    Kirim Komentar
                 </button>
             </div>
-            
-            <!-- No Comments Message -->
-            <div class="comments-empty" id="commentsEmpty" style="display: none;">
-                <p>📝 Belum ada komentar. Jadilah yang pertama!</p>
+        </div>
+        
+        <!-- Comments List -->
+        <div class="comments-list" id="commentsList">
+            <div class="comment-placeholder">
+                <p>Belum ada komentar. Jadilah yang pertama!</p>
             </div>
         </div>
     </section>
@@ -267,9 +186,8 @@
     <script>document.getElementById("modalOverlay").style.display="none";</script>
 
     <script defer src="common.js?v=2.1.0"></script>
-    <script defer src="auto-reload.js?v=2.1.0"></script>
+    <!-- <script defer src="auto-reload.js?v=2.1.0"></script> -->
     <script defer src="manga-config.js?v=2.1.0"></script>
-    <script defer src="rating-comments.js?v=1.0.0"></script>
     <script defer src="reader.js?v=2.1.0"></script>
     
 <script>

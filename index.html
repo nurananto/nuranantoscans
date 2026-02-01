@@ -19,7 +19,6 @@
                          https://images.weserv.nl
                          https://api.anthropic.com;
                        form-action 'self' https://manga-auth-worker.nuranantoadhien.workers.dev;
-                       frame-ancestors 'none';
                        base-uri 'self';">
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
         <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
@@ -42,7 +41,6 @@
         <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
         <link rel="preconnect" href="https://images.weserv.nl" />
         <link rel="dns-prefetch" href="https://images.weserv.nl" />
-        <link rel="preload" href="assets/fire.png" as="image" type="image/png" />
 
         <!-- ✅ FIX: Blocking CSS untuk prevent FOUC saat hard refresh -->
         <link rel="stylesheet" href="style.css?v=f7d92a3" />
@@ -149,7 +147,7 @@
                 justify-content: space-between;
                 align-items: center;
                 gap: 1rem;
-                margin-bottom: 1.5rem;
+                margin-bottom: 1rem;
                 padding: 0;
             }
 
@@ -180,48 +178,147 @@
                 color: #888;
             }
 
-            .trakteer-button {
-                position: fixed;
-                bottom: 30px;
-                left: 1.5rem;
-                right: 1.5rem;
-                z-index: 1000;
+            .manga-list-container {
                 display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-                background: linear-gradient(135deg, #be1e2d 0%, #d32f2f 100%);
-                padding: 0.75rem 1.25rem;
-                border-radius: 16px;
-                text-decoration: none;
-                color: #fff;
-                font-weight: 700;
-                font-size: 0.95rem;
-                box-shadow: 0 4px 15px rgba(190, 30, 45, 0.4);
-                max-width: calc(1400px - 3rem);
-                margin: 0 auto;
-            }
-
-            .trakteer-icon {
-                width: 28px;
-                height: 28px;
-            }
-
-            .grid-container {
-                display: grid;
-                gap: 1.25rem;
+                gap: 0;
                 padding: 0;
                 max-width: 1400px;
                 margin: 0 auto;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                cursor: grab;
+                user-select: none;
+            }
+
+            .manga-list-container.is-dragging {
+                cursor: grabbing;
+                scroll-snap-type: none;
+            }
+
+            .manga-list-container::-webkit-scrollbar {
+                display: none;
+            }
+
+            .manga-list-page {
+                flex: 0 0 100%;
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                grid-auto-rows: minmax(380px, auto);
+                gap: 1rem;
+                padding: 0.5rem;
+                scroll-snap-align: start;
+            }
+
+            .pagination-container {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+                margin-top: 1rem;
+                padding: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            #paginationDots {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .pagination-dot {
+                min-width: 32px;
+                height: 32px;
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 0 8px;
+                font-size: 14px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .pagination-dot:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: translateY(-2px);
+            }
+
+            .pagination-dot.active {
+                background: #1877f2;
+                color: #fff;
+                border-color: #1877f2;
+            }
+
+            .pagination-ellipsis {
+                color: rgba(255, 255, 255, 0.5);
+                padding: 0 4px;
+                font-weight: bold;
+                user-select: none;
+            }
+
+            .pagination-nav {
+                background: transparent;
+                border: none;
+                color: #fff;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-size: 18px;
+                font-weight: bold;
+            }
+
+            .pagination-nav:hover {
+                color: #1877f2;
+                transform: scale(1.2);
+            }
+
+            .pagination-nav:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+
+            .pagination-nav:disabled:hover {
+                transform: none;
+                color: #fff;
+            }
+
+            .empty-state {
+                width: 100%;
+                min-height: 300px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 2rem;
+            }
+
+            .empty-state p {
+                margin: 0.5rem 0;
             }
 
             /* ✅ FIXED: Background & Shadow Transparent */
             .manga-card {
                 position: relative;
-                overflow: visible;
+                overflow: hidden;
                 background: transparent;
                 border-radius: 0.8rem;
-                border: 1px solid rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.15);
                 padding: 0.5rem;
                 box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
                 cursor: pointer;
@@ -230,34 +327,42 @@
                     box-shadow 0.3s ease;
                 display: flex;
                 flex-direction: column;
+                height: 100%;
+                min-height: 0;
             }
 
             .manga-card:hover {
-                transform: scale(1.03);
-                box-shadow: none;
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
             }
 
             .manga-cover-wrapper {
                 position: relative;
                 width: 100%;
-                max-width: 100%; /* ✅ FIX: Prevent overflow */
-                overflow: hidden; /* ✅ FIX: Clip image yang overflow */
-                order: 1;
-                min-width: 0; /* ✅ FIX: Prevent flex shrink issues */
+                overflow: hidden;
+                aspect-ratio: 3/4.2;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 0.6rem;
+                flex: 0 0 auto;
+            }
+
+            /* Type badge di manga card sama seperti trending */
+            .manga-cover-wrapper .type-badge {
+                bottom: 0;
+                right: 0;
+                border-radius: 0.6rem 0 0.6rem 0;
             }
 
             .manga-card img,
             .manga-cover-wrapper img {
                 width: 100%;
                 max-width: 100%; /* ✅ FIX: Prevent overflow */
-                height: auto; /* ✅ FIX: Maintain aspect ratio fallback */
-                aspect-ratio: 3/4.2;
+                height: 100%; /* ✅ FIX: Fill container height */
                 object-fit: cover;
                 object-position: center; /* ✅ FIX: Center image untuk better crop */
                 border-radius: 0.6rem;
                 display: block;
                 background: transparent;
-                contain-intrinsic-size: 300px 420px;
                 /* ✅ FIX: Prevent image scaling issues */
                 image-rendering: -webkit-optimize-contrast;
                 image-rendering: crisp-edges;
@@ -267,22 +372,20 @@
             /* Type Badge Base Styles */
             .type-badge {
                 position: absolute;
-                bottom: clamp(6px, 1.5vw, 10px);
-                right: clamp(6px, 1.5vw, 10px);
+                bottom: 0;
+                right: 0;
                 padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
-                border-radius: clamp(4px, 1vw, 6px);
+                border-radius: 0.6rem 0 0.6rem 0;
                 /* ✅ FIX: Fallback font-size untuk prevent glitch saat hard refresh */
-                font-size: 11px; /* Fallback untuk browser yang belum support clamp() */
-                font-size: clamp(10px, 2vw, 12px); /* Preferred dengan clamp() */
+                font-size: 12px; /* Fallback untuk browser yang belum support clamp() */
+                font-size: clamp(11px, 2vw, 13px); /* Preferred dengan clamp() */
                 font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 color: #fff;
                 z-index: 5;
                 pointer-events: none;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-                backdrop-filter: blur(4px);
-                -webkit-backdrop-filter: blur(4px);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
                 line-height: 1.2;
                 white-space: nowrap;
                 display: flex;
@@ -296,12 +399,14 @@
 
             /* Badge untuk B/W (Manga Hitam Putih) */
             .type-badge-bw {
+                background: #1a1a1a;
                 background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
                 border: 1px solid rgba(255, 255, 255, 0.2);
             }
 
             /* Badge untuk Colour (Webtoon Berwarna) */
             .type-badge-colour {
+                background: #0d5fcc;
                 background: linear-gradient(135deg, #1877f2 0%, #0d5fcc 100%);
                 border: 1px solid rgba(255, 255, 255, 0.3);
             }
@@ -321,33 +426,89 @@
                 font-size: inherit;
             }
 
+            /* ✅ Status badge di pojok kiri atas (seperti trending badge) */
+            .status-badge {
+                position: absolute;
+                top: 0;
+                left: 0;
+                padding: 4px 10px;
+                border-radius: 0.6rem 0 0.6rem 0;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #fff;
+                z-index: 2;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                pointer-events: none;
+            }
 
-            /* Badge container untuk manga list */
-            .manga-badges-container {
+            .status-badge-updated {
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+            }
+
+            .status-badge-ongoing {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+            }
+
+            .status-badge-end {
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+            }
+
+            .status-badge-hiatus {
+                background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+                box-shadow: 0 2px 8px rgba(107, 114, 128, 0.4);
+            }
+
+            .badge-icon {
+                width: 12px;
+                height: 12px;
+                flex-shrink: 0;
+            }
+
+            /* ✅ Title manga - urutan pertama setelah cover */
+            .manga-title {
+                color: #fff;
+                padding: 0.6rem 0.4rem 0;
+                text-align: left;
+                font-size: 1rem;
+                font-weight: 600;
+                line-height: 1.4;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                min-height: 1.4em;
+                flex: 0 0 auto;
+                order: 1;
+            }
+
+            /* ✅ Info bar di bawah title - urutan kedua setelah title */
+            .manga-info-bar {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 8px 0;
-                background: transparent;
-                border-radius: 0;
-                gap: 8px;
-                min-height: 50px;
+                padding: 0.5rem 0.5rem 0.3rem;
+                gap: 0.5rem;
+                margin-top: auto;
+                flex: 0 0 auto;
+                order: 2;
             }
 
-            .manga-title {
+            .manga-chapter {
                 color: #fff;
-                padding: 0.4rem 0.5rem 1.2rem;
-                text-align: center;
-                /* ✅ FIX: Fallback font-size untuk prevent glitch */
-                font-size: 0.95rem;
+                font-size: 0.75rem;
+                font-weight: 700;
+            }
+
+            .manga-time {
+                color: #888;
+                font-size: 0.8rem;
                 font-weight: 600;
-                line-height: 1.65;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                word-break: break-word;
             }
 
             .visually-hidden {
@@ -378,24 +539,36 @@
                 top: 0;
             }
 
-            /* Desktop Besar (5 kolom) */
+            /* Desktop Besar (5 kolom) - 2 rows × 5 = 10 per page */
 @media (min-width: 1400px) {
-    .grid-container {
+    .manga-list-page {
+        flex: 0 0 100%;
         grid-template-columns: repeat(5, 1fr);
+        grid-auto-rows: minmax(380px, auto);
+        gap: 1rem;
+        padding: 0.5rem;
     }
 }
 
-/* Desktop Sedang (4 kolom) */
+/* Desktop Sedang (4 kolom) - 2 rows × 4 = 8 per page */
 @media (min-width: 1024px) and (max-width: 1399px) {
-    .grid-container {
+    .manga-list-page {
+        flex: 0 0 100%;
         grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: minmax(350px, auto);
+        gap: 1rem;
+        padding: 0.5rem;
     }
 }
 
-/* Tablet (3 kolom) */
+/* Tablet (3 kolom) - 2 rows × 3 = 6 per page */
 @media (min-width: 768px) and (max-width: 1023px) {
-    .grid-container {
+    .manga-list-page {
+        flex: 0 0 100%;
         grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: minmax(320px, auto);
+        gap: 0.875rem;
+        padding: 0.5rem;
     }
     .site-logo {
         height: 50px;
@@ -429,9 +602,22 @@
     .site-logo {
         height: 45px;
     }
-    .grid-container {
+    .manga-list-page {
+        flex: 0 0 100%;
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.875rem;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        grid-auto-rows: minmax(300px, auto);
+    }
+    .pagination-dot {
+        min-width: 28px;
+        height: 28px;
+        font-size: 13px;
+    }
+    .pagination-nav {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
     }
     .search-section {
         padding: 0;
@@ -440,86 +626,14 @@
         padding: 0.65rem 1rem;
         font-size: 0.95rem;
     }
-    .trakteer-button {
-        left: 0.625rem;
-        right: 0.625rem;
-        padding: 0.65rem 1rem;
-        font-size: 0.85rem;
-    }
-    .trakteer-icon {
-        width: 24px;
-        height: 24px;
-    }
-    /* Hide desktop buttons on mobile */
+    /* Hide desktop buttons on mobile - Show login button only */
     .header-buttons {
-        display: none !important;
-    }
-    /* Show hamburger menu on mobile */
-    .header-menu-toggle {
         display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        width: 45px;
-        height: 45px;
-        background: #3a3a3a;
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        flex-shrink: 0;
-        position: relative;
-        z-index: 10002;
-    }
-    .header-menu-toggle .header-icon {
-        width: 24px;
-        height: 24px;
-        color: #fff;
-        display: block;
-    }
-    /* Hide dropdown by default on mobile */
-    .header-menu-dropdown {
-        display: none !important;
-        visibility: hidden;
-    }
-    /* Show dropdown when has .show class */
-    .header-menu-dropdown.show {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    .github-link-header,
-    .facebook-link-header {
-        width: 45px;
-        height: 45px;
-        min-width: 45px;
-        min-height: 45px;
-        padding: 0;
-        justify-content: center;
-        border-radius: 10px;
-    }
-    .github-icon,
-    .facebook-icon {
-        width: 24px;
-        height: 24px;
-    }
-    .github-text,
-    .facebook-text {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border-width: 0;
     }
     .manga-title {
-        font-size: 0.8rem;
-        padding: 0.5rem 0.4rem 1.3rem;
-        line-height: 1.65;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.4rem 0;
+        line-height: 1.4;
     }
 }
 
@@ -530,18 +644,6 @@
     }
     .site-logo {
         height: 40px;
-    }
-    .header-menu-toggle {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    .header-menu-toggle .header-icon {
-        width: 22px;
-        height: 22px;
     }
     .github-link-header,
     .facebook-link-header {
@@ -556,9 +658,13 @@
         width: 22px;
         height: 22px;
     }
+    .manga-list-page {
+        grid-auto-rows: minmax(280px, auto); /* ✅ FIX: Smaller minimum height */
+    }
     .manga-title {
-        font-size: 0.75rem;
-        padding: 0.45rem 0.35rem 1.2rem;
+        font-size: 0.8rem;
+        padding: 0.45rem 0.35rem 0;
+        line-height: 1.4;
     }
 }
 
@@ -582,26 +688,6 @@
     margin: 0 auto 15px;
 }
 
-            .loading-indicator {
-                text-align: center;
-                padding: 40px 20px;
-                display: none;
-            }
-
-            .loading-indicator.show {
-                display: block;
-            }
-
-            .spinner {
-                width: 50px;
-                height: 50px;
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #1877f2;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 15px;
-            }
-
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -611,150 +697,517 @@
     }
 }
 
-/* Fire Icon - Prevent layout shift */
-.fire-icon {
+/* ========================================
+   TRENDING SECTION
+   ======================================== */
+.trending-section {
+    max-width: 1400px;
+    margin: 0 auto 2.5rem;
+    padding: 0;
+}
+
+.trending-container {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    cursor: grab;
+    user-select: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+.trending-container.is-dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+}
+
+.trending-container::-webkit-scrollbar {
+    display: none;
+}
+
+.trending-card {
+    flex: 0 0 auto;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    scroll-snap-align: start;
+    background: transparent;
+    border-radius: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.trending-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+}
+
+.trending-cover-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4.2;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    background: rgba(255, 255, 255, 0.05);
     flex-shrink: 0;
-    width: clamp(24px, 5vw, 40px);
-    height: clamp(24px, 5vw, 40px);
-    object-fit: contain;
 }
 
-.fire-icon-left {
-    animation: fireFlickerLeft 1.5s ease-in-out infinite;
+.trending-cover-wrapper .type-badge {
+    bottom: 0;
+    right: 0;
+    border-radius: 0.6rem 0 0.6rem 0;
+    font-size: 12px;
+    font-size: clamp(11px, 2vw, 13px);
 }
 
-.fire-icon-right {
-    animation: fireFlickerRight 1.5s ease-in-out infinite;
+.trending-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
 }
 
-@keyframes fireFlickerLeft {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1) rotate(-3deg);
-    }
-    50% {
-        opacity: 0.85;
-        transform: scale(1.1) rotate(3deg);
-    }
-}
-
-@keyframes fireFlickerRight {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1) rotate(3deg);
-    }
-    50% {
-        opacity: 0.85;
-        transform: scale(1.1) rotate(-3deg);
-    }
-}
-
-.top5-heading {
+.trending-badge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 0.6rem 0 0.6rem 0;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: clamp(0.5rem, 2vw, 1rem);
+    gap: 4px;
 }
 
-.heading-text {
+.badge-icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+.trending-title {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 0.6rem 0.4rem 0;
+    text-align: left;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+    min-height: 1.4em;
+    flex-shrink: 0;
 }
 
-/* Top 5 Section - Prevent flicker & crop */
-            /* Top 5 Section - Prevent flicker & crop */
-            .top5-section {
-                max-width: 1400px;
-                margin: 0 auto 3rem;
-                padding: 0;
-            }
+.trending-info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.4rem 0.3rem;
+    gap: 0.5rem;
+    margin-top: auto;
+}
 
-            .top5-heading {
-                text-align: center;
-                font-size: clamp(1.5rem, 4vw, 2rem);
-                font-weight: 700;
-                margin-bottom: 1.5rem;
-                color: #fff;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
+.trending-chapter {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
 
-            .top5-badges-container {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 8px 0;
-                background: transparent;
-                border-radius: 0;
-                gap: 10px;
-                margin-bottom: 0;
-            }
+.trending-views {
+    color: #888;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
 
-            .top5-container {
-                display: flex;
-                gap: 1rem;
-                overflow-x: auto;
-                padding: 15px;
-                margin: 0 -15px;
-                scroll-behavior: smooth;
-            }
+.view-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    stroke: #888;
+}
 
-            .top5-container::-webkit-scrollbar {
-                display: none;
-            }
-
-            .top5-card {
-                position: relative;
-                flex: 0 0 45%;
-                background: transparent;
-                border-radius: 0.8rem;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                padding: 0.5rem;
-                box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
-                cursor: pointer;
-                overflow: visible;
-                transition: transform 0.3s ease;
-            }
-
-            .top5-card:hover {
-                transform: scale(1.05);
-            }
-
-            .top5-card:focus {
-                outline: none;
-                transform: scale(1.1);
-                z-index: 10;
-            }
-
-            .top5-card img {
-                width: 100%;
-                aspect-ratio: 3/4.2;
-                object-fit: cover;
-                display: block;
-                background: transparent;
-                border-radius: 0.6rem;
-            }
-
-/* Desktop Besar TOP5 (5 kolom) */
+/* Responsive Trending */
 @media (min-width: 1400px) {
-    .top5-container {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 1.25rem;
-        overflow-x: visible;
-        padding: 0;
-        margin: 0;
+    .trending-card {
+        width: 260px;
+        min-width: 260px;
+        max-width: 260px;
     }
-    .top5-card {
-        flex: none;
-        width: auto;
+}
+
+@media (min-width: 1024px) and (max-width: 1399px) {
+    .trending-card {
+        width: 245px;
+        min-width: 245px;
+        max-width: 245px;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .trending-card {
+        width: 225px;
+        min-width: 225px;
+        max-width: 225px;
     }
 }
 
 @media (max-width: 767px) {
-    .top5-container {
+    .trending-section {
+        margin-bottom: 2rem;
+    }
+    
+    .trending-container {
         gap: 0.875rem;
+    }
+    
+    .trending-card {
+        width: 190px;
+        min-width: 190px;
+        max-width: 190px;
+    }
+    
+    .trending-badge {
+        font-size: 9px;
+        padding: 3px 8px;
+    }
+    
+    .badge-icon {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .trending-title {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.3rem 0;
+    }
+    
+    .trending-info-bar {
+        padding: 0.4rem 0.3rem 0.2rem;
+    }
+    
+    .trending-chapter {
+        font-size: 0.75rem;
+    }
+    
+    .trending-views {
+        font-size: 0.7rem;
+    }
+    
+    .view-icon {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .trending-card {
+        width: 175px;
+        min-width: 175px;
+        max-width: 175px;
+    }
+    
+    .trending-badge {
+        font-size: 8px;
+        padding: 3px 6px;
+        top: 0;
+        left: 0;
+    }
+    
+    .badge-icon {
+        width: 9px;
+        height: 9px;
+    }
+    
+    .trending-title {
+        font-size: 0.75rem;
+    }
+    
+    .trending-chapter {
+        font-size: 0.7rem;
+    }
+    
+    .trending-views {
+        font-size: 0.65rem;
+    }
+    
+    .view-icon {
+        width: 11px;
+        height: 11px;
+    }
+}
+
+@media (max-width: 399px) {
+    .trending-card {
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
+    }
+}
+
+@media (max-width: 399px) {
+    body {
         padding: 15px;
-        margin: 0 -15px;
+        padding-bottom: 100px;
+    }
+    
+    .manga-list-page {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.625rem;
+        padding: 0.5rem;
+        grid-auto-rows: minmax(260px, auto); /* ✅ FIX: Even smaller minimum height */
+    }
+    
+    .manga-card {
+        padding: 0.4rem;
+    }
+    
+    .manga-cover-wrapper {
+        border-radius: 0.5rem;
+    }
+    
+    .manga-card img,
+    .manga-cover-wrapper img {
+        border-radius: 0.5rem;
+    }
+    
+    .manga-chapter {
+        font-size: 0.65rem;
+    }
+    
+    .manga-time {
+        font-size: 0.6rem;
+    }
+    
+    .manga-title {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.3rem 0;
+    }
+    
+    .status-badge {
+        font-size: 9px;
+        padding: 3px 6px;
+    }
+    
+    .badge-icon {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .pagination-dot {
+        min-width: 26px;
+        height: 26px;
+        font-size: 12px;
+    }
+    
+    .pagination-nav {
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+    }
+    
+    #searchInput {
+        padding: 0.6rem 0.9rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Support Container Section */
+.support-section {
+    max-width: 1400px;
+    margin: 0 auto 2rem;
+    padding: 0;
+}
+
+.support-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: clamp(1rem, 2vw, 1.5rem);
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.support-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 1.5vw, 12px);
+    padding: clamp(14px, 2vw, 18px) clamp(20px, 3vw, 32px);
+    border-radius: clamp(10px, 1.5vw, 14px);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: clamp(14px, 1.8vw, 18px);
+    color: #fff;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    flex: 1;
+}
+
+.support-button-github {
+    background: linear-gradient(135deg, #24292e 0%, #1a1e22 100%);
+}
+
+.support-button-github:hover {
+    background: linear-gradient(135deg, #2f363d 0%, #24292e 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(36, 41, 46, 0.4);
+}
+
+.support-button-facebook {
+    background: linear-gradient(135deg, #1877f2 0%, #0d5fcc 100%);
+}
+
+.support-button-facebook:hover {
+    background: linear-gradient(135deg, #2984f6 0%, #1877f2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
+}
+
+.support-button-trakteer {
+    background: linear-gradient(135deg, #be1e2d 0%, #d32f2f 100%);
+}
+
+.support-button-trakteer:hover {
+    background: linear-gradient(135deg, #d32f2f 0%, #be1e2d 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(190, 30, 45, 0.4);
+}
+
+.support-icon {
+    width: clamp(20px, 2.5vw, 28px);
+    height: clamp(20px, 2.5vw, 28px);
+    flex-shrink: 0;
+}
+
+.support-text {
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.support-text-mobile {
+    display: none;
+}
+
+/* Tablet Support Container */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .support-container {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .support-button {
+        font-size: 14px;
+    }
+    
+    /* Hide "Donasi Chapter", show "Donasi" on tablet */
+    .support-button-trakteer .support-text-desktop {
+        display: none;
+    }
+    
+    .support-button-trakteer .support-text-mobile {
+        display: inline;
+    }
+}
+
+/* Mobile Support Container */
+@media (max-width: 767px) {
+    .support-section {
+        margin-bottom: 2rem;
+    }
+    
+    .support-container {
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.875rem;
+    }
+    
+    /* Hide all text on mobile - icon only */
+    .support-text,
+    .support-text-desktop,
+    .support-text-mobile {
+        display: none;
+    }
+    
+    .support-button {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+    
+    .support-icon {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .support-container {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .support-button {
+        padding: 11px 14px;
+        font-size: 12px;
+        border-radius: 8px;
+    }
+    
+    .support-icon {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .support-text {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 399px) {
+    .support-container {
+        padding: 0.75rem;
+        gap: 0.75rem;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .support-button {
+        padding: 10px 10px;
+        font-size: 10px;
+        gap: 5px;
+    }
+    
+    .support-icon {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .support-text {
+        font-size: 10px;
     }
 }
         </style>
@@ -782,7 +1235,7 @@
                 <nav aria-label="Social media links">
                     <!-- Desktop: Show all buttons -->
                     <div class="header-buttons">
-  <!-- Profile/Login Button - FIRST -->
+  <!-- Profile/Login Button -->
   <button class="header-icon-button profile-button" 
           id="btnOpenLogin"
           aria-label="Login or Register">
@@ -792,76 +1245,43 @@
     </svg>
     <span class="button-text">Login</span>
   </button>
-
-  <!-- GitHub Link -->
-  <a href="https://github.com/nurananto/nuranantoscans" 
-     target="_blank" 
-     rel="noopener noreferrer"
-     class="header-icon-button github-button"
-     aria-label="View source code on GitHub (opens in new tab)">
-    <svg class="header-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-    </svg>
-  </a>
-
-  <!-- Facebook Link -->
-  <a href="https://web.facebook.com/profile.php?id=61556658895013" 
-     target="_blank" 
-     rel="noopener noreferrer"
-     class="header-icon-button facebook-button"
-     aria-label="Follow Nurananto Scanlation on Facebook (opens in new tab)">
-    <svg class="header-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-  </a>
+  
+  <!-- Notification Button -->
+  <div class="notification-wrapper">
+    <button class="header-icon-button notification-button" 
+            id="btnNotification"
+            aria-label="View notifications">
+      <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span class="notification-badge" id="notificationBadge" style="display: none;"></span>
+    </button>
+    
+    <!-- Notification Dropdown -->
+    <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
+      <div class="notification-header">
+        <h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Notifikasi
+        </h3>
+        <button id="btnSyncNotifications" class="btn-sync-notif" title="Sync notifikasi dari mention lama">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="notification-content" id="notificationContent">
+        <!-- Content will be dynamically loaded -->
+      </div>
+    </div>
+  </div>
 </div>
 
-                    <!-- Mobile: Hamburger Menu Button -->
-                    <button class="header-menu-toggle" 
-                            id="btnHeaderMenu"
-                            aria-label="Menu"
-                            aria-expanded="false">
-                      <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                        <circle cx="12" cy="5" r="1"/>
-                        <circle cx="12" cy="12" r="1"/>
-                        <circle cx="12" cy="19" r="1"/>
-                      </svg>
-                    </button>
-
-                    <!-- Mobile: Dropdown Menu -->
-                    <div class="header-menu-dropdown" id="headerMenuDropdown">
-                      <button class="header-menu-item profile-button" 
-                              id="btnOpenLoginMobile"
-                              aria-label="Login or Register">
-                        <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                          <circle cx="12" cy="7" r="4"/>
-                        </svg>
-                        <span>Profile / Login</span>
-                      </button>
-
-                      <a href="https://github.com/nurananto/NuranantoScanlation" 
-                         target="_blank" 
-                         rel="noopener noreferrer"
-                         class="header-menu-item github-button"
-                         aria-label="View source code on GitHub (opens in new tab)">
-                        <svg class="header-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                        </svg>
-                        <span>GitHub</span>
-                      </a>
-
-                      <a href="https://web.facebook.com/profile.php?id=61556658895013" 
-                         target="_blank" 
-                         rel="noopener noreferrer"
-                         class="header-menu-item facebook-button"
-                         aria-label="Follow Nurananto Scanlation on Facebook (opens in new tab)">
-                        <svg class="header-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                        </svg>
-                        <span>Facebook</span>
-                      </a>
-                    </div>
+                    <!-- Mobile: Show Login Button Only (No Hamburger) -->
                 </nav>
             </div>
             <div class="header-border"></div>
@@ -870,29 +1290,51 @@
         <!-- Ganti bagian <main> di index.html dengan ini -->
 
         <main role="main" id="main-content">
-            <!-- TOP 5 MOST VIEWED SECTION -->
-            <section class="top5-section" aria-labelledby="top5-heading">
-                <h2 id="top5-heading" class="top5-heading">
-                    <img
-                        src="assets/fire.png"
-                        alt=""
-                        class="fire-icon fire-icon-left"
-                        aria-hidden="true"
-                        loading="eager"
-                        decoding="sync"
-                    />
-                    <span class="heading-text">Trending 24 Jam</span>
-                    <img
-                        src="assets/fire.png"
-                        alt=""
-                        class="fire-icon fire-icon-right"
-                        aria-hidden="true"
-                        loading="eager"
-                        decoding="sync"
-                    />
-                </h2>
-                <div class="top5-container" id="top5Container" role="list">
-                    <!-- Top 5 cards will be rendered here by JavaScript -->
+            <!-- TRENDING SECTION -->
+            <section class="trending-section" aria-labelledby="trending-heading">
+                <div class="trending-container" id="trendingContainer" role="list">
+                    <!-- Trending cards will be rendered here by JavaScript -->
+                </div>
+            </section>
+
+            <!-- SUPPORT CONTAINER SECTION -->
+            <section class="support-section" aria-labelledby="support-heading">
+                <h2 id="support-heading" class="visually-hidden">Support Links</h2>
+                <div class="support-container">
+                    <a href="https://github.com/nurananto/nuranantoscans" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="support-button support-button-github"
+                       aria-label="View source code on GitHub (opens in new tab)">
+                        <svg class="support-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        <span class="support-text support-text-desktop">Source</span>
+                    </a>
+                    
+                    <a href="https://web.facebook.com/profile.php?id=61556658895013" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="support-button support-button-facebook"
+                       aria-label="Follow Nurananto Scans on Facebook (opens in new tab)">
+                        <svg class="support-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                        <span class="support-text support-text-desktop">Facebook</span>
+                    </a>
+                    
+                    <a href="https://trakteer.id/NuranantoScanlation" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="support-button support-button-trakteer"
+                       aria-label="Donate to buy RAW chapters on Trakteer (opens in new tab)">
+                        <svg class="support-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v12M9 9h6M9 15h6"/>
+                        </svg>
+                        <span class="support-text support-text-desktop">Donasi Chapter</span>
+                        <span class="support-text support-text-mobile">Donasi</span>
+                    </a>
                 </div>
             </section>
 
@@ -901,6 +1343,7 @@
                 class="manga-list-section"
                 aria-labelledby="manga-list-heading"
             >
+                <!-- Header and Search outside container -->
                 <div class="manga-list-header">
                     <h2 id="manga-list-heading" class="manga-list-heading">
                         Manga List
@@ -928,8 +1371,17 @@
                     <p>Memuat daftar manga...</p>
                 </div>
 
-                <!-- Manga Grid -->
-                <div class="grid-container" id="mangaGrid" role="list"></div>
+                <!-- Manga List Container -->
+                <div class="manga-list-container" id="mangaGrid" role="list">
+                    <!-- Manga cards will be rendered here by JavaScript -->
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="pagination-container" id="paginationControls" style="display: none;">
+                    <button class="pagination-nav" id="prevPage" aria-label="Previous page">‹</button>
+                    <div id="paginationDots"></div>
+                    <button class="pagination-nav" id="nextPage" aria-label="Next page">›</button>
+                </div>
             </section>
         </main>
 
@@ -948,24 +1400,10 @@
                     </p>
                 </div>
             </div>
-            <a
-                href="https://trakteer.id/NuranantoScanlation"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="trakteer-button"
-                aria-label="Support us on Trakteer - Donate to buy RAW chapters (opens in new tab)"
-            >
-                <svg class="trakteer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 6v12M9 9h6M9 15h6"/>
-                </svg>
-                <span>Donasi untuk Beli RAW Chapter</span>
-            </a>
         </footer>
 
         <!-- ✅ Scripts -->
         <script defer src="common.js?v=f7d92a3"></script>
-        <script defer src="auto-reload.js?v=f7d92a3"></script>
         <script defer src="manga-config.js?v=f7d92a3"></script>
         <script defer src="script.js?v=f7d92a3"></script>
 
@@ -981,7 +1419,6 @@
                 window.addEventListener("load", async () => {
                     try {
                         // ✅ STEP 1: Unregister old SW with query string
-                        console.log("🔍 Checking for old SW...");
                         const regs =
                             await navigator.serviceWorker.getRegistrations();
 
@@ -991,10 +1428,6 @@
                                 reg.active &&
                                 reg.active.scriptURL.includes("?v=")
                             ) {
-                                console.log(
-                                    "🗑️ Unregistering old SW with query string:",
-                                    reg.active.scriptURL,
-                                );
                                 await reg.unregister();
 
                                 // ✅ Clear all caches after unregistering
@@ -1005,20 +1438,16 @@
                                             caches.delete(name),
                                         ),
                                     );
-                                    console.log("🗑️ All caches cleared");
                                 }
                             }
                         }
 
                         // ✅ STEP 2: Register new SW (NO query string)
-                        console.log("📝 Registering new SW...");
                         const registration =
                             await navigator.serviceWorker.register("./sw.js", {
                                 updateViaCache: "none",
                                 scope: "./",
                             });
-
-                        console.log("✅ SW registered:", registration.scope);
 
                         // ✅ STEP 3: Check for updates immediately
                         registration.update();
@@ -1026,15 +1455,12 @@
                        // ✅ STEP 4: Listen for updates - SMOOTH TRANSITION
 registration.addEventListener("updatefound", () => {
     const newWorker = registration.installing;
-    console.log("🔄 New SW installing...");
 
     newWorker.addEventListener("statechange", () => {
         if (
             newWorker.state === "installed" &&
             navigator.serviceWorker.controller
         ) {
-            console.log("✅ New SW ready");
-            
             // Skip waiting & activate immediately
             newWorker.postMessage({ type: 'SKIP_WAITING' });
         }
@@ -1048,7 +1474,6 @@ navigator.serviceWorker.addEventListener(
     () => {
         if (!refreshing) {
             refreshing = true;
-            console.log("🔄 SW updated");
             
             // Fade out sebelum reload
             document.body.style.opacity = '0';
@@ -1061,16 +1486,11 @@ navigator.serviceWorker.addEventListener(
     },
 );
                     } catch (err) {
+                        // Only show critical errors
                         console.error("❌ SW registration failed:", err);
 
                         // ✅ If registration fails, try to clear everything and retry once
-                        if (err.name === "SecurityError") {
-                            console.warn(
-                                "⚠️ SW blocked by security policy (HTTPS required)",
-                            );
-                        } else {
-                            console.log("🔄 Attempting to recover...");
-
+                        if (err.name !== "SecurityError") {
                             try {
                                 // Unregister all
                                 const allRegs =
@@ -1088,10 +1508,6 @@ navigator.serviceWorker.addEventListener(
                                         ),
                                     );
                                 }
-
-                                console.log(
-                                    "🗑️ Cleanup completed, please refresh page",
-                                );
                             } catch (cleanupErr) {
                                 console.error("❌ Cleanup failed:", cleanupErr);
                             }
@@ -1108,9 +1524,6 @@ navigator.serviceWorker.addEventListener(
     <div style="background: linear-gradient(135deg, #1877f2 0%, #166fe5 100%); padding: 12px; border-radius: 8px 8px 0 0; text-align: center;">
       <div style="color: white; font-size: 13px; font-weight: 600;">
         🔒 Secure Login - Nurananto Scanlation Web
-      </div>
-      <div style="color: rgba(255,255,255,0.9); font-size: 11px; margin-top: 4px;">
-        Akun digunakan hanya untuk melihat progress membaca saja.
       </div>
     </div>
 
@@ -1269,7 +1682,7 @@ navigator.serviceWorker.addEventListener(
       
       <!-- Upgrade Button (show for non-donatur) -->
       <button id="btnUpgrade" class="btn-upgrade-profile">
-        ⚡ UPGRADE SEKARANG
+        ⚡ UPGRADE
       </button>
       
       <!-- ✅ History Button -->
