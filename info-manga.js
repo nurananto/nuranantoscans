@@ -4202,4 +4202,66 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         dWarn('[INFO-RATING] No repo parameter found');
     }
+    
+    // ✅ Initialize notification tabs (same as index.html)
+    initializeNotificationTabs();
 });
+
+/**
+ * Initialize notification tabs (Komentar & Update)
+ */
+function initializeNotificationTabs() {
+    const tabs = document.querySelectorAll('.notification-tab');
+    
+    if (tabs.length === 0) {
+        return; // No tabs found, skip
+    }
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.getAttribute('data-tab');
+            
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            tab.classList.add('active');
+            
+            // Show/hide content sections
+            const commentsSection = document.getElementById('notificationComments');
+            const updatesSection = document.getElementById('notificationUpdates');
+            
+            if (targetTab === 'comments') {
+                // Show comments, hide updates
+                if (commentsSection) {
+                    commentsSection.style.display = 'block';
+                    commentsSection.classList.add('active');
+                }
+                if (updatesSection) {
+                    updatesSection.style.display = 'none';
+                    updatesSection.classList.remove('active');
+                }
+                
+                // Load comments notifications (handled by common.js)
+                if (window.loadNotifications && typeof window.loadNotifications === 'function') {
+                    window.loadNotifications();
+                }
+            } else if (targetTab === 'updates') {
+                // Show updates, hide comments
+                if (commentsSection) {
+                    commentsSection.style.display = 'none';
+                    commentsSection.classList.remove('active');
+                }
+                if (updatesSection) {
+                    updatesSection.style.display = 'block';
+                    updatesSection.classList.add('active');
+                }
+                
+                // Load update notifications (handled by common.js)
+                if (window.loadUpdateNotifications && typeof window.loadUpdateNotifications === 'function') {
+                    window.loadUpdateNotifications();
+                }
+            }
+        });
+    });
+}

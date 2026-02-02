@@ -208,10 +208,10 @@
                 flex: 0 0 100%;
                 display: grid;
                 grid-template-columns: repeat(5, 1fr);
-                grid-auto-rows: minmax(380px, auto);
                 gap: 1rem;
                 padding: 0.5rem;
                 scroll-snap-align: start;
+                align-content: start;
             }
 
             .pagination-container {
@@ -230,6 +230,7 @@
                 flex-direction: row;
                 align-items: center;
                 gap: 8px;
+                flex-shrink: 0;
             }
 
             .pagination-dot {
@@ -411,6 +412,13 @@
                 border: 1px solid rgba(255, 255, 255, 0.3);
             }
 
+            /* Badge untuk Novel */
+            .type-badge-novel {
+                background: #8b5cf6;
+                background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
             .type-badge-icon {
                 width: 14px; /* Fallback */
                 width: clamp(12px, 2.5vw, 16px); /* Preferred */
@@ -431,9 +439,9 @@
                 position: absolute;
                 top: 0;
                 left: 0;
-                padding: 4px 10px;
+                padding: 6px 14px;
                 border-radius: 0.6rem 0 0.6rem 0;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
@@ -441,7 +449,7 @@
                 z-index: 2;
                 display: flex;
                 align-items: center;
-                gap: 4px;
+                gap: 5px;
                 pointer-events: none;
             }
 
@@ -466,8 +474,8 @@
             }
 
             .badge-icon {
-                width: 12px;
-                height: 12px;
+                width: 14px;
+                height: 14px;
                 flex-shrink: 0;
             }
 
@@ -721,8 +729,6 @@
     -ms-overflow-style: none;
     cursor: grab;
     user-select: none;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
 }
 
 .trending-container.is-dragging {
@@ -736,9 +742,9 @@
 
 .trending-card {
     flex: 0 0 auto;
-    width: 260px;
-    min-width: 260px;
-    max-width: 260px;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
     scroll-snap-align: start;
     background: transparent;
     border-radius: 0.8rem;
@@ -787,9 +793,9 @@
     left: 0;
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     color: #fff;
-    padding: 4px 10px;
+    padding: 6px 14px;
     border-radius: 0.6rem 0 0.6rem 0;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -797,7 +803,7 @@
     box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
 }
 
 .badge-icon {
@@ -857,25 +863,25 @@
 /* Responsive Trending */
 @media (min-width: 1400px) {
     .trending-card {
-        width: 260px;
-        min-width: 260px;
-        max-width: 260px;
+        width: 300px;
+        min-width: 300px;
+        max-width: 300px;
     }
 }
 
 @media (min-width: 1024px) and (max-width: 1399px) {
     .trending-card {
-        width: 245px;
-        min-width: 245px;
-        max-width: 245px;
+        width: 285px;
+        min-width: 285px;
+        max-width: 285px;
     }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
     .trending-card {
-        width: 225px;
-        min-width: 225px;
-        max-width: 225px;
+        width: 260px;
+        min-width: 260px;
+        max-width: 260px;
     }
 }
 
@@ -889,19 +895,19 @@
     }
     
     .trending-card {
-        width: 190px;
-        min-width: 190px;
-        max-width: 190px;
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
     }
     
     .trending-badge {
-        font-size: 9px;
-        padding: 3px 8px;
+        font-size: 10px;
+        padding: 5px 12px;
     }
     
     .badge-icon {
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
     }
     
     .trending-title {
@@ -929,21 +935,21 @@
 
 @media (max-width: 480px) {
     .trending-card {
-        width: 175px;
-        min-width: 175px;
-        max-width: 175px;
+        width: 200px;
+        min-width: 200px;
+        max-width: 200px;
     }
     
     .trending-badge {
-        font-size: 8px;
-        padding: 3px 6px;
+        font-size: 9px;
+        padding: 4px 10px;
         top: 0;
         left: 0;
     }
     
     .badge-icon {
-        width: 9px;
-        height: 9px;
+        width: 11px;
+        height: 11px;
     }
     
     .trending-title {
@@ -966,9 +972,9 @@
 
 @media (max-width: 399px) {
     .trending-card {
-        width: 160px;
-        min-width: 160px;
-        max-width: 160px;
+        width: 185px;
+        min-width: 185px;
+        max-width: 185px;
     }
 }
 
@@ -1210,6 +1216,133 @@
         font-size: 10px;
     }
 }
+
+/* Notification Tabs Styling */
+.notification-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.notification-tab {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-bottom: 2px solid transparent;
+}
+
+.notification-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.notification-tab.active {
+    color: #1877f2;
+    border-bottom-color: #1877f2;
+    background: rgba(24, 119, 242, 0.1);
+}
+
+.notification-tab svg {
+    stroke: currentColor;
+}
+
+/* Notification Content Areas */
+.notification-content {
+    display: none;
+}
+
+.notification-content.active {
+    display: block;
+}
+
+/* Update Item Styling */
+.update-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.2s ease;
+}
+
+.update-item:last-child {
+    border-bottom: none;
+}
+
+.update-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.update-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.update-item-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.update-item-icon.success {
+    stroke: #10b981;
+}
+
+.update-item-icon.info {
+    stroke: #3b82f6;
+}
+
+.update-item-icon.warning {
+    stroke: #f59e0b;
+}
+
+.update-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.update-item-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+    padding-left: 28px;
+}
+
+.update-item-time {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
+    padding-left: 28px;
+}
+
+/* Empty State for Updates and Comments */
+.notification-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.notification-empty svg {
+    width: 48px;
+    height: 48px;
+    stroke: rgba(255, 255, 255, 0.3);
+    margin-bottom: 12px;
+}
+
+.notification-empty p {
+    font-size: 14px;
+    margin: 0;
+}
         </style>
     </head>
     <body>
@@ -1268,14 +1401,38 @@
           </svg>
           Notifikasi
         </h3>
-        <button id="btnSyncNotifications" class="btn-sync-notif" title="Sync notifikasi dari mention lama">
+        <button id="btnSyncNotifications" class="btn-sync-notif" title="Sync komentar / Refresh update">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
           </svg>
         </button>
       </div>
-      <div class="notification-content" id="notificationContent">
-        <!-- Content will be dynamically loaded -->
+      
+      <!-- Notification Tabs -->
+      <div class="notification-tabs">
+        <button class="notification-tab active" data-tab="comments">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Komentar
+        </button>
+        <button class="notification-tab" data-tab="updates">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Update
+        </button>
+      </div>
+      
+      <!-- Comments Content -->
+      <div class="notification-content active" id="notificationComments">
+        <!-- Comments will be dynamically loaded -->
+      </div>
+      
+      <!-- Updates Content -->
+      <div class="notification-content" id="notificationUpdates" style="display: none;">
+        <!-- Updates will be dynamically loaded -->
       </div>
     </div>
   </div>

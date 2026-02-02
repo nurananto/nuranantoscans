@@ -111,14 +111,38 @@
           </svg>
           Notifikasi
         </h3>
-        <button id="btnSyncNotifications" class="btn-sync-notif" title="Sync notifikasi dari mention lama">
+        <button id="btnSyncNotifications" class="btn-sync-notif" title="Sync komentar / Refresh update">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
           </svg>
         </button>
       </div>
-      <div class="notification-content" id="notificationContent">
-        <!-- Content will be dynamically loaded -->
+      
+      <!-- Notification Tabs -->
+      <div class="notification-tabs">
+        <button class="notification-tab active" data-tab="comments">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Komentar
+        </button>
+        <button class="notification-tab" data-tab="updates">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Update
+        </button>
+      </div>
+      
+      <!-- Comments Content -->
+      <div class="notification-content active" id="notificationComments">
+        <!-- Comments will be dynamically loaded -->
+      </div>
+      
+      <!-- Updates Content -->
+      <div class="notification-content" id="notificationUpdates" style="display: none;">
+        <!-- Updates will be dynamically loaded -->
       </div>
     </div>
   </div>

@@ -206,6 +206,9 @@ function createTrendingCard(manga, mangaData, rank, views24h) {
   // Use cover from manga-config.json (same as manga-list)
   const cdnUrls = getResponsiveCDN(manga.cover);
   
+  // ✅ Check if user is donatur setia (use cached status)
+  const isDonaturSetia = isDonaturFromDOM();
+  
   // ✅ Get NEWEST chapter from repo manga.json (compare dates between locked and unlocked)
   let latestChapter = 'N/A';
   let isLocked = false;
@@ -235,8 +238,19 @@ function createTrendingCard(manga, mangaData, rank, views24h) {
   // Get manga type for badge
   const mangaType = (manga.type || 'manga').toLowerCase();
   const isWebtoon = mangaType === 'webtoon';
-  const typeBadgeText = isWebtoon ? 'Colour' : 'B/W';
-  const typeBadgeClass = isWebtoon ? 'type-badge-colour' : 'type-badge-bw';
+  const isNovel = mangaType === 'novel';
+  
+  let typeBadgeText, typeBadgeClass;
+  if (isNovel) {
+    typeBadgeText = 'Novel';
+    typeBadgeClass = 'type-badge-novel';
+  } else if (isWebtoon) {
+    typeBadgeText = 'Colour';
+    typeBadgeClass = 'type-badge-colour';
+  } else {
+    typeBadgeText = 'B/W';
+    typeBadgeClass = 'type-badge-bw';
+  }
   
   const card = document.createElement('div');
   card.className = 'trending-card';
@@ -273,7 +287,7 @@ function createTrendingCard(manga, mangaData, rank, views24h) {
     <div class="trending-title">${manga.title}</div>
     <div class="trending-info-bar">
       <span class="trending-chapter">
-        ${isLocked ? '🔒 ' : ''}${formattedChapter === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formattedChapter}
+        ${isLocked ? (isDonaturSetia ? '🔓 ' : '🔒 ') : ''}${formattedChapter === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formattedChapter}
       </span>
       <span class="trending-views">
         <svg class="view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -286,13 +300,13 @@ function createTrendingCard(manga, mangaData, rank, views24h) {
   `;
   
   card.addEventListener('click', () => {
-    window.location.href = `info-manga.html?repo=${manga.repo.toLowerCase()}`;
+    window.location.href = `info-manga.html?repo=${manga.id}`;
   });
   
   card.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      window.location.href = `info-manga.html?repo=${manga.repo.toLowerCase()}`;
+      window.location.href = `info-manga.html?repo=${manga.id}`;
     }
   });
   
@@ -402,6 +416,9 @@ function enableTrendingMouseDrag() {
 function createCard(manga, mangaData, index = 0) {
   const isRecent = isRecentlyUpdated(mangaData.lastChapterUpdate);
   
+  // ✅ Check if user is donatur setia (use cached status)
+  const isDonaturSetia = isDonaturFromDOM();
+  
   // ✅ Get chapter info and time for info bar (mirip trending card)
   let chapterNumber = '';
   let timeText = '';
@@ -412,7 +429,8 @@ function createCard(manga, mangaData, index = 0) {
     
     if (lockedDate > unlockedDate) {
       const formatted = formatChapter(mangaData.latestLockedChapter);
-      chapterNumber = `🔒 ${formatted === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formatted}`;
+      const lockIcon = isDonaturSetia ? '🔓 ' : '🔒 ';
+      chapterNumber = `${lockIcon}${formatted === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formatted}`;
       timeText = getRelativeTime(mangaData.latestLockedDate) || '';
     } else {
       const formatted = formatChapter(mangaData.latestUnlockedChapter);
@@ -425,7 +443,8 @@ function createCard(manga, mangaData, index = 0) {
     timeText = getRelativeTime(mangaData.latestUnlockedDate) || '';
   } else if (mangaData.latestLockedChapter) {
     const formatted = formatChapter(mangaData.latestLockedChapter);
-    chapterNumber = `🔒 ${formatted === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formatted}`;
+    const lockIcon = isDonaturSetia ? '🔓 ' : '🔒 ';
+    chapterNumber = `${lockIcon}${formatted === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formatted}`;
     timeText = getRelativeTime(mangaData.latestLockedDate) || '';
   }
   
@@ -488,8 +507,19 @@ function createCard(manga, mangaData, index = 0) {
   // ✅ Get manga type from manga-config.js (not from manga.json)
   const mangaType = (manga.type || 'manga').toLowerCase();
   const isWebtoon = mangaType === 'webtoon';
-  const typeBadgeText = isWebtoon ? 'Colour' : 'B/W';
-  const typeBadgeClass = isWebtoon ? 'type-badge-colour' : 'type-badge-bw';
+  const isNovel = mangaType === 'novel';
+  
+  let typeBadgeText, typeBadgeClass;
+  if (isNovel) {
+    typeBadgeText = 'Novel';
+    typeBadgeClass = 'type-badge-novel';
+  } else if (isWebtoon) {
+    typeBadgeText = 'Colour';
+    typeBadgeClass = 'type-badge-colour';
+  } else {
+    typeBadgeText = 'B/W';
+    typeBadgeClass = 'type-badge-bw';
+  }
   
   if (DEBUG_MODE) {
     dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);

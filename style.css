@@ -1432,11 +1432,85 @@ input:focus-visible {
     margin: 0;
 }
 
+/* Tablet Responsive */
+@media (max-width: 1023px) and (min-width: 768px) {
+    .notification-dropdown {
+        width: 380px;
+    }
+}
+
 /* Mobile Responsive */
 @media (max-width: 767px) {
     .notification-dropdown {
         width: calc(100vw - 40px);
         right: -12px;
+        max-height: 70vh;
+    }
+    
+    .notification-header {
+        padding: 14px 16px;
+    }
+    
+    .notification-header h3 {
+        font-size: 15px;
+    }
+    
+    .notification-content {
+        max-height: 350px;
+    }
+}
+
+@media (max-width: 480px) {
+    .notification-dropdown {
+        width: calc(100vw - 24px);
+        right: -8px;
+        max-height: 65vh;
+    }
+    
+    .notification-header {
+        padding: 12px 14px;
+    }
+    
+    .notification-header h3 {
+        font-size: 14px;
+    }
+    
+    .btn-sync-notif {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .notification-content {
+        max-height: 300px;
+    }
+    
+    .notification-item {
+        padding: 12px 14px;
+    }
+    
+    .notification-item-manga {
+        font-size: 13px;
+    }
+    
+    .notification-item-text {
+        font-size: 12px;
+    }
+    
+    .notification-tab {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .update-item {
+        padding: 10px 14px;
+    }
+    
+    .update-item-title {
+        font-size: 13px;
+    }
+    
+    .update-item-description {
+        font-size: 12px;
     }
 }
 
@@ -2041,6 +2115,22 @@ opacity: 1;
 }
 
 /* ✅ RESPONSIVE - PROFILE MODAL */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .profile-content {
+    padding: 36px 28px;
+    gap: 15px;
+  }
+  
+  .profile-avatar {
+    width: 75px;
+    height: 75px;
+  }
+  
+  .profile-username {
+    font-size: 19px;
+  }
+}
+
 @media (max-width: 767px) {
   .profile-content {
     padding: 32px 24px;

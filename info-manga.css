@@ -3041,6 +3041,22 @@ nav {
 }
 
 /* ✅ RESPONSIVE - PROFILE MODAL */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .profile-content {
+    padding: 36px 28px;
+    gap: 15px;
+  }
+  
+  .profile-avatar {
+    width: 75px;
+    height: 75px;
+  }
+  
+  .profile-username {
+    font-size: 19px;
+  }
+}
+
 @media (max-width: 767px) {
   .profile-content {
     padding: 32px 24px;
@@ -4101,6 +4117,45 @@ nav {
     cursor: not-allowed;
 }
 
+/* Notification Tabs */
+.notification-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.notification-tab {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-bottom: 2px solid transparent;
+}
+
+.notification-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.notification-tab.active {
+    color: #1877f2;
+    border-bottom-color: #1877f2;
+    background: rgba(24, 119, 242, 0.1);
+}
+
+.notification-tab svg {
+    stroke: currentColor;
+}
+
 .notification-content {
     max-height: 400px;
     overflow-y: auto;
@@ -4260,6 +4315,66 @@ nav {
     font-weight: 600;
 }
 
+/* Update Item Styling */
+.update-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.2s ease;
+}
+
+.update-item:last-child {
+    border-bottom: none;
+}
+
+.update-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.update-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.update-item-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.update-item-icon.success {
+    stroke: #10b981;
+}
+
+.update-item-icon.info {
+    stroke: #3b82f6;
+}
+
+.update-item-icon.warning {
+    stroke: #f59e0b;
+}
+
+.update-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.update-item-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+    padding-left: 28px;
+}
+
+.update-item-time {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
+    padding-left: 28px;
+}
+
 .notification-empty {
     padding: 40px 20px;
     text-align: center;
@@ -4278,9 +4393,82 @@ nav {
     margin: 0;
 }
 
+@media (max-width: 1023px) and (min-width: 768px) {
+    .notification-dropdown {
+        width: 380px;
+    }
+}
+
 @media (max-width: 767px) {
     .notification-dropdown {
         width: calc(100vw - 40px);
         right: -12px;
+        max-height: 70vh;
+    }
+    
+    .notification-header {
+        padding: 14px 16px;
+    }
+    
+    .notification-header h3 {
+        font-size: 15px;
+    }
+    
+    .notification-content {
+        max-height: 350px;
+    }
+}
+
+@media (max-width: 480px) {
+    .notification-dropdown {
+        width: calc(100vw - 24px);
+        right: -8px;
+        max-height: 65vh;
+    }
+    
+    .notification-header {
+        padding: 12px 14px;
+    }
+    
+    .notification-header h3 {
+        font-size: 14px;
+    }
+    
+    .btn-sync-notif {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .notification-content {
+        max-height: 300px;
+    }
+    
+    .notification-item {
+        padding: 12px 14px;
+    }
+    
+    .notification-item-manga {
+        font-size: 13px;
+    }
+    
+    .notification-item-text {
+        font-size: 12px;
+    }
+    
+    .notification-tab {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .update-item {
+        padding: 10px 14px;
+    }
+    
+    .update-item-title {
+        font-size: 13px;
+    }
+    
+    .update-item-description {
+        font-size: 12px;
     }
 }

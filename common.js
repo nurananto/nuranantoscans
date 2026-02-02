@@ -750,32 +750,92 @@ function initNotificationSystem() {
                     return;
                 }
                 
-                const response = await fetch(`${NOTIFICATION_API}/reprocess-mentions`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+                // Check which tab is active
+                const updatesTab = document.querySelector('[data-tab="updates"]');
+                const isUpdateTabActive = updatesTab?.classList.contains('active');
                 
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert(`✅ Berhasil!\n\n${data.message}`);
-                    loadNotifications();
-                    updateNotificationBadge();
+                if (isUpdateTabActive) {
+                    // ✅ Refresh Update Tab - Clear cache dan reload
+                    localStorage.removeItem('notif_updates_cache');
+                    localStorage.removeItem('notif_updates_cache_time');
+                    await loadUpdateNotifications();
+                    
+                    // Show success message
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '✅';
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                    }, 1000);
                 } else {
-                    alert(`❌ Gagal: ${data.error}`);
+                    // ✅ Sync Comments - Original functionality
+                    // Clear comments cache before syncing
+                    localStorage.removeItem('notif_comments_cache');
+                    localStorage.removeItem('notif_comments_cache_time');
+                    
+                    const response = await fetch(`${NOTIFICATION_API}/reprocess-mentions`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(`✅ Berhasil!\n\n${data.message}`);
+                        loadNotifications();
+                        updateNotificationBadge();
+                    } else {
+                        alert(`❌ Gagal: ${data.error}`);
+                    }
                 }
             } catch (error) {
                 console.error('[NOTIF SYNC] Error:', error);
-                alert('❌ Terjadi kesalahan saat sync notifikasi');
+                alert('❌ Terjadi kesalahan saat refresh');
             } finally {
                 btn.disabled = false;
                 btn.style.opacity = '1';
             }
         });
     }
+    
+    // ✅ Notification Tabs Handler
+    const notificationTabs = document.querySelectorAll('.notification-tab');
+    notificationTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetTab = tab.dataset.tab;
+            
+            // Update active tab
+            notificationTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Show corresponding content
+            const commentsContent = document.getElementById('notificationComments');
+            const updatesContent = document.getElementById('notificationUpdates');
+            
+            if (targetTab === 'comments') {
+                commentsContent.style.display = 'block';
+                commentsContent.classList.add('active');
+                updatesContent.style.display = 'none';
+                updatesContent.classList.remove('active');
+                loadNotifications();
+            } else if (targetTab === 'updates') {
+                commentsContent.style.display = 'none';
+                commentsContent.classList.remove('active');
+                updatesContent.style.display = 'block';
+                updatesContent.classList.add('active');
+                loadUpdateNotifications();
+                
+                // ✅ Hide notification badge when viewing updates
+                const badge = document.getElementById('notificationBadge');
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+            }
+        });
+    });
     
     // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
@@ -799,13 +859,13 @@ function initNotificationSystem() {
 }
 
 /**
- * Load notifications
+ * Load notifications (for Comments tab)
  */
 async function loadNotifications() {
     dLog('🔔 [NOTIF] loadNotifications() called');
-    const content = document.getElementById('notificationContent');
+    const content = document.getElementById('notificationComments');
     if (!content) {
-        dWarn('⚠️ [NOTIF] notificationContent element not found');
+        dWarn('⚠️ [NOTIF] notificationComments element not found');
         return;
     }
     
@@ -837,6 +897,22 @@ async function loadNotifications() {
     `;
     
     try {
+        // ✅ Check cache first (5 minutes cache - comment notifications update frequently)
+        const cacheKey = 'notif_comments_cache';
+        const cacheTimeKey = 'notif_comments_cache_time';
+        const cacheTime = localStorage.getItem(cacheTimeKey);
+        const now = Date.now();
+        
+        // Cache 5 menit (300000 ms) - Comment notifications bisa sering update
+        if (cacheTime && (now - parseInt(cacheTime)) < 5 * 60 * 1000) {
+            const cachedData = localStorage.getItem(cacheKey);
+            if (cachedData) {
+                dLog('🔔 [NOTIF] Using cached comments data');
+                content.innerHTML = cachedData;
+                return;
+            }
+        }
+        
         dLog('🔔 [NOTIF] Fetching notifications from:', NOTIFICATION_API);
         // Add timestamp to URL to prevent caching
         const cacheBuster = `?_=${Date.now()}`;
@@ -857,11 +933,9 @@ async function loadNotifications() {
                 content.innerHTML = `
                     <div class="notification-empty">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                         </svg>
-                        <p>Notifikasi belum tersedia</p>
-                        <small>Fitur ini akan segera aktif</small>
+                        <p>Tidak ada komentar</p>
                     </div>
                 `;
                 return;
@@ -878,17 +952,19 @@ async function loadNotifications() {
             content.innerHTML = `
                 <div class="notification-empty">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
-                    <p>Tidak ada Notifikasi</p>
+                    <p>Tidak ada komentar</p>
                 </div>
             `;
+            // ✅ Save to cache even for empty state
+            localStorage.setItem('notif_comments_cache', content.innerHTML);
+            localStorage.setItem('notif_comments_cache_time', Date.now().toString());
             return;
         }
         
         // Render notifications
-        content.innerHTML = notifications.map(notif => {
+        const renderedHTML = notifications.map(notif => {
             const timeAgo = getTimeAgo(notif.created_at);
             const unreadClass = notif.is_read ? '' : 'unread';
             
@@ -932,6 +1008,13 @@ async function loadNotifications() {
                 </div>
             `;
         }).join('');
+        
+        // ✅ Set rendered HTML to content
+        content.innerHTML = renderedHTML;
+        
+        // ✅ Save to cache
+        localStorage.setItem('notif_comments_cache', renderedHTML);
+        localStorage.setItem('notif_comments_cache_time', Date.now().toString());
         
     } catch (error) {
         console.error('❌ [NOTIF] Error loading notifications:', error);
@@ -1130,6 +1213,213 @@ function getTimeAgo(timestamp) {
         return `${minutes} menit lalu`;
     } else {
         return 'Baru saja';
+    }
+}
+
+/**
+ * Load Update Notifications (for Updates tab)
+ */
+async function loadUpdateNotifications() {
+    dLog('🔔 [UPDATE] loadUpdateNotifications() called');
+    const content = document.getElementById('notificationUpdates');
+    if (!content) {
+        dWarn('⚠️ [UPDATE] notificationUpdates element not found');
+        return;
+    }
+    
+    const token = localStorage.getItem('authToken');
+    dLog('🔔 [UPDATE] Auth token exists:', !!token);
+    
+    if (!token) {
+        // Show login required state
+        content.innerHTML = `
+            <div class="notification-login-required">
+                <p>Silahkan login untuk melihat update.</p>
+                <small>Untuk melihat update akun, silahkan login ke akunmu.</small>
+                <div class="notification-login-buttons">
+                    <button class="notification-login-btn primary" onclick="document.getElementById('btnOpenLogin').click(); document.getElementById('notificationDropdown').style.display='none';">
+                        Login / Register
+                    </button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show loading
+    content.innerHTML = `
+        <div class="notification-empty">
+            <div class="spinner" style="width: 40px; height: 40px; margin: 20px auto;"></div>
+            <p>Loading updates...</p>
+        </div>
+    `;
+    
+    try {
+        // Check cache first (1 hour cache - status jarang berubah)
+        const cacheKey = 'notif_updates_cache';
+        const cacheTimeKey = 'notif_updates_cache_time';
+        const cacheTime = localStorage.getItem(cacheTimeKey);
+        const now = Date.now();
+        
+        // Cache 1 jam (3600000 ms) - Status donatur/webhook jarang berubah
+        if (cacheTime && (now - parseInt(cacheTime)) < 60 * 60 * 1000) {
+            const cachedData = localStorage.getItem(cacheKey);
+            if (cachedData) {
+                dLog('🔔 [UPDATE] Using cached data');
+                content.innerHTML = cachedData;
+                return;
+            }
+        }
+        
+        // Fetch donatur status data
+        const profileResponse = await fetch('https://manga-auth-worker.nuranantoadhien.workers.dev/donatur/status', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            cache: 'no-store'
+        });
+        
+        if (!profileResponse.ok) {
+            throw new Error('Failed to fetch donatur status');
+        }
+        
+        const profileData = await profileResponse.json();
+        const updates = [];
+        
+        // Check if user has donator status
+        if (profileData.isDonatur) {
+            const expiresAt = new Date(profileData.expiresAt);
+            const now = new Date();
+            const daysLeft = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24));
+            
+            // Check if expired
+            if (daysLeft < 0) {
+                updates.push({
+                    type: 'warning',
+                    title: '❌ Status Donatur Sudah Berakhir',
+                    description: `Status Donatur Setia Anda telah berakhir pada ${expiresAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}. Silahkan perpanjang untuk mengakses chapter terkunci.`,
+                    time: 'Berakhir',
+                    icon: 'warning'
+                });
+            } else {
+                // Active donatur status notification
+                updates.push({
+                    type: 'info',
+                    title: 'Status Donatur Aktif',
+                    description: `Status Donatur Setia Anda aktif hingga ${expiresAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+                    time: 'Aktif',
+                    icon: 'info'
+                });
+                
+                // Warning if expires in 1 day
+                if (daysLeft === 1) {
+                    updates.push({
+                        type: 'warning',
+                        title: '⚠️ Status Donatur Akan Berakhir',
+                        description: 'Status Donatur Setia Anda akan berakhir besok. Jangan lupa untuk perpanjang agar tetap dapat mengakses chapter terkunci.',
+                        time: 'H-1',
+                        icon: 'warning'
+                    });
+                }
+            }
+        }
+        
+        // Check for webhook connection (if available in profile data)
+        if (profileData.webhookConnected || profileData.lastWebhookUpdate) {
+            const webhookTime = profileData.lastWebhookUpdate ? getTimeAgo(profileData.lastWebhookUpdate) : 'Terhubung';
+            updates.push({
+                type: 'success',
+                title: '✅ Webhook Trakteer Terhubung',
+                description: 'Akun Anda terhubung dengan webhook Trakteer. Donasi akan otomatis terdeteksi dan status akan diupdate secara real-time.',
+                time: webhookTime,
+                icon: 'success'
+            });
+        }
+        
+        // Render updates
+        let htmlContent;
+        if (updates.length === 0) {
+            htmlContent = `
+                <div class="notification-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <p>Tidak ada update</p>
+                    <small>Update akan muncul di sini</small>
+                </div>
+            `;
+        } else {
+            htmlContent = updates.map(update => {
+                const iconSVG = getUpdateIconSVG(update.icon);
+                return `
+                    <div class="update-item">
+                        <div class="update-item-header">
+                            <div class="update-item-icon ${update.icon}">
+                                ${iconSVG}
+                            </div>
+                            <span class="update-item-title">${update.title}</span>
+                        </div>
+                        <p class="update-item-description">${update.description}</p>
+                        <span class="update-item-time">${update.time}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        content.innerHTML = htmlContent;
+        
+        // Save to cache
+        localStorage.setItem(cacheKey, htmlContent);
+        localStorage.setItem(cacheTimeKey, Date.now().toString());
+        
+    } catch (error) {
+        console.error('❌ [UPDATE] Error loading updates:', error);
+        content.innerHTML = `
+            <div class="notification-empty">
+                <p>Failed to load updates</p>
+                <small>Please try again later</small>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Get update icon SVG based on type
+ */
+function getUpdateIconSVG(type) {
+    switch(type) {
+        case 'success':
+            return `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+            `;
+        case 'info':
+            return `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+            `;
+        case 'warning':
+            return `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            `;
+        default:
+            return `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+            `;
     }
 }
 
