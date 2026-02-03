@@ -456,10 +456,9 @@ function createCard(manga, mangaData, index = 0) {
     // UPDATED badge dengan arrow up icon
     statusBadgeHTML = `
       <div class="status-badge status-badge-updated" aria-label="Recently updated">
-        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-          <path d="M12 19V5M5 12l7-7 7 7"/>
-        </svg>
+        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         <span>UPDATED!</span>
+        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
       </div>
     `;
   } else {

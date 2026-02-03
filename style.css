@@ -1,3 +1,39 @@
+.status-badge-updated {
+  background: linear-gradient(
+    135deg,
+    rgba(24, 119, 242, 0.85) 0%,
+    rgba(10, 91, 214, 0.85) 100%
+  );
+  box-shadow:
+    0 0 8px 2px #1877f2,
+    0 0 16px 4px rgba(24,119,242,0.5),
+    0 4px 15px rgba(24, 119, 242, 0.4);
+  animation: updated-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes updated-glow {
+  0% {
+    box-shadow:
+      0 0 8px 2px #1877f2,
+      0 0 16px 4px rgba(24,119,242,0.5),
+      0 4px 15px rgba(24, 119, 242, 0.4);
+  }
+  100% {
+    box-shadow:
+      0 0 16px 6px #1877f2,
+      0 0 32px 12px rgba(24,119,242,0.7),
+      0 4px 15px rgba(24, 119, 242, 0.4);
+  }
+}
+/* Updated badge blue style for status-badge-updated */
+.status-badge-updated {
+  background: linear-gradient(
+    135deg,
+    rgba(24, 119, 242, 0.75) 0%,
+    rgba(10, 91, 214, 0.75) 100%
+  );
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
+}
 /* === NURANANTO SCANLATION STYLE === */
 /* Kombinasi layout grid lama dengan fitur modern */
 
@@ -379,12 +415,13 @@ header {
 /* ============================================
    STATUS BADGES (END/ONGOING/HIATUS)
    ============================================ */
+/* Responsive status badge: icon and text always in one row */
 .status-badge {
     backdrop-filter: blur(10px) saturate(180%);
     -webkit-backdrop-filter: blur(10px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.18);
     color: #fff;
-    padding: 6px 8px;
+    padding: 6px 12px 6px 8px;
     border-radius: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -392,11 +429,46 @@ header {
     z-index: 10;
     text-align: center;
     pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
     line-height: 1.2;
+    white-space: nowrap;
+    max-width: 100%;
+    min-width: 0;
+    font-size: clamp(10px, 2.5vw, 13px);
+}
+
+/* Make sure the icon stays sized and aligned */
+.status-badge .badge-icon {
+    width: 1em;
+    height: 1em;
+    min-width: 14px;
+    min-height: 14px;
+    max-width: 18px;
+    max-height: 18px;
+    flex-shrink: 0;
+    margin-right: 4px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Responsive tweaks for mobile */
+@media (max-width: 600px) {
+  .status-badge {
+    padding: 4px 8px 4px 6px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .status-badge .badge-icon {
+    min-width: 12px;
+    min-height: 12px;
+    max-width: 15px;
+    max-height: 15px;
+    margin-right: 3px;
+  }
+}
 }
 
 .status-badge-end {
@@ -446,9 +518,29 @@ header {
 }
 
 /* Recently Updated Card - Efek glow biru */
+
 .manga-card.recently-updated {
-    border: 1px solid rgba(24, 119, 242, 0.5);
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
+  border: 1.5px solid #1877f2;
+  box-shadow:
+    0 0 12px 2px #1877f2,
+    0 0 32px 8px rgba(24,119,242,0.25),
+    0 4px 15px rgba(24, 119, 242, 0.3);
+  animation: card-updated-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes card-updated-glow {
+  0% {
+    box-shadow:
+      0 0 12px 2px #1877f2,
+      0 0 32px 8px rgba(24,119,242,0.25),
+      0 4px 15px rgba(24, 119, 242, 0.3);
+  }
+  100% {
+    box-shadow:
+      0 0 24px 8px #1877f2,
+      0 0 48px 16px rgba(24,119,242,0.35),
+      0 4px 15px rgba(24, 119, 242, 0.3);
+  }
 }
 
 .manga-card.recently-updated:hover {
