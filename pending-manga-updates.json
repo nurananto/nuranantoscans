@@ -1,4 +1,9 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "repo": "Midari",
+      "timestamp": "2026-02-03T11:56:53Z"
+    }
+  ],
   "lastRebuild": "2026-02-03T11:45:52Z"
 }
