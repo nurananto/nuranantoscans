@@ -1712,7 +1712,7 @@ navigator.serviceWorker.addEventListener(
 
     <!-- Login Panel -->
     <div class="login-panel active" id="panelLogin" role="tabpanel" aria-labelledby="tabLogin">
-      <h2 id="login-modal-title" class="login-title">Welcome Back!</h2>
+      <h2 id="login-modal-title" class="login-title">Selamat Datang</h2>
       <form class="login-form" autocomplete="on" action="javascript:void(0)">
         <div class="form-group">
           <label for="loginEmail">Email</label>
@@ -1746,7 +1746,7 @@ navigator.serviceWorker.addEventListener(
 
     <!-- Register Panel -->
     <div class="login-panel" id="panelRegister" role="tabpanel" aria-labelledby="tabRegister">
-      <h2 class="login-title">Create Account</h2>
+      <h2 class="login-title">Buat Akun Baru</h2>
       <form class="login-form" autocomplete="on" action="javascript:void(0)">
         <div class="form-group">
           <label for="registerEmail">Email</label>
@@ -1773,6 +1773,13 @@ navigator.serviceWorker.addEventListener(
               </svg>
             </button>
           </div>
+          <div class="password-strength" id="passwordStrength" style="display: none;">
+            <div class="strength-bar">
+              <div class="strength-fill" id="strengthFill"></div>
+            </div>
+            <span class="strength-text" id="strengthText"></span>
+            <ul class="strength-hints" id="strengthHints"></ul>
+          </div>
         </div>
         <div class="form-group">
           <label for="registerConfirm">Confirm Password</label>
@@ -1797,7 +1804,7 @@ navigator.serviceWorker.addEventListener(
 
     <!-- Forgot Password Panel -->
     <div class="login-panel" id="panelForgot" role="tabpanel" aria-labelledby="tabForgot">
-      <h2 class="login-title">Reset Password</h2>
+      <h2 class="login-title">Ubah Password</h2>
       <p class="login-subtitle">Masukkan email untuk menerima link reset</p>
       <form class="login-form" id="formForgotPassword" autocomplete="on" action="javascript:void(0)">
         <div class="form-group">

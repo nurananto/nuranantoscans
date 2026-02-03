@@ -1878,6 +1878,79 @@ nav {
 }
 
 /* ============================================
+   PASSWORD STRENGTH INDICATOR
+   ============================================ */
+.password-strength {
+    margin-top: 10px;
+}
+
+.strength-bar {
+    height: 4px;
+    background: #2a2a2a;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.strength-fill {
+    height: 100%;
+    transition: width 0.3s ease, background 0.3s ease;
+    border-radius: 2px;
+}
+
+.strength-fill.weak {
+    background: linear-gradient(90deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+.strength-fill.medium {
+    background: linear-gradient(90deg, #ffa500 0%, #ff8c00 100%);
+}
+
+.strength-fill.strong {
+    background: linear-gradient(90deg, #51cf66 0%, #40c057 100%);
+}
+
+.strength-text {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.strength-text.weak {
+    color: #ff6b6b;
+}
+
+.strength-text.medium {
+    color: #ffa500;
+}
+
+.strength-text.strong {
+    color: #51cf66;
+}
+
+.strength-hints {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 12px;
+    color: #999;
+}
+
+.strength-hints li {
+    padding: 3px 0;
+    padding-left: 16px;
+    position: relative;
+}
+
+.strength-hints li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #666;
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 767px) {

@@ -2115,6 +2115,119 @@ const codeModal = document.getElementById('codeModal');
 
     dLog('🔧 [SETUP] Adding form handlers...');
 
+    // 🆕 PASSWORD STRENGTH CHECKER
+    function checkPasswordStrength(password) {
+        const strength = {
+            score: 0,
+            level: 'weak',
+            message: '',
+            hints: []
+        };
+        
+        if (password.length >= 8) {
+            strength.score += 1;
+        } else {
+            strength.hints.push('Minimal 8 karakter');
+        }
+        
+        if (/[A-Z]/.test(password)) {
+            strength.score += 1;
+        } else {
+            strength.hints.push('Tambahkan huruf besar (A-Z)');
+        }
+        
+        if (/[a-z]/.test(password)) {
+            strength.score += 1;
+        } else {
+            strength.hints.push('Tambahkan huruf kecil (a-z)');
+        }
+        
+        if (/[0-9]/.test(password)) {
+            strength.score += 1;
+        } else {
+            strength.hints.push('Tambahkan angka (0-9)');
+        }
+        
+        if (/[^A-Za-z0-9]/.test(password)) {
+            strength.score += 1;
+        } else {
+            strength.hints.push('Tambahkan karakter spesial (!@#$%^&*)');
+        }
+        
+        // Determine level
+        if (strength.score >= 4) {
+            strength.level = 'strong';
+            strength.message = 'Password kuat 💪';
+        } else if (strength.score >= 2) {
+            strength.level = 'medium';
+            strength.message = 'Password cukup kuat';
+        } else {
+            strength.level = 'weak';
+            strength.message = 'Password lemah ⚠️';
+        }
+        
+        return strength;
+    }
+
+    // 🆕 ATTACH PASSWORD STRENGTH CHECKER TO REGISTER PASSWORD INPUT
+    const registerPasswordInput = document.getElementById('registerPassword');
+    const strengthIndicator = document.getElementById('passwordStrength');
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthText = document.getElementById('strengthText');
+    const strengthHints = document.getElementById('strengthHints');
+    const registerButton = document.querySelector('#panelRegister button[type="submit"]');
+
+    if (registerPasswordInput && strengthIndicator && registerButton) {
+        // Initially disable button
+        registerButton.disabled = true;
+        registerButton.style.opacity = '0.5';
+        registerButton.style.cursor = 'not-allowed';
+        registerButton.title = 'Password terlalu lemah';
+
+        registerPasswordInput.addEventListener('input', (e) => {
+            const password = e.target.value;
+            
+            if (password.length === 0) {
+                strengthIndicator.style.display = 'none';
+                registerButton.disabled = true;
+                registerButton.style.opacity = '0.5';
+                registerButton.style.cursor = 'not-allowed';
+                registerButton.title = 'Password terlalu lemah';
+                return;
+            }
+            
+            strengthIndicator.style.display = 'block';
+            const strength = checkPasswordStrength(password);
+            
+            // Update bar
+            strengthFill.style.width = (strength.score * 20) + '%';
+            strengthFill.className = 'strength-fill ' + strength.level;
+            
+            // Update text
+            strengthText.textContent = strength.message;
+            strengthText.className = 'strength-text ' + strength.level;
+            
+            // Update hints
+            strengthHints.innerHTML = strength.hints
+                .map(hint => `<li>${hint}</li>`)
+                .join('');
+            
+            // 🆕 Enable/Disable button based on password strength
+            // Minimum: Medium (score ≥ 2)
+            if (strength.score >= 2) {
+                registerButton.disabled = false;
+                registerButton.style.opacity = '1';
+                registerButton.style.cursor = 'pointer';
+                registerButton.title = 'Klik untuk register';
+            } else {
+                registerButton.disabled = true;
+                registerButton.style.opacity = '0.5';
+                registerButton.style.cursor = 'not-allowed';
+                registerButton.title = 'Password terlalu lemah. Ikuti saran di atas.';
+            }
+        });
+    }
+
     document.querySelector('#panelLogin form').addEventListener('submit', async (e) => {
         e.preventDefault();
         dLog('🔐 [LOGIN] ========================================');
@@ -2198,6 +2311,14 @@ document.querySelector('#panelRegister form').addEventListener('submit', async (
     if (password.length < 8) {
         console.error('❌ [REGISTER] Password too short');
         alert('Password minimal 8 karakter');
+        return;
+    }
+    
+    // 🆕 Validate password strength (minimum: medium)
+    const strength = checkPasswordStrength(password);
+    if (strength.score < 2) {
+        console.error('❌ [REGISTER] Password too weak');
+        alert('Password terlalu lemah! Ikuti saran untuk membuat password lebih kuat.');
         return;
     }
     
