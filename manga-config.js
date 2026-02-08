@@ -131,7 +131,7 @@ MANGA_LIST = [
   {
     id: 'aiwooshiete',
     title: 'Watashi ni Ai wo Oshiete',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/aiwooshiete-e56a300a-60aa-433e-8589-c8a963f188f8.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/aiwooshiete-7d6b9351-e246-4f2b-a19f-ded9c2dfa843.webp',
     repo: 'AiwoOshiete'
   },
   {
