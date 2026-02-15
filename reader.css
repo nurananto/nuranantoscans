@@ -910,18 +910,19 @@ img {
 
 .btn-close-modal {
     width: 100%;
-    padding: 13px 20px;
+    padding: 13px 24px;
     background: #3a3a3a;
     color: #fff;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
+    font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-top: 6px;
+    margin-top: 0;
 }
 
 .btn-close-modal:hover {
@@ -1235,8 +1236,29 @@ img {
     font-size: 16px;
     color: #e0e0e0;
     text-align: center;
-    line-height: 1.5;
+    line-height: 1.6;
     margin: 0;
+}
+
+.login-required-message-primary {
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.login-required-message-secondary {
+    font-size: 15px;
+    color: #ffa502;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.highlight-text {
+    color: #ff4757;
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
 }
 
 .login-required-submessage {
@@ -1250,45 +1272,54 @@ img {
 .login-required-buttons {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 0px;
+    gap: 16px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .login-required-btn {
     width: 100%;
-    padding: 13px 20px;
+    padding: 13px 24px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
+    font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    box-sizing: border-box;
+    display: inline-block;
+    line-height: 1.5;
+    margin: 0;
 }
 
 .login-required-btn-primary {
-    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
+    background: #1877f2;
     color: #fff;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
+    box-shadow: 0 0 25px rgba(24, 119, 242, 0.8), 0 4px 15px rgba(24, 119, 242, 0.6);
+    white-space: nowrap;
 }
 
 .login-required-btn-primary:hover {
-    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%);
+    background: #166fe5;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
+    box-shadow: 0 0 35px rgba(24, 119, 242, 1), 0 6px 20px rgba(24, 119, 242, 0.8);
 }
 
 .login-required-btn-trakteer {
     background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+    box-shadow: 0 0 25px rgba(233, 30, 99, 0.8), 0 4px 15px rgba(233, 30, 99, 0.6);
+    text-decoration: none;
+    text-align: center;
 }
 
 .login-required-btn-trakteer:hover {
     background: linear-gradient(135deg, #c2185b 0%, #e91e63 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(233, 30, 99, 0.6);
+    box-shadow: 0 0 35px rgba(233, 30, 99, 1), 0 6px 20px rgba(233, 30, 99, 0.8);
 }
 
 /* Responsive Design */
@@ -2132,5 +2163,22 @@ img {
     .login-icon {
         width: 16px;
         height: 16px;
+    }
+}
+
+/* Responsive styles for login-required modal */
+@media (max-width: 768px) {
+    .login-required-btn {
+        font-size: 13px;
+        padding: 14px 16px;
+        letter-spacing: 0.3px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-required-btn {
+        font-size: 11px;
+        padding: 12px 14px;
+        letter-spacing: 0.2px;
     }
 }

@@ -50,6 +50,17 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     loginRequiredModal.style.display = 'flex';
     loginRequiredModal.classList.add('active');
     
+    // Conditional: Hide trakteer button for webtoon type
+    const mangaType = mangaData?.manga?.type || 'manga';
+    const btnTrakteerPost = document.getElementById('btnTrakteerPost');
+    if (btnTrakteerPost) {
+        if (mangaType === 'webtoon') {
+            btnTrakteerPost.style.display = 'none';
+        } else {
+            btnTrakteerPost.style.display = 'block';
+        }
+    }
+    
     if (DEBUG_MODE) dLog('🔒 Chapter Terkunci modal shown');
     
     const btnBackToInfo = document.getElementById('btnBackToInfoFromModal');

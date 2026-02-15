@@ -1708,7 +1708,20 @@ document.addEventListener('DOMContentLoaded', () => {
             loginModal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             
-            alert('Berhasil logout');
+            // Reset login button state
+            const loginForm = document.querySelector('#panelLogin form');
+            if (loginForm) {
+                const loginButton = loginForm.querySelector('button[type="submit"]');
+                if (loginButton) {
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Login';
+                }
+            }
+            
+            // Show success message in login modal
+            setTimeout(() => {
+                showFormMessage('loginMessage', '✅ Berhasil logout', 'success', 3000);
+            }, 100);
         });
     }
         // ✅ Upgrade button handler
@@ -2115,54 +2128,71 @@ const codeModal = document.getElementById('codeModal');
     dLog('🔧 [SETUP] Adding form handlers...');
 
     // 🆕 PASSWORD STRENGTH CHECKER
+    // 🆕 PASSWORD STRENGTH CHECKER
+    // Requirement: Minimum 8 characters + 2 out of 4 criteria (uppercase, lowercase, number, special)
     function checkPasswordStrength(password) {
         const strength = {
             score: 0,
+            criteriaScore: 0, // Score for the 4 criteria (not including length)
             level: 'weak',
             message: '',
-            hints: []
+            hints: [],
+            meetsMinLength: false
         };
         
+        // Check minimum length (mandatory)
         if (password.length >= 8) {
-            strength.score += 1;
+            strength.meetsMinLength = true;
         } else {
-            strength.hints.push('Minimal 8 karakter');
+            strength.hints.push('⚠️ Minimal 8 karakter (WAJIB)');
         }
         
+        // Check 4 criteria
         if (/[A-Z]/.test(password)) {
-            strength.score += 1;
+            strength.criteriaScore += 1;
         } else {
             strength.hints.push('Tambahkan huruf besar (A-Z)');
         }
         
         if (/[a-z]/.test(password)) {
-            strength.score += 1;
+            strength.criteriaScore += 1;
         } else {
             strength.hints.push('Tambahkan huruf kecil (a-z)');
         }
         
         if (/[0-9]/.test(password)) {
-            strength.score += 1;
+            strength.criteriaScore += 1;
         } else {
             strength.hints.push('Tambahkan angka (0-9)');
         }
         
         if (/[^A-Za-z0-9]/.test(password)) {
-            strength.score += 1;
+            strength.criteriaScore += 1;
         } else {
             strength.hints.push('Tambahkan karakter spesial (!@#$%^&*)');
         }
         
+        // Calculate total score for display (0-100%)
+        // Length (20%) + each criteria (20% each) = 100%
+        strength.score = (strength.meetsMinLength ? 1 : 0) + strength.criteriaScore;
+        
         // Determine level
-        if (strength.score >= 4) {
+        // Strong: min length + all 4 criteria (score 5)
+        // Medium: min length + 2-3 criteria (score 3-4)
+        // Weak: anything else
+        if (strength.meetsMinLength && strength.criteriaScore >= 4) {
             strength.level = 'strong';
             strength.message = 'Password kuat 💪';
-        } else if (strength.score >= 2) {
+        } else if (strength.meetsMinLength && strength.criteriaScore >= 2) {
             strength.level = 'medium';
-            strength.message = 'Password cukup kuat';
+            strength.message = `Password cukup kuat (${strength.criteriaScore}/4 kriteria)`;
         } else {
             strength.level = 'weak';
             strength.message = 'Password lemah ⚠️';
+        }
+        
+        if (DEBUG_MODE) {
+            dLog('🔐 [PASSWORD] Length OK:', strength.meetsMinLength, '| Criteria:', strength.criteriaScore, '/4 | Level:', strength.level);
         }
         
         return strength;
@@ -2176,12 +2206,60 @@ const codeModal = document.getElementById('codeModal');
     const strengthHints = document.getElementById('strengthHints');
     const registerButton = document.querySelector('#panelRegister button[type="submit"]');
 
-    if (registerPasswordInput && strengthIndicator && registerButton) {
+    if (DEBUG_MODE) {
+        dLog('🔐 [REGISTER] Elements found:');
+        dLog('  - registerPasswordInput:', !!registerPasswordInput);
+        dLog('  - strengthIndicator:', !!strengthIndicator);
+        dLog('  - strengthFill:', !!strengthFill);
+        dLog('  - strengthText:', !!strengthText);
+        dLog('  - strengthHints:', !!strengthHints);
+        dLog('  - registerButton:', !!registerButton);
+    }
+
+    if (registerPasswordInput && strengthIndicator && strengthFill && strengthText && strengthHints && registerButton) {
         // Initially disable button
         registerButton.disabled = true;
         registerButton.style.opacity = '0.5';
         registerButton.style.cursor = 'not-allowed';
-        registerButton.title = 'Password terlalu lemah';
+        registerButton.title = 'Password harus: min 8 karakter + 2 dari 4 kriteria';
+
+        // 🆕 Shared function to update button state
+        let currentPasswordMatch = false;
+
+        function updateButtonState() {
+            const password = registerPasswordInput.value;
+            const confirmPassword = document.getElementById('registerConfirm')?.value || '';
+            const strength = checkPasswordStrength(password);
+            const isPasswordValid = strength.meetsMinLength && strength.criteriaScore >= 2;
+            const isMatch = confirmPassword.length === 0 || password === confirmPassword;
+            const shouldEnable = isPasswordValid && (confirmPassword.length === 0 || (isMatch && confirmPassword.length > 0));
+
+            currentPasswordMatch = isMatch;
+
+            if (shouldEnable && confirmPassword.length > 0 && isMatch) {
+                registerButton.disabled = false;
+                registerButton.style.opacity = '1';
+                registerButton.style.cursor = 'pointer';
+                registerButton.title = 'Klik untuk register';
+                if (DEBUG_MODE) dLog('✅ [BUTTON] Enabled');
+            } else {
+                registerButton.disabled = true;
+                registerButton.style.opacity = '0.5';
+                registerButton.style.cursor = 'not-allowed';
+                if (!isPasswordValid) {
+                    if (!strength.meetsMinLength) {
+                        registerButton.title = 'Password harus minimal 8 karakter';
+                    } else {
+                        registerButton.title = `Password perlu ${2 - strength.criteriaScore} kriteria lagi (2 dari 4)`;
+                    }
+                } else if (confirmPassword.length > 0 && !isMatch) {
+                    registerButton.title = 'Password tidak cocok dengan Confirm Password';
+                } else {
+                    registerButton.title = 'Password harus: min 8 karakter + 2 dari 4 kriteria';
+                }
+                if (DEBUG_MODE) dLog('❌ [BUTTON] Disabled -', registerButton.title);
+            }
+        }
 
         registerPasswordInput.addEventListener('input', (e) => {
             const password = e.target.value;
@@ -2191,16 +2269,20 @@ const codeModal = document.getElementById('codeModal');
                 registerButton.disabled = true;
                 registerButton.style.opacity = '0.5';
                 registerButton.style.cursor = 'not-allowed';
-                registerButton.title = 'Password terlalu lemah';
+                registerButton.title = 'Password harus: min 8 karakter + 2 dari 4 kriteria';
                 return;
             }
             
             strengthIndicator.style.display = 'block';
             const strength = checkPasswordStrength(password);
             
-            // Update bar
+            // Update bar (score 0-5, each worth 20%)
             strengthFill.style.width = (strength.score * 20) + '%';
             strengthFill.className = 'strength-fill ' + strength.level;
+            
+            if (DEBUG_MODE) {
+                dLog('🎨 [INDICATOR] Width:', (strength.score * 20) + '%', '| Class:', 'strength-fill ' + strength.level);
+            }
             
             // Update text
             strengthText.textContent = strength.message;
@@ -2211,20 +2293,153 @@ const codeModal = document.getElementById('codeModal');
                 .map(hint => `<li>${hint}</li>`)
                 .join('');
             
-            // 🆕 Enable/Disable button based on password strength
-            // Minimum: Medium (score ≥ 2)
-            if (strength.score >= 2) {
-                registerButton.disabled = false;
-                registerButton.style.opacity = '1';
-                registerButton.style.cursor = 'pointer';
-                registerButton.title = 'Klik untuk register';
-            } else {
-                registerButton.disabled = true;
-                registerButton.style.opacity = '0.5';
-                registerButton.style.cursor = 'not-allowed';
-                registerButton.title = 'Password terlalu lemah. Ikuti saran di atas.';
-            }
+            // Update button state
+            updateButtonState();
         });
+
+        // Make updateButtonState available globally within this scope
+        window._updateRegisterButtonState = updateButtonState;
+    } else {
+        console.error('❌ [REGISTER] Missing password strength elements!');
+        if (!registerPasswordInput) console.error('  - Missing: registerPasswordInput');
+        if (!strengthIndicator) console.error('  - Missing: strengthIndicator');
+        if (!strengthFill) console.error('  - Missing: strengthFill');
+        if (!strengthText) console.error('  - Missing: strengthText');
+        if (!strengthHints) console.error('  - Missing: strengthHints');
+        if (!registerButton) console.error('  - Missing: registerButton');
+    }
+
+    // 🆕 PASSWORD MATCH CHECKER FOR CONFIRM PASSWORD
+    const registerConfirmInput = document.getElementById('registerConfirm');
+    const passwordMatch = document.getElementById('passwordMatch');
+
+    // 🆕 FORM MESSAGE HELPER FUNCTIONS
+    function showFormMessage(elementId, message, type = 'info', duration = 0) {
+        const messageEl = document.getElementById(elementId);
+        if (!messageEl) {
+            console.error(`❌ Message element #${elementId} not found`);
+            return;
+        }
+
+        messageEl.textContent = message;
+        messageEl.className = `form-message ${type}`;
+        messageEl.style.display = 'block';
+
+        if (DEBUG_MODE) {
+            dLog(`📣 [MESSAGE] Showing ${type} message in #${elementId}:`, message);
+        }
+
+        // Auto-hide after duration (if specified)
+        if (duration > 0) {
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, duration);
+        }
+    }
+
+    function hideFormMessage(elementId) {
+        const messageEl = document.getElementById(elementId);
+        if (messageEl) {
+            messageEl.style.display = 'none';
+        }
+    }
+
+    // 🆕 RESET REGISTER FORM FUNCTION
+    function resetRegisterForm() {
+        if (DEBUG_MODE) dLog('🔄 [RESET] Resetting register form indicators');
+        
+        // Reset password strength indicator
+        const strengthFill = document.getElementById('strengthFill');
+        const strengthText = document.getElementById('strengthText');
+        const strengthHints = document.getElementById('strengthHints');
+        const strengthIndicator = document.getElementById('passwordStrength');
+        
+        if (strengthFill) {
+            strengthFill.style.width = '0%';
+            strengthFill.className = 'strength-fill';
+        }
+        if (strengthText) {
+            strengthText.textContent = '';
+        }
+        if (strengthHints) {
+            strengthHints.innerHTML = '';
+        }
+        if (strengthIndicator) {
+            strengthIndicator.style.display = 'none';
+        }
+        
+        // Reset password match indicator
+        const passwordMatch = document.getElementById('passwordMatch');
+        if (passwordMatch) {
+            passwordMatch.style.display = 'none';
+            passwordMatch.innerHTML = '';
+        }
+        
+        // Reset register button
+        const registerButton = document.querySelector('#panelRegister button[type="submit"]');
+        if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.textContent = 'Register';
+        }
+        
+        // Hide register message
+        hideFormMessage('registerMessage');
+        
+        if (DEBUG_MODE) dLog('✅ [RESET] Register form reset complete');
+    }
+
+    if (DEBUG_MODE) {
+        dLog('🔐 [PASSWORD MATCH] Elements found:');
+        dLog('  - registerConfirmInput:', !!registerConfirmInput);
+        dLog('  - passwordMatch:', !!passwordMatch);
+    }
+
+    if (registerPasswordInput && registerConfirmInput && passwordMatch && registerButton) {
+        function checkPasswordMatch() {
+            const password = registerPasswordInput.value;
+            const confirmPassword = registerConfirmInput.value;
+
+            // Jangan tampilkan apapun jika confirm password kosong
+            if (confirmPassword.length === 0) {
+                passwordMatch.style.display = 'none';
+                // Call updateButtonState if available
+                if (window._updateRegisterButtonState) {
+                    window._updateRegisterButtonState();
+                }
+                return;
+            }
+
+            passwordMatch.style.display = 'block';
+
+            const isMatch = password === confirmPassword;
+
+            if (isMatch) {
+                passwordMatch.innerHTML = '<span class="match-success">✓ Password cocok</span>';
+                passwordMatch.className = 'password-match success';
+                if (DEBUG_MODE) dLog('✅ [PASSWORD MATCH] Passwords match');
+            } else {
+                passwordMatch.innerHTML = '<span class="match-error">✗ Password tidak cocok</span>';
+                passwordMatch.className = 'password-match error';
+                if (DEBUG_MODE) dLog('❌ [PASSWORD MATCH] Passwords do not match');
+            }
+
+            // Call updateButtonState if available
+            if (window._updateRegisterButtonState) {
+                window._updateRegisterButtonState();
+            }
+        }
+
+        // Check on both password and confirm password input
+        registerPasswordInput.addEventListener('input', checkPasswordMatch);
+        registerConfirmInput.addEventListener('input', checkPasswordMatch);
+    } else {
+        if (DEBUG_MODE) {
+            console.error('❌ [PASSWORD MATCH] Missing elements!');
+            if (!registerPasswordInput) console.error('  - Missing: registerPasswordInput');
+            if (!registerConfirmInput) console.error('  - Missing: registerConfirmInput');
+            if (!passwordMatch) console.error('  - Missing: passwordMatch');
+            if (!registerButton) console.error('  - Missing: registerButton');
+        }
     }
 
     document.querySelector('#panelLogin form').addEventListener('submit', async (e) => {
@@ -2236,6 +2451,15 @@ const codeModal = document.getElementById('codeModal');
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
         if (DEBUG_MODE) dLog('🔐 [LOGIN] Email:', email);
+        
+        // Hide any previous messages
+        hideFormMessage('loginMessage');
+        
+        // ✅ Show loading state
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = '⏳ Logging in...';
         
         try {
             dLog('🌐 [LOGIN] Sending request to:', `${API_URL}/auth/login`);
@@ -2256,6 +2480,9 @@ const codeModal = document.getElementById('codeModal');
                 localStorage.setItem('user', JSON.stringify(data.user));
                 dLog('💾 [LOGIN] Saved');
                 
+                // ✅ Show success message
+                showFormMessage('loginMessage', '✅ Login berhasil! Redirecting...', 'success', 2000);
+                
                 // ✅ Update profile button text
                 if (window.updateProfileButtonText) {
                     window.updateProfileButtonText();
@@ -2266,16 +2493,25 @@ const codeModal = document.getElementById('codeModal');
                     window.updateNotificationBadge();
                 }
                 
-                dLog('🎭 [LOGIN] Showing profile modal...');
-                showProfileModal(data.user);
+                // Wait a moment before showing profile modal
+                setTimeout(() => {
+                    dLog('🎭 [LOGIN] Showing profile modal...');
+                    showProfileModal(data.user);
+                }, 1500);
             } else {
                 console.error('❌ [LOGIN] Login failed:', data.error);
-                alert(data.error || 'Login gagal');
+                showFormMessage('loginMessage', data.error || 'Login gagal', 'error');
+                // Re-enable button on error
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
             }
         } catch (error) {
             console.error('❌ [LOGIN] Error:', error);
             console.error('❌ [LOGIN] Error stack:', error.stack);
-            alert('Terjadi kesalahan: ' + error.message);
+            showFormMessage('loginMessage', 'Terjadi kesalahan: ' + error.message, 'error');
+            // Re-enable button on error
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
         }
         dLog('🔐 [LOGIN] ========================================');
     });
@@ -2301,24 +2537,31 @@ document.querySelector('#panelRegister form').addEventListener('submit', async (
     if (DEBUG_MODE) dLog('📝 [REGISTER] Email:', email);
     dLog('📝 [REGISTER] Password length:', password.length);
     
+    // Hide any previous messages
+    hideFormMessage('registerMessage');
+    
     if (password !== confirm) {
         console.error('❌ [REGISTER] Password mismatch');
-        alert('Password tidak cocok!');
+        showFormMessage('registerMessage', 'Password tidak cocok!', 'error');
         return;
     }
     
     if (password.length < 8) {
         console.error('❌ [REGISTER] Password too short');
-        alert('Password minimal 8 karakter');
+        showFormMessage('registerMessage', 'Password minimal 8 karakter', 'error');
         return;
     }
     
-    // 🆕 Validate password strength (minimum: medium)
+    // 🆕 Validate password strength (minimum: 8 chars + 2/4 criteria)
     const strength = checkPasswordStrength(password);
-    if (strength.score < 2) {
+    if (!strength.meetsMinLength || strength.criteriaScore < 2) {
         console.error('❌ [REGISTER] Password too weak');
-        alert('Password terlalu lemah! Ikuti saran untuk membuat password lebih kuat.');
+        showFormMessage('registerMessage', 'Password terlalu lemah! Harus minimal 8 karakter + 2 dari 4 kriteria (huruf besar, huruf kecil, angka, karakter spesial).', 'error');
         return;
+    }
+    
+    if (DEBUG_MODE) {
+        dLog('✅ [REGISTER] Password valid:', strength.meetsMinLength, 'length +', strength.criteriaScore, '/4 criteria');
     }
     
     // ✅ Disable button dan show loading state
@@ -2346,25 +2589,32 @@ document.querySelector('#panelRegister form').addEventListener('submit', async (
             dLog('✅ [REGISTER] Message:', data.message);
             if (DEBUG_MODE) dLog('✅ [REGISTER] User email:', data.email);
             
-            alert('✅ ' + data.message);
+            // Show success message
+            showFormMessage('registerMessage', '✅ Registrasi berhasil! Silakan cek kotak masuk dan folder spam email yang sudah didaftarkan untuk verifikasi.', 'success');
             
-            // Tutup modal dan switch ke login tab
-            dLog('🚪 [REGISTER] Closing modal...');
-            document.getElementById('loginModal').style.display = 'none';
-            document.body.style.overflow = '';
-            dLog('✅ [REGISTER] Modal closed');
+            // Clear form after 5 seconds and close modal
+            setTimeout(() => {
+                e.target.reset();
+                resetRegisterForm();
+                dLog('🚪 [REGISTER] Closing modal...');
+                document.getElementById('loginModal').style.display = 'none';
+                document.body.style.overflow = '';
+                dLog('✅ [REGISTER] Modal closed');
+            }, 5000);
         } else {
             // ✅ Handle error response (misalnya 409 Conflict - user sudah terdaftar)
             const errorMessage = data.error || data.message || 'Registration failed';
             console.error('❌ [REGISTER] Registration failed:', errorMessage);
-            alert('❌ ' + errorMessage);
+            showFormMessage('registerMessage', errorMessage, 'error');
+            // Re-enable button on error
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
         }
     } catch (error) {
         console.error('❌ [REGISTER] Error:', error);
         console.error('❌ [REGISTER] Error stack:', error.stack);
-        alert('Terjadi kesalahan: ' + error.message);
-    } finally {
-        // ✅ Re-enable button
+        showFormMessage('registerMessage', 'Terjadi kesalahan: ' + error.message, 'error');
+        // Re-enable button on error
         submitButton.disabled = false;
         submitButton.textContent = originalButtonText;
     }
@@ -2409,6 +2659,11 @@ document.querySelector('#panelRegister form').addEventListener('submit', async (
             
             const panelId = tab.id.replace('tab', 'panel');
             document.getElementById(panelId)?.classList.add('active');
+            
+            // Reset register form when switching to register tab
+            if (tab.id === 'tabRegister') {
+                resetRegisterForm();
+            }
         });
     });
     dLog('🔧 [SETUP] Tab switching handlers added');
@@ -2447,11 +2702,14 @@ document.querySelector('#panelRegister form').addEventListener('submit', async (
             dLog('📥 [FORGOT] Response data:', data);
             
             if (data.success) {
-                alert('✅ ' + data.message);
+                showFormMessage('forgotMessage', '✅ Link untuk reset password sudah dikirimkan silahkan cek kotak masuk atau kotak spam', 'success');
                 document.getElementById('forgotEmail').value = '';
                 
-                // Switch to login tab
-                document.getElementById('tabLogin').click();
+                // Switch to login tab after 5 seconds
+                setTimeout(() => {
+                    document.getElementById('tabLogin').click();
+                    hideFormMessage('forgotMessage');
+                }, 5000);
             } else {
                 errorEl.textContent = data.error || 'Terjadi kesalahan';
             }

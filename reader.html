@@ -159,20 +159,19 @@
       <div class="login-modal-content">
         <div class="login-required-content">
           <h2 class="login-required-title">🔒 Chapter Terkunci 🔒</h2>
-          <p class="login-required-message">
-            Chapter terkunci karena raw berbayar, untuk mengakses chapter terkunci, anda bisa melakukan dua cara:
+          <p class="login-required-message login-required-message-primary">
+            Chapter Terkunci karena <span class="highlight-text">RAW berbayar</span>.
           </p>
-          <p class="login-required-submessage">
-            1. Kembali ke info-manga, lakukan login dan menjadi donatur setia<br>
-            2. Donate trakteer dan baca locked chapter di community post trakteer.
+          <p class="login-required-message login-required-message-secondary">
+            Locked Chapter bisa dibaca dengan cara
           </p>
           
           <div class="login-required-buttons">
             <button id="btnBackToInfoFromModal" class="login-required-btn login-required-btn-primary">
-              📖 Kembali ke Info Manga
+              🔐 Login Dulu dan Jadilah DONATUR SETIA
             </button>
-            <a href="https://trakteer.id/NuranantoScanlation" target="_blank" class="login-required-btn login-required-btn-trakteer" style="display: block; text-align: center; text-decoration: none;">
-              💰 DONASI VIA TRAKTEER
+            <a id="btnTrakteerPost" href="https://trakteer.id/NuranantoScanlation/posts" target="_blank" class="login-required-btn login-required-btn-trakteer">
+              📖 Baca di Post Trakteer
             </a>
           </div>
           
@@ -276,6 +275,11 @@ if ('serviceWorker' in navigator) {
         </svg>
     </button>
 
+    <!-- Scripts -->
+    <script defer src="common.js?v=2.0.5"></script>
+    <script defer src="manga-config.js?v=2.0.5"></script>
+    <script defer src="reader.js?v=2.0.5"></script>
+    <script defer src="auto-reload.js?v=2.0.5"></script>
     <script>document.getElementById("modalOverlay").style.display="none";</script>
 </body>
 </html>

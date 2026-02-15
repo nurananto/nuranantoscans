@@ -47,7 +47,7 @@
           crossorigin>
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="fonts.css">
+    <link rel="stylesheet" href="fonts.css?v=4b51f1b">
     <link rel="stylesheet" href="info-manga.css?v=4b51f1b">
     
     <!-- Preconnect -->
@@ -520,6 +520,7 @@ if ('serviceWorker' in navigator) {
           </div>
         </div>
         <button type="submit" class="btn-login">Login</button>
+        <div class="form-message" id="loginMessage" style="display: none;"></div>
       </form>
     </div>
 
@@ -576,8 +577,10 @@ if ('serviceWorker' in navigator) {
               </svg>
             </button>
           </div>
+          <div class="password-match" id="passwordMatch" style="display: none;"></div>
         </div>
         <button type="submit" class="btn-login">Register</button>
+        <div class="form-message" id="registerMessage" style="display: none;"></div>
       </form>
     </div>
 
@@ -597,6 +600,7 @@ if ('serviceWorker' in navigator) {
         </div>
         <p id="forgotError" class="code-error"></p>
         <button type="submit" class="btn-login" id="btnSendReset">Kirim Link Reset</button>
+        <div class="form-message" id="forgotMessage" style="display: none;"></div>
       </form>
     </div>
   </div>
@@ -647,20 +651,19 @@ if ('serviceWorker' in navigator) {
   <div class="login-modal-content">
     <div class="login-required-content">
       <h2 class="login-required-title">🔒 Chapter Terkunci 🔒</h2>
-      <p class="login-required-message">
-        Chapter terkunci karena raw berbayar, untuk mengakses chapter terkunci, anda bisa melakukan dua cara:
+      <p class="login-required-message login-required-message-primary">
+        Chapter Terkunci karena <span class="highlight-text">RAW berbayar</span>.
       </p>
-      <p class="login-required-submessage">
-        1. Login dan menjadi DONATUR SETIA<br>
-        2. Donate trakteer dan baca locked chapter di community post trakteer.
+      <p class="login-required-message login-required-message-secondary">
+        Locked Chapter bisa dibaca dengan cara
       </p>
       
       <div class="login-required-buttons">
         <button id="btnLoginFromRequired" class="login-required-btn login-required-btn-primary">
-          🔐 LOGIN / REGISTER
+          🔐 Login dan Jadilah DONATUR SETIA
         </button>
-        <a href="https://trakteer.id/NuranantoScanlation" target="_blank" class="login-required-btn login-required-btn-trakteer" style="display: block; text-align: center; text-decoration: none;">
-          💰 DONASI VIA TRAKTEER
+        <a id="btnTrakteerPost" href="https://trakteer.id/NuranantoScanlation/posts" target="_blank" class="login-required-btn login-required-btn-trakteer">
+          📖 Baca di Post Trakteer
         </a>
       </div>
       
@@ -716,38 +719,13 @@ if ('serviceWorker' in navigator) {
         <h3 class="panduan-section-title">Donasi Lewat Trakteer</h3>
         <p class="panduan-warning-red">(WAJIB DIPAHAMI)</p>
         
-        <div class="panduan-subsection">
-          <h4 class="panduan-subtitle">✅ Donasi dengan menulis email login nuranantoscans.my.id</h4>
-          <p class="panduan-text"><strong>Caranya:</strong></p>
-          <ul class="panduan-list">
-            <li>Tulis email login nuranantoscans.my.id di Pesan Dukungan Trakteer</li>
-            <li>Pesan TIDAK DIPRIVASI (jangan aktifkan pesan privat)</li>
-          </ul>
-          <p class="panduan-text"><strong>Kekurangan:</strong></p>
-          <ul class="panduan-list">
-            <li>Email login terlihat oleh user lain</li>
-          </ul>
-          <p class="panduan-text"><strong>Kelebihan:</strong></p>
-          <ul class="panduan-list">
-            <li>Status otomatis DONATUR SETIA</li>
-            <li>Semua locked chapter bisa dibaca langsung melalui website dan community post trakteer.</li>
-          </ul>
-        </div>
-
-        <div class="panduan-subsection">
-          <h4 class="panduan-subtitle">❌ Donasi tanpa menulis email login nuranantoscans.my.id / pesan dukungan diprivasi</h4>
-          <p class="panduan-text"><strong>Kekurangan:</strong></p>
-          <ul class="panduan-list">
-            <li>Status tidak berubah (Masih Pembaca Setia)</li>
-            <li>Status locked chapter di website tidak berubah</li>
-            <li>Baca locked chapter harus lewat Community Post Trakteer</li>
-            <li>Tidak semua locked chapter tersedia<br>(Webtoon / Longstrip hanya bisa dibaca di website)</li>
-          </ul>
-          <p class="panduan-text"><strong>Kelebihan:</strong></p>
-          <ul class="panduan-list">
-            <li>Email login tidak terlihat user lain</li>
-          </ul>
-        </div>
+        <ul class="panduan-list">
+          <li>Tuliskan email login pada Pesan Dukungan.</li>
+          <li>Pastikan penulisan email benar dan tidak ada typo tulisan apapun.</li>
+          <li>JANGAN CENTANG "jadikan pesan private".</li>
+        </ul>
+        
+        <img src="assets/login.webp" alt="Contoh Donasi Trakteer" style="width: 100%; max-width: 500px; margin: 16px auto; display: block; border-radius: 8px; border: 2px solid rgba(255, 255, 255, 0.2);">
       </div>
 
       <button id="btnBackToUpgrade" class="upgrade-btn upgrade-btn-primary" style="width: 100%; margin-top: 8px;">
@@ -816,5 +794,11 @@ if ('serviceWorker' in navigator) {
     </div>
   </div>
 </div>
+
+<!-- Scripts -->
+<script defer src="common.js?v=4b51f1b"></script>
+<script defer src="manga-config.js?v=4b51f1b"></script>
+<script defer src="info-manga.js?v=4b51f1b"></script>
+<script defer src="auto-reload.js?v=4b51f1b"></script>
 </body>
 </html>

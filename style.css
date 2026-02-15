@@ -469,7 +469,6 @@ header {
     margin-right: 3px;
   }
 }
-}
 
 .status-badge-end {
     background: linear-gradient(
@@ -552,7 +551,7 @@ header {
    ============================================ */
 .manga-title {
     color: var(--text-primary);
-    padding: 0.4rem 0.5rem 1.2rem;
+    padding: 0.6rem 0.5rem 0.4rem;
     text-align: center;
     background: transparent;
     display: -webkit-box;
@@ -563,12 +562,7 @@ header {
     word-break: break-word;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    padding-top: 0.6rem;
     order: 3;
-}
-
-.manga-card.recently-updated .manga-title {
-    padding-top: 0.4rem;
 }
 
 /* Desktop - Font lebih besar */
@@ -577,7 +571,8 @@ header {
         font-size: 0.95rem;
         font-weight: 600;
         line-height: 1.65;
-        max-height: calc(0.95rem * 1.65 * 2 + 0.7rem);
+        max-height: calc(0.95rem * 1.65 * 2 + 1rem);
+        padding-bottom: 0.4rem;
     }
 }
 
@@ -587,7 +582,8 @@ header {
         font-size: 0.875rem;
         font-weight: 600;
         line-height: 1.65;
-        max-height: calc(0.875rem * 1.65 * 2 + 0.65rem);
+        max-height: calc(0.875rem * 1.65 * 2 + 0.9rem);
+        padding-bottom: 0.35rem;
     }
 }
 
@@ -596,14 +592,9 @@ header {
     .manga-title {
         font-size: 0.8rem;
         font-weight: 600;
-        padding: 0.5rem 0.4rem 1.3rem;
+        padding: 0.5rem 0.4rem 0.3rem;
         line-height: 1.65;
-        max-height: calc(0.8rem * 1.65 * 2 + 1.8rem); /* ✅ FIX: Consistent height */
-    }
-
-    .manga-card.recently-updated .manga-title {
-        padding-top: 0.5rem;
-        padding-bottom: 1.3rem;
+        max-height: calc(0.8rem * 1.65 * 2 + 0.8rem);
     }
 }
 
@@ -612,14 +603,9 @@ header {
     .manga-title {
         font-size: 0.75rem;
         font-weight: 500;
-        padding: 0.45rem 0.35rem 1.2rem;
+        padding: 0.45rem 0.35rem 0.25rem;
         line-height: 1.65;
-        max-height: calc(0.75rem * 1.65 * 2 + 1.65rem); /* ✅ FIX: Consistent height */
-    }
-
-    .manga-card.recently-updated .manga-title {
-        padding-top: 0.45rem;
-        padding-bottom: 1.2rem;
+        max-height: calc(0.75rem * 1.65 * 2 + 0.7rem);
     }
 }
 
@@ -1973,52 +1959,69 @@ nav {
    PASSWORD STRENGTH INDICATOR
    ============================================ */
 .password-strength {
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
 .strength-bar {
-    height: 4px;
-    background: #2a2a2a;
-    border-radius: 2px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
     overflow: hidden;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .strength-fill {
     height: 100%;
-    transition: width 0.3s ease, background 0.3s ease;
-    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 5px;
+    position: relative;
 }
 
 .strength-fill.weak {
-    background: linear-gradient(90deg, #ff6b6b 0%, #ee5a52 100%);
+    background: linear-gradient(90deg, #ff4757 0%, #ff3838 100%);
+    box-shadow: 
+        0 0 10px rgba(255, 71, 87, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .strength-fill.medium {
-    background: linear-gradient(90deg, #ffa500 0%, #ff8c00 100%);
+    background: linear-gradient(90deg, #ffa502 0%, #ff8c00 100%);
+    box-shadow: 
+        0 0 10px rgba(255, 165, 2, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .strength-fill.strong {
-    background: linear-gradient(90deg, #51cf66 0%, #40c057 100%);
+    background: linear-gradient(90deg, #26de81 0%, #20bf6b 100%);
+    box-shadow: 
+        0 0 10px rgba(38, 222, 129, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .strength-text {
     display: block;
     margin-bottom: 8px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
 }
 
 .strength-text.weak {
-    color: #ff6b6b;
+    color: #ff4757;
+    text-shadow: 0 0 8px rgba(255, 71, 87, 0.3);
 }
 
 .strength-text.medium {
-    color: #ffa500;
+    color: #ffa502;
+    text-shadow: 0 0 8px rgba(255, 165, 2, 0.3);
 }
 
 .strength-text.strong {
-    color: #51cf66;
+    color: #26de81;
+    text-shadow: 0 0 8px rgba(38, 222, 129, 0.3);
 }
 
 .strength-hints {
@@ -2040,6 +2043,82 @@ nav {
     position: absolute;
     left: 0;
     color: #666;
+}
+
+/* Password Match Indicator */
+.password-match {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.password-match.success {
+    background: rgba(38, 222, 129, 0.1);
+    border: 1px solid rgba(38, 222, 129, 0.3);
+}
+
+.password-match.error {
+    background: rgba(255, 71, 87, 0.1);
+    border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.match-success {
+    color: #26de81;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.match-error {
+    color: #ff4757;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Form Message (Success/Error) */
+.form-message {
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-message.success {
+    background: rgba(38, 222, 129, 0.15);
+    border: 1px solid rgba(38, 222, 129, 0.4);
+    color: #26de81;
+}
+
+.form-message.error {
+    background: rgba(255, 71, 87, 0.15);
+    border: 1px solid rgba(255, 71, 87, 0.4);
+    color: #ff4757;
+}
+
+.form-message.info {
+    background: rgba(24, 119, 242, 0.15);
+    border: 1px solid rgba(24, 119, 242, 0.4);
+    color: #1877f2;
 }
 
 /* ============================================
@@ -2456,13 +2535,24 @@ opacity: 1;
 .upgrade-btn-panduan {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: #fff;
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4), 0 0 30px rgba(245, 158, 11, 0.6);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4), 0 0 30px rgba(245, 158, 11, 0.6);
+  }
+  50% {
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.6), 0 0 40px rgba(245, 158, 11, 0.8), 0 0 60px rgba(245, 158, 11, 0.4);
+  }
 }
 
 .upgrade-btn-panduan:hover {
   background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6), 0 0 50px rgba(245, 158, 11, 0.8);
+  animation: none;
 }
 
 .badge-instant {

@@ -2779,6 +2779,170 @@ nav {
     box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
+/* Password Strength Indicator */
+.password-strength {
+    margin-top: 12px;
+}
+
+.strength-bar {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.strength-fill {
+    height: 100%;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 5px;
+    position: relative;
+}
+
+.strength-fill.weak {
+    background: linear-gradient(90deg, #ff4757 0%, #ff3838 100%);
+    box-shadow: 
+        0 0 10px rgba(255, 71, 87, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.strength-fill.medium {
+    background: linear-gradient(90deg, #ffa502 0%, #ff8c00 100%);
+    box-shadow: 
+        0 0 10px rgba(255, 165, 2, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.strength-fill.strong {
+    background: linear-gradient(90deg, #26de81 0%, #20bf6b 100%);
+    box-shadow: 
+        0 0 10px rgba(38, 222, 129, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.strength-text {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.strength-text.weak {
+    color: #ff4757;
+    text-shadow: 0 0 8px rgba(255, 71, 87, 0.3);
+}
+
+.strength-text.medium {
+    color: #ffa502;
+    text-shadow: 0 0 8px rgba(255, 165, 2, 0.3);
+}
+
+.strength-text.strong {
+    color: #26de81;
+    text-shadow: 0 0 8px rgba(38, 222, 129, 0.3);
+}
+
+.strength-hints {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 12px;
+    color: #999;
+}
+
+.strength-hints li {
+    padding: 3px 0;
+    padding-left: 16px;
+    position: relative;
+}
+
+.strength-hints li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #666;
+}
+
+/* Password Match Indicator */
+.password-match {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.password-match.success {
+    background: rgba(38, 222, 129, 0.1);
+    border: 1px solid rgba(38, 222, 129, 0.3);
+}
+
+.password-match.error {
+    background: rgba(255, 71, 87, 0.1);
+    border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.match-success {
+    color: #26de81;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.match-error {
+    color: #ff4757;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Form Message (Success/Error) */
+.form-message {
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.form-message.success {
+    background: rgba(38, 222, 129, 0.15);
+    border: 1px solid rgba(38, 222, 129, 0.4);
+    color: #26de81;
+}
+
+.form-message.error {
+    background: rgba(255, 71, 87, 0.15);
+    border: 1px solid rgba(255, 71, 87, 0.4);
+    color: #ff4757;
+}
+
+.form-message.info {
+    background: rgba(24, 119, 242, 0.15);
+    border: 1px solid rgba(24, 119, 242, 0.4);
+    color: #1877f2;
+}
+
 /* ============================================
    RESPONSIVE
    ============================================ */
@@ -3145,12 +3309,35 @@ nav {
   line-height: 1.2;
 }
 
+
+
 .login-required-message {
   font-size: 16px;
   color: #e0e0e0;
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.6;
   margin: 0;
+}
+
+.login-required-message-primary {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+.login-required-message-secondary {
+  font-size: 15px;
+  color: #ffa502;
+  font-weight: 500;
+  margin-bottom: 0;
+}
+
+.highlight-text {
+  color: #ff4757;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
 }
 
 .login-required-submessage {
@@ -3164,33 +3351,40 @@ nav {
 .login-required-buttons {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 0px;
+  gap: 16px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .login-required-btn {
-  width: 100%;
-  padding: 13px 20px;
+  padding: 13px 24px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
+  font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  width: 100%;
+  box-sizing: border-box;
+  display: inline-block;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .login-required-btn-primary {
   background: #1877f2;
   color: #fff;
-  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
+  box-shadow: 0 0 25px rgba(24, 119, 242, 0.8), 0 4px 15px rgba(24, 119, 242, 0.6);
+  white-space: nowrap;
 }
 
 .login-required-btn-primary:hover {
   background: #166fe5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
+  box-shadow: 0 0 35px rgba(24, 119, 242, 1), 0 6px 20px rgba(24, 119, 242, 0.8);
 }
 
 .login-required-btn-secondary {
@@ -3208,13 +3402,15 @@ nav {
 .login-required-btn-trakteer {
   background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
   color: #fff;
-  box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+  box-shadow: 0 0 25px rgba(233, 30, 99, 0.8), 0 4px 15px rgba(233, 30, 99, 0.6);
+  text-decoration: none;
+  text-align: center;
 }
 
 .login-required-btn-trakteer:hover {
   background: linear-gradient(135deg, #c2185b 0%, #e91e63 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(233, 30, 99, 0.6);
+  box-shadow: 0 0 35px rgba(233, 30, 99, 1), 0 6px 20px rgba(233, 30, 99, 0.8);
 }
 
 .upgrade-content,
@@ -3310,13 +3506,24 @@ nav {
 .upgrade-btn-panduan {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: #fff;
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4), 0 0 30px rgba(245, 158, 11, 0.6);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4), 0 0 30px rgba(245, 158, 11, 0.6);
+  }
+  50% {
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.6), 0 0 40px rgba(245, 158, 11, 0.8), 0 0 60px rgba(245, 158, 11, 0.4);
+  }
 }
 
 .upgrade-btn-panduan:hover {
   background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6), 0 0 50px rgba(245, 158, 11, 0.8);
+  animation: none;
 }
 
 .badge-instant {
@@ -3334,18 +3541,19 @@ nav {
 
 .btn-close-modal {
   width: 100%;
-  padding: 13px 20px;
+  padding: 13px 24px;
   background: #3a3a3a;
   color: #fff;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
+  font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-top: 6px;
+  margin-top: 0;
 }
 
 .btn-close-modal:hover {
@@ -3599,8 +3807,9 @@ nav {
   }
   
   .login-required-btn {
-    font-size: 14px;
-    padding: 14px 18px;
+    font-size: 13px;
+    padding: 14px 16px;
+    letter-spacing: 0.3px;
   }
   
   .benefit-item {
@@ -3640,6 +3849,12 @@ nav {
   
   .benefit-item {
     font-size: 13px;
+  }
+  
+  .login-required-btn {
+    font-size: 11px;
+    padding: 12px 14px;
+    letter-spacing: 0.2px;
   }
   
   .code-buttons {
