@@ -2298,6 +2298,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dLog('🚪 [LOGOUT] Logout button clicked!');
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
+                localStorage.removeItem('userDonaturStatus'); // 🔥 Clear donatur status cache
                 
                 // ✅ Dispatch custom event untuk notify rating/comments section
                 window.dispatchEvent(new CustomEvent('userLoggedOut'));

@@ -1687,6 +1687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dLog('🚪 [LOGOUT] Logout button clicked!');
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
+            localStorage.removeItem('userDonaturStatus'); // 🔥 Clear donatur status cache
             
             // ✅ Update profile button text
             if (window.updateProfileButtonText) {
