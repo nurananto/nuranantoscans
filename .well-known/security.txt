@@ -1,19 +1,29 @@
 Contact: mailto:nuranantoadhien@gmail.com
-Expires: 2026-12-31T23:59:59Z
+Expires: 2027-12-31T23:59:59Z
 Preferred-Languages: id, en
-Canonical: https://nurananto.github.io/.well-known/security.txt
+Canonical: https://nuranantoscans.my.id/.well-known/security.txt
 
 # Fan Translation Project
 This is a non-commercial fan translation website.
 We do not claim ownership of any manga content.
 All rights belong to their respective authors and publishers.
 
+# Security Scope
+Authentication, XSS, CSRF, SQL injection, API endpoints
+
 # Authentication System
 User accounts are used solely for reading progress tracking.
 Login forms connect to: manga-auth-worker.nuranantoadhien.workers.dev
-No sensitive data (credit cards, etc.) is collected.
+Passwords are hashed with PBKDF2 (100,000 iterations).
+No sensitive data (credit cards, payment info) is collected.
+
+# Responsible Disclosure
+Email security issues to: nuranantoadhien@gmail.com
+Please allow 90 days for resolution before public disclosure.
 
 # Not a Phishing Site
 This is a legitimate fan scanlation project.
 Open source: https://github.com/nurananto/nuranantoscans
+Live site: https://nuranantoscans.my.id
+
 

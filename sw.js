@@ -26,7 +26,13 @@ const STATIC_ASSETS = [
     './assets/star.png',
     './assets/mangadex-logo.png',
     './assets/book.png',
-    './assets/trakteer-icon.png'
+    './assets/trakteer-icon.png',
+    './assets/Webicon/favicon.ico',
+    './assets/Webicon/favicon.svg',
+    './assets/Webicon/favicon-96x96.png',
+    './assets/Webicon/apple-touch-icon.png',
+    './assets/Webicon/web-app-manifest-192x192.png',
+    './assets/Webicon/web-app-manifest-512x512.png'
 ];
 
 // ✅ UPDATED: Hanya manifest.json yang never cache

@@ -39,6 +39,252 @@ if (!window._weservErrorFiltered) {
 }
 
 // ============================================
+// 🛡️ SECURITY UTILITIES
+// ============================================
+
+/**
+ * Escape HTML to prevent XSS attacks
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string
+ */
+function escapeHTML(str) {
+    if (typeof str !== 'string') return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+/**
+ * Sanitize HTML by removing dangerous tags and attributes
+ * @param {string} html - HTML string to sanitize
+ * @returns {string} Sanitized HTML
+ */
+function sanitizeHTML(html) {
+    if (typeof html !== 'string') return '';
+    
+    // Remove script tags
+    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    
+    // Remove event handlers (onclick, onerror, etc.)
+    html = html.replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '');
+    html = html.replace(/\son\w+\s*=\s*[^\s>]*/gi, '');
+    
+    // Remove javascript: protocol
+    html = html.replace(/javascript:/gi, '');
+    
+    // Remove data: protocol (except for images with safe mime types)
+    html = html.replace(/data:(?!image\/(png|jpg|jpeg|gif|webp|svg\+xml))/gi, '');
+    
+    return html;
+}
+
+/**
+ * Validate repository parameter
+ * @param {string} repo - Repository name to validate
+ * @returns {boolean} True if valid
+ */
+function validateRepoParam(repo) {
+    if (!repo || typeof repo !== 'string') return false;
+    // Only allow alphanumeric, hyphen, underscore
+    return /^[a-zA-Z0-9\-_]+$/.test(repo) && repo.length <= 100;
+}
+
+/**
+ * Validate chapter parameter
+ * @param {string} chapter - Chapter to validate
+ * @returns {boolean} True if valid
+ */
+function validateChapterParam(chapter) {
+    if (!chapter || typeof chapter !== 'string') return false;
+    // Allow numbers with optional decimal point
+    return /^[0-9]+(\.[0-9]+)?$/.test(chapter) && chapter.length <= 20;
+}
+
+/**
+ * Create element with safe text content
+ * @param {string} tag - HTML tag name
+ * @param {string} text - Text content
+ * @param {string} className - CSS class name
+ * @returns {HTMLElement} Created element
+ */
+function createSafeElement(tag, text = '', className = '') {
+    const element = document.createElement(tag);
+    if (text) element.textContent = text;
+    if (className) element.className = className;
+    return element;
+}
+
+/**
+ * Safely set innerHTML with sanitization
+ * @param {HTMLElement} element - Target element
+ * @param {string} html - HTML content
+ */
+function safeSetInnerHTML(element, html) {
+    if (!element) return;
+    element.innerHTML = sanitizeHTML(html);
+}
+
+// ============================================
+// 🔐 SECURE TOKEN MANAGEMENT (FREE TIER OPTIMIZED)
+// ============================================
+
+/**
+ * Token configuration
+ */
+const TOKEN_CONFIG = {
+    EXPIRY_DAYS: 7,
+    STORAGE_KEY: 'authToken',
+    EXPIRY_KEY: 'authTokenExpiry',
+    USER_KEY: 'user'
+};
+
+/**
+ * Save token with automatic expiry
+ * @param {string} token - Auth token to save
+ * @param {number} expiryDays - Days until expiry (default: 7)
+ */
+function saveAuthToken(token, expiryDays = TOKEN_CONFIG.EXPIRY_DAYS) {
+    if (!token) return false;
+    
+    try {
+        // Calculate expiry timestamp
+        const expiryTime = Date.now() + (expiryDays * 24 * 60 * 60 * 1000);
+        
+        // Save token and expiry
+        localStorage.setItem(TOKEN_CONFIG.STORAGE_KEY, token);
+        localStorage.setItem(TOKEN_CONFIG.EXPIRY_KEY, expiryTime.toString());
+        
+        dLog('🔐 Token saved with expiry:', new Date(expiryTime).toLocaleString());
+        return true;
+    } catch (e) {
+        console.error('Failed to save token:', e);
+        return false;
+    }
+}
+
+/**
+ * Get token if valid (not expired)
+ * @returns {string|null} Token if valid, null if expired or not found
+ */
+function getAuthToken() {
+    try {
+        const token = localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
+        const expiryStr = localStorage.getItem(TOKEN_CONFIG.EXPIRY_KEY);
+        
+        if (!token) {
+            dLog('🔐 No token found');
+            return null;
+        }
+        
+        // Check expiry
+        if (expiryStr) {
+            const expiry = parseInt(expiryStr);
+            if (Date.now() > expiry) {
+                dLog('🔐 Token expired, clearing...');
+                clearAuthToken();
+                return null;
+            }
+        } else {
+            // No expiry set, assume old token - set expiry now
+            dLog('🔐 Legacy token found, setting expiry...');
+            saveAuthToken(token);
+        }
+        
+        return token;
+    } catch (e) {
+        console.error('Failed to get token:', e);
+        return null;
+    }
+}
+
+/**
+ * Check if token is valid (exists and not expired)
+ * @returns {boolean} True if token is valid
+ */
+function isTokenValid() {
+    return getAuthToken() !== null;
+}
+
+/**
+ * Clear all auth data
+ */
+function clearAuthToken() {
+    try {
+        localStorage.removeItem(TOKEN_CONFIG.STORAGE_KEY);
+        localStorage.removeItem(TOKEN_CONFIG.EXPIRY_KEY);
+        localStorage.removeItem(TOKEN_CONFIG.USER_KEY);
+        localStorage.removeItem('userDonaturStatus');
+        dLog('🔐 Auth data cleared');
+        return true;
+    } catch (e) {
+        console.error('Failed to clear token:', e);
+        return false;
+    }
+}
+
+/**
+ * Get token expiry time
+ * @returns {Date|null} Expiry date or null
+ */
+function getTokenExpiry() {
+    try {
+        const expiryStr = localStorage.getItem(TOKEN_CONFIG.EXPIRY_KEY);
+        if (!expiryStr) return null;
+        return new Date(parseInt(expiryStr));
+    } catch (e) {
+        return null;
+    }
+}
+
+/**
+ * Refresh token expiry (extend by another 7 days)
+ */
+function refreshTokenExpiry() {
+    const token = localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
+    if (token) {
+        return saveAuthToken(token);
+    }
+    return false;
+}
+
+/**
+ * ✅ Auto-check token expiry on page load
+ */
+(function autoCheckTokenExpiry() {
+    // Check immediately
+    const token = getAuthToken();
+    if (!token && localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY)) {
+        // Token exists but expired
+        dLog('🔐 Token expired on page load, logging out...');
+        clearAuthToken();
+        
+        // Trigger logout UI updates if function exists
+        if (typeof updateUIAfterLogout === 'function') {
+            updateUIAfterLogout();
+        }
+    }
+    
+    // Check periodically (every 5 minutes)
+    setInterval(() => {
+        const token = getAuthToken();
+        if (!token && localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY)) {
+            dLog('🔐 Token expired during session, logging out...');
+            clearAuthToken();
+            
+            // Show notification
+            if (typeof showToast === 'function') {
+                showToast('Session expired. Please login again.', 'warning', 5000);
+            }
+            
+            // Trigger logout
+            if (typeof updateUIAfterLogout === 'function') {
+                updateUIAfterLogout();
+            }
+        }
+    }, 5 * 60 * 1000); // Check every 5 minutes
+})();
+
+// ============================================
 // 🍞 TOAST NOTIFICATION SYSTEM
 // ============================================
 window.showToast = function(message, type = 'info', duration = 3000) {

@@ -21,8 +21,9 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
         dLog('✅ Donatur SETIA - Opening chapter directly');
         const urlParams = new URLSearchParams(window.location.search);
         const repoParam = urlParams.get('repo');
-        if (repoParam && chapterFolder) {
-            window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
+        // ✅ Security: Validate parameters before redirect
+        if (repoParam && chapterFolder && validateRepoParam(repoParam) && validateChapterParam(chapterFolder)) {
+            window.location.href = `reader.html?repo=${encodeURIComponent(repoParam)}&chapter=${encodeURIComponent(chapterFolder)}`;
         }
         return;
     }
@@ -328,8 +329,9 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
         dLog('✅ Donatur SETIA - Opening chapter directly');
         const urlParams = new URLSearchParams(window.location.search);
         const repoParam = urlParams.get('repo');
-        if (repoParam && chapterFolder) {
-            window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
+        // ✅ Security: Validate parameters before redirect
+        if (repoParam && chapterFolder && validateRepoParam(repoParam) && validateChapterParam(chapterFolder)) {
+            window.location.href = `reader.html?repo=${encodeURIComponent(repoParam)}&chapter=${encodeURIComponent(chapterFolder)}`;
         }
         return;
     }
@@ -379,17 +381,18 @@ function getMangaJsonUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const repoParam = urlParams.get('repo');
     
-    if (!repoParam) {
-        console.error('❌ Parameter "repo" tidak ditemukan di URL');
-        alert('Error: Parameter repo tidak ditemukan.\n\nContoh: info-manga.html?repo=10nenburi');
+    // ✅ Security: Validate repo parameter
+    if (!repoParam || !validateRepoParam(repoParam)) {
+        console.error('❌ Parameter "repo" tidak ditemukan atau tidak valid di URL');
+        alert('Error: Parameter repo tidak ditemukan atau tidak valid.\n\nContoh: info-manga.html?repo=10nenburi');
         return null;
     }
     
     const mangaConfig = MANGA_REPOS[repoParam];
     
     if (!mangaConfig) {
-        console.error(`❌ Repo "${repoParam}" tidak ditemukan di mapping`);
-        alert(`Error: Repo "${repoParam}" tidak terdaftar.\n\nRepo tersedia: ${Object.keys(MANGA_REPOS).join(', ')}`);
+        console.error(`❌ Repo "${escapeHTML(repoParam)}" tidak ditemukan di mapping`);
+        alert(`Error: Repo "${escapeHTML(repoParam)}" tidak terdaftar.\n\nRepo tersedia: ${Object.keys(MANGA_REPOS).join(', ')}`);
         return null;
     }
     
@@ -2914,22 +2917,30 @@ function renderHistoryList(history) {
     const chapterNum = item.chapter_id.replace(/^ch\.?/i, '');
     const timeAgo = formatRelativeTime(item.read_at);
     
+    // ✅ Security: Escape all dynamic data
+    const safeMangaId = escapeHTML(item.manga_id);
+    const safeChapterId = escapeHTML(item.chapter_id);
+    const safeMangaTitle = escapeHTML(item.manga_title);
+    const safeCover = escapeHTML(cover);
+    const safeChapterNum = escapeHTML(chapterNum);
+    const safeTimeAgo = escapeHTML(timeAgo);
+    
     return `
       <div class="history-card" 
-           data-manga-id="${item.manga_id}" 
-           data-chapter="${item.chapter_id}"
+           data-manga-id="${safeMangaId}" 
+           data-chapter="${safeChapterId}"
            tabindex="0"
            role="button">
-        <img src="${cover}" 
-             alt="${item.manga_title} cover" 
+        <img src="${safeCover}" 
+             alt="${safeMangaTitle} cover" 
              class="history-cover"
              loading="lazy"
-             data-original="${cover}"
+             data-original="${safeCover}"
              onerror="this.onerror=null; this.src='assets/Logo 2.png';">
         <div class="history-info">
-          <div class="history-manga-title">${item.manga_title}</div>
-          <div class="history-chapter">Chapter ${chapterNum}</div>
-          <div class="history-time">${timeAgo}</div>
+          <div class="history-manga-title">${safeMangaTitle}</div>
+          <div class="history-chapter">Chapter ${safeChapterNum}</div>
+          <div class="history-time">${safeTimeAgo}</div>
         </div>
       </div>
     `;
@@ -2940,7 +2951,10 @@ function renderHistoryList(history) {
     card.addEventListener('click', () => {
       const mangaId = card.getAttribute('data-manga-id');
       const chapterId = card.getAttribute('data-chapter');
-      window.location.href = `reader.html?repo=${mangaId}&chapter=${chapterId}`;
+      // ✅ Security: Validate parameters before redirect
+      if (validateRepoParam(mangaId) && validateChapterParam(chapterId)) {
+        window.location.href = `reader.html?repo=${encodeURIComponent(mangaId)}&chapter=${encodeURIComponent(chapterId)}`;
+      }
     });
     
     // Keyboard support

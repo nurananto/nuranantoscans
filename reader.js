@@ -32,8 +32,9 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     if (DEBUG_MODE) dLog('✅ Donatur SETIA - Opening chapter directly');
         const urlParams = new URLSearchParams(window.location.search);
         const repoParam = urlParams.get('repo');
-        if (repoParam && chapterFolder) {
-            window.location.href = `reader.html?repo=${repoParam}&chapter=${chapterFolder}`;
+        // ✅ Security: Validate parameters before redirect
+        if (repoParam && chapterFolder && validateRepoParam(repoParam) && validateChapterParam(chapterFolder)) {
+            window.location.href = `reader.html?repo=${encodeURIComponent(repoParam)}&chapter=${encodeURIComponent(chapterFolder)}`;
         }
         return;
     }
@@ -247,14 +248,15 @@ async function initializeReader() {
     if (DEBUG_MODE) dLog('📋 Parameters:', { chapter: chapterParam, repo: repoParam });
     if (DEBUG_MODE) dLog('📋 Chapter type:', typeof chapterParam, 'Value:', JSON.stringify(chapterParam)); // ← TAMBAH INI
         
-        if (!chapterParam) {
-            alert('Error: Parameter chapter tidak ditemukan.');
+        // ✅ Security: Validate URL parameters
+        if (!chapterParam || !validateChapterParam(chapterParam)) {
+            alert('Error: Parameter chapter tidak valid atau tidak ditemukan.');
             hideLoading();
             return;
         }
         
-        if (!repoParam) {
-            alert('Error: Parameter repo atau manga tidak ditemukan.');
+        if (!repoParam || !validateRepoParam(repoParam)) {
+            alert('Error: Parameter repo atau manga tidak valid atau tidak ditemukan.');
             hideLoading();
             return;
         }
@@ -1903,17 +1905,22 @@ class ReaderComments {
         
         // Handle different content formats
         const content = comment.content || comment.text || '';
+        
+        // ✅ Security: Escape all dynamic data
+        const safeUsername = this.escapeHtml(displayUsername);
+        const safeContent = this.escapeHtml(content);
+        const safeCommentId = this.escapeHtml(String(comment.id || ''));
 
         return `
-            <div class="comment-item" data-id="${comment.id}">
+            <div class="comment-item" data-id="${safeCommentId}">
                 <div class="comment-header">
-                    <span class="comment-user">@${this.escapeHtml(displayUsername)}</span>
+                    <span class="comment-user">@${safeUsername}</span>
                     <span class="comment-date">${formattedDate}</span>
                 </div>
-                <div class="comment-content">${this.escapeHtml(content)}</div>
+                <div class="comment-content">${safeContent}</div>
                 <div class="comment-actions">
-                    ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${displayUsername}">Reply</button>` : ''}
-                    ${isOwner ? `<button class="btn-delete-comment" data-id="${comment.id}">Hapus</button>` : ''}
+                    ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${safeUsername}">Reply</button>` : ''}
+                    ${isOwner ? `<button class="btn-delete-comment" data-id="${safeCommentId}">Hapus</button>` : ''}
                 </div>
             </div>
         `;

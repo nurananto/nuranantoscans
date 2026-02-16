@@ -256,7 +256,7 @@ function createTrendingCard(manga, mangaData, rank, views24h) {
   card.className = 'trending-card';
   card.setAttribute('role', 'article');
   card.setAttribute('tabindex', '0');
-  card.setAttribute('aria-label', `${manga.title} - Chapter ${formattedChapter} - ${formattedViews} views`);
+  card.setAttribute('aria-label', `${escapeHTML(manga.title)} - Chapter ${formattedChapter} - ${formattedViews} views`);
   
   card.innerHTML = `
     <div class="trending-cover-wrapper">
@@ -267,46 +267,50 @@ function createTrendingCard(manga, mangaData, rank, views24h) {
         </svg>
         TRENDING 24 JAM
       </span>
-      <div class="type-badge ${typeBadgeClass}" aria-label="Type: ${typeBadgeText}">
+      <div class="type-badge ${escapeHTML(typeBadgeClass)}" aria-label="Type: ${escapeHTML(typeBadgeText)}">
         <svg class="type-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
           <path d="M6.5 2v20"/>
         </svg>
-        <span class="type-badge-text">${typeBadgeText}</span>
+        <span class="type-badge-text">${escapeHTML(typeBadgeText)}</span>
       </div>
       <img 
-        src="${cdnUrls.medium}" 
-        srcset="${cdnUrls.small} 500w, ${cdnUrls.medium} 700w, ${cdnUrls.large} 900w"
+        src="${escapeHTML(cdnUrls.medium)}" 
+        srcset="${escapeHTML(cdnUrls.small)} 500w, ${escapeHTML(cdnUrls.medium)} 700w, ${escapeHTML(cdnUrls.large)} 900w"
         sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, 20vw"
-        alt="Cover ${manga.title}" 
+        alt="Cover ${escapeHTML(manga.title)}" 
         class="trending-cover"
         loading="lazy"
       />
     </div>
-    <div class="trending-title">${manga.title}</div>
+    <div class="trending-title">${escapeHTML(manga.title)}</div>
     <div class="trending-info-bar">
       <span class="trending-chapter">
-        ${isLocked ? (isDonaturSetia ? '🔓 ' : '🔒 ') : ''}${formattedChapter === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formattedChapter}
+        ${isLocked ? (isDonaturSetia ? '🔓 ' : '🔒 ') : ''}${formattedChapter === 'Oneshot' ? 'Oneshot' : 'Ch. ' + escapeHTML(formattedChapter)}
       </span>
       <span class="trending-views">
         <svg class="view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
           <circle cx="12" cy="12" r="3"/>
         </svg>
-        ${formattedViews}
+        ${escapeHTML(formattedViews)}
       </span>
     </div>
   `;
   
   card.addEventListener('click', () => {
-    window.location.href = `info-manga.html?repo=${manga.id}`;
+    if (validateRepoParam(manga.id)) {
+      window.location.href = `info-manga.html?repo=${encodeURIComponent(manga.id)}`;
+    }
   });
   
   card.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      window.location.href = `info-manga.html?repo=${manga.id}`;
+      if (validateRepoParam(manga.id)) {
+        window.location.href = `info-manga.html?repo=${encodeURIComponent(manga.id)}`;
+      }
     }
   });
   
@@ -524,39 +528,48 @@ function createCard(manga, mangaData, index = 0) {
     dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);
   }
   
+  // ✅ Security: Validate and escape all dynamic data
+  const safeRepoId = validateRepoParam(manga.id) ? encodeURIComponent(manga.id) : '';
+  const safeMangaTitle = escapeHTML(manga.title);
+  const safeAriaLabel = escapeHTML(ariaLabel);
+  const safeTypeBadgeText = escapeHTML(typeBadgeText);
+  const safeTypeBadgeClass = escapeHTML(typeBadgeClass);
+  const safeChapterNumber = escapeHTML(chapterNumber);
+  const safeTimeText = escapeHTML(timeText);
+  
   return `
     <div class="manga-card ${isRecent ? 'recently-updated' : ''}" 
          role="listitem"
          tabindex="0"
-         data-manga-id="${manga.id}"
-         aria-label="${ariaLabel}"
-         onclick="window.location.href='info-manga.html?repo=${manga.id}'"
-         onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='info-manga.html?repo=${manga.id}'}">
+         data-manga-id="${escapeHTML(manga.id)}"
+         aria-label="${safeAriaLabel}"
+         onclick="if('${safeRepoId}'){window.location.href='info-manga.html?repo=${safeRepoId}'}"
+         onkeypress="if((event.key==='Enter'||event.key===' ')&&'${safeRepoId}'){event.preventDefault();window.location.href='info-manga.html?repo=${safeRepoId}'}">
       <div class="manga-cover-wrapper">
         <img 
-          src="${cdnUrls.medium}"
-          srcset="${srcset}"
-          sizes="${sizes}"
-          alt="${manga.title} cover image"
+          src="${escapeHTML(cdnUrls.medium)}"
+          srcset="${escapeHTML(srcset)}"
+          sizes="${escapeHTML(sizes)}"
+          alt="${safeMangaTitle} cover image"
           loading="${loadingAttr}"
           ${fetchPriority}
           ${decodingAttr}
-          data-original="${manga.cover}"
+          data-original="${escapeHTML(manga.cover)}"
           aria-hidden="true">
         ${statusBadgeHTML}
-        <div class="type-badge ${typeBadgeClass}" aria-label="Type: ${typeBadgeText}">
+        <div class="type-badge ${safeTypeBadgeClass}" aria-label="Type: ${safeTypeBadgeText}">
           <svg class="type-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
             <path d="M6.5 2v20"/>
           </svg>
-          <span class="type-badge-text">${typeBadgeText}</span>
+          <span class="type-badge-text">${safeTypeBadgeText}</span>
         </div>
       </div>
-      <div class="manga-title" aria-hidden="true">${manga.title}</div>
+      <div class="manga-title" aria-hidden="true">${safeMangaTitle}</div>
       <div class="manga-info-bar">
-        <span class="manga-chapter">${chapterNumber}</span>
-        <span class="manga-time">${timeText}</span>
+        <span class="manga-chapter">${safeChapterNumber}</span>
+        <span class="manga-time">${safeTimeText}</span>
       </div>
     </div>`;
 }
@@ -3095,22 +3108,30 @@ function renderHistoryList(history) {
     const chapterNum = item.chapter_id.replace(/^ch\.?/i, '');
     const timeAgo = formatRelativeTime(item.read_at);
     
+    // ✅ Security: Escape all dynamic data
+    const safeMangaId = escapeHTML(item.manga_id);
+    const safeChapterId = escapeHTML(item.chapter_id);
+    const safeMangaTitle = escapeHTML(item.manga_title);
+    const safeCover = escapeHTML(cover);
+    const safeChapterNum = escapeHTML(chapterNum);
+    const safeTimeAgo = escapeHTML(timeAgo);
+    
     return `
       <div class="history-card" 
-           data-manga-id="${item.manga_id}" 
-           data-chapter="${item.chapter_id}"
+           data-manga-id="${safeMangaId}" 
+           data-chapter="${safeChapterId}"
            tabindex="0"
            role="button">
-        <img src="${cover}" 
-             alt="${item.manga_title} cover" 
+        <img src="${safeCover}" 
+             alt="${safeMangaTitle} cover" 
              class="history-cover"
              loading="lazy"
-             data-original="${cover}"
+             data-original="${safeCover}"
              onerror="this.onerror=null; this.src='assets/Logo 2.png';">
         <div class="history-info">
-          <div class="history-manga-title">${item.manga_title}</div>
-          <div class="history-chapter">Chapter ${chapterNum}</div>
-          <div class="history-time">${timeAgo}</div>
+          <div class="history-manga-title">${safeMangaTitle}</div>
+          <div class="history-chapter">Chapter ${safeChapterNum}</div>
+          <div class="history-time">${safeTimeAgo}</div>
         </div>
       </div>
     `;
@@ -3121,7 +3142,10 @@ function renderHistoryList(history) {
     card.addEventListener('click', () => {
       const mangaId = card.getAttribute('data-manga-id');
       const chapterId = card.getAttribute('data-chapter');
-      window.location.href = `reader.html?repo=${mangaId}&chapter=${chapterId}`;
+      // ✅ Security: Validate parameters before redirect
+      if (validateRepoParam(mangaId) && validateChapterParam(chapterId)) {
+        window.location.href = `reader.html?repo=${encodeURIComponent(mangaId)}&chapter=${encodeURIComponent(chapterId)}`;
+      }
     });
     
     // Keyboard support
