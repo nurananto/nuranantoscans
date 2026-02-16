@@ -457,16 +457,24 @@ header {
 /* Responsive tweaks for mobile */
 @media (max-width: 600px) {
   .status-badge {
-    padding: 4px 8px 4px 6px;
-    font-size: 11px;
-    gap: 4px;
+    padding: 2.5px 5px 2.5px 3.5px;
+    font-size: 8.5px;
+    gap: 2.5px;
   }
   .status-badge .badge-icon {
-    min-width: 12px;
-    min-height: 12px;
-    max-width: 15px;
-    max-height: 15px;
-    margin-right: 3px;
+    min-width: 9px;
+    min-height: 9px;
+    max-width: 11px;
+    max-height: 11px;
+    margin-right: 1.5px;
+  }
+  .badge-text {
+    font-size: 0.55rem;
+    letter-spacing: 0.4px;
+  }
+  .badge-chapter {
+    font-size: 0.45rem;
+    letter-spacing: 0.15px;
   }
 }
 
