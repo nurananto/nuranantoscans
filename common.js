@@ -7,7 +7,7 @@
 // 🛡️ DEBUG MODE & LOGGING
 // ============================================
 const urlParams = new URLSearchParams(window.location.search);
-const DEBUG_MODE = true; // Always ON for debugging
+const DEBUG_MODE = false; // Set to true for debugging
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const PRODUCTION_MODE = !DEBUG_MODE && !isLocalhost;
 
@@ -37,6 +37,47 @@ if (!window._weservErrorFiltered) {
     };
     window._weservErrorFiltered = true;
 }
+
+// ============================================
+// 🍞 TOAST NOTIFICATION SYSTEM
+// ============================================
+window.showToast = function(message, type = 'info', duration = 3000) {
+    // Create toast container if not exists
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    // Icon based on type
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <span class="toast-message">${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+};
 
 // ============================================
 // 📡 FETCH UTILITIES
@@ -190,6 +231,22 @@ function createImageErrorHandler(originalUrl) {
 // ============================================
 // 👤 DONATUR STATUS UTILITIES
 // ============================================
+
+/**
+ * 🆕 Get current user ID from localStorage
+ * This helps prevent cross-account status caching issues
+ */
+function getCurrentUserId() {
+    try {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return null;
+        const user = JSON.parse(userStr);
+        return user.uid || user.id || null;
+    } catch (error) {
+        return null;
+    }
+}
+
 function isDonaturFromDOM() {
     try {
         const statusBox = document.getElementById('statusBadge');
@@ -204,10 +261,20 @@ function isDonaturFromDOM() {
             }
         }
         
+        // 🆕 Get current user ID to validate cache ownership
+        const currentUserId = getCurrentUserId();
+        
         const stored = localStorage.getItem('userDonaturStatus');
         if (stored) {
             try {
                 const data = JSON.parse(stored);
+                
+                // 🆕 VALIDATE USER ID - Check if cached status belongs to current user
+                if (currentUserId && data.userId && data.userId !== currentUserId) {
+                    dLog('⚠️ Cached status belongs to different user, invalidating');
+                    localStorage.removeItem('userDonaturStatus');
+                    return false;
+                }
                 
                 // ✅ VALIDATE EXPIRED STATUS - Check if expiresAt has passed
                 if (data.isDonatur && data.expiresAt) {
@@ -219,6 +286,7 @@ function isDonaturFromDOM() {
                         // ✅ Status sudah berakhir - invalidate cache
                         localStorage.setItem('userDonaturStatus', JSON.stringify({
                             isDonatur: false,
+                            userId: currentUserId,
                             timestamp: Date.now()
                         }));
                         return false;
@@ -244,25 +312,36 @@ async function checkIsDonatur() {
     const token = localStorage.getItem('authToken');
     if (!token) return false;
     
+    // 🆕 Get current user ID
+    const currentUserId = getCurrentUserId();
+    
     // ✅ VALIDATE CACHE FIRST - Check if cached status is expired
     const stored = localStorage.getItem('userDonaturStatus');
     if (stored) {
         try {
             const data = JSON.parse(stored);
             
-            // ✅ VALIDATE EXPIRED STATUS - Check if expiresAt has passed
-            if (data.isDonatur && data.expiresAt) {
-                const now = new Date();
-                const expiry = new Date(data.expiresAt);
-                const isExpired = expiry <= now;
-                
-                if (isExpired) {
-                    // ✅ Status sudah berakhir - invalidate cache immediately
-                    localStorage.setItem('userDonaturStatus', JSON.stringify({
-                        isDonatur: false,
-                        timestamp: Date.now()
-                    }));
-                    return false;
+            // 🆕 VALIDATE USER ID - Check if cached status belongs to current user
+            if (currentUserId && data.userId && data.userId !== currentUserId) {
+                dLog('⚠️ Cached status belongs to different user, clearing cache');
+                localStorage.removeItem('userDonaturStatus');
+                // Continue to API check
+            } else {
+                // ✅ VALIDATE EXPIRED STATUS - Check if expiresAt has passed
+                if (data.isDonatur && data.expiresAt) {
+                    const now = new Date();
+                    const expiry = new Date(data.expiresAt);
+                    const isExpired = expiry <= now;
+                    
+                    if (isExpired) {
+                        // ✅ Status sudah berakhir - invalidate cache immediately
+                        localStorage.setItem('userDonaturStatus', JSON.stringify({
+                            isDonatur: false,
+                            userId: currentUserId,
+                            timestamp: Date.now()
+                        }));
+                        return false;
+                    }
                 }
             }
         } catch (error) {
@@ -300,6 +379,7 @@ async function checkIsDonatur() {
                 // Status sudah berakhir
                 localStorage.setItem('userDonaturStatus', JSON.stringify({
                     isDonatur: false,
+                    userId: currentUserId,
                     timestamp: Date.now()
                 }));
                 return false;
@@ -307,6 +387,7 @@ async function checkIsDonatur() {
             
             localStorage.setItem('userDonaturStatus', JSON.stringify({
                 isDonatur: true,
+                userId: currentUserId,
                 expiresAt: data.expiresAt,
                 timestamp: Date.now()
             }));
@@ -314,6 +395,7 @@ async function checkIsDonatur() {
         } else {
             localStorage.setItem('userDonaturStatus', JSON.stringify({
                 isDonatur: false,
+                userId: currentUserId,
                 timestamp: Date.now()
             }));
             return false;
@@ -328,11 +410,17 @@ async function checkIsDonatur() {
             console.error('Donatur check error:', error);
         }
         
-        // ✅ Fallback to localStorage if available, but validate expiresAt first
+        // ✅ Fallback to localStorage if available, but validate expiresAt and userId first
         const stored = localStorage.getItem('userDonaturStatus');
         if (stored) {
             try {
                 const data = JSON.parse(stored);
+                
+                // 🆕 VALIDATE USER ID - Check if cached status belongs to current user
+                if (currentUserId && data.userId && data.userId !== currentUserId) {
+                    dLog('⚠️ Cached status belongs to different user during error fallback, denying');
+                    return false;
+                }
                 
                 // ✅ VALIDATE EXPIRED STATUS - Check if expiresAt has passed
                 if (data.isDonatur && data.expiresAt) {
@@ -344,6 +432,7 @@ async function checkIsDonatur() {
                         // ✅ Status sudah berakhir - invalidate cache
                         localStorage.setItem('userDonaturStatus', JSON.stringify({
                             isDonatur: false,
+                            userId: currentUserId,
                             timestamp: Date.now()
                         }));
                         return false;
@@ -363,26 +452,37 @@ async function checkIsDonatur() {
 }
 
 async function getUserDonaturStatus() {
-    // ✅ VALIDATE CACHE FIRST - Check if cached status is expired
+    // 🆕 Get current user ID
+    const currentUserId = getCurrentUserId();
+    
+    // ✅ VALIDATE CACHE FIRST - Check if cached status is expired and belongs to current user
     // This ensures expired status is detected even before checking DOM or API
     const stored = localStorage.getItem('userDonaturStatus');
     if (stored) {
         try {
             const data = JSON.parse(stored);
             
-            // ✅ VALIDATE EXPIRED STATUS - Check if expiresAt has passed
-            if (data.isDonatur && data.expiresAt) {
-                const now = new Date();
-                const expiry = new Date(data.expiresAt);
-                const isExpired = expiry <= now;
-                
-                if (isExpired) {
-                    // ✅ Status sudah berakhir - invalidate cache immediately
-                    localStorage.setItem('userDonaturStatus', JSON.stringify({
-                        isDonatur: false,
-                        timestamp: Date.now()
-                    }));
-                    return false;
+            // 🆕 VALIDATE USER ID - Check if cached status belongs to current user
+            if (currentUserId && data.userId && data.userId !== currentUserId) {
+                dLog('⚠️ Cached status belongs to different user in getUserDonaturStatus, clearing');
+                localStorage.removeItem('userDonaturStatus');
+                // Continue to normal check
+            } else {
+                // ✅ VALIDATE EXPIRED STATUS - Check if expiresAt has passed
+                if (data.isDonatur && data.expiresAt) {
+                    const now = new Date();
+                    const expiry = new Date(data.expiresAt);
+                    const isExpired = expiry <= now;
+                    
+                    if (isExpired) {
+                        // ✅ Status sudah berakhir - invalidate cache immediately
+                        localStorage.setItem('userDonaturStatus', JSON.stringify({
+                            isDonatur: false,
+                            userId: currentUserId,
+                            timestamp: Date.now()
+                        }));
+                        return false;
+                    }
                 }
             }
         } catch (error) {
@@ -409,6 +509,9 @@ async function verifyDonaturStatusStrict() {
         // ✅ No token = definitely not donatur
         return false;
     }
+    
+    // 🆕 Get current user ID for cache validation
+    const currentUserId = getCurrentUserId();
     
     const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
     
@@ -444,9 +547,10 @@ async function verifyDonaturStatusStrict() {
                 return false;
             }
             
-            // ✅ Valid donatur - update cache for UI purposes
+            // ✅ Valid donatur - update cache for UI purposes (with userId)
             localStorage.setItem('userDonaturStatus', JSON.stringify({
                 isDonatur: true,
+                userId: currentUserId,
                 expiresAt: data.expiresAt,
                 timestamp: Date.now()
             }));
@@ -746,7 +850,7 @@ function initNotificationSystem() {
             try {
                 const authToken = localStorage.getItem('authToken');
                 if (!authToken) {
-                    alert('Anda harus login terlebih dahulu');
+                    showToast('Anda harus login terlebih dahulu', 'warning');
                     return;
                 }
                 
@@ -783,16 +887,22 @@ function initNotificationSystem() {
                     const data = await response.json();
                     
                     if (data.success) {
-                        alert(`✅ Berhasil!\n\n${data.message}`);
+                        if (typeof showToast === 'function') {
+                            showToast(data.message, 'success');
+                        }
                         loadNotifications();
                         updateNotificationBadge();
                     } else {
-                        alert(`❌ Gagal: ${data.error}`);
+                        if (typeof showToast === 'function') {
+                            showToast(data.error, 'error');
+                        }
                     }
                 }
             } catch (error) {
                 console.error('[NOTIF SYNC] Error:', error);
-                alert('❌ Terjadi kesalahan saat refresh');
+                if (typeof showToast === 'function') {
+                    showToast('Terjadi kesalahan saat refresh', 'error');
+                }
             } finally {
                 btn.disabled = false;
                 btn.style.opacity = '1';

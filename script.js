@@ -1393,7 +1393,7 @@ document.addEventListener('submit', async (e) => {
             
             if (data.success) {
                 dLog('✅ [VIP-CODE] Success!');
-                alert('✅ ' + data.message);
+                showToast(data.message, 'success', 4000);
                 
                 const codeModal = document.getElementById('codeModal');
                 if (codeModal) codeModal.style.display = 'none';
@@ -1550,6 +1550,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
                     
+                    // 🔥 Check status BEFORE showing modal to ensure fresh data
+                    dLog('🔍 [CLICK] Refreshing donatur status before showing modal...');
+                    await checkDonaturStatus();
+                    dLog('✅ [CLICK] Status refreshed');
+                    
                     await showProfileModal(parsedUser);
                 } catch (e) {
                     console.error('❌ [USER] Parse error:', e);
@@ -1646,16 +1651,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = 'hidden';
         dLog('✅ [PROFILE] Modal shown immediately');
         
-        // ✅ Setelah modal ditampilkan, check status di background
-        try {
-            // ✅ Validate cache first to ensure expired status is updated
-            validateAndUpdateExpiredStatus();
-            dLog('🔍 [PROFILE] Checking DONATUR status...');
-            await checkDonaturStatus();
-        } catch (statusError) {
-            console.error('❌ [PROFILE] Error checking status:', statusError);
-            // Continue anyway - modal already shown
-        }
+        // 🔥 NOTE: Status checking is now handled BEFORE showProfileModal is called
+        // No need to call checkDonaturStatus here to avoid double-call race condition
+        // The status is already fresh from the login handler or caller
         
         // ✅ Setelah status ready, pastikan content opacity 1
         const profileContent = profileModal.querySelector('.profile-content');
@@ -1688,6 +1686,24 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
             localStorage.removeItem('userDonaturStatus'); // 🔥 Clear donatur status cache
+            
+            // 🆕 Stop periodic status check
+            if (window.stopPeriodicStatusCheck) {
+                window.stopPeriodicStatusCheck();
+            }
+            
+            // 🔥 FORCE UPDATE DOM TO PEMBACA SETIA immediately
+            const statusBox = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const btnUpgrade = document.getElementById('btnUpgrade');
+            const countdownBox = document.getElementById('countdownBox');
+            
+            if (statusBox) statusBox.className = 'status-box pembaca-setia';
+            if (statusText) statusText.textContent = 'PEMBACA SETIA';
+            if (btnUpgrade) btnUpgrade.style.display = 'block';
+            if (countdownBox) countdownBox.style.display = 'none';
+            
+            dLog('📢 [LOGOUT] DOM status updated to PEMBACA SETIA');
             
             // ✅ Update profile button text
             if (window.updateProfileButtonText) {
@@ -1754,13 +1770,51 @@ document.addEventListener('DOMContentLoaded', () => {
 const upgradeModal = document.getElementById('upgradeModal');
 const codeModal = document.getElementById('codeModal');
 
+    // 🆕 Helper function to get current user ID
+    function getCurrentUserId() {
+        try {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) return null;
+            const user = JSON.parse(userStr);
+            return user.uid || user.id || null;
+        } catch (error) {
+            return null;
+        }
+    }
+
     // ✅ STEP 5: Check VIP Status
     async function checkDonaturStatus() {
+    dLog('🔍 [STATUS-CHECK] ========================================');
+    dLog('🔍 [STATUS-CHECK] Starting donatur status check...');
+    
     // ✅ VALIDATE CACHE FIRST - Check if cached status is expired
     validateAndUpdateExpiredStatus();
     
     const token = localStorage.getItem('authToken');
+    const currentUserId = getCurrentUserId();
+    
+    dLog('🔍 [STATUS-CHECK] Token exists:', !!token);
+    dLog('🔍 [STATUS-CHECK] Current user ID:', currentUserId);
+    
+    // 🆕 VALIDATE USER ID - Clear cache if it belongs to a different user
+    const cachedStatus = localStorage.getItem('userDonaturStatus');
+    if (cachedStatus && currentUserId) {
+        try {
+            const parsed = JSON.parse(cachedStatus);
+            dLog('🔍 [STATUS-CHECK] Cached userId:', parsed.userId, '| Current userId:', currentUserId);
+            if (parsed.userId && parsed.userId !== currentUserId) {
+                dLog('⚠️ [CACHE] Cached status belongs to different user, clearing');
+                localStorage.removeItem('userDonaturStatus');
+            }
+        } catch (e) {
+            // Invalid cache, remove it
+            dLog('⚠️ [CACHE] Invalid cache, removing');
+            localStorage.removeItem('userDonaturStatus');
+        }
+    }
+    
     if (!token) {
+        dLog('⚠️ [STATUS-CHECK] No token found, setting PEMBACA SETIA');
         // ✅ Jika tidak ada token, set status sebagai PEMBACA SETIA
         const statusBox = document.getElementById('statusBadge');
         const statusText = document.getElementById('statusText');
@@ -1776,14 +1830,19 @@ const codeModal = document.getElementById('codeModal');
         
         localStorage.setItem('userDonaturStatus', JSON.stringify({
             isDonatur: false,
+            userId: currentUserId,
             timestamp: Date.now()
         }));
+        dLog('✅ [STATUS-CHECK] No token - set PEMBACA SETIA');
+        dLog('🔍 [STATUS-CHECK] ========================================');
         return;
     }
     
     const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
     
     try {
+        dLog('🌐 [STATUS-CHECK] Fetching from API:', `${API_URL}/donatur/status`);
+        
         // ✅ Add timeout to fetch request
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -1795,11 +1854,14 @@ const codeModal = document.getElementById('codeModal');
         
         clearTimeout(timeoutId);
         
+        dLog('📥 [STATUS-CHECK] API Response status:', response.status);
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
+        dLog('📥 [STATUS-CHECK] API Response data:', data);
         
         const statusBox = document.getElementById('statusBadge');
         const statusText = document.getElementById('statusText');
@@ -1813,8 +1875,11 @@ const codeModal = document.getElementById('codeModal');
             const expiry = data.expiresAt ? new Date(data.expiresAt) : null;
             const isExpired = expiry && expiry <= now;
             
+            dLog('💎 [STATUS-CHECK] User IS donatur, expired:', isExpired);
+            
             if (isExpired) {
                 // ✅ Status sudah berakhir - kembalikan ke PEMBACA SETIA
+                dLog('⚠️ [STATUS-CHECK] Status expired, setting PEMBACA SETIA');
                 statusBox.className = 'status-box pembaca-setia';
                 statusText.textContent = 'PEMBACA SETIA';
                 
@@ -1830,10 +1895,13 @@ const codeModal = document.getElementById('codeModal');
                 // ✅ Store status in localStorage for reader.js
                 localStorage.setItem('userDonaturStatus', JSON.stringify({
                     isDonatur: false,
+                    userId: currentUserId,
                     timestamp: Date.now()
                 }));
+                dLog('✅ [STATUS-CHECK] DOM updated to PEMBACA SETIA (expired)');
             } else {
                 // ✅ DONATUR AKTIF - LANGSUNG UPDATE (TANPA FADE)
+                dLog('✨ [STATUS-CHECK] Active donatur, setting DONATUR SETIA');
                 statusBox.className = 'status-box donatur-setia';
                 statusText.textContent = 'DONATUR SETIA';
                 
@@ -1862,13 +1930,16 @@ const codeModal = document.getElementById('codeModal');
                 // ✅ Store status in localStorage for reader.js
                 localStorage.setItem('userDonaturStatus', JSON.stringify({
                     isDonatur: true,
+                    userId: currentUserId,
                     expiresAt: data.expiresAt,
                     timestamp: Date.now()
                 }));
+                dLog('✅ [STATUS-CHECK] DOM updated to DONATUR SETIA (active)');
             }
             
         } else {
             // ❌ NON-DONATUR - LANGSUNG UPDATE (TANPA FADE)
+            dLog('ℹ️ [STATUS-CHECK] User is NOT donatur, setting PEMBACA SETIA');
             statusBox.className = 'status-box pembaca-setia';
             statusText.textContent = 'PEMBACA SETIA';
             
@@ -1884,11 +1955,18 @@ const codeModal = document.getElementById('codeModal');
             // ✅ Store status in localStorage for reader.js
             localStorage.setItem('userDonaturStatus', JSON.stringify({
                 isDonatur: false,
+                userId: currentUserId,
                 timestamp: Date.now()
             }));
+            dLog('✅ [STATUS-CHECK] DOM updated to PEMBACA SETIA (non-donatur)');
         }
+        
+        dLog('✅ [STATUS-CHECK] Status check completed successfully');
+        dLog('🔍 [STATUS-CHECK] ========================================');
     } catch (error) {
         // ✅ Handle network errors gracefully - use localStorage as fallback
+        dLog('❌ [STATUS-CHECK] Error occurred:', error.name, error.message);
+        
         if (error.name === 'AbortError') {
             dWarn('Donatur status check timeout - using cached status');
         } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
@@ -1897,10 +1975,13 @@ const codeModal = document.getElementById('codeModal');
             console.error('Donatur check error:', error);
         }
         
+        dLog('🔄 [STATUS-CHECK] Attempting fallback to cache...');
+        
         // ✅ Fallback to localStorage if available
         try {
             const cachedStatus = localStorage.getItem('userDonaturStatus');
             if (cachedStatus) {
+                dLog('📦 [STATUS-CHECK] Cache found, using it');
                 const parsed = JSON.parse(cachedStatus);
                 const statusBox = document.getElementById('statusBadge');
                 const statusText = document.getElementById('statusText');
@@ -1958,6 +2039,7 @@ const codeModal = document.getElementById('codeModal');
                 }
             } else {
                 // No cached status - default to PEMBACA SETIA
+                dLog('⚠️ [STATUS-CHECK] No cache found, defaulting to PEMBACA SETIA');
                 const statusBox = document.getElementById('statusBadge');
                 const statusText = document.getElementById('statusText');
                 const btnUpgrade = document.getElementById('btnUpgrade');
@@ -1970,9 +2052,13 @@ const codeModal = document.getElementById('codeModal');
                 if (btnUpgrade) btnUpgrade.style.display = 'block';
                 if (countdownBox) countdownBox.style.display = 'none';
             }
+            dLog('✅ [STATUS-CHECK] Fallback completed');
         } catch (fallbackError) {
             console.error('Fallback error:', fallbackError);
+            dLog('❌ [STATUS-CHECK] Fallback failed:', fallbackError.message);
         }
+        
+        dLog('🔍 [STATUS-CHECK] ========================================');
     }
 }
 
@@ -2012,6 +2098,7 @@ const codeModal = document.getElementById('codeModal');
                     // ✅ Update localStorage - INVALIDATE CACHE
                     localStorage.setItem('userDonaturStatus', JSON.stringify({
                         isDonatur: false,
+                        userId: getCurrentUserId(),
                         timestamp: Date.now()
                     }));
                     
@@ -2059,6 +2146,7 @@ const codeModal = document.getElementById('codeModal');
             // ✅ Update localStorage - INVALIDATE CACHE
             localStorage.setItem('userDonaturStatus', JSON.stringify({
                 isDonatur: false,
+                userId: getCurrentUserId(),
                 timestamp: Date.now()
             }));
             
@@ -2099,6 +2187,51 @@ const codeModal = document.getElementById('codeModal');
         validateAndUpdateExpiredStatus();
     }, 10000); // Check every 10 seconds
     
+    // 🆕 Set up periodic API status check (every 2 minutes) - RECOMMENDED FOR WEBAPP
+    // This ensures donatur status stays fresh even if user doesn't switch tabs
+    const PERIODIC_CHECK_INTERVAL = 120000; // 2 minutes (adjustable: 60000 = 1 min, 300000 = 5 min)
+    let periodicStatusCheckInterval = null;
+    
+    function startPeriodicStatusCheck() {
+        // Clear existing interval if any
+        if (periodicStatusCheckInterval) {
+            clearInterval(periodicStatusCheckInterval);
+        }
+        
+        // Only start periodic check if user is logged in
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            dLog('⏰ [PERIODIC] Starting periodic status check (every', PERIODIC_CHECK_INTERVAL / 1000, 'seconds)');
+            periodicStatusCheckInterval = setInterval(() => {
+                const currentToken = localStorage.getItem('authToken');
+                if (currentToken) {
+                    dLog('🔄 [PERIODIC] Periodic status check triggered');
+                    checkDonaturStatus().catch(err => {
+                        dLog('⚠️ [PERIODIC] Status check failed:', err.message);
+                    });
+                } else {
+                    // User logged out, stop periodic check
+                    dLog('🛑 [PERIODIC] User logged out, stopping periodic check');
+                    clearInterval(periodicStatusCheckInterval);
+                    periodicStatusCheckInterval = null;
+                }
+            }, PERIODIC_CHECK_INTERVAL);
+        }
+    }
+    
+    // Start periodic check on page load if user is logged in
+    startPeriodicStatusCheck();
+    
+    // Export function for use in login/logout handlers
+    window.startPeriodicStatusCheck = startPeriodicStatusCheck;
+    window.stopPeriodicStatusCheck = () => {
+        if (periodicStatusCheckInterval) {
+            clearInterval(periodicStatusCheckInterval);
+            periodicStatusCheckInterval = null;
+            dLog('🛑 [PERIODIC] Periodic status check stopped');
+        }
+    };
+    
     // ✅ Validate when page becomes visible (user switches back to tab)
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
@@ -2117,6 +2250,77 @@ const codeModal = document.getElementById('codeModal');
         dLog('🎯 [FOCUS] Window focused - validating expired status');
         validateAndUpdateExpiredStatus();
         // Also refresh status from API if available
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            checkDonaturStatus();
+        }
+    });
+
+    // 🆕 Listen for storage changes (cross-tab/window account switching detection)
+    window.addEventListener('storage', (e) => {
+        // Detect authToken changes (login/logout/account switch in another tab)
+        if (e.key === 'authToken') {
+            dLog('🔄 [STORAGE] Auth token changed in another tab');
+            dLog('🔄 [STORAGE] Old token:', e.oldValue ? 'exists' : 'null');
+            dLog('🔄 [STORAGE] New token:', e.newValue ? 'exists' : 'null');
+            
+            // Clear donatur status cache immediately to prevent stuck status
+            localStorage.removeItem('userDonaturStatus');
+            dLog('🧹 [STORAGE] Cleared userDonaturStatus cache');
+            
+            // Update UI
+            if (window.updateProfileButtonText) {
+                window.updateProfileButtonText();
+            }
+            
+            // If logged out in another tab
+            if (!e.newValue) {
+                dLog('🚪 [STORAGE] User logged out in another tab');
+                // Stop periodic status check
+                if (window.stopPeriodicStatusCheck) {
+                    window.stopPeriodicStatusCheck();
+                }
+                const profileModal = document.getElementById('profileModal');
+                if (profileModal && profileModal.style.display !== 'none') {
+                    profileModal.style.display = 'none';
+                }
+                // Clear notification badge
+                if (window.updateNotificationBadge) {
+                    window.updateNotificationBadge();
+                }
+            }
+            // If logged in or switched account in another tab
+            else {
+                dLog('🔐 [STORAGE] User logged in/switched account in another tab');
+                // Restart periodic status check with new account
+                if (window.startPeriodicStatusCheck) {
+                    window.startPeriodicStatusCheck();
+                }
+                // Refresh donatur status with new account
+                checkDonaturStatus();
+            }
+        }
+        
+        // Detect userDonaturStatus changes (status upgraded in another tab)
+        if (e.key === 'userDonaturStatus') {
+            dLog('💎 [STORAGE] Donatur status changed in another tab');
+            // Refresh profile modal if it's open
+            const profileModal = document.getElementById('profileModal');
+            if (profileModal && profileModal.style.display !== 'none') {
+                dLog('🔄 [STORAGE] Refreshing profile modal after status change');
+                const currentUser = localStorage.getItem('user');
+                if (currentUser && window.showProfileModal) {
+                    setTimeout(() => {
+                        window.showProfileModal();
+                    }, 300);
+                }
+            }
+        }
+    });
+
+    // 🆕 Listen for custom status update events (for manual triggers)
+    window.addEventListener('forceStatusUpdate', () => {
+        dLog('🔄 [EVENT] Force status update triggered');
         const token = localStorage.getItem('authToken');
         if (token) {
             checkDonaturStatus();
@@ -2477,9 +2681,20 @@ const codeModal = document.getElementById('codeModal');
             if (data.success) {
                 dLog('✅ [LOGIN] Login successful!');
                 dLog('💾 [LOGIN] Saving to localStorage...');
+                
+                // 🔥 CRITICAL: Clear donatur status BEFORE setting new auth token
+                // This prevents stuck status when switching accounts in the SAME tab
+                localStorage.removeItem('userDonaturStatus');
+                dLog('🧹 [LOGIN] Cleared old donatur status cache before login');
+                
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 dLog('💾 [LOGIN] Saved');
+                
+                // 🆕 Start periodic status check for new login
+                if (window.startPeriodicStatusCheck) {
+                    window.startPeriodicStatusCheck();
+                }
                 
                 // ✅ Show success message
                 showFormMessage('loginMessage', '✅ Login berhasil! Redirecting...', 'success', 2000);
@@ -2494,11 +2709,22 @@ const codeModal = document.getElementById('codeModal');
                     window.updateNotificationBadge();
                 }
                 
-                // Wait a moment before showing profile modal
-                setTimeout(() => {
-                    dLog('🎭 [LOGIN] Showing profile modal...');
-                    showProfileModal(data.user);
-                }, 1500);
+                // 🔥 FORCE REFRESH STATUS immediately after login (before showing modal)
+                // This ensures fresh status without needing page reload
+                dLog('🔍 [LOGIN] Force refreshing donatur status...');
+                checkDonaturStatus().then(() => {
+                    dLog('✅ [LOGIN] Status refreshed, showing profile modal...');
+                    // Show profile modal after status is refreshed
+                    setTimeout(() => {
+                        showProfileModal(data.user);
+                    }, 500);
+                }).catch(err => {
+                    dLog('⚠️ [LOGIN] Status refresh error:', err);
+                    // Show modal anyway even if status check fails
+                    setTimeout(() => {
+                        showProfileModal(data.user);
+                    }, 500);
+                });
             } else {
                 console.error('❌ [LOGIN] Login failed:', data.error);
                 showFormMessage('loginMessage', data.error || 'Login gagal', 'error');

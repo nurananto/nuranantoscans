@@ -811,7 +811,7 @@ function setupInformationButtons(links) {
             if (links && links.raw) {
                 window.open(links.raw, '_blank');
             } else {
-                alert('Link Source Web tidak tersedia');
+                showToast('Link Source Web tidak tersedia', 'warning');
             }
         };
     }
@@ -1537,7 +1537,7 @@ function setupReadFirstButton() {
         
         if (!firstChapter) {
             dLog('⚠️ No unlocked chapters found');
-            alert('Tidak ada chapter yang tersedia. Semua chapter terkunci.');
+            showToast('Tidak ada chapter yang tersedia. Semua chapter terkunci.', 'warning', 4000);
             openTrakteer();
             return;
         }
@@ -1845,6 +1845,7 @@ document.addEventListener('submit', async (e) => {
                 if (data.expiresAt) {
                     localStorage.setItem('userDonaturStatus', JSON.stringify({
                         isDonatur: true,
+                        userId: getCurrentUserId(),
                         expiresAt: data.expiresAt,
                         timestamp: Date.now()
                     }));
@@ -1904,7 +1905,7 @@ document.addEventListener('submit', async (e) => {
                     displayChapters();
                 }
                 
-                alert('✅ ' + data.message);
+                showToast(data.message, 'success', 4000);
                 
                 const codeModal = document.getElementById('codeModal');
                 if (codeModal) codeModal.style.display = 'none';
@@ -2088,6 +2089,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
                     
+                    // 🔥 Check status BEFORE showing modal to ensure fresh data
+                    dLog('🔍 [CLICK] Refreshing donatur status before showing modal...');
+                    await checkDonaturStatus();
+                    dLog('✅ [CLICK] Status refreshed');
+                    
                     await showProfileModal(parsedUser);
                 } catch (e) {
                     console.error('❌ [USER] Parse error:', e);
@@ -2238,16 +2244,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ [PROFILE] Username element not found or user data invalid!');
             }
             
-            // ✅ Setelah modal ditampilkan, check status di background
-            try {
-                // ✅ Validate cache first to ensure expired status is updated
-                validateAndUpdateExpiredStatus();
-                dLog('🔍 [PROFILE] Checking DONATUR status...');
-                await checkDonaturStatus();
-            } catch (statusError) {
-                console.error('❌ [PROFILE] Error checking status:', statusError);
-                // Continue anyway - modal already shown
-            }
+            // 🔥 NOTE: Status checking is now handled BEFORE showProfileModal is called
+            // No need to call checkDonaturStatus here to avoid double-call race condition
+            // The status is already fresh from the login handler or caller
             
             // ✅ Setelah status ready, pastikan content opacity 1
             const profileContent = profileModal.querySelector('.profile-content');
@@ -2299,6 +2298,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
                 localStorage.removeItem('userDonaturStatus'); // 🔥 Clear donatur status cache
+                
+                // 🔥 FORCE UPDATE DOM TO PEMBACA SETIA immediately
+                const statusBox = document.getElementById('statusBadge');
+                const statusText = document.getElementById('statusText');
+                const btnUpgrade = document.getElementById('btnUpgrade');
+                const countdownBox = document.getElementById('countdownBox');
+                
+                if (statusBox) statusBox.className = 'status-box pembaca-setia';
+                if (statusText) statusText.textContent = 'PEMBACA SETIA';
+                if (btnUpgrade) btnUpgrade.style.display = 'block';
+                if (countdownBox) countdownBox.style.display = 'none';
+                
+                dLog('📢 [LOGOUT] DOM status updated to PEMBACA SETIA');
                 
                 // ✅ Dispatch custom event untuk notify rating/comments section
                 window.dispatchEvent(new CustomEvent('userLoggedOut'));
@@ -2361,6 +2373,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // 🆕 Helper function to get current user ID
+    function getCurrentUserId() {
+        try {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) return null;
+            const user = JSON.parse(userStr);
+            return user.uid || user.id || null;
+        } catch (error) {
+            return null;
+        }
+    }
+
     // ✅ STEP 5: Check DONATUR Status
     // ✅ Export function untuk digunakan di tempat lain
     window.checkDonaturStatus = async function checkDonaturStatus() {
@@ -2368,6 +2392,22 @@ document.addEventListener('DOMContentLoaded', () => {
         validateAndUpdateExpiredStatus();
         
         const token = localStorage.getItem('authToken');
+        const currentUserId = getCurrentUserId();
+        
+        // 🆕 VALIDATE USER ID - Clear cache if it belongs to a different user
+        const cachedStatus = localStorage.getItem('userDonaturStatus');
+        if (cachedStatus && currentUserId) {
+            try {
+                const parsed = JSON.parse(cachedStatus);
+                if (parsed.userId && parsed.userId !== currentUserId) {
+                    dLog('⚠️ [CACHE] Cached status belongs to different user, clearing');
+                    localStorage.removeItem('userDonaturStatus');
+                }
+            } catch (e) {
+                // Invalid cache, remove it
+                localStorage.removeItem('userDonaturStatus');
+            }
+        }
         if (!token) {
             // ✅ Jika tidak ada token, set status sebagai PEMBACA SETIA di localStorage
             const statusBox = document.getElementById('statusBadge');
@@ -2384,6 +2424,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             localStorage.setItem('userDonaturStatus', JSON.stringify({
                 isDonatur: false,
+                userId: currentUserId,
                 timestamp: Date.now()
             }));
             return;
@@ -2438,6 +2479,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // ✅ Store status in localStorage FIRST (sebelum update DOM) untuk menghindari flash
                     localStorage.setItem('userDonaturStatus', JSON.stringify({
                         isDonatur: false,
+                        userId: currentUserId,
                         timestamp: Date.now()
                     }));
                 } else {
@@ -2470,6 +2512,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // ✅ Store status in localStorage FIRST (sebelum update DOM) untuk menghindari flash
                     localStorage.setItem('userDonaturStatus', JSON.stringify({
                         isDonatur: true,
+                        userId: currentUserId,
                         expiresAt: data.expiresAt,
                         timestamp: Date.now()
                     }));
@@ -2492,6 +2535,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ✅ Store status in localStorage FIRST (sebelum update DOM) untuk menghindari flash
                 localStorage.setItem('userDonaturStatus', JSON.stringify({
                     isDonatur: false,
+                    userId: currentUserId,
                     timestamp: Date.now()
                 }));
             }
@@ -2585,6 +2629,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     localStorage.setItem('userDonaturStatus', JSON.stringify({
                         isDonatur: false,
+                        userId: getCurrentUserId(),
                         timestamp: Date.now()
                     }));
                 }
@@ -2630,6 +2675,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // ✅ Update localStorage - INVALIDATE CACHE
                     localStorage.setItem('userDonaturStatus', JSON.stringify({
                         isDonatur: false,
+                        userId: getCurrentUserId(),
                         timestamp: Date.now()
                     }));
                     
@@ -2685,6 +2731,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update localStorage
             localStorage.setItem('userDonaturStatus', JSON.stringify({
                 isDonatur: false,
+                userId: getCurrentUserId(),
                 timestamp: Date.now()
             }));
             
@@ -3449,6 +3496,12 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
             if (data.success) {
                 dLog('✅ [LOGIN] Login successful!');
                 dLog('💾 [LOGIN] Saving to localStorage...');
+                
+                // 🔥 CRITICAL: Clear donatur status BEFORE setting new auth token
+                // This prevents stuck status when switching accounts in the SAME tab
+                localStorage.removeItem('userDonaturStatus');
+                dLog('🧹 [LOGIN] Cleared old donatur status cache before login');
+                
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 dLog('💾 [LOGIN] Saved');
@@ -3466,31 +3519,42 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                     window.updateNotificationBadge();
                 }
                 
-                // ✅ Wait a moment before closing modal so user sees success message
-                setTimeout(() => {
-                    // ✅ CRITICAL: Close login modal IMMEDIATELY (synchronously) before showing profile modal
-                    const loginModal = document.getElementById('loginModal');
-                    const loginRequiredModal = document.getElementById('loginRequiredModal');
-                    if (loginModal) {
-                        loginModal.style.display = 'none';
-                        loginModal.style.visibility = 'hidden';
-                    }
-                    if (loginRequiredModal) {
-                        loginRequiredModal.style.display = 'none';
-                        loginRequiredModal.style.visibility = 'hidden';
-                    }
-                    document.body.style.overflow = '';
-                    
-                    // ✅ Dispatch custom event untuk notify rating/comments section
-                    window.dispatchEvent(new CustomEvent('userLoggedIn', {
-                        detail: { user: data.user, token: data.token }
-                    }));
-                    dLog('📢 [LOGIN] Dispatched userLoggedIn event');
-                    
-                    // ✅ Show profile modal
-                    dLog('🎭 [LOGIN] Showing profile modal...');
-                    showProfileModal(data.user);
-                }, 800);
+                // 🔥 FORCE REFRESH STATUS immediately after login (before showing modal)
+                // This ensures fresh status without needing page reload
+                dLog('🔍 [LOGIN] Force refreshing donatur status...');
+                
+                // Close modals first
+                const loginModal = document.getElementById('loginModal');
+                const loginRequiredModal = document.getElementById('loginRequiredModal');
+                if (loginModal) {
+                    loginModal.style.display = 'none';
+                    loginModal.style.visibility = 'hidden';
+                }
+                if (loginRequiredModal) {
+                    loginRequiredModal.style.display = 'none';
+                    loginRequiredModal.style.visibility = 'hidden';
+                }
+                document.body.style.overflow = '';
+                
+                // Dispatch login event
+                window.dispatchEvent(new CustomEvent('userLoggedIn', {
+                    detail: { user: data.user, token: data.token }
+                }));
+                dLog('📢 [LOGIN] Dispatched userLoggedIn event');
+                
+                // Force refresh status then show modal
+                checkDonaturStatus().then(() => {
+                    dLog('✅ [LOGIN] Status refreshed, showing profile modal...');
+                    setTimeout(() => {
+                        showProfileModal(data.user);
+                    }, 300);
+                }).catch(err => {
+                    dLog('⚠️ [LOGIN] Status refresh error:', err);
+                    // Show modal anyway even if status check fails
+                    setTimeout(() => {
+                        showProfileModal(data.user);
+                    }, 300);
+                });
             } else {
                 console.error('❌ [LOGIN] Login failed:', data.error);
                 showFormMessage('loginMessage', '❌ ' + (data.error || 'Login gagal'), 'error');
@@ -4419,12 +4483,12 @@ class InfoMangaRatingComments {
 
     async submitRating() {
         if (!this.isLoggedIn) {
-            alert('Silakan login terlebih dahulu');
+            showToast('Silakan login terlebih dahulu', 'warning');
             return;
         }
 
         if (this.selectedRating === 0) {
-            alert('Pilih rating 1-10 terlebih dahulu');
+            showToast('Pilih rating 1-10 terlebih dahulu', 'warning');
             return;
         }
 
@@ -4474,7 +4538,7 @@ class InfoMangaRatingComments {
                     dLog('[INFO-RATING] Rating submitted and refreshed');
                 }, 1000);
             } else {
-                alert(data.error || 'Gagal mengirim rating');
+                showToast(data.error || 'Gagal mengirim rating', 'error');
                 
                 // Reset button on error
                 if (btnSubmit) {
@@ -4484,7 +4548,7 @@ class InfoMangaRatingComments {
             }
         } catch (error) {
             console.error('[INFO-RATING] Submit error:', error);
-            alert('Terjadi kesalahan saat mengirim rating');
+            showToast('Terjadi kesalahan saat mengirim rating', 'error');
             
             // Reset button on error
             if (btnSubmit) {
@@ -4496,7 +4560,7 @@ class InfoMangaRatingComments {
 
     async submitComment() {
         if (!this.isLoggedIn) {
-            alert('Silakan login terlebih dahulu');
+            showToast('Silakan login terlebih dahulu', 'warning');
             return;
         }
 
@@ -4504,7 +4568,7 @@ class InfoMangaRatingComments {
         const content = textarea.value.trim();
 
         if (!content) {
-            alert('Komentar tidak boleh kosong');
+            showToast('Komentar tidak boleh kosong', 'warning');
             return;
         }
 
@@ -4526,13 +4590,14 @@ class InfoMangaRatingComments {
             if (data.success) {
                 textarea.value = '';
                 document.getElementById('commentCharCount').textContent = '0';
+                showToast('Komentar berhasil dikirim!', 'success');
                 await this.loadComments();
             } else {
-                alert(data.error || 'Gagal mengirim komentar');
+                showToast(data.error || 'Gagal mengirim komentar', 'error');
             }
         } catch (error) {
             console.error('[INFO-COMMENTS] Submit error:', error);
-            alert('Terjadi kesalahan saat mengirim komentar');
+            showToast('Terjadi kesalahan saat mengirim komentar', 'error');
         }
     }
 
@@ -4559,14 +4624,14 @@ class InfoMangaRatingComments {
 
             const data = await response.json();
             if (data.success) {
-                alert(data.message || 'Komentar berhasil dihapus');
+                showToast(data.message || 'Komentar berhasil dihapus', 'success');
                 await this.loadComments();
             } else {
-                alert(data.error || 'Gagal menghapus komentar');
+                showToast(data.error || 'Gagal menghapus komentar', 'error');
             }
         } catch (error) {
             console.error('[INFO-COMMENTS] Delete error:', error);
-            alert('Terjadi kesalahan saat menghapus komentar');
+            showToast('Terjadi kesalahan saat menghapus komentar', 'error');
         }
     }
 }

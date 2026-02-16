@@ -2004,7 +2004,7 @@ class ReaderComments {
 
     async submitComment() {
         if (!this.isLoggedIn) {
-            alert('Silakan login terlebih dahulu');
+            showToast('Silakan login terlebih dahulu', 'warning');
             return;
         }
 
@@ -2012,7 +2012,7 @@ class ReaderComments {
         const content = textarea.value.trim();
 
         if (!content) {
-            alert('Komentar tidak boleh kosong');
+            showToast('Komentar tidak boleh kosong', 'warning');
             return;
         }
 
@@ -2043,14 +2043,14 @@ class ReaderComments {
             if (data.success || response.ok) {
                 textarea.value = '';
                 document.getElementById('commentCharCount').textContent = '0';
-                alert('✅ Komentar berhasil dikirim!');
+                showToast('Komentar berhasil dikirim!', 'success');
                 await this.loadComments();
             } else {
-                alert(data.error || 'Gagal mengirim komentar');
+                showToast(data.error || 'Gagal mengirim komentar', 'error');
             }
         } catch (error) {
             if (DEBUG_MODE) console.error('[READER-COMMENTS] Submit error:', error);
-            alert('Terjadi kesalahan saat mengirim komentar');
+            showToast('Terjadi kesalahan saat mengirim komentar', 'error');
         } finally {
             // Re-enable button
             if (btnSubmit) {
@@ -2083,14 +2083,14 @@ class ReaderComments {
 
             const data = await response.json();
             if (data.success) {
-                alert('Komentar berhasil dihapus');
+                showToast('Komentar berhasil dihapus', 'success');
                 await this.loadComments();
             } else {
-                alert(data.error || 'Gagal menghapus komentar');
+                showToast(data.error || 'Gagal menghapus komentar', 'error');
             }
         } catch (error) {
             if (DEBUG_MODE) console.error('[READER-COMMENTS] Delete error:', error);
-            alert('Terjadi kesalahan saat menghapus komentar');
+            showToast('Terjadi kesalahan saat menghapus komentar', 'error');
         }
     }
 }
