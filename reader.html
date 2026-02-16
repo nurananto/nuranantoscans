@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <!-- Content Security Policy - Bank-Grade Protection -->
     <!-- CSP Reporting: To enable violation reports, add report-uri https://your-endpoint.com/csp-report -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.anthropic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com https://script.google.com https://*.googleusercontent.com https://raw.githubusercontent.com https://images.weserv.nl https://manga-auth-worker.nuranantoadhien.workers.dev https://manga-code-validator.nuranantoadhien.workers.dev https://decrypt-manifest.nuranantoadhien.workers.dev; form-action 'self' https://manga-auth-worker.nuranantoadhien.workers.dev; frame-ancestors 'none'; upgrade-insecure-requests; base-uri 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.anthropic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com https://script.google.com https://*.googleusercontent.com https://raw.githubusercontent.com https://images.weserv.nl https://manga-auth-worker.nuranantoadhien.workers.dev https://manga-code-validator.nuranantoadhien.workers.dev https://decrypt-manifest.nuranantoadhien.workers.dev https://profile-worker.nuranantoadhien.workers.dev; form-action 'self' https://manga-auth-worker.nuranantoadhien.workers.dev; frame-ancestors 'none'; upgrade-insecure-requests; base-uri 'self';">
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -115,19 +115,24 @@
         
         <!-- Comment Input Section (hanya untuk user login) -->
         <div class="comment-input-section" id="commentInputSection" style="display: none;">
-            <textarea 
-                class="comment-textarea" 
-                id="commentTextarea" 
-                placeholder="Tulis komentar Anda... (max 500 karakter)"
-                maxlength="500"
-            ></textarea>
-            <div class="comment-input-footer">
-                <span class="comment-char-count">
-                    <span id="commentCharCount">0</span>/500
-                </span>
-                <button class="btn-submit-comment" id="btnSubmitComment">
-                    Kirim Komentar
-                </button>
+            <div class="comment-input-wrapper">
+                <img class="comment-avatar" id="commentInputAvatar" src="assets/Logo 2.png" alt="Avatar" />
+                <div class="comment-input-content">
+                    <textarea 
+                        class="comment-textarea" 
+                        id="commentTextarea" 
+                        placeholder="Tulis komentar Anda... (max 500 karakter)"
+                        maxlength="500"
+                    ></textarea>
+                    <div class="comment-input-footer">
+                        <span class="comment-char-count">
+                            <span id="commentCharCount">0</span>/500
+                        </span>
+                        <button class="btn-submit-comment" id="btnSubmitComment">
+                            Kirim Komentar
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         

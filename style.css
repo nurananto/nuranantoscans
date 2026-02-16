@@ -2266,12 +2266,12 @@ nav {
 
 /* Avatar */
 .profile-avatar {
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   border: 3px solid #1877f2;
   object-fit: cover;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 /* Username */
@@ -2446,8 +2446,8 @@ opacity: 1;
   }
   
   .profile-avatar {
-    width: 75px;
-    height: 75px;
+    width: 110px;
+    height: 110px;
   }
   
   .profile-username {
@@ -2462,8 +2462,8 @@ opacity: 1;
   }
   
   .profile-avatar {
-    width: 70px;
-    height: 70px;
+    width: 100px;
+    height: 100px;
   }
   
   .profile-username {
@@ -2494,8 +2494,8 @@ opacity: 1;
   }
   
   .profile-avatar {
-    width: 65px;
-    height: 65px;
+    width: 90px;
+    height: 90px;
   }
   
   .profile-username {

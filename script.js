@@ -1652,17 +1652,33 @@ document.addEventListener('DOMContentLoaded', () => {
         profileModal.parentNode.replaceChild(newProfileModal, profileModal);
         profileModal = newProfileModal;
         
-        // Update username
+        // Update username (temporary - will be replaced by loadProfileData)
         const usernameEl = profileModal.querySelector('#profileUsername');
         if (usernameEl && user && user.username) {
             usernameEl.textContent = user.username;
-            dLog('✅ [PROFILE] Username updated to:', user.username);
+            dLog('✅ [PROFILE] Username updated to (temporary):', user.username);
         }
         
         // ✅ Tampilkan modal DULU (sebelum check status) agar tidak stuck
         profileModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         dLog('✅ [PROFILE] Modal shown immediately');
+        
+        // 🔥 Load fresh profile data from database (avatar + display_name)
+        if (typeof window.loadProfileData === 'function') {
+            dLog('🔄 [PROFILE] Loading fresh profile data from database...');
+            window.loadProfileData();
+        } else {
+            dLog('⚠️ [PROFILE] loadProfileData function not available');
+        }
+        
+        // 🔥 Check edit eligibility and hide pencil if rate limited
+        if (typeof window.checkEditEligibility === 'function') {
+            dLog('🔍 [PROFILE] Checking edit eligibility...');
+            window.checkEditEligibility();
+        } else {
+            dLog('⚠️ [PROFILE] checkEditEligibility function not available');
+        }
         
         // 🔥 NOTE: Status checking is now handled BEFORE showProfileModal is called
         // No need to call checkDonaturStatus here to avoid double-call race condition
@@ -1718,6 +1734,20 @@ document.addEventListener('DOMContentLoaded', () => {
             
             dLog('📢 [LOGOUT] DOM status updated to PEMBACA SETIA');
             
+            // 🔥 RESET PROFILE PHOTO AND USERNAME TO DEFAULT
+            const profileAvatar = document.querySelector('.profile-avatar');
+            const profileUsername = document.getElementById('profileUsername');
+            
+            if (profileAvatar) {
+                profileAvatar.src = 'assets/Logo 2.png';
+                dLog('📢 [LOGOUT] Profile avatar reset to default');
+            }
+            
+            if (profileUsername) {
+                profileUsername.textContent = 'Username';
+                dLog('📢 [LOGOUT] Profile username reset to default');
+            }
+            
             // ✅ Update profile button text
             if (window.updateProfileButtonText) {
                 window.updateProfileButtonText();
@@ -1766,6 +1796,42 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.overflow = 'hidden';
         });
     }
+
+        // ✅ Initialize Edit Profile functionality (after modal clone)
+        if (window.initEditProfile) {
+            dLog('🔧 [PROFILE] Initializing edit profile...');
+            dLog('🔍 [PROFILE] Checking imageCompression library...');
+            dLog('   - typeof imageCompression:', typeof imageCompression);
+            
+            // Wait for imageCompression library to load
+            if (typeof imageCompression !== 'undefined') {
+                dLog('✅ [PROFILE] imageCompression available');
+                window.initEditProfile();
+                dLog('✅ [PROFILE] Edit profile initialized');
+            } else {
+                dLog('⚠️ [PROFILE] imageCompression not loaded yet, waiting...');
+                let retryCount = 0;
+                const maxRetries = 30; // 30 retries x 500ms = 15 seconds
+                const checkInterval = setInterval(() => {
+                    retryCount++;
+                    dLog(`🔄 [PROFILE] Retry ${retryCount}/${maxRetries} - checking imageCompression...`);
+                    
+                    if (typeof imageCompression !== 'undefined') {
+                        dLog('✅ [PROFILE] imageCompression now available!');
+                        clearInterval(checkInterval);
+                        window.initEditProfile();
+                        dLog('✅ [PROFILE] Edit profile initialized (delayed)');
+                    } else if (retryCount >= maxRetries) {
+                        console.error(`❌ [PROFILE] imageCompression failed to load after ${maxRetries} retries (${maxRetries * 0.5}s)`);
+                        console.error('❌ [PROFILE] Please check console for CDN loader errors');
+                        console.error('💡 [PROFILE] Try refreshing the page or check your internet connection');
+                        clearInterval(checkInterval);
+                    }
+                }, 500);
+            }
+        } else {
+            dLog('⚠️ [PROFILE] initEditProfile not found');
+        }
         
         dLog('🎭 [PROFILE] ========================================');
     } catch (error) {

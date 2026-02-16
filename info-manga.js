@@ -2315,6 +2315,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 dLog('📢 [LOGOUT] DOM status updated to PEMBACA SETIA');
                 
+                // 🔥 Reset profile photo and username to default (prevent cross-account data sticking)
+                const profileAvatar = document.querySelector('.profile-avatar');
+                const profileUsername = document.getElementById('profileUsername');
+                
+                if (profileAvatar) {
+                    profileAvatar.src = 'assets/Logo 2.png';
+                    dLog('🖼️ [LOGOUT] Profile avatar reset to default');
+                }
+                if (profileUsername) {
+                    profileUsername.textContent = 'Username';
+                    dLog('📝 [LOGOUT] Profile username reset to default');
+                }
+                
                 // ✅ Dispatch custom event untuk notify rating/comments section
                 window.dispatchEvent(new CustomEvent('userLoggedOut'));
                 dLog('📢 [LOGOUT] Dispatched userLoggedOut event');
@@ -2362,6 +2375,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 upgradeModal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
             });
+        }
+
+        // ✅ Load profile data from database (IMPORTANT: Load fresh data first!)
+        if (typeof window.loadProfileData === 'function') {
+            dLog('🔄 [PROFILE] Loading profile data from database...');
+            window.loadProfileData();
+            dLog('✅ [PROFILE] Profile data load initiated');
+        } else {
+            dLog('⚠️ [PROFILE] loadProfileData not found');
+        }
+
+        // ✅ Check edit eligibility (check rate limits)
+        if (typeof window.checkEditEligibility === 'function') {
+            dLog('🔍 [PROFILE] Checking edit eligibility...');
+            window.checkEditEligibility();
+            dLog('✅ [PROFILE] Edit eligibility check initiated');
+        } else {
+            dLog('⚠️ [PROFILE] checkEditEligibility not found');
+        }
+
+        // ✅ Initialize Edit Profile functionality (after modal clone)
+        if (window.initEditProfile) {
+            dLog('🔧 [PROFILE] Initializing edit profile...');
+            dLog('🔍 [PROFILE] Checking imageCompression library...');
+            dLog('   - typeof imageCompression:', typeof imageCompression);
+            
+            // Wait for imageCompression library to load
+            if (typeof imageCompression !== 'undefined') {
+                dLog('✅ [PROFILE] imageCompression available');
+                window.initEditProfile();
+                dLog('✅ [PROFILE] Edit profile initialized');
+            } else {
+                dLog('⚠️ [PROFILE] imageCompression not loaded yet, waiting...');
+                let retryCount = 0;
+                const maxRetries = 30; // 30 retries x 500ms = 15 seconds
+                const checkInterval = setInterval(() => {
+                    retryCount++;
+                    dLog(`🔄 [PROFILE] Retry ${retryCount}/${maxRetries} - checking imageCompression...`);
+                    
+                    if (typeof imageCompression !== 'undefined') {
+                        dLog('✅ [PROFILE] imageCompression now available!');
+                        clearInterval(checkInterval);
+                        window.initEditProfile();
+                        dLog('✅ [PROFILE] Edit profile initialized (delayed)');
+                    } else if (retryCount >= maxRetries) {
+                        console.error(`❌ [PROFILE] imageCompression failed to load after ${maxRetries} retries (${maxRetries * 0.5}s)`);
+                        console.error('❌ [PROFILE] Please check console for CDN loader errors');
+                        console.error('💡 [PROFILE] Try refreshing the page or check your internet connection');
+                        clearInterval(checkInterval);
+                    }
+                }, 500);
+            }
+        } else {
+            dLog('⚠️ [PROFILE] initEditProfile not found');
         }
         
         dLog('🎭 [PROFILE] ========================================');
@@ -4125,21 +4192,41 @@ class InfoMangaRatingComments {
 
     async init(mangaId) {
         this.mangaId = mangaId;
+        // console.log('🚀 ============================================');
+        // console.log('🚀 [INIT] InfoMangaRatingComments initializing...');
+        // console.log('🚀 [INIT] MangaId:', mangaId);
         dLog('[INFO-RATING] Initializing for manga:', mangaId);
         
         // Setup event listeners FIRST
         this.setupEventListeners();
+        // console.log('✅ [INIT] Event listeners setup complete');
         
         // Check login status
+        // console.log('🔐 [INIT] Checking login status...');
         await this.checkLoginStatus();
+        // console.log('🔐 [INIT] Login status check complete. isLoggedIn:', this.isLoggedIn);
+        
+        // Load comment input avatar if logged in
+        if (this.isLoggedIn) {
+            // console.log('🖼️ [INIT] User is logged in, loading comment input avatar...');
+            await this.loadCommentInputAvatar();
+            // console.log('✅ [INIT] Avatar load attempt complete');
+        } else {
+            // console.log('⚠️ [INIT] User NOT logged in, skipping avatar load');
+        }
         
         // Load data
+        // console.log('📊 [INIT] Loading manga rating and comments...');
         await this.loadMangaRating();
         await this.loadComments();
+        // console.log('✅ [INIT] Data load complete');
+        // console.log('🚀 [INIT] Initialization complete!');
+        // console.log('🚀 ============================================');
         
         // Listen for login/logout events via storage
         window.addEventListener('storage', (e) => {
             if (e.key === 'authToken') {
+                // console.log('🔄 [STORAGE] Auth token changed, re-checking login status');
                 dLog('[INFO-RATING] Auth token changed, re-checking login status');
                 this.checkLoginStatus();
             }
@@ -4149,6 +4236,10 @@ class InfoMangaRatingComments {
         window.addEventListener('focus', () => {
             dLog('[INFO-RATING] Window focused, re-checking login status');
             this.checkLoginStatus();
+            // ✅ Reload avatar saat focus (mungkin user update profile di tab lain)
+            if (this.isLoggedIn) {
+                this.loadCommentInputAvatar();
+            }
         });
         
         // Listen for custom login event (if exists)
@@ -4170,21 +4261,35 @@ class InfoMangaRatingComments {
             this.checkLoginStatus();
             this.loadMangaRating();
             this.loadComments();
+            // ✅ Force reload avatar setelah profile modal closed
+            if (this.isLoggedIn) {
+                // console.log('🔄 [AVATAR-INPUT] Reloading avatar after profile modal closed...');
+                setTimeout(() => this.loadCommentInputAvatar(), 200);
+            }
         });
     }
 
     async checkLoginStatus() {
         const token = localStorage.getItem('authToken');
+        // console.log('🔐 ============================================');
+        // console.log('🔐 [LOGIN-CHECK] Checking login status...');
+        // console.log('🔐 [LOGIN-CHECK] Token exists:', !!token);
+        // if (token) {
+        //     console.log('🔐 [LOGIN-CHECK] Token preview:', token.substring(0, 20) + '...');
+        // }
         dLog('[INFO-RATING] Checking login status, token exists:', !!token);
         
         if (!token) {
             this.isLoggedIn = false;
+            // console.log('❌ [LOGIN-CHECK] No token found');
             this.showLoginButton();
             dLog('[INFO-RATING] No token, showing login button');
+            // console.log('🔐 ============================================');
             return;
         }
 
         try {
+            // console.log('🌐 [LOGIN-CHECK] Fetching donatur status...');
             const response = await fetch(`${this.API_BASE}/donatur/status`, {
                 method: 'GET',
                 headers: {
@@ -4192,26 +4297,35 @@ class InfoMangaRatingComments {
                 }
             });
 
+            // console.log('🌐 [LOGIN-CHECK] Response status:', response.status);
             dLog('[INFO-RATING] Status check response:', response.status);
 
             if (response.ok) {
                 const data = await response.json();
                 this.isLoggedIn = true;
+                // console.log('✅ [LOGIN-CHECK] Login successful!');
+                // console.log('✅ [LOGIN-CHECK] User data:', data);
                 // ✅ FIX: Jangan tampilkan rating input di sini
                 // Biarkan loadMangaRating() yang menentukan apakah rating input ditampilkan
                 // this.showRatingInput(); // REMOVED
-                this.showCommentInput();
+                // console.log('🖼️ [LOGIN-CHECK] Calling showCommentInput()...');
+                await this.showCommentInput();  // ✅ Added await
+                // console.log('✅ [LOGIN-CHECK] showCommentInput() complete');
                 dLog('[INFO-RATING] User is logged in, showing comment input only');
             } else {
                 this.isLoggedIn = false;
+                // console.log('❌ [LOGIN-CHECK] Token invalid (status not ok)');
                 this.showLoginButton();
                 dLog('[INFO-RATING] Token invalid, showing login button');
             }
         } catch (error) {
+            console.error('❌ [LOGIN-CHECK] Error during login check:', error);
             console.error('[INFO-RATING] Login check error:', error);
             this.isLoggedIn = false;
             this.showLoginButton();
         }
+        // console.log('🔐 [LOGIN-CHECK] Final isLoggedIn value:', this.isLoggedIn);
+        // console.log('🔐 ============================================');
     }
 
     showLoginButton() {
@@ -4235,18 +4349,138 @@ class InfoMangaRatingComments {
         }
     }
 
-    showCommentInput() {
+    async showCommentInput() {
+        // console.log('💬 ============================================');
+        // console.log('💬 [SHOW-INPUT] showCommentInput() called');
+        
         const btnLogin = document.getElementById('btnLoginComment');
         const inputSection = document.getElementById('commentInputSection');
         
+        // console.log('💬 [SHOW-INPUT] btnLogin element:', btnLogin);
+        // console.log('💬 [SHOW-INPUT] inputSection element:', inputSection);
+        
         if (btnLogin) {
             btnLogin.style.display = 'none';
+            // console.log('✅ [SHOW-INPUT] Login button hidden');
             dLog('[INFO-RATING] Login button hidden');
+        } else {
+            console.warn('⚠️ [SHOW-INPUT] btnLogin element not found!');
         }
+        
         if (inputSection) {
             inputSection.style.display = 'block';
+            // console.log('✅ [SHOW-INPUT] Comment input section shown');
             dLog('[INFO-RATING] Comment input shown');
+        } else {
+            console.warn('⚠️ [SHOW-INPUT] inputSection element not found!');
         }
+
+        // Load and set user avatar for comment input
+        // console.log('🖼️ [SHOW-INPUT] Calling loadCommentInputAvatar()...');
+        await this.loadCommentInputAvatar();
+        // console.log('✅ [SHOW-INPUT] loadCommentInputAvatar() complete');
+        
+        // ✅ Force reload setelah 500ms untuk ensure avatar terupdate
+        // console.log('🔄 [SHOW-INPUT] Setting up force reload in 500ms...');
+        setTimeout(() => {
+            // console.log('🔄 [AVATAR-INPUT] Force reload after 500ms...');
+            this.loadCommentInputAvatar();
+        }, 500);
+        
+        // console.log('💬 [SHOW-INPUT] showCommentInput() complete');
+        // console.log('💬 ============================================');
+    }
+
+    async loadCommentInputAvatar() {
+        // console.log('🖼️ ============================================');
+        // console.log('🖼️ [AVATAR-INPUT] loadCommentInputAvatar() called');
+        
+        const avatarEl = document.getElementById('commentInputAvatar');
+        // console.log('🖼️ [AVATAR-INPUT] Avatar element:', avatarEl);
+        // console.log('🖼️ [AVATAR-INPUT] Element exists:', !!avatarEl);
+        
+        if (!avatarEl) {
+            console.warn('⚠️ [AVATAR-INPUT] Element commentInputAvatar not found!');
+            // console.warn('⚠️ [AVATAR-INPUT] Retrying in 100ms...');
+            // Retry after short delay if element not ready
+            setTimeout(() => this.loadCommentInputAvatar(), 100);
+            // console.log('🖼️ ============================================');
+            return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        // console.log('🖼️ [AVATAR-INPUT] Token exists:', !!token);
+        
+        if (!token) {
+            // console.log('⚠️ [AVATAR-INPUT] No token, using default avatar');
+            avatarEl.src = 'assets/Logo 2.png';
+            // console.log('🖼️ [AVATAR-INPUT] Avatar set to: assets/Logo 2.png');
+            // console.log('🖼️ ============================================');
+            return;
+        }
+
+        try {
+            // console.log('🌐 [AVATAR-INPUT] Fetching avatar from profile-worker...');
+            // console.log('🌐 [AVATAR-INPUT] API URL: https://profile-worker.nuranantoadhien.workers.dev/profile/me');
+            
+            const response = await fetch('https://profile-worker.nuranantoadhien.workers.dev/profile/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                cache: 'no-store'  // ✅ Disable cache untuk always get fresh data
+            });
+
+            // console.log('🌐 [AVATAR-INPUT] Response status:', response.status);
+            // console.log('🌐 [AVATAR-INPUT] Response ok:', response.ok);
+
+            if (response.ok) {
+                const data = await response.json();
+                // console.log('📦 [AVATAR-INPUT] Profile API response:', data);
+                
+                // ✅ FIX: Profile worker uses camelCase (avatarUrl), manga-auth-worker uses snake_case (avatar_url)
+                const avatarUrl = data.profile?.avatarUrl || data.profile?.avatar_url || data.avatar_url || data.avatarUrl;
+                
+                // console.log('📦 [AVATAR-INPUT] Profile object:', data.profile);
+                // console.log('📦 [AVATAR-INPUT] Avatar URL from API:', avatarUrl);
+                // console.log('📦 [AVATAR-INPUT] Avatar URL type:', typeof avatarUrl);
+                // console.log('📦 [AVATAR-INPUT] Avatar URL length:', avatarUrl ? avatarUrl.length : 0);
+                
+                if (avatarUrl) {
+                    // Add cache busting to force reload
+                    const finalUrl = avatarUrl.includes('?') 
+                        ? `${avatarUrl}&t=${Date.now()}` 
+                        : `${avatarUrl}?t=${Date.now()}`;
+                    
+                    // console.log('✅ [AVATAR-INPUT] Final URL with cache busting:', finalUrl);
+                    // console.log('✅ [AVATAR-INPUT] Setting avatar src...');
+                    avatarEl.src = finalUrl;
+                    // console.log('✅ [AVATAR-INPUT] Avatar src set successfully!');
+                    // console.log('✅ [AVATAR-INPUT] Current img.src value:', avatarEl.src);
+                    
+                    avatarEl.onerror = () => {
+                        console.error('❌ [AVATAR-INPUT] Failed to load image from:', finalUrl);
+                        console.error('❌ [AVATAR-INPUT] Falling back to default');
+                        avatarEl.src = 'assets/Logo 2.png';
+                    };
+                } else {
+                    // console.log('⚠️ [AVATAR-INPUT] No avatar_url in response, using default');
+                    avatarEl.src = 'assets/Logo 2.png';
+                }
+            } else {
+                console.error('❌ [AVATAR-INPUT] Profile API failed with status:', response.status);
+                const errorText = await response.text();
+                console.error('❌ [AVATAR-INPUT] Error response:', errorText);
+                avatarEl.src = 'assets/Logo 2.png';
+            }
+        } catch (error) {
+            console.error('❌ [AVATAR-INPUT] Avatar load error:', error);
+            console.error('❌ [AVATAR-INPUT] Error stack:', error.stack);
+            avatarEl.src = 'assets/Logo 2.png';
+        }
+        
+        // console.log('🖼️ [AVATAR-INPUT] loadCommentInputAvatar() complete');
+        // console.log('🖼️ ============================================');
     }
 
     async loadMangaRating() {
@@ -4344,6 +4578,7 @@ class InfoMangaRatingComments {
             const data = await response.json();
 
             dLog('[INFO-COMMENTS] Loaded:', data);
+            // console.log('🖼️ [COMMENTS-DEBUG] First comment avatar_url:', data.comments?.[0]?.avatar_url);
 
             if (data.success && data.comments && data.comments.length > 0) {
                 this.displayComments(data.comments);
@@ -4376,16 +4611,27 @@ class InfoMangaRatingComments {
             minute: '2-digit'
         });
 
+        // Add cache busting for avatar
+        const baseAvatarUrl = comment.avatar_url || 'assets/Logo 2.png';
+        const avatarUrl = baseAvatarUrl.includes('?') ? `${baseAvatarUrl}&t=${Date.now()}` : `${baseAvatarUrl}?t=${Date.now()}`;
+        
+        if (!comment.avatar_url) {
+            console.warn('⚠️ [COMMENT-AVATAR] No avatar_url in comment data - manga-auth-worker needs deployment');
+        }
+
         return `
             <div class="comment-item" data-id="${comment.id}">
-                <div class="comment-header">
-                    <span class="comment-user">@${comment.username}</span>
-                    <span class="comment-date">${formattedDate}</span>
-                </div>
-                <div class="comment-content">${this.escapeHtml(comment.content)}</div>
-                <div class="comment-actions">
-                    ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${comment.username}">Reply</button>` : ''}
-                    ${isOwner ? `<button class="btn-delete-comment" data-id="${comment.id}">Hapus</button>` : ''}
+                <img class="comment-avatar" src="${avatarUrl}" alt="${comment.username}" onerror="this.src='assets/Logo 2.png'" />
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <span class="comment-user">@${comment.username}</span>
+                        <span class="comment-date">${formattedDate}</span>
+                    </div>
+                    <div class="comment-content">${this.escapeHtml(comment.content)}</div>
+                    <div class="comment-actions">
+                        ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${comment.username}">Reply</button>` : ''}
+                        ${isOwner ? `<button class="btn-delete-comment" data-id="${comment.id}">Hapus</button>` : ''}
+                    </div>
                 </div>
             </div>
         `;

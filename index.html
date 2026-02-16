@@ -7,7 +7,7 @@
         <!-- CSP Reporting: To enable violation reports, add report-uri https://your-endpoint.com/csp-report -->
         <meta http-equiv="Content-Security-Policy" 
               content="default-src 'self'; 
-                       script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.anthropic.com; 
+                       script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://api.anthropic.com; 
                        style-src 'self' 'unsafe-inline'; 
                        img-src 'self' data: https:; 
                        font-src 'self' data:; 
@@ -15,6 +15,10 @@
                          https://manga-auth-worker.nuranantoadhien.workers.dev 
                          https://manga-code-validator.nuranantoadhien.workers.dev 
                          https://decrypt-manifest.nuranantoadhien.workers.dev
+                         https://profile-worker.nuranantoadhien.workers.dev
+                         https://cdn.jsdelivr.net
+                         https://unpkg.com
+                         https://cdnjs.cloudflare.com
                          https://script.google.com 
                          https://*.googleusercontent.com 
                          https://raw.githubusercontent.com 
@@ -1380,6 +1384,361 @@
     font-size: 14px;
     margin: 0;
 }
+
+/* ============================================
+   EDIT PROFILE MODAL STYLES
+   ============================================ */
+.profile-username-container {
+    position: relative;
+    display: inline-block;
+    margin: 0 0 12px 0;
+}
+
+.profile-username {
+    margin: 0 !important;
+    line-height: 1.2;
+}
+
+.btn-edit-profile {
+    position: absolute;
+    right: -35px;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    height: 24px;
+    background: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+}
+
+.btn-edit-profile:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
+
+.btn-edit-profile svg {
+    stroke: #ffd700;
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))
+            drop-shadow(0 0 8px rgba(255, 215, 0, 0.6))
+            drop-shadow(0 0 12px rgba(255, 215, 0, 0.4));
+    animation: pencilGlow 2s ease-in-out infinite;
+}
+
+.btn-edit-profile:hover svg {
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 1))
+            drop-shadow(0 0 12px rgba(255, 215, 0, 0.8))
+            drop-shadow(0 0 18px rgba(255, 215, 0, 0.6));
+}
+
+@keyframes pencilGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))
+                drop-shadow(0 0 8px rgba(255, 215, 0, 0.6))
+                drop-shadow(0 0 12px rgba(255, 215, 0, 0.4));
+    }
+    50% {
+        filter: drop-shadow(0 0 6px rgba(255, 215, 0, 1))
+                drop-shadow(0 0 10px rgba(255, 215, 0, 0.7))
+                drop-shadow(0 0 14px rgba(255, 215, 0, 0.5));
+    }
+}
+
+/* Hide pencil when rate limited */
+.btn-edit-profile.hidden {
+    display: none;
+}
+
+/* Responsive adjustments for pencil button */
+@media (max-width: 767px) {
+    .btn-edit-profile {
+        right: -30px;
+    }
+    
+    .btn-edit-profile svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-edit-profile {
+        right: -28px;
+    }
+    
+    .btn-edit-profile svg {
+        width: 13px;
+        height: 13px;
+    }
+}
+
+/* Edit Profile Modal Content */
+.edit-profile-content {
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.edit-profile-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px 0;
+    text-align: center;
+}
+
+/* Avatar Upload Area */
+.avatar-upload-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.avatar-upload-preview {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid #1877f2;
+    object-fit: cover;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.avatar-upload-preview:hover {
+    opacity: 0.8;
+    border-color: #2984f6;
+}
+
+.avatar-upload-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+    pointer-events: none;
+}
+
+.avatar-upload-container:hover .avatar-upload-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.avatar-upload-overlay svg {
+    stroke: #fff;
+}
+
+#avatarInput {
+    display: none;
+}
+
+/* Display Name Input */
+.edit-form-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.edit-form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #b0b0b0;
+}
+
+.edit-form-group input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.edit-form-group input:focus {
+    border-color: #1877f2;
+    background: #222;
+}
+
+.edit-form-group input::placeholder {
+    color: #666;
+}
+
+/* Warning Box */
+.edit-warning-box {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+    width: 100%;
+}
+
+.edit-warning-text {
+    font-size: 13px;
+    color: #fbbf24;
+    line-height: 1.5;
+}
+
+/* Buttons */
+.edit-profile-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.btn-save-profile {
+    background: linear-gradient(135deg, #1877f2 0%, #0d5fcc 100%);
+    color: #fff;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-save-profile:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2984f6 0%, #1877f2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
+}
+
+.btn-save-profile:disabled {
+    background: #424242;
+    color: #888;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-cancel-edit {
+    background: transparent;
+    color: #bbb;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-cancel-edit:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* Loading State */
+.btn-save-profile.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-save-profile.loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 10px;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error Message */
+.edit-error-message {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    color: #ef4444;
+    font-size: 13px;
+    text-align: center;
+    width: 100%;
+    display: none;
+}
+
+.edit-error-message.show {
+    display: block;
+}
+
+/* Success Message */
+.edit-success-message {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    color: #10b981;
+    font-size: 13px;
+    text-align: center;
+    width: 100%;
+    display: none;
+}
+
+.edit-success-message.show {
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .edit-profile-content {
+        padding: 24px 20px;
+        gap: 16px;
+    }
+
+    .edit-profile-title {
+        font-size: 19px;
+    }
+
+    .avatar-upload-container {
+        width: 85px;
+        height: 85px;
+    }
+
+    .edit-form-group input {
+        padding: 12px 14px;
+        font-size: 15px;
+    }
+
+    .btn-save-profile {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+
+    .btn-cancel-edit {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+}
         </style>
     </head>
     <body>
@@ -1601,6 +1960,674 @@
         <script defer src="manga-config.js?v=2.2.1"></script>
         <script defer src="script.js?v=2.2.1"></script>
         <script defer src="auto-reload.js?v=2.2.1"></script>
+
+        <!-- Browser Image Compression Library - Load with error handling -->
+        <script>
+        (function() {
+            // console.log('📦 [CDN-LOADER] Starting to load browser-image-compression...');
+            
+            // Use jsDelivr as primary CDN (most reliable, no SRI issues)
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js';
+            script.async = false; // Synchronous loading
+            script.crossOrigin = 'anonymous';
+            
+            script.onload = function() {
+                // console.log('✅ [CDN-LOADER] browser-image-compression loaded successfully from jsDelivr!');
+                // console.log('   - typeof imageCompression:', typeof imageCompression);
+                // console.log('   - window.imageCompression:', !!window.imageCompression);
+            };
+            
+            script.onerror = function() {
+                console.error('❌ [CDN-LOADER] Failed to load from jsDelivr, trying unpkg fallback...');
+                
+                // Try fallback CDN #1: unpkg
+                const fallbackScript1 = document.createElement('script');
+                fallbackScript1.src = 'https://unpkg.com/browser-image-compression@2.0.2/dist/browser-image-compression.js';
+                fallbackScript1.async = false;
+                
+                fallbackScript1.onload = function() {
+                    // console.log('✅ [CDN-LOADER] browser-image-compression loaded from unpkg fallback!');
+                    // console.log('   - typeof imageCompression:', typeof imageCompression);
+                };
+                
+                fallbackScript1.onerror = function() {
+                    console.error('❌ [CDN-LOADER] unpkg failed, trying cdnjs fallback...');
+                    
+                    // Try fallback CDN #2: cdnjs (last resort, no SRI check)
+                    const fallbackScript2 = document.createElement('script');
+                    fallbackScript2.src = 'https://cdnjs.cloudflare.com/ajax/libs/browser-image-compression/2.0.2/browser-image-compression.min.js';
+                    fallbackScript2.async = false;
+                    
+                    fallbackScript2.onload = function() {
+                        // console.log('✅ [CDN-LOADER] browser-image-compression loaded from cdnjs fallback!');
+                        // console.log('   - typeof imageCompression:', typeof imageCompression);
+                    };
+                    
+                    fallbackScript2.onerror = function() {
+                        console.error('❌ [CDN-LOADER] All 3 CDN sources failed!');
+                        console.error('❌ [CDN-LOADER] Avatar compression will not work.');
+                        console.error('💡 [CDN-LOADER] Please check your internet connection or try disabling ad blocker.');
+                    };
+                    
+                    document.head.appendChild(fallbackScript2);
+                };
+                
+                document.head.appendChild(fallbackScript1);
+            };
+            
+            document.head.appendChild(script);
+            // console.log('🔄 [CDN-LOADER] Script tag added to head, waiting for load...');
+        })();
+        </script>
+
+        <!-- Edit Profile Handler -->
+        <script>
+        // Edit Profile functionality - Global initialization function
+        // This is called every time profile modal is cloned/opened
+        window.initEditProfile = function() {
+            const DEBUG = false; // Set to 'true' to enable debug logs
+            // console.log('🎨 [EDIT-PROFILE] ========================================');
+            // console.log('🎨 [EDIT-PROFILE] Initializing edit profile module...');
+            
+            const editProfileModal = document.getElementById('editProfileModal');
+            const profileModal = document.getElementById('profileModal');
+            const btnEditProfile = document.getElementById('btnEditProfile');
+            const btnCancelEdit = document.getElementById('btnCancelEdit');
+            const btnSaveProfile = document.getElementById('btnSaveProfile');
+            const avatarInput = document.getElementById('avatarInput');
+            const avatarPreview = document.getElementById('avatarPreview');
+            const avatarUploadOverlay = document.getElementById('avatarUploadOverlay');
+            const displayNameInput = document.getElementById('displayNameInput');
+            const editErrorMessage = document.getElementById('editErrorMessage');
+            const editSuccessMessage = document.getElementById('editSuccessMessage');
+
+            // console.log('🔍 [EDIT-PROFILE] DOM Elements check:');
+            // console.log('   - editProfileModal:', !!editProfileModal);
+            // console.log('   - profileModal:', !!profileModal);
+            // console.log('   - btnEditProfile:', !!btnEditProfile);
+            // console.log('   - btnCancelEdit:', !!btnCancelEdit);
+            // console.log('   - btnSaveProfile:', !!btnSaveProfile);
+            // console.log('   - avatarInput:', !!avatarInput);
+            // console.log('   - avatarPreview:', !!avatarPreview);
+            // console.log('   - avatarUploadOverlay:', !!avatarUploadOverlay);
+            // console.log('   - displayNameInput:', !!displayNameInput);
+            // console.log('   - editErrorMessage:', !!editErrorMessage);
+            // console.log('   - editSuccessMessage:', !!editSuccessMessage);
+
+            let selectedAvatarFile = null;
+            let hasChanges = false;
+            const PROFILE_WORKER_URL = 'https://profile-worker.nuranantoadhien.workers.dev';
+            
+            // console.log('⚙️ [EDIT-PROFILE] Worker URL:', PROFILE_WORKER_URL);
+            // console.log('🎨 [EDIT-PROFILE] ========================================');
+
+            // Open edit profile modal
+            if (btnEditProfile) {
+                btnEditProfile.addEventListener('click', function() {
+                    // console.log('✏️ [EDIT] ========================================');
+                    // console.log('✏️ [EDIT] Edit profile button clicked!');
+                    
+                    // Load current data
+                    const currentUsername = document.getElementById('profileUsername')?.textContent || '';
+                    const currentAvatar = document.querySelector('.profile-avatar')?.src || 'assets/Logo 2.png';
+                    
+                    // console.log('📋 [EDIT] Current data:');
+                    // console.log('   - Username:', currentUsername);
+                    // console.log('   - Avatar URL:', currentAvatar);
+                    
+                    displayNameInput.value = currentUsername;
+                    avatarPreview.src = currentAvatar;
+                    
+                    selectedAvatarFile = null;
+                    hasChanges = false;
+                    btnSaveProfile.disabled = true;
+                    
+                    // console.log('🔄 [EDIT] Reset state:');
+                    // console.log('   - selectedAvatarFile:', selectedAvatarFile);
+                    // console.log('   - hasChanges:', hasChanges);
+                    // console.log('   - btnSaveProfile.disabled:', btnSaveProfile.disabled);
+                    
+                    // Hide messages
+                    editErrorMessage.classList.remove('show');
+                    editSuccessMessage.classList.remove('show');
+                    
+                    profileModal.style.display = 'none';
+                    editProfileModal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    
+                    // console.log('✅ [EDIT] Edit profile modal opened!');
+                    // console.log('✏️ [EDIT] ========================================');
+                });
+                // console.log('✅ [EDIT-PROFILE] Edit button listener added');
+            }
+
+            // Close edit modal
+            if (btnCancelEdit) {
+                btnCancelEdit.addEventListener('click', function() {
+                    // console.log('❌ [CANCEL] ========================================');
+                    // console.log('❌ [CANCEL] Cancel button clicked!');
+                    // console.log('❌ [CANCEL] Closing edit modal...');
+                    
+                    editProfileModal.style.display = 'none';
+                    profileModal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    
+                    // console.log('✅ [CANCEL] Edit modal closed, profile modal shown');
+                    // console.log('❌ [CANCEL] ========================================');
+                });
+                // console.log('✅ [EDIT-PROFILE] Cancel button listener added');
+            }
+
+            // Close on overlay click - DISABLED (only cancel button closes modal)
+            // if (editProfileModal) {
+            //     editProfileModal.addEventListener('click', function(e) {
+            //         if (e.target === editProfileModal) {
+            //             console.log('🖱️ [OVERLAY] ========================================');
+            //             console.log('🖱️ [OVERLAY] Edit modal overlay clicked!');
+            //             console.log('🖱️ [OVERLAY] Closing edit modal...');
+            //             
+            //             editProfileModal.style.display = 'none';
+            //             profileModal.style.display = 'flex';
+            //             document.body.style.overflow = 'hidden';
+            //             
+            //             console.log('✅ [OVERLAY] Edit modal closed via overlay');
+            //             console.log('🖱️ [OVERLAY] ========================================');
+            //         }
+            //     });
+            //     console.log('✅ [EDIT-PROFILE] Overlay click listener added');
+            // }
+
+            // Avatar upload handler
+            if (avatarUploadOverlay && avatarPreview && avatarInput) {
+                if (DEBUG) console.log('🔧 [AVATAR-SETUP] Setting up avatar upload handlers...');
+                if (DEBUG) console.log('   - avatarUploadOverlay:', !!avatarUploadOverlay);
+                if (DEBUG) console.log('   - avatarPreview:', !!avatarPreview);
+                if (DEBUG) console.log('   - avatarInput:', !!avatarInput);
+                if (DEBUG) console.log('   - avatarInput.type:', avatarInput.type);
+                if (DEBUG) console.log('   - avatarInput.id:', avatarInput.id);
+                
+                avatarUploadOverlay.addEventListener('click', function() {
+                    if (DEBUG) console.log('🖼️ [AVATAR] Avatar overlay clicked - opening file picker...');
+                    avatarInput.click();
+                });
+
+                avatarPreview.addEventListener('click', function() {
+                    if (DEBUG) console.log('🖼️ [AVATAR] Avatar preview clicked - opening file picker...');
+                    avatarInput.click();
+                });
+
+                avatarInput.addEventListener('change', async function(e) {
+                    if (DEBUG) console.log('📁 [AVATAR] ========================================');
+                    if (DEBUG) console.log('📁 [AVATAR] *** FILE INPUT CHANGE EVENT FIRED! ***');
+                    if (DEBUG) console.log('📁 [AVATAR] Event:', e);
+                    if (DEBUG) console.log('📁 [AVATAR] e.target:', e.target);
+                    if (DEBUG) console.log('📁 [AVATAR] e.target.files:', e.target.files);
+                    if (DEBUG) console.log('📁 [AVATAR] e.target.files.length:', e.target.files?.length);
+                    
+                    const file = e.target.files[0];
+                    if (DEBUG) console.log('📁 [AVATAR] file:', file);
+                    
+                    if (!file) {
+                        if (DEBUG) console.log('⚠️ [AVATAR] No file selected');
+                        if (DEBUG) console.log('📁 [AVATAR] ========================================');
+                        return;
+                    }
+
+                    if (DEBUG) console.log('📂 [AVATAR] File selected:');
+                    if (DEBUG) console.log('   - Name:', file.name);
+                    if (DEBUG) console.log('   - Type:', file.type);
+                    if (DEBUG) console.log('   - Size:', (file.size / 1024).toFixed(2), 'KB');
+
+                    // Validate file type
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                    if (!allowedTypes.includes(file.type)) {
+                        console.error('❌ [AVATAR] Invalid file type:', file.type);
+                        showError('Format file harus JPEG, PNG, atau WebP');
+                        if (DEBUG) console.log('📁 [AVATAR] ========================================');
+                        return;
+                    }
+                    
+                    if (DEBUG) console.log('✅ [AVATAR] File type valid');
+
+                    try {
+                        if (DEBUG) console.log('🔄 [AVATAR] Starting compression...');
+                        
+                        // Check if imageCompression library is loaded
+                        if (typeof imageCompression === 'undefined') {
+                            console.error('❌ [AVATAR] imageCompression library not loaded!');
+                            showError('Library kompresi gambar belum siap. Silakan refresh halaman dan coba lagi.');
+                            if (DEBUG) console.log('📁 [AVATAR] ========================================');
+                            return;
+                        }
+                        
+                        if (DEBUG) console.log('✅ [AVATAR] imageCompression library available');
+                        
+                        // Compress image (disable web worker to avoid CSP issues)
+                        const options = {
+                            maxSizeMB: 0.5, // Target 500KB (more realistic)
+                            maxWidthOrHeight: 1024, // Allow slightly larger for better quality
+                            useWebWorker: false, // Disable to avoid CSP blob: restriction
+                            fileType: file.type,
+                            initialQuality: 0.8 // Start with 80% quality
+                        };
+
+                        const compressedFile = await imageCompression(file, options);
+                        
+                        if (DEBUG) console.log('✅ [AVATAR] Compression complete:');
+                        if (DEBUG) console.log('   - Original size:', (file.size / 1024).toFixed(2), 'KB');
+                        if (DEBUG) console.log('   - Compressed size:', (compressedFile.size / 1024).toFixed(2), 'KB');
+                        if (DEBUG) console.log('   - Reduction:', ((1 - compressedFile.size / file.size) * 100).toFixed(1), '%');
+                        
+                        // Smart file selection: use original if compression made it bigger
+                        let finalFile;
+                        if (compressedFile.size >= file.size) {
+                            if (DEBUG) console.log('⚠️ [AVATAR] Compressed file is larger than original, using original instead');
+                            finalFile = file;
+                        } else {
+                            if (DEBUG) console.log('✅ [AVATAR] Using compressed file (smaller)');
+                            finalFile = compressedFile;
+                        }
+                        
+                        if (DEBUG) console.log('📊 [AVATAR] Final file stats:');
+                        if (DEBUG) console.log('   - Final size:', (finalFile.size / 1024).toFixed(2), 'KB');
+                        
+                        // Check final size
+                        if (finalFile.size > 1024 * 1024) {
+                            console.error('❌ [AVATAR] File too large:', (finalFile.size / 1024).toFixed(2), 'KB');
+                            showError('Ukuran file maksimal 1 MB');
+                            if (DEBUG) console.log('📁 [AVATAR] ========================================');
+                            return;
+                        }
+
+                        selectedAvatarFile = finalFile;
+                        if (DEBUG) console.log('💾 [AVATAR] File stored in memory');
+                        
+                        // Preview
+                        if (DEBUG) console.log('🖼️ [AVATAR] Updating preview...');
+                        if (DEBUG) console.log('   - avatarPreview element:', avatarPreview);
+                        if (DEBUG) console.log('   - avatarPreview.src (before):', avatarPreview.src);
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (DEBUG) console.log('📸 [AVATAR] FileReader onload fired');
+                            if (DEBUG) console.log('   - Result length:', e.target.result.length);
+                            avatarPreview.src = e.target.result;
+                            if (DEBUG) console.log('   - avatarPreview.src (after):', avatarPreview.src.substring(0, 50) + '...');
+                            if (DEBUG) console.log('✅ [AVATAR] Preview updated successfully!');
+                        };
+                        reader.onerror = function(e) {
+                            console.error('❌ [AVATAR] FileReader error:', e);
+                        };
+                        reader.readAsDataURL(finalFile);
+                        if (DEBUG) console.log('🔄 [AVATAR] FileReader started reading...');
+
+                        hasChanges = true;
+                        checkChanges();
+                        
+                        if (DEBUG) console.log('✅ [AVATAR] Avatar upload complete!');
+                        if (DEBUG) console.log('   - hasChanges:', hasChanges);
+                        if (DEBUG) console.log('📁 [AVATAR] ========================================');
+                    } catch (error) {
+                        console.error('❌ [AVATAR] Compression error:', error);
+                        showError('Gagal memproses gambar');
+                        if (DEBUG) console.log('📁 [AVATAR] ========================================');
+                    }
+                });
+                // console.log('✅ [EDIT-PROFILE] Avatar upload listeners added');
+            }
+
+            // Display name change handler
+            if (displayNameInput) {
+                displayNameInput.addEventListener('input', function() {
+                    if (DEBUG) console.log('⌨️ [NAME] Display name input changed:', this.value);
+                    
+                    const currentUsername = document.getElementById('profileUsername')?.textContent || '';
+                    hasChanges = this.value.trim() !== currentUsername || selectedAvatarFile !== null;
+                    
+                    if (DEBUG) console.log('🔄 [NAME] hasChanges:', hasChanges);
+                    if (DEBUG) console.log('   - Current:', currentUsername);
+                    if (DEBUG) console.log('   - New:', this.value.trim());
+                    if (DEBUG) console.log('   - Has avatar:', selectedAvatarFile !== null);
+                    
+                    checkChanges();
+                });
+                // console.log('✅ [EDIT-PROFILE] Display name input listener added');
+            }
+
+            // Check if there are changes
+            function checkChanges() {
+                const isValid = displayNameInput.value.trim().length >= 3 && 
+                               displayNameInput.value.trim().length <= 30;
+                const wasDisabled = btnSaveProfile.disabled;
+                btnSaveProfile.disabled = !hasChanges || !isValid;
+                
+                if (wasDisabled !== btnSaveProfile.disabled) {
+                    if (DEBUG) console.log('🔘 [CHECK] Save button state changed:');
+                    if (DEBUG) console.log('   - Disabled:', btnSaveProfile.disabled);
+                    if (DEBUG) console.log('   - hasChanges:', hasChanges);
+                    if (DEBUG) console.log('   - isValid:', isValid);
+                    if (DEBUG) console.log('   - Name length:', displayNameInput.value.trim().length);
+                }
+            }
+
+            // Show error message
+            function showError(message) {
+                console.error('❌ [ERROR] Showing error:', message);
+                editErrorMessage.textContent = message;
+                editErrorMessage.classList.add('show');
+                editSuccessMessage.classList.remove('show');
+                setTimeout(() => {
+                    editErrorMessage.classList.remove('show');
+                    if (DEBUG) console.log('🔄 [ERROR] Error message auto-hidden');
+                }, 5000);
+            }
+
+            // Show success message
+            function showSuccess(message) {
+                if (DEBUG) console.log('✅ [SUCCESS] Showing success:', message);
+                editSuccessMessage.textContent = message;
+                editSuccessMessage.classList.add('show');
+                editErrorMessage.classList.remove('show');
+            }
+
+            // Save profile
+            if (btnSaveProfile) {
+                btnSaveProfile.addEventListener('click', async function() {
+                    if (DEBUG) console.log('💾 [SAVE] ========================================');
+                    if (DEBUG) console.log('💾 [SAVE] Save profile button clicked!');
+                    
+                    if (this.disabled || this.classList.contains('loading')) {
+                        if (DEBUG) console.log('⚠️ [SAVE] Button disabled or loading - ignoring click');
+                        if (DEBUG) console.log('💾 [SAVE] ========================================');
+                        return;
+                    }
+
+                    this.classList.add('loading');
+                    this.textContent = 'MENYIMPAN';
+                    editErrorMessage.classList.remove('show');
+                    editSuccessMessage.classList.remove('show');
+                    
+                    if (DEBUG) console.log('🔄 [SAVE] Button set to loading state');
+
+                    // Use getAuthToken() from common.js (checks expiry too)
+                    const token = getAuthToken();
+                    if (!token) {
+                        console.error('❌ [SAVE] No token found!');
+                        showError('Anda harus login terlebih dahulu');
+                        this.classList.remove('loading');
+                        this.textContent = 'SIMPAN';
+                        if (DEBUG) console.log('💾 [SAVE] ========================================');
+                        return;
+                    }
+                    
+                    if (DEBUG) console.log('✅ [SAVE] Token found:', token.substring(0, 20) + '...');
+
+                    try {
+                        let success = false;
+
+                        // Upload avatar if changed
+                        if (selectedAvatarFile) {
+                            if (DEBUG) console.log('📤 [SAVE] Uploading avatar...');
+                            if (DEBUG) console.log('   - File size:', (selectedAvatarFile.size / 1024).toFixed(2), 'KB');
+                            if (DEBUG) console.log('   - File type:', selectedAvatarFile.type);
+                            
+                            const formData = new FormData();
+                            formData.append('avatar', selectedAvatarFile);
+
+                            const avatarResponse = await fetch(`${PROFILE_WORKER_URL}/profile/upload-avatar`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: formData
+                            });
+
+                            if (DEBUG) console.log('📥 [SAVE] Avatar upload response status:', avatarResponse.status);
+                            const avatarData = await avatarResponse.json();
+                            if (DEBUG) console.log('📦 [SAVE] Avatar response data:', avatarData);
+
+                            if (avatarData.success) {
+                                success = true;
+                                if (DEBUG) console.log('✅ [SAVE] Avatar uploaded successfully!');
+                                if (DEBUG) console.log('   - New avatar URL:', avatarData.avatarUrl);
+                                
+                                // Update profile avatar
+                                const profileAvatar = document.querySelector('.profile-avatar');
+                                if (profileAvatar) {
+                                    profileAvatar.src = avatarData.avatarUrl;
+                                    if (DEBUG) console.log('🖼️ [SAVE] Profile avatar UI updated');
+                                }
+                            } else {
+                                console.error('❌ [SAVE] Avatar upload failed:', avatarData.error);
+                                throw new Error(avatarData.error || 'Upload avatar gagal');
+                            }
+                        } else {
+                            if (DEBUG) console.log('⏭️ [SAVE] No avatar file selected, skipping upload');
+                        }
+
+                        // Update display name if changed
+                        const currentUsername = document.getElementById('profileUsername')?.textContent || '';
+                        const newDisplayName = displayNameInput.value.trim();
+
+                        if (newDisplayName !== currentUsername) {
+                            if (DEBUG) console.log('📝 [SAVE] Updating display name...');
+                            if (DEBUG) console.log('   - Old name:', currentUsername);
+                            if (DEBUG) console.log('   - New name:', newDisplayName);
+                            
+                            const nameResponse = await fetch(`${PROFILE_WORKER_URL}/profile/update-name`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ displayName: newDisplayName })
+                            });
+
+                            if (DEBUG) console.log('📥 [SAVE] Name update response status:', nameResponse.status);
+                            const nameData = await nameResponse.json();
+                            if (DEBUG) console.log('📦 [SAVE] Name response data:', nameData);
+
+                            if (nameData.success) {
+                                success = true;
+                                if (DEBUG) console.log('✅ [SAVE] Display name updated successfully!');
+                                
+                                // Update profile username
+                                const profileUsername = document.getElementById('profileUsername');
+                                if (profileUsername) {
+                                    profileUsername.textContent = newDisplayName;
+                                    if (DEBUG) console.log('📝 [SAVE] Profile username UI updated');
+                                }
+                            } else {
+                                console.error('❌ [SAVE] Name update failed:', nameData.error);
+                                throw new Error(nameData.error || 'Update nama gagal');
+                            }
+                        } else {
+                            if (DEBUG) console.log('⏭️ [SAVE] Display name unchanged, skipping update');
+                        }
+
+                        // Show success
+                        if (success) {
+                            if (DEBUG) console.log('🎉 [SAVE] Profile save complete!');
+                            showSuccess('✅ Profile berhasil diupdate!');
+                            
+                            // Re-check eligibility to hide pencil if rate limited
+                            if (typeof window.checkEditEligibility === 'function') {
+                                window.checkEditEligibility();
+                            }
+                            
+                            setTimeout(() => {
+                                if (DEBUG) console.log('🔄 [SAVE] Closing edit modal...');
+                                editProfileModal.style.display = 'none';
+                                profileModal.style.display = 'flex';
+                                selectedAvatarFile = null;
+                                hasChanges = false;
+                                if (DEBUG) console.log('✅ [SAVE] Modal switched, state reset');
+                            }, 2000);
+                        } else {
+                            if (DEBUG) console.log('⚠️ [SAVE] No changes were made');
+                            showError('Tidak ada perubahan untuk disimpan');
+                        }
+
+                    } catch (error) {
+                        console.error('❌ [SAVE] Save profile error:', error);
+                        console.error('❌ [SAVE] Error details:', {
+                            message: error.message,
+                            stack: error.stack
+                        });
+                        showError(error.message || 'Gagal menyimpan profile');
+                    } finally {
+                        this.classList.remove('loading');
+                        this.textContent = 'SIMPAN';
+                        if (DEBUG) console.log('🔄 [SAVE] Button reset to normal state');
+                        if (DEBUG) console.log('💾 [SAVE] ========================================');
+                    }
+                });
+                // console.log('✅ [EDIT-PROFILE] Save button listener added');
+            }
+            
+            // console.log('✅ [EDIT-PROFILE] All listeners initialized successfully!');
+        }; // End of initEditProfile function
+
+        // console.log('🚀 [INIT-SCRIPT-LOADED] Edit profile script loaded!');
+        // console.log('🚀 [INIT-SCRIPT-LOADED] typeof imageCompression:', typeof imageCompression);
+        // console.log('🚀 [INIT-SCRIPT-LOADED] window.initEditProfile:', typeof window.initEditProfile);
+
+        // ============================================
+        // LOAD PROFILE DATA FROM DATABASE
+        // ============================================
+        window.loadProfileData = async function loadProfileData() {
+            // console.log('🔄 [PROFILE-LOAD] Loading profile data from database...');
+            
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    // console.log('⚠️ [PROFILE-LOAD] No auth token, skipping profile load');
+                    return;
+                }
+
+                const response = await fetch('https://profile-worker.nuranantoadhien.workers.dev/profile/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('❌ [PROFILE-LOAD] Failed to load profile:', response.status);
+                    return;
+                }
+
+                const data = await response.json();
+                // console.log('📦 [PROFILE-LOAD] Profile data received:', data);
+
+                if (data.success && data.profile) {
+                    const { displayName, avatarUrl } = data.profile;
+                    // console.log('🔍 [PROFILE-LOAD] Extracted data - displayName:', displayName, 'avatarUrl:', avatarUrl);
+
+                    // Update profile username
+                    const profileUsername = document.getElementById('profileUsername');
+                    // console.log('🔍 [PROFILE-LOAD] profileUsername element:', profileUsername);
+                    
+                    if (profileUsername) {
+                        if (displayName) {
+                            profileUsername.textContent = displayName;
+                            // console.log('✅ [PROFILE-LOAD] Username updated to:', displayName);
+                            // console.log('🔍 [PROFILE-LOAD] Current username text:', profileUsername.textContent);
+                        } // else { console.warn('⚠️ [PROFILE-LOAD] displayName is empty or null'); }
+                    } else {
+                        console.error('❌ [PROFILE-LOAD] profileUsername element not found!');
+                    }
+
+                    // Update profile avatar
+                    const profileAvatar = document.querySelector('.profile-avatar');
+                    // console.log('🔍 [PROFILE-LOAD] profileAvatar element:', profileAvatar);
+                    
+                    if (profileAvatar) {
+                        if (avatarUrl) {
+                            profileAvatar.src = avatarUrl;
+                            // console.log('✅ [PROFILE-LOAD] Avatar updated to:', avatarUrl);
+                        } // else { console.warn('⚠️ [PROFILE-LOAD] avatarUrl is empty or null'); }
+                    } else {
+                        console.error('❌ [PROFILE-LOAD] profileAvatar element not found!');
+                    }
+
+                    // console.log('🎉 [PROFILE-LOAD] Profile load completed!');
+                } // else { console.warn('⚠️ [PROFILE-LOAD] Invalid profile data:', data); }
+            } catch (error) {
+                console.error('❌ [PROFILE-LOAD] Error loading profile:', error);
+            }
+        }; // End of loadProfileData
+
+        // ============================================
+        // CHECK EDIT ELIGIBILITY & HIDE PENCIL IF RATE LIMITED
+        // ============================================
+        window.checkEditEligibility = async function() {
+            // console.log('🔍 [ELIGIBILITY] Checking edit eligibility...');
+            
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    // console.log('⚠️ [ELIGIBILITY] No auth token');
+                    return;
+                }
+
+                const response = await fetch('https://profile-worker.nuranantoadhien.workers.dev/profile/check-eligibility', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('❌ [ELIGIBILITY] Failed to check eligibility:', response.status);
+                    return;
+                }
+
+                const data = await response.json();
+                // console.log('📦 [ELIGIBILITY] Response:', data);
+
+                if (data.success) {
+                    const btnEditProfile = document.getElementById('btnEditProfile');
+                    
+                    // Hide pencil if BOTH avatar AND name are rate limited
+                    const isRateLimited = !data.avatar.canUpload && !data.name.canChange;
+                    
+                    if (btnEditProfile) {
+                        if (isRateLimited) {
+                            btnEditProfile.classList.add('hidden');
+                            // console.log('🚫 [ELIGIBILITY] Edit button hidden - rate limited for both avatar and name');
+                            // console.log('   - Avatar available in:', data.avatar.remainingDays, 'days');
+                            // console.log('   - Name available in:', data.name.remainingDays, 'days');
+                        } else {
+                            btnEditProfile.classList.remove('hidden');
+                            // console.log('✅ [ELIGIBILITY] Edit button visible - editing available');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('❌ [ELIGIBILITY] Error checking eligibility:', error);
+            }
+        };
+
+        // Load profile data when page loads (if user is logged in)
+        // Use window.addEventListener('load') to ensure common.js is loaded first
+        window.addEventListener('load', function() {
+            // console.log('🔄 [PROFILE-LOAD] Page fully loaded, checking auth status...');
+            
+            // Check if getAuthToken is available (from common.js)
+            if (typeof getAuthToken === 'function') {
+                const token = getAuthToken();
+                if (token) {
+                    // console.log('🔐 [PROFILE-LOAD] User is logged in, loading profile...');
+                    window.loadProfileData();
+                    window.checkEditEligibility(); // Check if edit button should be hidden
+                } // else { console.log('ℹ️ [PROFILE-LOAD] No valid token found, skipping profile load'); }
+            } // else { console.warn('⚠️ [PROFILE-LOAD] getAuthToken() not available - common.js might not be loaded'); }
+        });
+        </script>
 
         <!-- Service Worker Registration -->
         <script>
@@ -1872,8 +2899,16 @@ navigator.serviceWorker.addEventListener(
       <!-- Avatar -->
       <img src="assets/Logo 2.png" alt="Profile Avatar" class="profile-avatar">
       
-      <!-- Username -->
-      <h2 id="profileUsername" class="profile-username">Username</h2>
+      <!-- Username with Edit Icon -->
+      <div class="profile-username-container">
+        <h2 id="profileUsername" class="profile-username">Username</h2>
+        <button id="btnEditProfile" class="btn-edit-profile" aria-label="Edit Profile">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+      </div>
       
       <!-- Status Badge -->
       <div id="statusBadge" class="status-box pembaca-setia">
@@ -1905,6 +2940,64 @@ navigator.serviceWorker.addEventListener(
     </div>
   </div>
 </div>
+
+<!-- ✅ Edit Profile Modal -->
+<div id="editProfileModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true">
+  <div class="login-modal-content">
+    <div class="edit-profile-content">
+      <h2 class="edit-profile-title">Edit Profile</h2>
+
+      <!-- Avatar Upload -->
+      <div class="avatar-upload-container">
+        <img id="avatarPreview" src="assets/Logo 2.png" alt="Avatar Preview" class="avatar-upload-preview">
+        <div class="avatar-upload-overlay" id="avatarUploadOverlay">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp">
+      </div>
+
+      <!-- Display Name Input -->
+      <div class="edit-form-group">
+        <label for="displayNameInput">Nama Tampilan</label>
+        <input 
+          type="text" 
+          id="displayNameInput" 
+          placeholder="Masukkan nama (3-30 karakter)"
+          minlength="3"
+          maxlength="30"
+        >
+      </div>
+
+      <!-- Warning -->
+      <div class="edit-warning-box">
+        <span class="edit-warning-text">
+          ⚠️ Ganti foto profile dan nama profile hanya bisa dilakukan <strong>sekali dalam sebulan</strong>.
+        </span>
+      </div>
+
+      <!-- Error Message -->
+      <div id="editErrorMessage" class="edit-error-message"></div>
+
+      <!-- Success Message -->
+      <div id="editSuccessMessage" class="edit-success-message"></div>
+
+      <!-- Buttons -->
+      <div class="edit-profile-buttons">
+        <button id="btnSaveProfile" class="btn-save-profile" disabled>
+          SIMPAN
+        </button>
+        <button id="btnCancelEdit" class="btn-cancel-edit">
+          BATAL
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="upgradeModal" class="modal-overlay" style="display: none;">
   <div class="login-modal-content">
     <div class="upgrade-content">

@@ -1693,6 +1693,11 @@ class ReaderComments {
         // Check login status
         await this.checkLoginStatus();
         
+        // Load comment input avatar if logged in
+        if (this.isLoggedIn) {
+            await this.loadCommentInputAvatar();
+        }
+        
         // Load comments
         await this.loadComments();
         
@@ -1753,7 +1758,7 @@ class ReaderComments {
 
             if (response.ok) {
                 this.isLoggedIn = true;
-                this.showCommentInput();
+                await this.showCommentInput();  // ✅ Added await
                 dLog('[READER-COMMENTS] User is logged in, showing comment input');
             } else {
                 this.isLoggedIn = false;
@@ -1780,7 +1785,7 @@ class ReaderComments {
         }
     }
 
-    showCommentInput() {
+    async showCommentInput() {
         const btnLogin = document.getElementById('btnLoginComment');
         const inputSection = document.getElementById('commentInputSection');
         
@@ -1791,6 +1796,76 @@ class ReaderComments {
         if (inputSection) {
             inputSection.style.display = 'block';
             dLog('[READER-COMMENTS] Comment input shown');
+        }
+
+        // Load and set user avatar for comment input
+        await this.loadCommentInputAvatar();
+        
+        // ✅ Force reload setelah 500ms untuk ensure avatar terupdate
+        setTimeout(() => {
+            // console.log('🔄 [READER-AVATAR-INPUT] Force reload after 500ms...');
+            this.loadCommentInputAvatar();
+        }, 500);
+    }
+
+    async loadCommentInputAvatar() {
+        const avatarEl = document.getElementById('commentInputAvatar');
+        if (!avatarEl) {
+            console.warn('⚠️ [READER-AVATAR-INPUT] Element commentInputAvatar not found, retrying in 100ms...');
+            // Retry after short delay if element not ready
+            setTimeout(() => this.loadCommentInputAvatar(), 100);
+            return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            // console.log('🖼️ [READER-AVATAR-INPUT] No token, using default avatar');
+            avatarEl.src = 'assets/Logo 2.png';
+            return;
+        }
+
+        try {
+            // console.log('🖼️ [READER-AVATAR-INPUT] Fetching avatar from profile-worker...');
+            const response = await fetch('https://profile-worker.nuranantoadhien.workers.dev/profile/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                cache: 'no-store'  // ✅ Disable cache untuk always get fresh data
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // console.log('🖼️ [READER-AVATAR-INPUT] Profile API response:', data);
+                
+                // ✅ FIX: Profile worker uses camelCase (avatarUrl), manga-auth-worker uses snake_case (avatar_url)
+                const avatarUrl = data.profile?.avatarUrl || data.profile?.avatar_url || data.avatar_url || data.avatarUrl;
+                
+                // console.log('🖼️ [READER-AVATAR-INPUT] Avatar URL from API:', avatarUrl);
+                
+                if (avatarUrl) {
+                    // Add cache busting to force reload
+                    const finalUrl = avatarUrl.includes('?') 
+                        ? `${avatarUrl}&t=${Date.now()}` 
+                        : `${avatarUrl}?t=${Date.now()}`;
+                    
+                    // console.log('✅ [READER-AVATAR-INPUT] Setting avatar to:', finalUrl);
+                    avatarEl.src = finalUrl;
+                    avatarEl.onerror = () => {
+                        console.error('❌ [READER-AVATAR-INPUT] Failed to load image, using default');
+                        avatarEl.src = 'assets/Logo 2.png';
+                    };
+                } else {
+                    // console.log('⚠️ [READER-AVATAR-INPUT] No avatar_url in response, using default');
+                    avatarEl.src = 'assets/Logo 2.png';
+                }
+            } else {
+                console.error('❌ [READER-AVATAR-INPUT] Profile API failed:', response.status);
+                avatarEl.src = 'assets/Logo 2.png';
+            }
+        } catch (error) {
+            console.error('❌ [READER-AVATAR-INPUT] Avatar load error:', error);
+            avatarEl.src = 'assets/Logo 2.png';
         }
     }
 
@@ -1906,6 +1981,10 @@ class ReaderComments {
         // Handle different content formats
         const content = comment.content || comment.text || '';
         
+        // Get avatar URL with cache busting
+        const baseAvatarUrl = comment.avatar_url || 'assets/Logo 2.png';
+        const avatarUrl = baseAvatarUrl.includes('?') ? `${baseAvatarUrl}&t=${Date.now()}` : `${baseAvatarUrl}?t=${Date.now()}`;
+        
         // ✅ Security: Escape all dynamic data
         const safeUsername = this.escapeHtml(displayUsername);
         const safeContent = this.escapeHtml(content);
@@ -1913,14 +1992,17 @@ class ReaderComments {
 
         return `
             <div class="comment-item" data-id="${safeCommentId}">
-                <div class="comment-header">
-                    <span class="comment-user">@${safeUsername}</span>
-                    <span class="comment-date">${formattedDate}</span>
-                </div>
-                <div class="comment-content">${safeContent}</div>
-                <div class="comment-actions">
-                    ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${safeUsername}">Reply</button>` : ''}
-                    ${isOwner ? `<button class="btn-delete-comment" data-id="${safeCommentId}">Hapus</button>` : ''}
+                <img class="comment-avatar" src="${avatarUrl}" alt="${safeUsername}" onerror="this.src='assets/Logo 2.png'" />
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <span class="comment-user">@${safeUsername}</span>
+                        <span class="comment-date">${formattedDate}</span>
+                    </div>
+                    <div class="comment-content">${safeContent}</div>
+                    <div class="comment-actions">
+                        ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${safeUsername}">Reply</button>` : ''}
+                        ${isOwner ? `<button class="btn-delete-comment" data-id="${safeCommentId}">Hapus</button>` : ''}
+                    </div>
                 </div>
             </div>
         `;

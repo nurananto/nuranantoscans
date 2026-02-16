@@ -1979,6 +1979,26 @@ img {
     margin-bottom: 24px;
 }
 
+.comment-input-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.comment-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 20%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(77, 208, 225, 0.3);
+}
+
+.comment-input-content {
+    flex: 1;
+}
+
 .comment-textarea {
     width: 100%;
     min-height: 100px;
@@ -2039,6 +2059,14 @@ img {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     padding: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.comment-body {
+    flex: 1;
+    min-width: 0;
 }
 
 .comment-header {
