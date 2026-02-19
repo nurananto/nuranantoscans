@@ -3,6 +3,36 @@
  * Reads encrypted manifest.json and decrypts page URLs
  */
 
+console.log('🚀 Reader.js loading...');
+
+// ============================================
+// GLOBAL ERROR HANDLER FOR DEBUGGING
+// ============================================
+window.addEventListener('error', function(event) {
+    console.error('❌ Global Error:', event.error);
+    console.error('Stack:', event.error?.stack);
+    console.error('Message:', event.message);
+    console.error('Filename:', event.filename);
+    console.error('Line:', event.lineno, 'Column:', event.colno);
+});
+
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('❌ Unhandled Promise Rejection:', event.reason);
+    console.error('Promise:', event.promise);
+});
+
+console.log('✅ Error handlers registered');
+
+// ============================================
+// CHECK DEPENDENCIES
+// ============================================
+console.log('🔍 Checking dependencies...');
+console.log('  - DEBUG_MODE:', typeof DEBUG_MODE !== 'undefined' ? DEBUG_MODE : 'UNDEFINED');
+console.log('  - MANGA_LIST:', typeof MANGA_LIST !== 'undefined' ? `Array(${MANGA_LIST.length})` : 'UNDEFINED');
+console.log('  - MANGA_REPOS:', typeof MANGA_REPOS !== 'undefined' ? `Object(${Object.keys(MANGA_REPOS).length} keys)` : 'UNDEFINED');
+console.log('  - fetchFreshJSON:', typeof fetchFreshJSON !== 'undefined' ? 'DEFINED' : 'UNDEFINED');
+console.log('  - getCachedData:', typeof getCachedData !== 'undefined' ? 'DEFINED' : 'UNDEFINED');
+
 // ============================================
 // DECRYPTION MODULE
 // ============================================
@@ -211,13 +241,28 @@ const progressFill = document.getElementById('progressFill');
 const pageThumbnails = document.getElementById('pageThumbnails');
 
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('✅ DOM Content Loaded');
     try {
+        console.log('🔧 Initializing protection...');
         initProtection();
+        console.log('✅ Protection initialized');
+        
+        console.log('🔧 Initializing reader...');
         await initializeReader();
+        console.log('✅ Reader initialized');
+        
+        console.log('🔧 Setting up event listeners...');
         setupEnhancedEventListeners();
+        console.log('✅ Event listeners set up');
+        
+        console.log('🔧 Initializing global login button...');
         initGlobalLoginButton(); // Setup redirect to info-manga
+        console.log('✅ Global login button initialized');
+        
+        console.log('🎉 All initialization complete!');
     } catch (error) {
-    if (DEBUG_MODE) console.error('❌ Fatal error during initialization:', error);
+        console.error('❌ Fatal error during initialization:', error);
+        console.error('Error stack:', error.stack);
         alert(`Terjadi kesalahan saat memuat reader:\n${error.message}\n\nSilakan refresh halaman atau kembali ke info.`);
         hideLoading();
     }
@@ -334,10 +379,12 @@ if (isValidated || isDonatur) {
 }
 
 async function loadMangaData(repo) {
+    console.log('📡 loadMangaData called with repo:', repo);
     try {
         // ✅ CHECK CACHE FIRST (5 minutes TTL)
         const cacheKey = `reader_manga_${repo}`;
         const cached = getCachedData(cacheKey, 300000, true); // 5 min, use sessionStorage
+        console.log('💾 Cache check:', cached ? 'HIT' : 'MISS');
         
         if (cached) {
             mangaData = cached.mangaData;
@@ -470,10 +517,76 @@ function setupUI() {
     
     document.title = `${mangaData.manga.title} - ${currentChapter.title}`;
 
-    // ✅ Update top navbar title and chapter
+    // ✅ Update top navbar card with manga info
     const mangaTitleTopElement = document.getElementById('mangaTitleTop');
     if (mangaTitleTopElement) {
         mangaTitleTopElement.textContent = mangaData.manga.title;
+    }
+    
+    // Update genres
+    const navCardGenresElement = document.getElementById('navCardGenres');
+    if (navCardGenresElement && mangaData.manga.genre) {
+        const genres = mangaData.manga.genre;
+        navCardGenresElement.textContent = genres.length > 0 ? genres.join(', ') : 'Genre not available';
+    }
+    
+    // Update status badge
+    const navStatusBadgeElement = document.getElementById('navStatusBadge');
+    if (navStatusBadgeElement && mangaData.manga.status) {
+        const status = mangaData.manga.status.toUpperCase();
+        navStatusBadgeElement.className = 'nav-status-badge';
+        
+        if (status === 'HIATUS') {
+            navStatusBadgeElement.classList.add('status-hiatus');
+            navStatusBadgeElement.textContent = 'Hiatus';
+        } else if (status === 'END' || status === 'COMPLETED' || status === 'TAMAT') {
+            navStatusBadgeElement.classList.add('status-completed');
+            navStatusBadgeElement.textContent = 'Tamat';
+        } else {
+            navStatusBadgeElement.classList.add('status-ongoing');
+            navStatusBadgeElement.textContent = 'Ongoing';
+        }
+    }
+    
+    // Update cover image
+    try {
+        console.log('📷 Starting cover image update...');
+        const navCardCoverElement = document.getElementById('navCardCover');
+        console.log('📷 Cover element found:', !!navCardCoverElement);
+        console.log('📷 MANGA_LIST defined:', typeof MANGA_LIST !== 'undefined');
+        
+        if (navCardCoverElement) {
+            // Get cover from MANGA_LIST (check if it's defined first)
+            if (typeof MANGA_LIST !== 'undefined') {
+                const urlParams = new URLSearchParams(window.location.search);
+                const repoId = urlParams.get('repo') || urlParams.get('manga');
+                console.log('📷 Looking for repo:', repoId);
+                
+                const mangaInfo = MANGA_LIST.find(m => m.id === repoId);
+                console.log('📷 Manga info found:', !!mangaInfo);
+                
+                if (mangaInfo) {
+                    console.log('📷 Cover URL:', mangaInfo.cover);
+                    if (mangaInfo.cover) {
+                        navCardCoverElement.src = mangaInfo.cover;
+                        navCardCoverElement.alt = `Cover ${mangaData.manga.title}`;
+                        console.log('✅ Cover image set successfully');
+                    } else {
+                        console.warn('⚠️ No cover URL in mangaInfo');
+                    }
+                } else {
+                    console.warn('⚠️ Manga info not found in MANGA_LIST for repo:', repoId);
+                    console.log('📷 Available repos in MANGA_LIST:', MANGA_LIST.map(m => m.id).join(', '));
+                }
+            } else {
+                console.error('❌ MANGA_LIST is not defined');
+            }
+        } else {
+            console.error('❌ navCardCover element not found in DOM');
+        }
+    } catch (coverError) {
+        console.error('❌ Error updating cover image:', coverError);
+        console.error('Stack:', coverError.stack);
     }
     
     const chapterTitleTopElement = document.getElementById('chapterTitleTop');
@@ -1958,15 +2071,48 @@ class ReaderComments {
         dLog('[READER-COMMENTS] Displaying', comments.length, 'comments');
         dLog('[READER-COMMENTS] First comment sample:', comments[0]);
         
-        listEl.innerHTML = comments.map(comment => this.renderComment(comment)).join('');
+        // Separate parent comments and replies
+        const parentComments = comments.filter(c => !c.parent_id);
+        const replies = comments.filter(c => c.parent_id);
+        
+        // Create a map of parent ID to replies
+        const repliesMap = {};
+        replies.forEach(reply => {
+            if (!repliesMap[reply.parent_id]) {
+                repliesMap[reply.parent_id] = [];
+            }
+            repliesMap[reply.parent_id].push(reply);
+        });
+        
+        // Sort replies by created_at ASC (oldest first) for each parent
+        Object.keys(repliesMap).forEach(parentId => {
+            repliesMap[parentId].sort((a, b) => 
+                new Date(a.created_at) - new Date(b.created_at)
+            );
+        });
+        
+        // Render parent comments with their replies
+        let html = '';
+        parentComments.forEach(parent => {
+            // Render parent comment
+            html += this.renderComment(parent, false);
+            
+            // Render replies (indented)
+            const parentReplies = repliesMap[parent.id] || [];
+            parentReplies.forEach(reply => {
+                html += this.renderComment(reply, true);
+            });
+        });
+        
+        listEl.innerHTML = html;
     }
 
-    renderComment(comment) {
+    renderComment(comment, isReply = false) {
         const token = localStorage.getItem('authToken');
         const isOwner = this.isLoggedIn && comment.user_id === this.getUserIdFromToken(token);
+        const canEdit = isOwner && !comment.is_edited; // Only show edit button if not edited yet
         
-        // Handle different date formats
-        const date = new Date(comment.created_at || comment.createdAt);
+        const date = new Date(comment.created_at);
         const formattedDate = date.toLocaleDateString('id-ID', {
             day: 'numeric',
             month: 'short',
@@ -1974,34 +2120,54 @@ class ReaderComments {
             hour: '2-digit',
             minute: '2-digit'
         });
-        
-        // Handle different username formats
-        const displayUsername = comment.username || comment.user?.username || 'Unknown User';
-        
-        // Handle different content formats
-        const content = comment.content || comment.text || '';
-        
-        // Get avatar URL with cache busting
+
+        // Add cache busting for avatar
         const baseAvatarUrl = comment.avatar_url || 'assets/Logo 2.png';
         const avatarUrl = baseAvatarUrl.includes('?') ? `${baseAvatarUrl}&t=${Date.now()}` : `${baseAvatarUrl}?t=${Date.now()}`;
         
-        // ✅ Security: Escape all dynamic data
-        const safeUsername = this.escapeHtml(displayUsername);
-        const safeContent = this.escapeHtml(content);
-        const safeCommentId = this.escapeHtml(String(comment.id || ''));
+        // Add CSS class and data attributes for threading
+        const commentClass = isReply ? 'comment-item comment-reply' : 'comment-item';
+        const parentIdAttr = comment.parent_id ? `data-parent-id="${comment.parent_id}"` : '';
 
         return `
-            <div class="comment-item" data-id="${safeCommentId}">
-                <img class="comment-avatar" src="${avatarUrl}" alt="${safeUsername}" onerror="this.src='assets/Logo 2.png'" />
-                <div class="comment-body">
+            <div class="${commentClass}" data-id="${comment.id}" ${parentIdAttr}>
+                <div class="comment-top-box">
+                    <img class="comment-avatar" src="${avatarUrl}" alt="${comment.username}" onerror="this.src='assets/Logo 2.png'" />
                     <div class="comment-header">
-                        <span class="comment-user">@${safeUsername}</span>
+                        <span class="comment-user">@${comment.username}</span>
                         <span class="comment-date">${formattedDate}</span>
                     </div>
-                    <div class="comment-content">${safeContent}</div>
+                </div>
+                <div class="comment-bottom-box">
+                    <div class="comment-content">${this.escapeHtml(comment.content)}</div>
                     <div class="comment-actions">
-                        ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${safeUsername}">Reply</button>` : ''}
-                        ${isOwner ? `<button class="btn-delete-comment" data-id="${safeCommentId}">Hapus</button>` : ''}
+                        ${this.isLoggedIn ? `
+                        <button class="btn-reply-comment" data-username="${comment.username}">
+                            <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 10H7a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-8a2 2 0 0 0 -2 -2h-2"></path>
+                                <path d="M12 3v9"></path>
+                                <path d="M9 9l3 -3l3 3"></path>
+                            </svg>
+                            Reply
+                        </button>` : ''}
+                        ${canEdit ? `
+                        <button class="btn-edit-comment" data-id="${comment.id}">
+                            <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Edit
+                        </button>` : ''}
+                        ${isOwner ? `
+                        <button class="btn-delete-comment" data-id="${comment.id}">
+                            <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            Hapus
+                        </button>` : ''}
                     </div>
                 </div>
             </div>
@@ -2076,19 +2242,49 @@ class ReaderComments {
             btnSubmitComment.addEventListener('click', () => this.submitComment());
         }
 
-        // Reply & Delete (event delegation)
+        // Reply, Edit & Delete (event delegation)
         const commentsList = document.getElementById('commentsList');
         if (commentsList) {
             commentsList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('btn-reply-comment')) {
-                    const username = e.target.dataset.username;
-                    this.replyToComment(username);
-                } else if (e.target.classList.contains('btn-delete-comment')) {
-                    const commentId = e.target.dataset.id;
+                // Use closest() to handle SVG children
+                const replyBtn = e.target.closest('.btn-reply-comment');
+                const editBtn = e.target.closest('.btn-edit-comment');
+                const deleteBtn = e.target.closest('.btn-delete-comment');
+                
+                if (replyBtn) {
+                    const username = replyBtn.dataset.username;
+                    const commentElement = replyBtn.closest('.comment-item');
+                    const commentId = commentElement?.dataset?.id;
+                    if (commentId) {
+                        this.replyToComment(username, commentId);
+                    }
+                } else if (editBtn) {
+                    const commentId = editBtn.dataset.id;
+                    this.editComment(commentId);
+                } else if (deleteBtn) {
+                    const commentId = deleteBtn.dataset.id;
                     this.deleteComment(commentId);
                 }
             });
         }
+    }
+
+    // Helper: Cleanup any active reply/edit/delete actions
+    cleanupActiveActions() {
+        // Remove all reply boxes
+        document.querySelectorAll('.comment-reply-box').forEach(box => box.remove());
+        
+        // Remove all delete confirmation boxes
+        document.querySelectorAll('.comment-delete-confirm').forEach(box => box.remove());
+        
+        // Restore all edit wrappers to original content
+        document.querySelectorAll('.comment-edit-wrapper').forEach(wrapper => {
+            const content = wrapper.querySelector('.comment-textarea').value;
+            const contentEl = document.createElement('div');
+            contentEl.className = 'comment-content';
+            contentEl.textContent = content;
+            wrapper.replaceWith(contentEl);
+        });
     }
 
     async submitComment() {
@@ -2149,37 +2345,321 @@ class ReaderComments {
         }
     }
 
-    replyToComment(username) {
-        const textarea = document.getElementById('commentTextarea');
-        if (textarea) {
-            textarea.value = `@${username} `;
-            textarea.focus();
-            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    async replyToComment(username, commentId) {
+        // Cleanup any active actions first (ensure only 1 action at a time)
+        this.cleanupActiveActions();
+        
+        // Find the comment element
+        const targetComment = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+        if (!targetComment) {
+            console.error('[REPLY] Target comment element not found!');
+            return;
         }
+        
+        // Get parent comment ID for threading
+        // If replying to a reply, use the original parent_id, not the reply's id
+        // This ensures all replies stay at same level (1-level threading)
+        const parentIdAttr = targetComment.dataset.parentId;
+        const parentId = parentIdAttr && parentIdAttr !== 'null' ? parentIdAttr : commentId;
+        
+        // Get user avatar - try to get from existing comment input avatar first
+        let userAvatarUrl = 'assets/Logo 2.png';
+        const existingAvatar = document.getElementById('commentInputAvatar');
+        
+        if (existingAvatar && existingAvatar.src && !existingAvatar.src.includes('Logo 2.png')) {
+            userAvatarUrl = existingAvatar.src;
+        } else {
+            // Otherwise fetch from API
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const response = await fetch('https://profile-worker.nuranantoadhien.workers.dev/profile/me', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        cache: 'no-store'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const avatarUrl = data.profile?.avatarUrl || data.profile?.avatar_url || data.avatar_url || data.avatarUrl;
+                        
+                        if (avatarUrl) {
+                            userAvatarUrl = avatarUrl.includes('?') 
+                                ? `${avatarUrl}&t=${Date.now()}` 
+                                : `${avatarUrl}?t=${Date.now()}`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('[REPLY-AVATAR] Failed to load user avatar:', error);
+                }
+            }
+        }
+        
+        // Create reply box
+        const replyBox = document.createElement('div');
+        replyBox.className = 'comment-reply-box';
+        replyBox.innerHTML = `
+            <div class="reply-box-header">
+                <span class="reply-to-label">Membalas @${username}</span>
+            </div>
+            <div class="comment-input-wrapper">
+                <img class="comment-avatar" src="${userAvatarUrl}" alt="Avatar" onerror="this.src='assets/Logo 2.png'" />
+                <div class="comment-input-content">
+                    <textarea 
+                        class="comment-textarea reply-textarea" 
+                        placeholder="Tulis balasan Anda... (max 500 karakter)"
+                        maxlength="500">@${username} </textarea>
+                    <div class="comment-input-footer">
+                        <span class="comment-char-count">
+                            <span class="reply-char-count">${username.length + 2}</span>/500
+                        </span>
+                        <div class="reply-actions">
+                            <button class="btn-send-reply">
+                                <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                                Kirim
+                            </button>
+                            <button class="btn-cancel-reply">
+                                <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Insert after the target comment
+        targetComment.insertAdjacentElement('afterend', replyBox);
+        
+        // Focus on textarea and set cursor at end
+        const textarea = replyBox.querySelector('.reply-textarea');
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        
+        // Character count
+        const charCountEl = replyBox.querySelector('.reply-char-count');
+        textarea.addEventListener('input', (e) => {
+            charCountEl.textContent = e.target.value.length;
+        });
+        
+        // Send reply button
+        const btnSend = replyBox.querySelector('.btn-send-reply');
+        btnSend.addEventListener('click', async () => {
+            const content = textarea.value.trim();
+            if (!content || content === `@${username}`) {
+                showToast('Balasan tidak boleh kosong', 'warning');
+                return;
+            }
+            
+            const finalContent = content.startsWith(`@${username}`) ? content : `@${username} ${content}`;
+            
+            const token = localStorage.getItem('authToken');
+            try {
+                const response = await fetch(`${this.API_BASE}/comments/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        mangaId: this.repo,
+                        chapterId: this.chapterId,
+                        content: finalContent,
+                        parentId: parentId
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Balasan berhasil dikirim!', 'success');
+                    replyBox.remove();
+                    await this.loadComments();
+                } else {
+                    showToast(data.error || 'Gagal mengirim balasan', 'error');
+                }
+            } catch (error) {
+                console.error('[READER-COMMENTS] Reply error:', error);
+                showToast('Terjadi kesalahan saat mengirim balasan', 'error');
+            }
+        });
+        
+        // Cancel button
+        const btnCancel = replyBox.querySelector('.btn-cancel-reply');
+        btnCancel.addEventListener('click', () => {
+            replyBox.remove();
+        });
+        
+        // Scroll into view
+        replyBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async editComment(commentId) {
+        // Cleanup any active actions first (ensure only 1 action at a time)
+        this.cleanupActiveActions();
+        
+        const commentEl = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+        if (!commentEl) return;
+
+        const contentEl = commentEl.querySelector('.comment-content');
+        const currentContent = contentEl.textContent.trim();
+
+        const editWrapper = document.createElement('div');
+        editWrapper.className = 'comment-edit-wrapper';
+        editWrapper.innerHTML = `
+            <textarea 
+                class="comment-textarea" 
+                maxlength="500">${currentContent}</textarea>
+            <div class="comment-input-footer">
+                <span class="comment-char-count">
+                    <span class="edit-char-count">${currentContent.length}</span>/500
+                </span>
+                <div class="reply-actions">
+                    <button class="btn-save-edit" data-id="${commentId}">
+                        <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Simpan
+                    </button>
+                    <button class="btn-cancel-edit">
+                        <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        Batal
+                    </button>
+                </div>
+            </div>
+        `;
+
+        contentEl.replaceWith(editWrapper);
+        
+        const editArea = editWrapper.querySelector('.comment-textarea');
+        editArea.focus();
+        
+        const charCountEl = editWrapper.querySelector('.edit-char-count');
+        editArea.addEventListener('input', (e) => {
+            charCountEl.textContent = e.target.value.length;
+        });
+
+        const btnSave = editWrapper.querySelector('.btn-save-edit');
+        btnSave.addEventListener('click', async () => {
+            const newContent = editArea.value.trim();
+            if (!newContent) {
+                showToast('Komentar tidak boleh kosong', 'warning');
+                return;
+            }
+
+            const token = localStorage.getItem('authToken');
+            try {
+                const response = await fetch(`${this.API_BASE}/comments/${commentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ content: newContent })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Komentar berhasil diupdate', 'success');
+                    await this.loadComments();
+                } else {
+                    showToast(data.error || 'Gagal mengupdate komentar', 'error');
+                }
+            } catch (error) {
+                console.error('[READER-COMMENTS] Edit error:', error);
+                showToast('Terjadi kesalahan saat mengupdate komentar', 'error');
+            }
+        });
+
+        const btnCancel = editWrapper.querySelector('.btn-cancel-edit');
+        btnCancel.addEventListener('click', () => {
+            const newContentEl = document.createElement('div');
+            newContentEl.className = 'comment-content';
+            newContentEl.textContent = currentContent;
+            editWrapper.replaceWith(newContentEl);
+        });
     }
 
     async deleteComment(commentId) {
-        if (!confirm('Yakin ingin menghapus komentar ini?')) return;
-
-        const token = localStorage.getItem('authToken');
-        try {
-            const response = await fetch(`${this.API_BASE}/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                showToast('Komentar berhasil dihapus', 'success');
-                await this.loadComments();
-            } else {
-                showToast(data.error || 'Gagal menghapus komentar', 'error');
-            }
-        } catch (error) {
-            if (DEBUG_MODE) console.error('[READER-COMMENTS] Delete error:', error);
-            showToast('Terjadi kesalahan saat menghapus komentar', 'error');
+        // Cleanup any active actions first (ensure only 1 action at a time)
+        this.cleanupActiveActions();
+        
+        const commentEl = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+        if (!commentEl) return;
+        
+        const confirmBox = document.createElement('div');
+        confirmBox.className = 'comment-delete-confirm';
+        confirmBox.innerHTML = `
+            <div class="delete-confirm-content">
+                <svg class="delete-warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span class="delete-confirm-text">Yakin ingin menghapus komentar ini?</span>
+            </div>
+            <div class="delete-confirm-actions">
+                <button class="btn-confirm-delete" data-id="${commentId}">
+                    <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Hapus
+                </button>
+                <button class="btn-cancel-delete">
+                    <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Batal
+                </button>
+            </div>
+        `;
+        
+        const contentEl = commentEl.querySelector('.comment-content');
+        if (contentEl) {
+            contentEl.after(confirmBox);
         }
+        
+        const btnConfirm = confirmBox.querySelector('.btn-confirm-delete');
+        btnConfirm.addEventListener('click', async () => {
+            const token = localStorage.getItem('authToken');
+            try {
+                const response = await fetch(`${this.API_BASE}/comments/${commentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Komentar berhasil dihapus', 'success');
+                    await this.loadComments();
+                } else {
+                    showToast(data.error || 'Gagal menghapus komentar', 'error');
+                }
+            } catch (error) {
+                console.error('[READER-COMMENTS] Delete error:', error);
+                showToast('Terjadi kesalahan saat menghapus komentar', 'error');
+            }
+        });
+        
+        const btnCancel = confirmBox.querySelector('.btn-cancel-delete');
+        btnCancel.addEventListener('click', () => {
+            confirmBox.remove();
+        });
+        
+        confirmBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }

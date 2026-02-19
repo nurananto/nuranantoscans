@@ -196,121 +196,78 @@ function formatViews(views) {
 }
 
 // ========================================
-// TOP 5 MOST VIEWED (24 HOURS)
+// TRENDING SECTION - TOP 5 MOST VIEWED (24 HOURS)
 // ========================================
 
 /**
- * Create Trending Card HTML
+ * Create Trending Card HTML (Landscape Layout)
  */
-function createTrendingCard(manga, mangaData, rank, views24h) {
-  // Use cover from manga-config.json (same as manga-list)
+function createTrendingCard(manga, mangaData, views24h) {
   const cdnUrls = getResponsiveCDN(manga.cover);
   
-  // ✅ Check if user is donatur setia (use cached status)
-  const isDonaturSetia = isDonaturFromDOM();
+  // Get manga details
+  const title = mangaData.manga?.title || manga.title || 'Unknown Title';
+  const genres = mangaData.manga?.genre || [];
+  const genresText = genres.length > 0 ? genres.join(', ') : 'Genre not available';
+  const synopsis = mangaData.manga?.description || 'Sinopsis tidak tersedia.';
+  const status = (mangaData.manga?.status || 'ONGOING').toUpperCase();
   
-  // ✅ Get NEWEST chapter from repo manga.json (compare dates between locked and unlocked)
-  let latestChapter = 'N/A';
-  let isLocked = false;
-  const unlockedDate = mangaData.latestUnlockedDate ? new Date(mangaData.latestUnlockedDate) : null;
-  const lockedDate = mangaData.latestLockedDate ? new Date(mangaData.latestLockedDate) : null;
-  
-  if (unlockedDate && lockedDate) {
-    // Compare dates, pick the newest
-    if (lockedDate > unlockedDate) {
-      latestChapter = mangaData.latestLockedChapter;
-      isLocked = true;
-    } else {
-      latestChapter = mangaData.latestUnlockedChapter;
-      isLocked = false;
-    }
-  } else if (lockedDate) {
-    latestChapter = mangaData.latestLockedChapter;
-    isLocked = true;
-  } else if (unlockedDate) {
-    latestChapter = mangaData.latestUnlockedChapter;
-    isLocked = false;
-  }
-  
-  const formattedChapter = formatChapter(latestChapter);
-  const formattedViews = formatViews(views24h);
-  
-  // Get manga type for badge
-  const mangaType = (manga.type || 'manga').toLowerCase();
-  const isWebtoon = mangaType === 'webtoon';
-  const isNovel = mangaType === 'novel';
-  
-  let typeBadgeText, typeBadgeClass;
-  if (isNovel) {
-    typeBadgeText = 'Novel';
-    typeBadgeClass = 'type-badge-novel';
-  } else if (isWebtoon) {
-    typeBadgeText = 'Colour';
-    typeBadgeClass = 'type-badge-colour';
-  } else {
-    typeBadgeText = 'B/W';
-    typeBadgeClass = 'type-badge-bw';
+  // Status badge class
+  let statusClass = 'status-ongoing';
+  let statusText = 'Ongoing';
+  if (status === 'HIATUS') {
+    statusClass = 'status-hiatus';
+    statusText = 'Hiatus';
+  } else if (status === 'COMPLETED' || status === 'TAMAT') {
+    statusClass = 'status-completed';
+    statusText = 'Tamat';
   }
   
   const card = document.createElement('div');
   card.className = 'trending-card';
   card.setAttribute('role', 'article');
-  card.setAttribute('tabindex', '0');
-  card.setAttribute('aria-label', `${escapeHTML(manga.title)} - Chapter ${formattedChapter} - ${formattedViews} views`);
+  card.setAttribute('aria-label', `${escapeHTML(title)} - ${statusText}`);
   
   card.innerHTML = `
-    <div class="trending-cover-wrapper">
-      <span class="trending-badge">
-        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-        TRENDING 24 JAM
-      </span>
-      <div class="type-badge ${escapeHTML(typeBadgeClass)}" aria-label="Type: ${escapeHTML(typeBadgeText)}">
-        <svg class="type-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-          <path d="M6.5 2v20"/>
-        </svg>
-        <span class="type-badge-text">${escapeHTML(typeBadgeText)}</span>
+    <div class="trending-card-left">
+      <div class="trending-badges-container">
+        <span class="trending-status-badge ${statusClass}">${statusText}</span>
+        <div class="trending-24h-badge">
+          <svg class="trending-24h-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          TRENDING
+        </div>
       </div>
+      <h3 class="trending-card-title">${escapeHTML(title)}</h3>
+      <div class="trending-card-genres">${escapeHTML(genresText)}</div>
+      <div class="trending-card-synopsis-label">Sinopsis</div>
+      <p class="trending-card-synopsis">${escapeHTML(synopsis)}</p>
+    </div>
+    <div class="trending-card-right">
       <img 
         src="${escapeHTML(cdnUrls.medium)}" 
-        srcset="${escapeHTML(cdnUrls.small)} 500w, ${escapeHTML(cdnUrls.medium)} 700w, ${escapeHTML(cdnUrls.large)} 900w"
-        sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, 20vw"
-        alt="Cover ${escapeHTML(manga.title)}" 
-        class="trending-cover"
-        loading="lazy"
+        srcset="${escapeHTML(cdnUrls.small)} 500w, ${escapeHTML(cdnUrls.medium)} 700w"
+        sizes="(max-width: 768px) 200px, 180px"
+        alt="Cover ${escapeHTML(title)}" 
+        class="trending-card-cover"
+        loading="eager"
       />
-    </div>
-    <div class="trending-title">${escapeHTML(manga.title)}</div>
-    <div class="trending-info-bar">
-      <span class="trending-chapter">
-        ${isLocked ? (isDonaturSetia ? '🔓 ' : '🔒 ') : ''}${formattedChapter === 'Oneshot' ? 'Oneshot' : 'Ch. ' + escapeHTML(formattedChapter)}
-      </span>
-      <span class="trending-views">
-        <svg class="view-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-        ${escapeHTML(formattedViews)}
-      </span>
     </div>
   `;
   
-  card.addEventListener('click', () => {
+  // Click handler for card (not button) - with drag prevention
+  card.addEventListener('click', (e) => {
+    // Ignore if clicking on button or anchor
+    if (e.target.closest('.trending-view-more')) return;
+    
+    // Check if this was a drag action
+    const container = document.getElementById('trendingContainer');
+    if (container && container.classList.contains('is-dragging')) return;
+    
     if (validateRepoParam(manga.id)) {
       window.location.href = `info-manga.html?repo=${encodeURIComponent(manga.id)}`;
-    }
-  });
-  
-  card.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      if (validateRepoParam(manga.id)) {
-        window.location.href = `info-manga.html?repo=${encodeURIComponent(manga.id)}`;
-      }
     }
   });
   
@@ -318,25 +275,27 @@ function createTrendingCard(manga, mangaData, rank, views24h) {
 }
 
 /**
- * Render Trending Most Viewed (24 hours)
+ * Render Trending - Top 5 Most Viewed (24 hours)
  */
 async function renderTrending(mangaList) {
   const container = document.getElementById('trendingContainer');
   if (!container) return;
   
   try {
+    // Show loading
+    container.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">Memuat trending...</p>';
+    
     // Fetch all manga data with 24h views
     const mangaWithData = await Promise.all(
       mangaList.map(async (manga) => {
         try {
           const mangaData = await fetchMangaData(manga.repo);
-          // ✅ Calculate views from daily-views.json (same as manga-list)
           const views24h = await calculate24HourViews(manga.repo) || 0;
           const lastUpdate = mangaData.lastChapterUpdate ? new Date(mangaData.lastChapterUpdate) : new Date(0);
           return { manga, mangaData, views24h, lastUpdate };
         } catch (error) {
           console.error(`Error fetching data for ${manga.repo}:`, error);
-          return { manga, mangaData: {}, views24h: 0, lastUpdate: new Date(0) };
+          return { manga, mangaData: { manga: {} }, views24h: 0, lastUpdate: new Date(0) };
         }
       })
     );
@@ -346,15 +305,15 @@ async function renderTrending(mangaList) {
     
     let trending;
     if (hasViewsData) {
-      // Sort by 24h views (descending) and take top 7
+      // Sort by 24h views (descending) and take top 5
       trending = mangaWithData
         .sort((a, b) => b.views24h - a.views24h)
-        .slice(0, 7);
+        .slice(0, 5);
     } else {
       // Fallback: Sort by latest chapter update
       trending = mangaWithData
         .sort((a, b) => b.lastUpdate - a.lastUpdate)
-        .slice(0, 7);
+        .slice(0, 5);
     }
     
     // Clear container
@@ -362,19 +321,69 @@ async function renderTrending(mangaList) {
     
     // Render cards
     const fragment = document.createDocumentFragment();
-    trending.forEach((item, index) => {
-      const card = createTrendingCard(item.manga, item.mangaData, index + 1, item.views24h);
+    trending.forEach((item) => {
+      const card = createTrendingCard(item.manga, item.mangaData, item.views24h);
       fragment.appendChild(card);
     });
     
     container.appendChild(fragment);
+    
+    // Generate pagination dots
+    updateTrendingDots(trending.length);
     
     // Enable drag scroll
     enableTrendingMouseDrag();
     
   } catch (error) {
     console.error('Error rendering Trending:', error);
-    container.innerHTML = '<p style="text-align: center; color: #888;">Gagal memuat trending</p>';
+    container.innerHTML = '<p style="text-align: center; color: #dc2626; padding: 2rem;">Gagal memuat trending</p>';
+  }
+}
+
+/**
+ * Update Trending Pagination Dots
+ */
+function updateTrendingDots(totalCards) {
+  const dotsContainer = document.getElementById('trendingDots');
+  if (!dotsContainer) return;
+  
+  dotsContainer.innerHTML = '';
+  
+  for (let i = 0; i < totalCards; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'trending-dot';
+    if (i === 0) dot.classList.add('active');
+    
+    dot.addEventListener('click', () => {
+      const container = document.getElementById('trendingContainer');
+      if (container) {
+        const cardWidth = container.scrollWidth / totalCards;
+        container.scrollTo({
+          left: cardWidth * i,
+          behavior: 'smooth'
+        });
+      }
+    });
+    
+    dotsContainer.appendChild(dot);
+  }
+  
+  // Listen to scroll to update active dot
+  const container = document.getElementById('trendingContainer');
+  if (container) {
+    container.addEventListener('scroll', () => {
+      const cardWidth = container.scrollWidth / totalCards;
+      const currentIndex = Math.round(container.scrollLeft / cardWidth);
+      
+      const dots = dotsContainer.querySelectorAll('.trending-dot');
+      dots.forEach((dot, index) => {
+        if (index === currentIndex) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    });
   }
 }
 
@@ -388,34 +397,106 @@ function enableTrendingMouseDrag() {
   let isDown = false;
   let startX;
   let scrollLeft;
+  let hasMoved = false;
   
   container.addEventListener('mousedown', (e) => {
-    if (e.target.closest('.trending-card')) {
-      isDown = true;
-      container.classList.add('is-dragging');
-      startX = e.pageX - container.offsetLeft;
-      scrollLeft = container.scrollLeft;
-    }
+    // Prevent default to avoid text selection and image drag
+    e.preventDefault();
+    isDown = true;
+    hasMoved = false;
+    container.style.cursor = 'grabbing';
+    // Don't add is-dragging immediately - wait for actual movement
+    startX = e.pageX - container.offsetLeft;
+    scrollLeft = container.scrollLeft;
   });
   
   container.addEventListener('mouseleave', () => {
     isDown = false;
+    container.style.cursor = 'grab';
     container.classList.remove('is-dragging');
   });
   
   container.addEventListener('mouseup', () => {
     isDown = false;
-    container.classList.remove('is-dragging');
+    container.style.cursor = 'grab';
+    
+    // If no movement, remove is-dragging immediately
+    if (!hasMoved) {
+      container.classList.remove('is-dragging');
+      return;
+    }
+    
+    // Snap to nearest card after drag
+    const cards = container.querySelectorAll('.trending-card');
+    const containerWidth = container.offsetWidth;
+    const currentScroll = container.scrollLeft;
+    const nearestCardIndex = Math.round(currentScroll / containerWidth);
+    
+    container.scrollTo({
+      left: nearestCardIndex * containerWidth,
+      behavior: 'smooth'
+    });
+    
+    // Remove is-dragging after a short delay to prevent click
+    setTimeout(() => {
+      container.classList.remove('is-dragging');
+      setTimeout(() => {
+        hasMoved = false;
+      }, 50);
+    }, 50);
   });
   
   container.addEventListener('mousemove', (e) => {
     if (!isDown) return;
     e.preventDefault();
+    
     const x = e.pageX - container.offsetLeft;
-    const walk = (x - startX) * 2;
-    container.scrollLeft = scrollLeft - walk;
+    const moved = Math.abs(x - startX);
+    
+    // Lower threshold for better responsiveness
+    if (moved > 2) {
+      if (!hasMoved) {
+        // First movement detected - now we're dragging
+        hasMoved = true;
+        container.classList.add('is-dragging');
+      }
+      const walk = (x - startX) * 1.5;
+      container.scrollLeft = scrollLeft - walk;
+    }
+  });
+  
+  // Prevent click if dragged
+  container.addEventListener('click', (e) => {
+    if (hasMoved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+  
+  // Snap to nearest card on scroll end
+  let scrollTimeout;
+  container.addEventListener('scroll', () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const containerWidth = container.offsetWidth;
+      const currentScroll = container.scrollLeft;
+      const nearestCardIndex = Math.round(currentScroll / containerWidth);
+      
+      // Only snap if not already at the right position
+      const targetScroll = nearestCardIndex * containerWidth;
+      if (Math.abs(currentScroll - targetScroll) > 5) {
+        container.scrollTo({
+          left: targetScroll,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   });
 }
+
+// ========================================
+// TOP 5 MOST VIEWED (24 HOURS)
+// ========================================
 
 function createCard(manga, mangaData, index = 0) {
   const isRecent = isRecentlyUpdated(mangaData.lastChapterUpdate);
@@ -637,8 +718,6 @@ function renderPagination(mangaWithData) {
   const mangaGrid = document.getElementById("mangaGrid");
   const paginationControls = document.getElementById("paginationControls");
   const paginationDots = document.getElementById("paginationDots");
-  const prevBtn = document.getElementById("prevPage");
-  const nextBtn = document.getElementById("nextPage");
   
   const itemsPerPage = getItemsPerPage();
   const totalPages = Math.ceil(mangaWithData.length / itemsPerPage);
@@ -722,75 +801,29 @@ function scrollToPage(pageIndex) {
 }
 
 /**
- * Update pagination UI
+ * Update pagination UI with circular dots
  */
 function updatePaginationUI() {
   const itemsPerPage = getItemsPerPage();
   const totalPages = Math.ceil(currentMangaData.length / itemsPerPage);
-  const prevBtn = document.getElementById("prevPage");
-  const nextBtn = document.getElementById("nextPage");
-  
-  // Re-render page numbers
   const paginationDots = document.getElementById("paginationDots");
+  
+  if (!paginationDots) return;
+  
+  // Clear existing dots
   paginationDots.innerHTML = '';
   
-  const createPageBtn = (pageNum) => {
-    const btn = document.createElement('button');
-    btn.className = 'pagination-dot';
-    btn.textContent = pageNum + 1;
-    if (pageNum === currentPage) btn.classList.add('active');
-    btn.setAttribute('aria-label', `Page ${pageNum + 1}`);
-    btn.addEventListener('click', () => goToPage(pageNum));
-    return btn;
-  };
-  
-  const createEllipsis = () => {
-    const ellipsis = document.createElement('span');
-    ellipsis.className = 'pagination-ellipsis';
-    ellipsis.textContent = '•••';
-    return ellipsis;
-  };
-  
-  // Show max 5 buttons to prevent wrapping on mobile
-  if (totalPages <= 5) {
-    // Show all pages if 5 or less
-    for (let i = 0; i < totalPages; i++) {
-      paginationDots.appendChild(createPageBtn(i));
-    }
-  } else {
-    // Always show first page
-    paginationDots.appendChild(createPageBtn(0));
+  // Create circular dots for each page
+  for (let i = 0; i < totalPages; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'pagination-dot';
+    if (i === currentPage) dot.classList.add('active');
     
-    // Show ellipsis if there's gap between first and current area
-    if (currentPage > 2) {
-      paginationDots.appendChild(createEllipsis());
-    }
+    // Click to navigate to page
+    dot.addEventListener('click', () => goToPage(i));
     
-    // Show current page and one neighbor (if not at edges)
-    if (currentPage > 1 && currentPage < totalPages - 2) {
-      // Middle: show current only
-      paginationDots.appendChild(createPageBtn(currentPage));
-    } else if (currentPage <= 1) {
-      // Near start: show page 1
-      if (totalPages > 1) {
-        paginationDots.appendChild(createPageBtn(1));
-      }
-    } else {
-      // Near end: show second-to-last
-      paginationDots.appendChild(createPageBtn(totalPages - 2));
-    }
-    
-    // Show ellipsis if there's gap between current area and last
-    if (currentPage < totalPages - 3) {
-      paginationDots.appendChild(createEllipsis());
-    }
-    
-    // Always show last page
-    paginationDots.appendChild(createPageBtn(totalPages - 1));
+    paginationDots.appendChild(dot);
   }
-  
-  prevBtn.disabled = currentPage === 0;
-  nextBtn.disabled = currentPage === totalPages - 1;
   
   // Scroll to current page
   scrollToPage(currentPage);
@@ -801,12 +834,6 @@ function updatePaginationUI() {
  */
 function setupPaginationListeners() {
   const mangaGrid = document.getElementById("mangaGrid");
-  const prevBtn = document.getElementById("prevPage");
-  const nextBtn = document.getElementById("nextPage");
-  
-  // Prev/Next buttons
-  prevBtn.addEventListener('click', () => goToPage(currentPage - 1));
-  nextBtn.addEventListener('click', () => goToPage(currentPage + 1));
   
   // Scroll detection for updating active dot
   let scrollTimeout;
@@ -1018,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', function() {
   setupSearchAccessibility();
   setupPaginationListeners(); // ✅ Setup pagination
   
-  // Render Trending
+  // Render trending section
   renderTrending(mangaList);
   
   // Render manga list

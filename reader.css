@@ -7,8 +7,8 @@
 :root {
     --primary-bg: #0a0a0a;
     --secondary-bg: #18191a;
-    --accent-color: #1877f2;
-    --accent-hover: #0a5bd6;
+    --accent-color: #6b7280;
+    --accent-hover: #9ca3af;
     --text-color: #e4e6eb;
     --text-secondary: #b0b3b8;
     --border-color: #3a3b3c;
@@ -121,7 +121,7 @@ img {
 }
 
 .nav-btn {
-    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%) !important;
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
     color: #ffffff !important;
     border: 3px solid rgba(255, 255, 255, 0.3) !important;
     padding: 0.6rem 1.2rem;
@@ -138,7 +138,7 @@ img {
     white-space: nowrap;
     box-sizing: border-box;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(55, 65, 81, 0.4) !important;
     letter-spacing: 0.3px;
 }
 
@@ -148,18 +148,18 @@ img {
 }
 
 .nav-btn:hover {
-    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%) !important;
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
     color: #ffffff !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6) !important;
+    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.6) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* ✅ Hover effects untuk tombol di navbar-top */
 .navbar-top .nav-btn:hover {
-    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%) !important;
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6) !important;
+    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.6) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
@@ -229,13 +229,115 @@ img {
 
 /* ✅ Hover effects untuk tombol di navbar-bottom */
 .navbar-bottom .nav-btn:hover {
-    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%) !important;
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6) !important;
+    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.6) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-/* Tombol judul panjang */
+/* Navbar Title Card - Trending-like Layout */
+.nav-title-card {
+    width: 100%;
+    display: flex;
+    gap: 1rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.nav-title-card:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.nav-card-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.nav-card-badges {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 0.3rem;
+}
+
+.nav-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+.nav-status-badge.status-ongoing {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+}
+
+.nav-status-badge.status-hiatus {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+}
+
+.nav-status-badge.status-completed {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: #fff;
+}
+
+.nav-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.nav-card-genres {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-card-right {
+    flex-shrink: 0;
+    width: 80px;
+    aspect-ratio: 3 / 4.2;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-card-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.nav-title-card:hover .nav-card-cover {
+    transform: scale(1.05);
+}
+
+/* Old nav-title-btn - kept for backwards compatibility if needed */
 .nav-title-btn {
     width: 100%;
     font-size: 1.2rem;
@@ -251,22 +353,22 @@ img {
     justify-content: center;
     margin: 0;
     /* ✅ Biru full gradient dengan border putih tebal */
-    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%) !important;
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
     color: #ffffff !important;
     border: 3px solid rgba(255, 255, 255, 0.3) !important;
     border-radius: 12px !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(55, 65, 81, 0.4) !important;
     font-weight: 600 !important;
     letter-spacing: 0.3px !important;
 }
 
 .nav-title-btn:hover {
-    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%) !important;
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
     border-color: rgba(255, 255, 255, 0.5) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6) !important;
+    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.6) !important;
 }
 
 /* Ensure span inside button also has ellipsis */
@@ -320,7 +422,7 @@ img {
     cursor: not-allowed !important;
     pointer-events: none !important;
     background: #0a0a0a !important;
-    border-color: rgba(77, 208, 225, 0.3) !important;
+    border-color: rgba(156, 163, 175, 0.3) !important;
     box-shadow: none !important;
 }
 
@@ -387,6 +489,23 @@ img {
         text-overflow: ellipsis;
     }
 
+    .nav-title-card {
+        gap: 0.75rem;
+        padding: 0.75rem;
+    }
+
+    .nav-card-title {
+        font-size: 1rem;
+    }
+
+    .nav-card-genres {
+        font-size: 0.7rem;
+    }
+
+    .nav-card-right {
+        width: 70px;
+    }
+
     .nav-buttons-row {
         gap: 0.2rem;
     }
@@ -433,6 +552,23 @@ img {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .nav-title-card {
+        gap: 0.6rem;
+        padding: 0.6rem;
+    }
+
+    .nav-card-title {
+        font-size: 0.9rem;
+    }
+
+    .nav-card-genres {
+        font-size: 0.65rem;
+    }
+
+    .nav-card-right {
+        width: 60px;
     }
 
     .nav-buttons-row {
@@ -569,7 +705,7 @@ img {
 }
 
 .next-chapter-btn {
-    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
     color: white;
     border: none;
     padding: 1.2rem 2.5rem;
@@ -582,7 +718,7 @@ img {
     justify-content: center;
     gap: 0.8rem;
     transition: all 0.3s ease;
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.5);
+    box-shadow: 0 6px 20px rgba(55, 65, 81, 0.5);
     width: 100%;
     max-width: 1200px;
     position: relative;
@@ -592,9 +728,9 @@ img {
 }
 
 .next-chapter-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%);
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 10px 30px rgba(24, 119, 242, 0.7);
+    box-shadow: 0 10px 30px rgba(75, 85, 99, 0.7);
 }
 
 .next-chapter-btn:disabled {
@@ -637,10 +773,10 @@ img {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #1877f2 0%, #0a5bd6 100%);
+    background: linear-gradient(90deg, #6b7280 0%, #9ca3af 100%);
     width: 0%;
     transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(24, 119, 242, 0.6);
+    box-shadow: 0 0 10px rgba(107, 114, 128, 0.6);
     border-radius: 10px;
 }
 
@@ -723,7 +859,7 @@ img {
 .page-thumb-item:hover {
     transform: translateY(-5px);
     border-color: var(--accent-color);
-    box-shadow: 0 8px 20px rgba(24, 119, 242, 0.4);
+    box-shadow: 0 8px 20px rgba(107, 114, 128, 0.4);
 }
 
 .page-thumb-item.active {
@@ -843,7 +979,7 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
   color: white;
   font-size: 9px;
   font-weight: 700;
@@ -853,7 +989,7 @@ img {
   border-radius: 4px;
   white-space: nowrap;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(24, 119, 242, 0.3);
+  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
   line-height: 1;
 }
 
@@ -962,11 +1098,11 @@ img {
 }
 
 .chapter-item-modal:hover {
-    background-color: rgba(77, 208, 225, 0.1);
+    background-color: rgba(156, 163, 175, 0.1);
 }
 
 .chapter-item-modal.active {
-    background-color: rgba(77, 208, 225, 0.2);
+    background-color: rgba(156, 163, 175, 0.2);
     border-left: 4px solid var(--accent-color);
 }
 
@@ -1008,12 +1144,12 @@ img {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
 }
 
 .back-to-info-btn-large:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
+    box-shadow: 0 6px 20px rgba(107, 114, 128, 0.6);
 }
 
 .back-to-info-btn-half {
@@ -1031,7 +1167,7 @@ img {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.4);
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.4);
     height: 100%; /* ✅ Pastikan tinggi sama dengan container */
     min-height: 60px; /* ✅ Minimum height untuk konsistensi di desktop */
     box-sizing: border-box; /* ✅ Pastikan padding tidak mempengaruhi tinggi */
@@ -1039,7 +1175,7 @@ img {
 
 .back-to-info-btn-half:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(24, 119, 242, 0.6);
+    box-shadow: 0 6px 20px rgba(107, 114, 128, 0.6);
 }
 
 .trakteer-btn-half {
@@ -1296,16 +1432,16 @@ img {
 }
 
 .login-required-btn-primary {
-    background: #1877f2;
+    background: #6b7280;
     color: #fff;
-    box-shadow: 0 0 25px rgba(24, 119, 242, 0.8), 0 4px 15px rgba(24, 119, 242, 0.6);
+    box-shadow: 0 0 25px rgba(107, 114, 128, 0.8), 0 4px 15px rgba(107, 114, 128, 0.6);
     white-space: nowrap;
 }
 
 .login-required-btn-primary:hover {
-    background: #166fe5;
+    background: #4b5563;
     transform: translateY(-2px);
-    box-shadow: 0 0 35px rgba(24, 119, 242, 1), 0 6px 20px rgba(24, 119, 242, 0.8);
+    box-shadow: 0 0 35px rgba(107, 114, 128, 1), 0 6px 20px rgba(107, 114, 128, 0.8);
 }
 
 .login-required-btn-trakteer {
@@ -1650,8 +1786,8 @@ img {
 }
 
 .code-modal-header {
-    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
-    border-bottom: 2px solid #0052a3;
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    border-bottom: 2px solid #111827;
     text-align: center;
     justify-content: center;
     border-radius: 16px 16px 0 0;
@@ -1700,9 +1836,9 @@ img {
 
 .code-input:focus {
     outline: none;
-    border-color: #1877f2;
+    border-color: #9ca3af;
     background: #333333;
-    box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.2);
+    box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.2);
 }
 
 .code-input::placeholder {
@@ -1780,14 +1916,14 @@ img {
 }
 
 .code-btn-submit {
-    background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
     color: white;
 }
 
 .code-btn-submit:hover:not(:disabled) {
-    background: linear-gradient(135deg, #0a5bd6 0%, #1877f2 100%);
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.5);
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.5);
 }
 
 .code-btn-submit:disabled {
@@ -1944,7 +2080,7 @@ img {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(77, 208, 225, 0.1);
+    background: rgba(156, 163, 175, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.3);
     color: #ffffff;
     padding: 10px 20px;
@@ -1959,7 +2095,7 @@ img {
 }
 
 .btn-login-comment:hover {
-    background: rgba(77, 208, 225, 0.2);
+    background: rgba(156, 163, 175, 0.2);
     border-color: rgba(255, 255, 255, 0.5);
     transform: translateY(-2px);
 }
@@ -1992,7 +2128,7 @@ img {
     object-fit: cover;
     flex-shrink: 0;
     background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(77, 208, 225, 0.3);
+    border: 2px solid rgba(156, 163, 175, 0.3);
 }
 
 .comment-input-content {
@@ -2015,7 +2151,7 @@ img {
 
 .comment-textarea:focus {
     outline: none;
-    border-color: rgba(77, 208, 225, 0.5);
+    border-color: rgba(156, 163, 175, 0.5);
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -2031,7 +2167,7 @@ img {
 }
 
 .btn-submit-comment {
-    background: linear-gradient(135deg, #4dd0e1, #26c6da);
+    background: linear-gradient(135deg, #d1d5db, #9ca3af);
     color: #0a0a0a;
     border: none;
     padding: 10px 24px;
@@ -2044,7 +2180,7 @@ img {
 
 .btn-submit-comment:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(77, 208, 225, 0.3);
+    box-shadow: 0 4px 12px rgba(156, 163, 175, 0.3);
 }
 
 /* Comments List */
@@ -2054,14 +2190,184 @@ img {
     gap: 16px;
 }
 
+/* Reply Box (Inline) */
+.comment-reply-box {
+    background: rgba(156, 163, 175, 0.05);
+    border: 1px solid rgba(156, 163, 175, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    margin-left: 40px;
+}
+
+/* Edit Wrapper (Inline) */
+.comment-edit-wrapper {
+    background: rgba(255, 165, 0, 0.05);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.comment-edit-wrapper .comment-textarea {
+    margin-bottom: 8px;
+}
+
+.comment-edit-wrapper .btn-save-edit,
+.comment-edit-wrapper .btn-cancel-edit {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    min-height: 28px;
+    line-height: 1;
+    width: auto;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.comment-edit-wrapper .comment-action-icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* Delete Confirmation (Inline) */
+.comment-delete-confirm {
+    background: rgba(220, 38, 38, 0.05);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.delete-confirm-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.delete-warning-icon {
+    width: 24px;
+    height: 24px;
+    color: #dc2626;
+    flex-shrink: 0;
+}
+
+.delete-confirm-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.delete-confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.btn-confirm-delete,
+.btn-cancel-delete {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: auto;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    min-height: 28px;
+    border: 1px solid;
+}
+
+.btn-confirm-delete {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: rgba(220, 38, 38, 0.4);
+    color: #ef4444;
+}
+
+.btn-confirm-delete:hover {
+    background: rgba(220, 38, 38, 0.2);
+    border-color: rgba(220, 38, 38, 0.6);
+    color: #dc2626;
+}
+
+.btn-cancel-delete {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-cancel-delete:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.btn-confirm-delete .comment-action-icon,
+.btn-cancel-delete .comment-action-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.reply-box-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(156, 163, 175, 0.2);
+}
+
+.reply-to-label {
+    color: #9ca3af;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.reply-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .comment-item {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    padding: 16px;
+    padding: 0;
     display: flex;
-    gap: 12px;
-    align-items: flex-start;
+    flex-direction: column;
+}
+
+/* Threaded replies - 1 level indent */
+.comment-reply {
+    margin-left: 40px;
+    margin-top: 8px;
+    border-left: 2px solid rgba(156, 163, 175, 0.3);
+}
+
+.comment-top-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px 8px 0 0;
+}
+
+.comment-bottom-box {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .comment-body {
@@ -2071,20 +2377,21 @@ img {
 
 .comment-header {
     display: flex;
-    justify-content: space-between;
+    gap: 12px;
     align-items: center;
-    margin-bottom: 8px;
+    flex: 1;
 }
 
 .comment-user {
     font-weight: 600;
-    color: #4dd0e1;
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 13px;
 }
 
 .comment-date {
-    font-size: 12px;
+    font-size: 11px;
     color: rgba(255, 255, 255, 0.4);
+    margin-left: auto;
 }
 
 .comment-content {
@@ -2095,33 +2402,103 @@ img {
 }
 
 .comment-actions {
-    display: flex;
+    display: flex !important;
     gap: 12px;
-    margin-top: 12px;
+    margin-top: 0;
+    justify-content: flex-end;
+    align-items: center;
 }
 
+.btn-edit-comment,
 .btn-reply-comment,
 .btn-delete-comment {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.7);
-    padding: 6px 12px;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 6px 13px;
     border-radius: 4px;
     font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    min-height: 28px;
+    box-sizing: border-box;
+}
+
+.comment-action-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.btn-save-edit,
+.btn-cancel-edit,
+.btn-send-reply,
+.btn-cancel-reply {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.3s ease;
+    width: auto;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    min-height: 28px;
 }
 
-.btn-reply-comment:hover {
-    background: rgba(77, 208, 225, 0.1);
-    border-color: #4dd0e1;
-    color: #4dd0e1;
+.btn-save-edit .comment-action-icon,
+.btn-cancel-edit .comment-action-icon,
+.btn-send-reply .comment-action-icon,
+.btn-cancel-reply .comment-action-icon {
+    width: 14px;
+    height: 14px;
 }
 
+.btn-save-edit,
+.btn-send-reply {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.btn-save-edit:hover,
+.btn-send-reply:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+}
+
+.btn-cancel-edit,
+.btn-cancel-reply {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-cancel-edit:hover,
+.btn-cancel-reply:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.btn-edit-comment:hover,
+.btn-reply-comment:hover,
 .btn-delete-comment:hover {
-    background: rgba(220, 20, 60, 0.1);
-    border-color: #dc143c;
-    color: #dc143c;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .comment-placeholder {
@@ -2136,7 +2513,189 @@ img {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+    .btn-edit-comment,
+    .btn-reply-comment,
+    .btn-delete-comment {
+        padding: 4px 11px;
+        font-size: 11px;
+        gap: 3px;
+        min-height: 24px;
+    }
+    
+    .comment-action-icon {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .btn-save-edit,
+    .btn-cancel-edit,
+    .btn-send-reply,
+    .btn-cancel-reply {
+        padding: 4px 11px;
+        font-size: 11px;
+        min-height: 24px;
+        gap: 3px;
+    }
+    
+    .btn-save-edit .comment-action-icon,
+    .btn-cancel-edit .comment-action-icon,
+    .btn-send-reply .comment-action-icon,
+    .btn-cancel-reply .comment-action-icon {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .btn-confirm-delete,
+    .btn-cancel-delete {
+        padding: 4px 11px;
+        font-size: 11px;
+        min-height: 24px;
+        gap: 3px;
+    }
+    
+    .btn-confirm-delete .comment-action-icon,
+    .btn-cancel-delete .comment-action-icon {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .reply-box-header {
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+    }
+    
+    .reply-to-label {
+        font-size: 12px;
+    }
+    
+    .comment-reply {
+        margin-left: 30px;
+    }
+}
+
 @media (max-width: 768px) {
+    .btn-edit-comment,
+    .btn-reply-comment,
+    .btn-delete-comment {
+        padding: 3px 9px;
+        font-size: 10px;
+        gap: 2px;
+        min-height: 22px;
+    }
+    
+    .comment-action-icon {
+        width: 11px;
+        height: 11px;
+    }
+    
+    .comment-actions {
+        gap: 8px;
+    }
+    
+    .comment-top-box {
+        padding: 8px 10px;
+    }
+    
+    .comment-bottom-box {
+        padding: 10px;
+        gap: 6px;
+    }
+    
+    .btn-save-edit,
+    .btn-cancel-edit,
+    .btn-send-reply,
+    .btn-cancel-reply {
+        padding: 2px 8px;
+        font-size: 10px;
+        gap: 2px;
+        min-height: 22px;
+    }
+    
+    .btn-save-edit .comment-action-icon,
+    .btn-cancel-edit .comment-action-icon,
+    .btn-send-reply .comment-action-icon,
+    .btn-cancel-reply .comment-action-icon {
+        width: 11px;
+        height: 11px;
+    }
+    
+    .btn-submit-comment {
+        padding: 3px 9px;
+        font-size: 10px;
+        min-height: 22px;
+    }
+    
+    .comment-reply-box {
+        padding: 8px;
+        margin-left: 20px;
+        margin-top: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .comment-edit-wrapper {
+        padding: 8px;
+    }
+    
+    .comment-edit-wrapper .btn-save-edit,
+    .comment-edit-wrapper .btn-cancel-edit {
+        padding: 2px 8px;
+        font-size: 10px;
+        min-height: 22px;
+        gap: 2px;
+        width: auto;
+    }
+    
+    .comment-edit-wrapper .comment-action-icon {
+        width: 11px;
+        height: 11px;
+    }
+    
+    .comment-delete-confirm {
+        padding: 8px;
+    }
+    
+    .delete-confirm-content {
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+    }
+    
+    .delete-warning-icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .delete-confirm-text {
+        font-size: 11px;
+    }
+    
+    .btn-confirm-delete,
+    .btn-cancel-delete {
+        padding: 2px 8px;
+        font-size: 10px;
+        min-height: 22px;
+        gap: 2px;
+    }
+    
+    .btn-confirm-delete .comment-action-icon,
+    .btn-cancel-delete .comment-action-icon {
+        width: 11px;
+        height: 11px;
+    }
+    
+    .reply-box-header {
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+    }
+    
+    .reply-to-label {
+        font-size: 11px;
+    }
+    
+    .comment-reply {
+        margin-left: 20px;
+    }
+    
     .comment-container {
         margin: 20px 10px;
         padding: 16px;
@@ -2166,6 +2725,14 @@ img {
     .btn-submit-comment {
         padding: 8px 16px;
         font-size: 13px;
+    }
+    
+    .comment-reply {
+        margin-left: 10px;
+    }
+    
+    .comment-reply-box {
+        margin-left: 10px;
     }
 }
 

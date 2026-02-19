@@ -529,7 +529,7 @@ function updateMangaConfigJs(updatedMangaList) {
         `    id: '${manga.id}',\n` +
         `    title: '${manga.title.replace(/'/g, "\\'")}',\n` +
         `    cover: '${manga.cover}',\n` +
-        `    repo: '${manga.repo}'\n` +
+        `    repo: '${manga.repo}'${manga.type ? `,\n    type: '${manga.type}'` : ''}\n` +
         `  }`;
     }).join(',\n') +
     '\n];';

@@ -4595,12 +4595,57 @@ class InfoMangaRatingComments {
         const listEl = document.getElementById('commentsList');
         if (!listEl) return;
 
-        listEl.innerHTML = comments.map(comment => this.renderComment(comment)).join('');
+        // Separate parent comments and replies
+        const parentComments = comments.filter(c => !c.parent_id);
+        const replies = comments.filter(c => c.parent_id);
+        
+        // Create a map of parent ID to replies
+        const repliesMap = {};
+        replies.forEach(reply => {
+            if (!repliesMap[reply.parent_id]) {
+                repliesMap[reply.parent_id] = [];
+            }
+            repliesMap[reply.parent_id].push(reply);
+        });
+        
+        // Sort replies by created_at ASC (oldest first) for each parent
+        Object.keys(repliesMap).forEach(parentId => {
+            repliesMap[parentId].sort((a, b) => 
+                new Date(a.created_at) - new Date(b.created_at)
+            );
+        });
+        
+        // Render parent comments with their replies
+        let html = '';
+        parentComments.forEach(parent => {
+            // Render parent comment
+            html += this.renderComment(parent, false);
+            
+            // Render replies (indented)
+            const parentReplies = repliesMap[parent.id] || [];
+            parentReplies.forEach(reply => {
+                html += this.renderComment(reply, true);
+            });
+        });
+        
+        listEl.innerHTML = html;
     }
 
-    renderComment(comment) {
+    renderComment(comment, isReply = false) {
         const token = localStorage.getItem('authToken');
         const isOwner = this.isLoggedIn && comment.user_id === this.getUserIdFromToken(token);
+        const canEdit = isOwner && !comment.is_edited; // Only show edit button if not edited yet
+        
+        // Debug logging
+        console.log('[COMMENT-RENDER] Comment ID:', comment.id);
+        console.log('[COMMENT-RENDER] isLoggedIn:', this.isLoggedIn);
+        console.log('[COMMENT-RENDER] comment.user_id:', comment.user_id);
+        console.log('[COMMENT-RENDER] token userId:', this.getUserIdFromToken(token));
+        console.log('[COMMENT-RENDER] isOwner:', isOwner);
+        console.log('[COMMENT-RENDER] is_edited:', comment.is_edited);
+        console.log('[COMMENT-RENDER] canEdit:', canEdit);
+        console.log('[COMMENT-RENDER] isReply:', isReply);
+        console.log('[COMMENT-RENDER] parent_id:', comment.parent_id);
         
         const date = new Date(comment.created_at);
         const formattedDate = date.toLocaleDateString('id-ID', {
@@ -4618,19 +4663,50 @@ class InfoMangaRatingComments {
         if (!comment.avatar_url) {
             console.warn('⚠️ [COMMENT-AVATAR] No avatar_url in comment data - manga-auth-worker needs deployment');
         }
+        
+        // Add CSS class and data attributes for threading
+        const commentClass = isReply ? 'comment-item comment-reply' : 'comment-item';
+        const parentIdAttr = comment.parent_id ? `data-parent-id="${comment.parent_id}"` : '';
 
         return `
-            <div class="comment-item" data-id="${comment.id}">
-                <img class="comment-avatar" src="${avatarUrl}" alt="${comment.username}" onerror="this.src='assets/Logo 2.png'" />
-                <div class="comment-body">
+            <div class="${commentClass}" data-id="${comment.id}" ${parentIdAttr}>
+                <div class="comment-top-box">
+                    <img class="comment-avatar" src="${avatarUrl}" alt="${comment.username}" onerror="this.src='assets/Logo 2.png'" />
                     <div class="comment-header">
                         <span class="comment-user">@${comment.username}</span>
                         <span class="comment-date">${formattedDate}</span>
                     </div>
+                </div>
+                <div class="comment-bottom-box">
                     <div class="comment-content">${this.escapeHtml(comment.content)}</div>
                     <div class="comment-actions">
-                        ${this.isLoggedIn ? `<button class="btn-reply-comment" data-username="${comment.username}">Reply</button>` : ''}
-                        ${isOwner ? `<button class="btn-delete-comment" data-id="${comment.id}">Hapus</button>` : ''}
+                        ${this.isLoggedIn ? `
+                        <button class="btn-reply-comment" data-username="${comment.username}">
+                            <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 10H7a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-8a2 2 0 0 0 -2 -2h-2"></path>
+                                <path d="M12 3v9"></path>
+                                <path d="M9 9l3 -3l3 3"></path>
+                            </svg>
+                            Reply
+                        </button>` : ''}
+                        ${canEdit ? `
+                        <button class="btn-edit-comment" data-id="${comment.id}">
+                            <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Edit
+                        </button>` : ''}
+                        ${isOwner ? `
+                        <button class="btn-delete-comment" data-id="${comment.id}">
+                            <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            Hapus
+                        </button>` : ''}
                     </div>
                 </div>
             </div>
@@ -4713,18 +4789,51 @@ class InfoMangaRatingComments {
             btnSubmitComment.addEventListener('click', () => this.submitComment());
         }
 
-        // Reply & Delete (event delegation)
+        // Reply, Edit & Delete (event delegation)
         const commentsList = document.getElementById('commentsList');
+        console.log('[SETUP] commentsList element:', commentsList);
         if (commentsList) {
+            console.log('[SETUP] Adding click event listener to commentsList');
             commentsList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('btn-reply-comment')) {
-                    const username = e.target.dataset.username;
-                    this.replyToComment(username);
-                } else if (e.target.classList.contains('btn-delete-comment')) {
-                    const commentId = e.target.dataset.id;
+                console.log('[CLICK] Click detected on:', e.target);
+                console.log('[CLICK] Target classList:', e.target.classList);
+                console.log('[CLICK] Target tagName:', e.target.tagName);
+                
+                // Use closest() to handle clicks on SVG/text inside buttons
+                const replyBtn = e.target.closest('.btn-reply-comment');
+                const editBtn = e.target.closest('.btn-edit-comment');
+                const deleteBtn = e.target.closest('.btn-delete-comment');
+                
+                console.log('[CLICK] Found replyBtn:', replyBtn);
+                console.log('[CLICK] Found editBtn:', editBtn);
+                console.log('[CLICK] Found deleteBtn:', deleteBtn);
+                
+                if (replyBtn) {
+                    const username = replyBtn.dataset.username;
+                    const commentElement = replyBtn.closest('.comment-item');
+                    const commentId = commentElement?.dataset?.id;
+                    console.log('[REPLY-BTN] Clicked reply for:', username);
+                    console.log('[REPLY-BTN] Comment element found:', commentElement);
+                    console.log('[REPLY-BTN] Comment element ID:', commentId);
+                    if (commentId) {
+                        console.log('[REPLY-BTN] Calling replyToComment()...');
+                        this.replyToComment(username, commentId);
+                    }
+                } else if (editBtn) {
+                    const commentId = editBtn.dataset.id;
+                    console.log('[EDIT-BTN] Clicked edit for comment ID:', commentId);
+                    console.log('[EDIT-BTN] Calling editComment()...');
+                    this.editComment(commentId);
+                } else if (deleteBtn) {
+                    const commentId = deleteBtn.dataset.id;
+                    console.log('[DELETE-BTN] Clicked delete for comment ID:', commentId);
+                    console.log('[DELETE-BTN] Calling deleteComment()...');
                     this.deleteComment(commentId);
                 }
             });
+            console.log('[SETUP] Event listener added successfully');
+        } else {
+            console.error('[SETUP] commentsList element NOT FOUND!');
         }
     }
 
@@ -4861,38 +4970,376 @@ class InfoMangaRatingComments {
         }
     }
 
-    replyToComment(username) {
-        const textarea = document.getElementById('commentTextarea');
-        if (textarea) {
-            textarea.value = `@${username} `;
-            textarea.focus();
-            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Helper: Cleanup any active reply/edit/delete actions
+    cleanupActiveActions() {
+        // Remove all reply boxes
+        document.querySelectorAll('.comment-reply-box').forEach(box => box.remove());
+        
+        // Remove all delete confirmation boxes
+        document.querySelectorAll('.comment-delete-confirm').forEach(box => box.remove());
+        
+        // Restore all edit wrappers to original content
+        document.querySelectorAll('.comment-edit-wrapper').forEach(wrapper => {
+            const content = wrapper.querySelector('.comment-textarea').value;
+            const contentEl = document.createElement('div');
+            contentEl.className = 'comment-content';
+            contentEl.textContent = content;
+            wrapper.replaceWith(contentEl);
+        });
+    }
+
+    async replyToComment(username, commentId) {
+        // Cleanup any active actions first (ensure only 1 action at a time)
+        this.cleanupActiveActions();
+        
+        // Find the comment element
+        const targetComment = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+        if (!targetComment) {
+            console.error('[REPLY] Target comment element not found!');
+            return;
         }
+        
+        // Get parent comment ID for threading
+        // If replying to a reply, use the original parent_id, not the reply's id
+        // This ensures all replies stay at same level (1-level threading)
+        const parentIdAttr = targetComment.dataset.parentId;
+        const parentId = parentIdAttr && parentIdAttr !== 'null' ? parentIdAttr : commentId;
+        
+        console.log('[REPLY-FUNC] Parent ID for reply:', parentId);
+        
+        // Get user avatar - try to get from existing comment input avatar first
+        let userAvatarUrl = 'assets/Logo 2.png';
+        const existingAvatar = document.getElementById('commentInputAvatar');
+        
+        if (existingAvatar && existingAvatar.src && !existingAvatar.src.includes('Logo 2.png')) {
+            // Use the avatar from comment input if it's already loaded
+            userAvatarUrl = existingAvatar.src;
+        } else {
+            // Otherwise fetch from API
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const response = await fetch('https://profile-worker.nuranantoadhien.workers.dev/profile/me', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        cache: 'no-store'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const avatarUrl = data.profile?.avatarUrl || data.profile?.avatar_url || data.avatar_url || data.avatarUrl;
+                        
+                        if (avatarUrl) {
+                            userAvatarUrl = avatarUrl.includes('?') 
+                                ? `${avatarUrl}&t=${Date.now()}` 
+                                : `${avatarUrl}?t=${Date.now()}`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('[REPLY-AVATAR] Failed to load user avatar:', error);
+                }
+            }
+        }
+        
+        // Create reply box
+        const replyBox = document.createElement('div');
+        replyBox.className = 'comment-reply-box';
+        replyBox.innerHTML = `
+            <div class="reply-box-header">
+                <span class="reply-to-label">Membalas @${username}</span>
+            </div>
+            <div class="comment-input-wrapper">
+                <img class="comment-avatar" src="${userAvatarUrl}" alt="Avatar" onerror="this.src='assets/Logo 2.png'" />
+                <div class="comment-input-content">
+                    <textarea 
+                        class="comment-textarea reply-textarea" 
+                        placeholder="Tulis balasan Anda... (max 500 karakter)"
+                        maxlength="500">@${username} </textarea>
+                    <div class="comment-input-footer">
+                        <span class="comment-char-count">
+                            <span class="reply-char-count">${username.length + 2}</span>/500
+                        </span>
+                        <div class="reply-actions">
+                            <button class="btn-send-reply" data-username="${username}">
+                                <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                                Kirim
+                            </button>
+                            <button class="btn-cancel-reply">
+                                <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Insert after the target comment
+        console.log('[REPLY-INSERT] About to insert reply box');
+        console.log('[REPLY-INSERT] Target comment before insert:', targetComment);
+        console.log('[REPLY-INSERT] Next sibling before insert:', targetComment.nextElementSibling);
+        
+        targetComment.insertAdjacentElement('afterend', replyBox);
+        
+        console.log('[REPLY-INSERT] Reply box inserted');
+        console.log('[REPLY-INSERT] Next sibling after insert:', targetComment.nextElementSibling);
+        console.log('[REPLY-INSERT] Reply box parent:', replyBox.parentElement);
+        console.log('[REPLY-INSERT] Reply box classList:', replyBox.classList);
+        
+        // Focus on textarea and set cursor at end
+        const textarea = replyBox.querySelector('.reply-textarea');
+        textarea.focus();
+        // Move cursor to end after @username mention
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        
+        // Character count
+        const charCountEl = replyBox.querySelector('.reply-char-count');
+        textarea.addEventListener('input', (e) => {
+            charCountEl.textContent = e.target.value.length;
+        });
+        
+        // Send reply button
+        const btnSend = replyBox.querySelector('.btn-send-reply');
+        btnSend.addEventListener('click', async () => {
+            const content = textarea.value.trim();
+            if (!content || content === `@${username}`) {
+                showToast('Balasan tidak boleh kosong', 'warning');
+                return;
+            }
+            
+            // Ensure @username mention is at the start
+            const finalContent = content.startsWith(`@${username}`) ? content : `@${username} ${content}`;
+            
+            const token = localStorage.getItem('authToken');
+            try {
+                const response = await fetch(`${this.API_BASE}/comments/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        mangaId: this.mangaId,
+                        content: finalContent,
+                        parentId: parentId
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Balasan berhasil dikirim!', 'success');
+                    replyBox.remove();
+                    await this.loadComments();
+                } else {
+                    showToast(data.error || 'Gagal mengirim balasan', 'error');
+                }
+            } catch (error) {
+                console.error('[INFO-COMMENTS] Reply error:', error);
+                showToast('Terjadi kesalahan saat mengirim balasan', 'error');
+            }
+        });
+        
+        // Cancel button
+        const btnCancel = replyBox.querySelector('.btn-cancel-reply');
+        btnCancel.addEventListener('click', () => {
+            replyBox.remove();
+            // Show action buttons again
+            if (actionsEl) {
+                actionsEl.style.display = 'flex';
+            }
+        });
+        
+        // Scroll into view
+        replyBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async editComment(commentId) {
+        // Cleanup any active actions first (ensure only 1 action at a time)
+        this.cleanupActiveActions();
+        
+        // Find the comment element
+        const commentEl = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+        if (!commentEl) {
+            console.error('[EDIT] Comment element not found!');
+            return;
+        }
+
+        // Get current comment content
+        const contentEl = commentEl.querySelector('.comment-content');
+        const currentContent = contentEl.textContent.trim();
+
+        // Create edit wrapper with simplified structure (no avatar needed)
+        const editWrapper = document.createElement('div');
+        editWrapper.className = 'comment-edit-wrapper';
+        editWrapper.innerHTML = `
+            <textarea 
+                class="comment-textarea" 
+                maxlength="500">${currentContent}</textarea>
+            <div class="comment-input-footer">
+                <span class="comment-char-count">
+                    <span class="edit-char-count">${currentContent.length}</span>/500
+                </span>
+                <div class="reply-actions">
+                    <button class="btn-save-edit" data-id="${commentId}">
+                        <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Simpan
+                    </button>
+                    <button class="btn-cancel-edit">
+                        <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        Batal
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Replace content with edit wrapper
+        contentEl.replaceWith(editWrapper);
+        
+        const editArea = editWrapper.querySelector('.comment-textarea');
+        editArea.focus();
+        
+        // Character count update
+        const charCountEl = editWrapper.querySelector('.edit-char-count');
+        editArea.addEventListener('input', (e) => {
+            charCountEl.textContent = e.target.value.length;
+        });
+
+        // Save button handler
+        const btnSave = editWrapper.querySelector('.btn-save-edit');
+        btnSave.addEventListener('click', async () => {
+            const newContent = editArea.value.trim();
+            if (!newContent) {
+                showToast('Komentar tidak boleh kosong', 'warning');
+                return;
+            }
+
+            const token = localStorage.getItem('authToken');
+            try {
+                const response = await fetch(`${this.API_BASE}/comments/${commentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ content: newContent })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Komentar berhasil diupdate', 'success');
+                    await this.loadComments();
+                } else {
+                    showToast(data.error || 'Gagal mengupdate komentar', 'error');
+                }
+            } catch (error) {
+                console.error('[INFO-COMMENTS] Edit error:', error);
+                showToast('Terjadi kesalahan saat mengupdate komentar', 'error');
+            }
+        });
+
+        // Cancel button handler
+        const btnCancel = editWrapper.querySelector('.btn-cancel-edit');
+        btnCancel.addEventListener('click', () => {
+            const newContentEl = document.createElement('div');
+            newContentEl.className = 'comment-content';
+            newContentEl.textContent = currentContent;
+            editWrapper.replaceWith(newContentEl);
+        });
     }
 
     async deleteComment(commentId) {
-        if (!confirm('Yakin ingin menghapus komentar ini?')) return;
-
-        const token = localStorage.getItem('authToken');
-        try {
-            const response = await fetch(`${this.API_BASE}/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                showToast(data.message || 'Komentar berhasil dihapus', 'success');
-                await this.loadComments();
-            } else {
-                showToast(data.error || 'Gagal menghapus komentar', 'error');
-            }
-        } catch (error) {
-            console.error('[INFO-COMMENTS] Delete error:', error);
-            showToast('Terjadi kesalahan saat menghapus komentar', 'error');
+        // Cleanup any active actions first (ensure only 1 action at a time)
+        this.cleanupActiveActions();
+        
+        // Find the comment element
+        const commentEl = document.querySelector(`.comment-item[data-id="${commentId}"]`);
+        if (!commentEl) {
+            console.error('[DELETE] Comment element not found!');
+            return;
         }
+        
+        // Create delete confirmation box
+        const confirmBox = document.createElement('div');
+        confirmBox.className = 'comment-delete-confirm';
+        confirmBox.innerHTML = `
+            <div class="delete-confirm-content">
+                <svg class="delete-warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span class="delete-confirm-text">Yakin ingin menghapus komentar ini?</span>
+            </div>
+            <div class="delete-confirm-actions">
+                <button class="btn-confirm-delete" data-id="${commentId}">
+                    <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Hapus
+                </button>
+                <button class="btn-cancel-delete">
+                    <svg class="comment-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Batal
+                </button>
+            </div>
+        `;
+        
+        // Insert after comment content
+        const contentEl = commentEl.querySelector('.comment-content');
+        if (contentEl) {
+            contentEl.after(confirmBox);
+        }
+        
+        // Confirm delete button
+        const btnConfirm = confirmBox.querySelector('.btn-confirm-delete');
+        btnConfirm.addEventListener('click', async () => {
+            const token = localStorage.getItem('authToken');
+            try {
+                const response = await fetch(`${this.API_BASE}/comments/${commentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast(data.message || 'Komentar berhasil dihapus', 'success');
+                    await this.loadComments();
+                } else {
+                    showToast(data.error || 'Gagal menghapus komentar', 'error');
+                }
+            } catch (error) {
+                console.error('[INFO-COMMENTS] Delete error:', error);
+                showToast('Terjadi kesalahan saat menghapus komentar', 'error');
+            }
+        });
+        
+        // Cancel delete button
+        const btnCancel = confirmBox.querySelector('.btn-cancel-delete');
+        btnCancel.addEventListener('click', () => {
+            confirmBox.remove();
+        });
+        
+        // Scroll into view
+        confirmBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
 
