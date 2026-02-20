@@ -4364,7 +4364,7 @@ class InfoMangaRatingComments {
             // console.log('✅ [SHOW-INPUT] Login button hidden');
             dLog('[INFO-RATING] Login button hidden');
         } else {
-            console.warn('⚠️ [SHOW-INPUT] btnLogin element not found!');
+            dWarn('⚠️ [SHOW-INPUT] btnLogin element not found!');
         }
         
         if (inputSection) {
@@ -4372,7 +4372,7 @@ class InfoMangaRatingComments {
             // console.log('✅ [SHOW-INPUT] Comment input section shown');
             dLog('[INFO-RATING] Comment input shown');
         } else {
-            console.warn('⚠️ [SHOW-INPUT] inputSection element not found!');
+            dWarn('⚠️ [SHOW-INPUT] inputSection element not found!');
         }
 
         // Load and set user avatar for comment input
@@ -4400,7 +4400,7 @@ class InfoMangaRatingComments {
         // console.log('🖼️ [AVATAR-INPUT] Element exists:', !!avatarEl);
         
         if (!avatarEl) {
-            console.warn('⚠️ [AVATAR-INPUT] Element commentInputAvatar not found!');
+            dWarn('⚠️ [AVATAR-INPUT] Element commentInputAvatar not found!');
             // console.warn('⚠️ [AVATAR-INPUT] Retrying in 100ms...');
             // Retry after short delay if element not ready
             setTimeout(() => this.loadCommentInputAvatar(), 100);
@@ -4637,15 +4637,15 @@ class InfoMangaRatingComments {
         const canEdit = isOwner && !comment.is_edited; // Only show edit button if not edited yet
         
         // Debug logging
-        console.log('[COMMENT-RENDER] Comment ID:', comment.id);
-        console.log('[COMMENT-RENDER] isLoggedIn:', this.isLoggedIn);
-        console.log('[COMMENT-RENDER] comment.user_id:', comment.user_id);
-        console.log('[COMMENT-RENDER] token userId:', this.getUserIdFromToken(token));
-        console.log('[COMMENT-RENDER] isOwner:', isOwner);
-        console.log('[COMMENT-RENDER] is_edited:', comment.is_edited);
-        console.log('[COMMENT-RENDER] canEdit:', canEdit);
-        console.log('[COMMENT-RENDER] isReply:', isReply);
-        console.log('[COMMENT-RENDER] parent_id:', comment.parent_id);
+        dLog('[COMMENT-RENDER] Comment ID:', comment.id);
+        dLog('[COMMENT-RENDER] isLoggedIn:', this.isLoggedIn);
+        dLog('[COMMENT-RENDER] comment.user_id:', comment.user_id);
+        dLog('[COMMENT-RENDER] token userId:', this.getUserIdFromToken(token));
+        dLog('[COMMENT-RENDER] isOwner:', isOwner);
+        dLog('[COMMENT-RENDER] is_edited:', comment.is_edited);
+        dLog('[COMMENT-RENDER] canEdit:', canEdit);
+        dLog('[COMMENT-RENDER] isReply:', isReply);
+        dLog('[COMMENT-RENDER] parent_id:', comment.parent_id);
         
         const date = new Date(comment.created_at);
         const formattedDate = date.toLocaleDateString('id-ID', {
@@ -4661,7 +4661,7 @@ class InfoMangaRatingComments {
         const avatarUrl = baseAvatarUrl.includes('?') ? `${baseAvatarUrl}&t=${Date.now()}` : `${baseAvatarUrl}?t=${Date.now()}`;
         
         if (!comment.avatar_url) {
-            console.warn('⚠️ [COMMENT-AVATAR] No avatar_url in comment data - manga-auth-worker needs deployment');
+            dWarn('⚠️ [COMMENT-AVATAR] No avatar_url in comment data - manga-auth-worker needs deployment');
         }
         
         // Add CSS class and data attributes for threading
@@ -4791,47 +4791,47 @@ class InfoMangaRatingComments {
 
         // Reply, Edit & Delete (event delegation)
         const commentsList = document.getElementById('commentsList');
-        console.log('[SETUP] commentsList element:', commentsList);
+        dLog('[SETUP] commentsList element:', commentsList);
         if (commentsList) {
-            console.log('[SETUP] Adding click event listener to commentsList');
+            dLog('[SETUP] Adding click event listener to commentsList');
             commentsList.addEventListener('click', (e) => {
-                console.log('[CLICK] Click detected on:', e.target);
-                console.log('[CLICK] Target classList:', e.target.classList);
-                console.log('[CLICK] Target tagName:', e.target.tagName);
+                dLog('[CLICK] Click detected on:', e.target);
+                dLog('[CLICK] Target classList:', e.target.classList);
+                dLog('[CLICK] Target tagName:', e.target.tagName);
                 
                 // Use closest() to handle clicks on SVG/text inside buttons
                 const replyBtn = e.target.closest('.btn-reply-comment');
                 const editBtn = e.target.closest('.btn-edit-comment');
                 const deleteBtn = e.target.closest('.btn-delete-comment');
                 
-                console.log('[CLICK] Found replyBtn:', replyBtn);
-                console.log('[CLICK] Found editBtn:', editBtn);
-                console.log('[CLICK] Found deleteBtn:', deleteBtn);
+                dLog('[CLICK] Found replyBtn:', replyBtn);
+                dLog('[CLICK] Found editBtn:', editBtn);
+                dLog('[CLICK] Found deleteBtn:', deleteBtn);
                 
                 if (replyBtn) {
                     const username = replyBtn.dataset.username;
                     const commentElement = replyBtn.closest('.comment-item');
                     const commentId = commentElement?.dataset?.id;
-                    console.log('[REPLY-BTN] Clicked reply for:', username);
-                    console.log('[REPLY-BTN] Comment element found:', commentElement);
-                    console.log('[REPLY-BTN] Comment element ID:', commentId);
+                    dLog('[REPLY-BTN] Clicked reply for:', username);
+                    dLog('[REPLY-BTN] Comment element found:', commentElement);
+                    dLog('[REPLY-BTN] Comment element ID:', commentId);
                     if (commentId) {
-                        console.log('[REPLY-BTN] Calling replyToComment()...');
+                        dLog('[REPLY-BTN] Calling replyToComment()...');
                         this.replyToComment(username, commentId);
                     }
                 } else if (editBtn) {
                     const commentId = editBtn.dataset.id;
-                    console.log('[EDIT-BTN] Clicked edit for comment ID:', commentId);
-                    console.log('[EDIT-BTN] Calling editComment()...');
+                    dLog('[EDIT-BTN] Clicked edit for comment ID:', commentId);
+                    dLog('[EDIT-BTN] Calling editComment()...');
                     this.editComment(commentId);
                 } else if (deleteBtn) {
                     const commentId = deleteBtn.dataset.id;
-                    console.log('[DELETE-BTN] Clicked delete for comment ID:', commentId);
-                    console.log('[DELETE-BTN] Calling deleteComment()...');
+                    dLog('[DELETE-BTN] Clicked delete for comment ID:', commentId);
+                    dLog('[DELETE-BTN] Calling deleteComment()...');
                     this.deleteComment(commentId);
                 }
             });
-            console.log('[SETUP] Event listener added successfully');
+            dLog('[SETUP] Event listener added successfully');
         } else {
             console.error('[SETUP] commentsList element NOT FOUND!');
         }
@@ -5005,7 +5005,7 @@ class InfoMangaRatingComments {
         const parentIdAttr = targetComment.dataset.parentId;
         const parentId = parentIdAttr && parentIdAttr !== 'null' ? parentIdAttr : commentId;
         
-        console.log('[REPLY-FUNC] Parent ID for reply:', parentId);
+        dLog('[REPLY-FUNC] Parent ID for reply:', parentId);
         
         // Get user avatar - try to get from existing comment input avatar first
         let userAvatarUrl = 'assets/Logo 2.png';
@@ -5083,16 +5083,16 @@ class InfoMangaRatingComments {
         `;
         
         // Insert after the target comment
-        console.log('[REPLY-INSERT] About to insert reply box');
-        console.log('[REPLY-INSERT] Target comment before insert:', targetComment);
-        console.log('[REPLY-INSERT] Next sibling before insert:', targetComment.nextElementSibling);
+        dLog('[REPLY-INSERT] About to insert reply box');
+        dLog('[REPLY-INSERT] Target comment before insert:', targetComment);
+        dLog('[REPLY-INSERT] Next sibling before insert:', targetComment.nextElementSibling);
         
         targetComment.insertAdjacentElement('afterend', replyBox);
         
-        console.log('[REPLY-INSERT] Reply box inserted');
-        console.log('[REPLY-INSERT] Next sibling after insert:', targetComment.nextElementSibling);
-        console.log('[REPLY-INSERT] Reply box parent:', replyBox.parentElement);
-        console.log('[REPLY-INSERT] Reply box classList:', replyBox.classList);
+        dLog('[REPLY-INSERT] Reply box inserted');
+        dLog('[REPLY-INSERT] Next sibling after insert:', targetComment.nextElementSibling);
+        dLog('[REPLY-INSERT] Reply box parent:', replyBox.parentElement);
+        dLog('[REPLY-INSERT] Reply box classList:', replyBox.classList);
         
         // Focus on textarea and set cursor at end
         const textarea = replyBox.querySelector('.reply-textarea');

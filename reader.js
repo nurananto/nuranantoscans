@@ -3,7 +3,7 @@
  * Reads encrypted manifest.json and decrypts page URLs
  */
 
-console.log('🚀 Reader.js loading...');
+dLog('🚀 Reader.js loading...');
 
 // ============================================
 // GLOBAL ERROR HANDLER FOR DEBUGGING
@@ -21,17 +21,17 @@ window.addEventListener('unhandledrejection', function(event) {
     console.error('Promise:', event.promise);
 });
 
-console.log('✅ Error handlers registered');
+dLog('✅ Error handlers registered');
 
 // ============================================
 // CHECK DEPENDENCIES
 // ============================================
-console.log('🔍 Checking dependencies...');
-console.log('  - DEBUG_MODE:', typeof DEBUG_MODE !== 'undefined' ? DEBUG_MODE : 'UNDEFINED');
-console.log('  - MANGA_LIST:', typeof MANGA_LIST !== 'undefined' ? `Array(${MANGA_LIST.length})` : 'UNDEFINED');
-console.log('  - MANGA_REPOS:', typeof MANGA_REPOS !== 'undefined' ? `Object(${Object.keys(MANGA_REPOS).length} keys)` : 'UNDEFINED');
-console.log('  - fetchFreshJSON:', typeof fetchFreshJSON !== 'undefined' ? 'DEFINED' : 'UNDEFINED');
-console.log('  - getCachedData:', typeof getCachedData !== 'undefined' ? 'DEFINED' : 'UNDEFINED');
+dLog('🔍 Checking dependencies...');
+dLog('  - DEBUG_MODE:', typeof DEBUG_MODE !== 'undefined' ? DEBUG_MODE : 'UNDEFINED');
+dLog('  - MANGA_LIST:', typeof MANGA_LIST !== 'undefined' ? `Array(${MANGA_LIST.length})` : 'UNDEFINED');
+dLog('  - MANGA_REPOS:', typeof MANGA_REPOS !== 'undefined' ? `Object(${Object.keys(MANGA_REPOS).length} keys)` : 'UNDEFINED');
+dLog('  - fetchFreshJSON:', typeof fetchFreshJSON !== 'undefined' ? 'DEFINED' : 'UNDEFINED');
+dLog('  - getCachedData:', typeof getCachedData !== 'undefined' ? 'DEFINED' : 'UNDEFINED');
 
 // ============================================
 // DECRYPTION MODULE
@@ -241,25 +241,25 @@ const progressFill = document.getElementById('progressFill');
 const pageThumbnails = document.getElementById('pageThumbnails');
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('✅ DOM Content Loaded');
+    dLog('✅ DOM Content Loaded');
     try {
-        console.log('🔧 Initializing protection...');
+        dLog('🔧 Initializing protection...');
         initProtection();
-        console.log('✅ Protection initialized');
+        dLog('✅ Protection initialized');
         
-        console.log('🔧 Initializing reader...');
+        dLog('🔧 Initializing reader...');
         await initializeReader();
-        console.log('✅ Reader initialized');
+        dLog('✅ Reader initialized');
         
-        console.log('🔧 Setting up event listeners...');
+        dLog('🔧 Setting up event listeners...');
         setupEnhancedEventListeners();
-        console.log('✅ Event listeners set up');
+        dLog('✅ Event listeners set up');
         
-        console.log('🔧 Initializing global login button...');
+        dLog('🔧 Initializing global login button...');
         initGlobalLoginButton(); // Setup redirect to info-manga
-        console.log('✅ Global login button initialized');
+        dLog('✅ Global login button initialized');
         
-        console.log('🎉 All initialization complete!');
+        dLog('🎉 All initialization complete!');
     } catch (error) {
         console.error('❌ Fatal error during initialization:', error);
         console.error('Error stack:', error.stack);
@@ -379,12 +379,12 @@ if (isValidated || isDonatur) {
 }
 
 async function loadMangaData(repo) {
-    console.log('📡 loadMangaData called with repo:', repo);
+    dLog('📡 loadMangaData called with repo:', repo);
     try {
         // ✅ CHECK CACHE FIRST (5 minutes TTL)
         const cacheKey = `reader_manga_${repo}`;
         const cached = getCachedData(cacheKey, 300000, true); // 5 min, use sessionStorage
-        console.log('💾 Cache check:', cached ? 'HIT' : 'MISS');
+        dLog('💾 Cache check:', cached ? 'HIT' : 'MISS');
         
         if (cached) {
             mangaData = cached.mangaData;
@@ -550,33 +550,33 @@ function setupUI() {
     
     // Update cover image
     try {
-        console.log('📷 Starting cover image update...');
+        dLog('📷 Starting cover image update...');
         const navCardCoverElement = document.getElementById('navCardCover');
-        console.log('📷 Cover element found:', !!navCardCoverElement);
-        console.log('📷 MANGA_LIST defined:', typeof MANGA_LIST !== 'undefined');
+        dLog('📷 Cover element found:', !!navCardCoverElement);
+        dLog('📷 MANGA_LIST defined:', typeof MANGA_LIST !== 'undefined');
         
         if (navCardCoverElement) {
             // Get cover from MANGA_LIST (check if it's defined first)
             if (typeof MANGA_LIST !== 'undefined') {
                 const urlParams = new URLSearchParams(window.location.search);
                 const repoId = urlParams.get('repo') || urlParams.get('manga');
-                console.log('📷 Looking for repo:', repoId);
+                dLog('📷 Looking for repo:', repoId);
                 
                 const mangaInfo = MANGA_LIST.find(m => m.id === repoId);
-                console.log('📷 Manga info found:', !!mangaInfo);
+                dLog('📷 Manga info found:', !!mangaInfo);
                 
                 if (mangaInfo) {
-                    console.log('📷 Cover URL:', mangaInfo.cover);
+                    dLog('📷 Cover URL:', mangaInfo.cover);
                     if (mangaInfo.cover) {
                         navCardCoverElement.src = mangaInfo.cover;
                         navCardCoverElement.alt = `Cover ${mangaData.manga.title}`;
-                        console.log('✅ Cover image set successfully');
+                        dLog('✅ Cover image set successfully');
                     } else {
-                        console.warn('⚠️ No cover URL in mangaInfo');
+                        dWarn('⚠️ No cover URL in mangaInfo');
                     }
                 } else {
-                    console.warn('⚠️ Manga info not found in MANGA_LIST for repo:', repoId);
-                    console.log('📷 Available repos in MANGA_LIST:', MANGA_LIST.map(m => m.id).join(', '));
+                    dWarn('⚠️ Manga info not found in MANGA_LIST for repo:', repoId);
+                    dLog('📷 Available repos in MANGA_LIST:', MANGA_LIST.map(m => m.id).join(', '));
                 }
             } else {
                 console.error('❌ MANGA_LIST is not defined');
@@ -1924,7 +1924,7 @@ class ReaderComments {
     async loadCommentInputAvatar() {
         const avatarEl = document.getElementById('commentInputAvatar');
         if (!avatarEl) {
-            console.warn('⚠️ [READER-AVATAR-INPUT] Element commentInputAvatar not found, retrying in 100ms...');
+            dWarn('⚠️ [READER-AVATAR-INPUT] Element commentInputAvatar not found, retrying in 100ms...');
             // Retry after short delay if element not ready
             setTimeout(() => this.loadCommentInputAvatar(), 100);
             return;

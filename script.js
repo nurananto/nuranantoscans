@@ -65,9 +65,27 @@ async function fetchMangaData(repo) {
     let latestUnlockedDate = null;
     let latestLockedChapter = null;
     let latestLockedDate = null;
+    let top3Chapters = []; // ✅ NEW: Store top 3 chapters
     
     if (data.chapters) {
       const chaptersArray = Object.values(data.chapters);
+      
+      // ✅ NEW: Get top 3 chapters sorted by chapter number (highest first)
+      const sortedChapters = [...chaptersArray].sort((a, b) => {
+        const getSort = (folder) => {
+          const parts = folder.split('.');
+          const int = parseInt(parts[0]) || 0;
+          const dec = parts[1] ? parseInt(parts[1]) : 0;
+          return int + (dec / 1000);
+        };
+        return getSort(b.folder) - getSort(a.folder);
+      });
+      top3Chapters = sortedChapters.slice(0, 3);
+      
+      // ✅ DEBUG: Log top3Chapters
+      if (DEBUG_MODE) {
+        dLog(`📚 [TOP3] Repo: ${repo}, Top 3 chapters:`, top3Chapters.map(ch => ch.folder));
+      }
       
       const unlockedChapters = chaptersArray.filter(ch => !ch.locked);
       if (unlockedChapters.length > 0) {
@@ -110,6 +128,7 @@ async function fetchMangaData(repo) {
       latestUnlockedDate,
       latestLockedChapter,
       latestLockedDate,
+      top3Chapters, // ✅ NEW: Include top 3 chapters
       manga: data.manga || {} // ✅ Include full manga object for type access
     };
     
@@ -142,6 +161,7 @@ async function fetchMangaData(repo) {
       latestUnlockedDate: null,
       latestLockedChapter: null,
       latestLockedDate: null,
+      top3Chapters: [], // ✅ NEW: Empty array for fallback
       manga: {} // ✅ Include empty manga object for type access
     };
   }
@@ -159,6 +179,21 @@ function isRecentlyUpdated(lastChapterUpdateStr) {
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
   
   return diffDays <= 2;
+}
+
+// ✅ NEW: Check if chapter is updated within 48 hours
+function isChapterRecent(uploadDateStr) {
+  if (!uploadDateStr) return false;
+  const uploadDate = new Date(uploadDateStr);
+  if (!uploadDate || isNaN(uploadDate.getTime())) return false;
+  
+  const now = new Date();
+  const wibNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+  
+  const diffMs = wibNow - uploadDate;
+  const diffHours = diffMs / (1000 * 60 * 60);
+  
+  return diffHours <= 48; // Within 48 hours
 }
 
 function getRelativeTime(lastChapterUpdateStr) {
@@ -504,153 +539,118 @@ function createCard(manga, mangaData, index = 0) {
   // ✅ Check if user is donatur setia (use cached status)
   const isDonaturSetia = isDonaturFromDOM();
   
-  // ✅ Get chapter info and time for info bar (mirip trending card)
-  let chapterNumber = '';
-  let timeText = '';
-  
-  if (mangaData.latestUnlockedChapter && mangaData.latestLockedChapter) {
-    const unlockedDate = mangaData.latestUnlockedDate ? new Date(mangaData.latestUnlockedDate) : new Date(0);
-    const lockedDate = mangaData.latestLockedDate ? new Date(mangaData.latestLockedDate) : new Date(0);
-    
-    if (lockedDate > unlockedDate) {
-      const formatted = formatChapter(mangaData.latestLockedChapter);
-      const lockIcon = isDonaturSetia ? '🔓 ' : '🔒 ';
-      chapterNumber = `${lockIcon}${formatted === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formatted}`;
-      timeText = getRelativeTime(mangaData.latestLockedDate) || '';
-    } else {
-      const formatted = formatChapter(mangaData.latestUnlockedChapter);
-      chapterNumber = `${formatted === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formatted}`;
-      timeText = getRelativeTime(mangaData.latestUnlockedDate) || '';
-    }
-  } else if (mangaData.latestUnlockedChapter) {
-    const formatted = formatChapter(mangaData.latestUnlockedChapter);
-    chapterNumber = `${formatted === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formatted}`;
-    timeText = getRelativeTime(mangaData.latestUnlockedDate) || '';
-  } else if (mangaData.latestLockedChapter) {
-    const formatted = formatChapter(mangaData.latestLockedChapter);
-    const lockIcon = isDonaturSetia ? '🔓 ' : '🔒 ';
-    chapterNumber = `${lockIcon}${formatted === 'Oneshot' ? 'Oneshot' : 'Ch. ' + formatted}`;
-    timeText = getRelativeTime(mangaData.latestLockedDate) || '';
-  }
-  
-  // ✅ Status badge di pojok kiri atas cover (seperti trending badge)
-  let statusBadgeHTML = '';
-  const status = mangaData.status || 'ONGOING';
-  
-  if (isRecent) {
-    // UPDATED badge dengan arrow up icon
-    statusBadgeHTML = `
-      <div class="status-badge status-badge-updated" aria-label="Recently updated">
-        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-        <span>UPDATED!</span>
-        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-      </div>
-    `;
-  } else {
-    let statusClass = '';
-    let statusText = '';
-    
-    if (status === 'END' || status === 'COMPLETED') {
-      statusClass = 'status-badge-end';
-      statusText = 'TAMAT';
-    } else if (status === 'HIATUS') {
-      statusClass = 'status-badge-hiatus';
-      statusText = 'HIATUS';
-    } else {
-      statusClass = 'status-badge-ongoing';
-      statusText = 'ONGOING';
-    }
-    
-    statusBadgeHTML = `
-      <div class="status-badge ${statusClass}" aria-label="${statusText}">
-        <span>${statusText}</span>
-      </div>
-    `;
-  }
+  // ✅ Security: Validate and escape all dynamic data
+  const safeRepoId = validateRepoParam(manga.id) ? encodeURIComponent(manga.id) : '';
+  const safeMangaTitle = escapeHTML(manga.title);
   
   const cdnUrls = getResponsiveCDN(manga.cover);
   
-  // ✅ FIX: Match srcset widths dengan actual CDN sizes untuk prevent pixelation
-  const srcset = `
-    ${cdnUrls.small} 500w,
-    ${cdnUrls.medium} 700w,
-    ${cdnUrls.large} 900w,
-    ${cdnUrls.xlarge} 1200w
-  `.trim();
+  // ✅ Get top 3 chapters
+  const top3Chapters = mangaData.top3Chapters || [];
   
-  // ✅ FIX: Optimized sizes untuk better image selection
-  const sizes = '(max-width: 480px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw';
+  // ✅ DEBUG: Log chapters availability
+  if (DEBUG_MODE) {
+    dLog(`🎯 [CARD] Manga: ${manga.title}, Top3 chapters count: ${top3Chapters.length}`);
+  }
   
-  const eagerLoadCount = window.innerWidth >= 1024 ? 10 : (window.innerWidth >= 768 ? 6 : 4);
+  // ✅ Build chapters HTML
+  let chaptersHTML = '';
+  if (top3Chapters.length > 0) {
+    chaptersHTML = top3Chapters.map((chapter, idx) => {
+      const chapterNumber = formatChapter(chapter.folder);
+      const chapterText = chapterNumber === 'Oneshot' ? 'Oneshot' : 'Chapter ' + chapterNumber;
+      const timeText = getRelativeTime(chapter.uploadDate) || '';
+      const lockIcon = chapter.locked ? (isDonaturSetia ? '🔓' : '🔒') : '';
+      
+      // ✅ Badge END untuk manga tamat - matching logic dengan info-manga.js
+      const mangaStatus = (mangaData.manga?.status || mangaData.status || '').toUpperCase();
+      const endChapter = mangaData.manga?.endChapter;
+      const isEndChapter = mangaStatus === 'END' && endChapter && (
+        (typeof endChapter === 'string' && chapter.folder.toLowerCase() === endChapter.toLowerCase()) ||
+        parseFloat(chapter.folder) === parseFloat(endChapter) ||
+        String(chapter.folder) === String(endChapter)
+      );
+      const endBadgeHTML = isEndChapter ? `
+        <div class="manga-chapter-badge-end">
+          END
+        </div>
+      ` : '';
+      
+      // ✅ Badge HIATUS untuk manga hiatus (hanya di chapter terakhir)
+      const isLastChapter = idx === 0; // First in array is last chapter (newest)
+      const hiatusBadgeHTML = (isLastChapter && mangaStatus === 'HIATUS') ? `
+        <div class="manga-chapter-badge-hiatus">
+          HIATUS
+        </div>
+      ` : '';
+      
+      // ✅ Badge UP for chapters updated within 48 hours (with glowing)
+      const isChapterNew = isChapterRecent(chapter.uploadDate);
+      const upBadgeHTML = isChapterNew ? `
+        <div class="manga-chapter-badge-up">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+          UP
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+        </div>
+      ` : '';
+      
+      const safeChapterText = escapeHTML(`${lockIcon}${chapterText}`);
+      const safeTimeText = escapeHTML(timeText);
+      const safeChapterFolder = escapeHTML(chapter.folder);
+      
+      // ✅ Handle locked chapter - add onclick handler
+      const onclickHandler = chapter.locked 
+        ? `onclick="handleChapterClick(event, '${safeRepoId}', '${safeChapterFolder}', true); return false;"`
+        : `onclick="event.stopPropagation()"`;
+      
+      return `
+        <a href="reader.html?repo=${safeRepoId}&chapter=${safeChapterFolder}" 
+           class="manga-chapter-item"
+           data-locked="${chapter.locked ? 'true' : 'false'}"
+           data-repo="${safeRepoId}"
+           data-chapter="${safeChapterFolder}"
+           ${onclickHandler}>
+          <div class="manga-chapter-left">
+            <span class="manga-chapter-text">${safeChapterText}</span>
+            ${endBadgeHTML}
+            ${hiatusBadgeHTML}
+            ${upBadgeHTML}
+          </div>
+          <span class="manga-chapter-time">${safeTimeText}</span>
+        </a>
+      `;
+    }).join('');
+  } else {
+    chaptersHTML = '<div style="color: #888; font-size: 0.9rem; padding: 1rem;">No chapters available</div>';
+  }
+  
+  const eagerLoadCount = 10; // First 10 items
   const loadingAttr = index < eagerLoadCount ? 'eager' : 'lazy';
   const fetchPriority = index < eagerLoadCount ? ' fetchpriority="high"' : '';
   const decodingAttr = index < eagerLoadCount ? ' decoding="sync"' : ' decoding="async"';
   
-  const ariaLabel = `${manga.title}${chapterNumber ? ', ' + chapterNumber : ''}${isRecent ? ', recently updated' : ''}`;
-  
-  // ✅ Get manga type from manga-config.js (not from manga.json)
-  const mangaType = (manga.type || 'manga').toLowerCase();
-  const isWebtoon = mangaType === 'webtoon';
-  const isNovel = mangaType === 'novel';
-  
-  let typeBadgeText, typeBadgeClass;
-  if (isNovel) {
-    typeBadgeText = 'Novel';
-    typeBadgeClass = 'type-badge-novel';
-  } else if (isWebtoon) {
-    typeBadgeText = 'Colour';
-    typeBadgeClass = 'type-badge-colour';
-  } else {
-    typeBadgeText = 'B/W';
-    typeBadgeClass = 'type-badge-bw';
-  }
-  
-  if (DEBUG_MODE) {
-    dLog(`📖 [TYPE-BADGE] Manga: ${manga.title}, Type: ${mangaType}, Badge: ${typeBadgeText}`);
-  }
-  
-  // ✅ Security: Validate and escape all dynamic data
-  const safeRepoId = validateRepoParam(manga.id) ? encodeURIComponent(manga.id) : '';
-  const safeMangaTitle = escapeHTML(manga.title);
-  const safeAriaLabel = escapeHTML(ariaLabel);
-  const safeTypeBadgeText = escapeHTML(typeBadgeText);
-  const safeTypeBadgeClass = escapeHTML(typeBadgeClass);
-  const safeChapterNumber = escapeHTML(chapterNumber);
-  const safeTimeText = escapeHTML(timeText);
-  
   return `
-    <div class="manga-card ${isRecent ? 'recently-updated' : ''}" 
-         role="listitem"
-         tabindex="0"
-         data-manga-id="${escapeHTML(manga.id)}"
-         aria-label="${safeAriaLabel}"
-         onclick="if('${safeRepoId}'){window.location.href='info-manga.html?repo=${safeRepoId}'}"
-         onkeypress="if((event.key==='Enter'||event.key===' ')&&'${safeRepoId}'){event.preventDefault();window.location.href='info-manga.html?repo=${safeRepoId}'}">
-      <div class="manga-cover-wrapper">
-        <img 
-          src="${escapeHTML(cdnUrls.medium)}"
-          srcset="${escapeHTML(srcset)}"
-          sizes="${escapeHTML(sizes)}"
-          alt="${safeMangaTitle} cover image"
-          loading="${loadingAttr}"
-          ${fetchPriority}
-          ${decodingAttr}
-          data-original="${escapeHTML(manga.cover)}"
-          aria-hidden="true">
-        ${statusBadgeHTML}
-        <div class="type-badge ${safeTypeBadgeClass}" aria-label="Type: ${safeTypeBadgeText}">
-          <svg class="type-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            <path d="M6.5 2v20"/>
-          </svg>
-          <span class="type-badge-text">${safeTypeBadgeText}</span>
+    <div class="manga-card-horizontal" data-manga-id="${escapeHTML(manga.id)}">
+      <a href="info-manga.html?repo=${safeRepoId}" class="manga-card-title-link">
+        <h3 class="manga-card-title-text">${safeMangaTitle}</h3>
+      </a>
+      <div class="manga-card-content">
+        <a href="info-manga.html?repo=${safeRepoId}" class="manga-card-cover-link">
+          <img 
+            src="${escapeHTML(cdnUrls.medium)}"
+            alt="${safeMangaTitle} cover"
+            loading="${loadingAttr}"
+            ${fetchPriority}
+            ${decodingAttr}
+            class="manga-card-cover-img">
+        </a>
+        <div class="manga-card-chapters">
+          ${chaptersHTML}
         </div>
-      </div>
-      <div class="manga-title" aria-hidden="true">${safeMangaTitle}</div>
-      <div class="manga-info-bar">
-        <span class="manga-chapter">${safeChapterNumber}</span>
-        <span class="manga-time">${safeTimeText}</span>
       </div>
     </div>`;
 }
@@ -701,14 +701,10 @@ let currentMangaData = []; // Store current manga data for pagination
 let currentPage = 0;
 
 /**
- * Get items per page based on viewport
+ * Get items per page - Fixed at 10 for new layout
  */
 function getItemsPerPage() {
-  const width = window.innerWidth;
-  if (width >= 1400) return 10; // 5 columns × 2 rows
-  if (width >= 1024) return 8;  // 4 columns × 2 rows
-  if (width >= 768) return 6;   // 3 columns × 2 rows
-  return 4; // 2 columns × 2 rows (mobile)
+  return 10; // Fixed at 10 items per page
 }
 
 /**
@@ -717,61 +713,48 @@ function getItemsPerPage() {
 function renderPagination(mangaWithData) {
   const mangaGrid = document.getElementById("mangaGrid");
   const paginationControls = document.getElementById("paginationControls");
-  const paginationDots = document.getElementById("paginationDots");
   
   const itemsPerPage = getItemsPerPage();
   const totalPages = Math.ceil(mangaWithData.length / itemsPerPage);
   
-  // Hide pagination if only 1 page
+  // Store manga data for pagination
+  currentMangaData = mangaWithData;
+  currentPage = 0;
+  
+  // Render first page
+  renderCurrentPage();
+  
+  // Show/hide pagination controls
   if (totalPages <= 1) {
     paginationControls.style.display = 'none';
-    // Render single page with smooth transition
-    const fragment = document.createDocumentFragment();
-    const pageDiv = document.createElement('div');
-    pageDiv.className = 'manga-list-page';
-    pageDiv.innerHTML = mangaWithData.map(({ manga, mangaData }, index) => 
-      createCard(manga, mangaData, index)
-    ).join("");
-    fragment.appendChild(pageDiv);
-    
-    // Replace content in one operation
-    mangaGrid.innerHTML = '';
-    mangaGrid.appendChild(fragment);
-    return;
+  } else {
+    paginationControls.style.display = 'flex';
+    updatePaginationUI();
   }
+}
+
+/**
+ * Render current page
+ */
+function renderCurrentPage() {
+  const mangaGrid = document.getElementById("mangaGrid");
+  const itemsPerPage = getItemsPerPage();
+  const startIdx = currentPage * itemsPerPage;
+  const endIdx = Math.min(startIdx + itemsPerPage, currentMangaData.length);
+  const pageItems = currentMangaData.slice(startIdx, endIdx);
   
-  // Show pagination
-  paginationControls.style.display = 'flex';
+  const pageDiv = document.createElement('div');
+  pageDiv.className = 'manga-list-page';
+  pageDiv.innerHTML = pageItems.map(({ manga, mangaData }, index) => 
+    createCard(manga, mangaData, startIdx + index)
+  ).join("");
   
-  // Build all pages in document fragment first (off-screen)
-  const fragment = document.createDocumentFragment();
-  
-  // Create pages
-  for (let i = 0; i < totalPages; i++) {
-    const pageDiv = document.createElement('div');
-    pageDiv.className = 'manga-list-page';
-    pageDiv.setAttribute('data-page', i);
-    
-    const startIdx = i * itemsPerPage;
-    const endIdx = Math.min(startIdx + itemsPerPage, mangaWithData.length);
-    const pageItems = mangaWithData.slice(startIdx, endIdx);
-    
-    pageDiv.innerHTML = pageItems.map(({ manga, mangaData }, index) => 
-      createCard(manga, mangaData, startIdx + index)
-    ).join("");
-    
-    fragment.appendChild(pageDiv);
-  }
-  
-  // Replace all content in single operation (no flicker)
+  // Replace content
   mangaGrid.innerHTML = '';
-  mangaGrid.appendChild(fragment);
+  mangaGrid.appendChild(pageDiv);
   
-  // Update pagination UI after grid is rendered
-  updatePaginationUI();
-  
-  // Enable mouse drag scroll
-  enableMangaListMouseDrag();
+  // Scroll to top smoothly
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /**
@@ -784,94 +767,65 @@ function goToPage(pageIndex) {
   if (pageIndex < 0 || pageIndex >= totalPages) return;
   
   currentPage = pageIndex;
-  scrollToPage(pageIndex);
+  renderCurrentPage();
   updatePaginationUI();
 }
 
 /**
- * Scroll to page
- */
-function scrollToPage(pageIndex) {
-  const mangaGrid = document.getElementById("mangaGrid");
-  const pageWidth = mangaGrid.offsetWidth;
-  mangaGrid.scrollTo({
-    left: pageIndex * pageWidth,
-    behavior: 'smooth'
-  });
-}
-
-/**
- * Update pagination UI with circular dots
+ * Update pagination UI with buttons
  */
 function updatePaginationUI() {
   const itemsPerPage = getItemsPerPage();
   const totalPages = Math.ceil(currentMangaData.length / itemsPerPage);
-  const paginationDots = document.getElementById("paginationDots");
+  const prevBtn = document.getElementById("prevPageBtn");
+  const nextBtn = document.getElementById("nextPageBtn");
+  const pageIndicator = document.getElementById("pageIndicator");
   
-  if (!paginationDots) return;
+  if (!prevBtn || !nextBtn || !pageIndicator) return;
   
-  // Clear existing dots
-  paginationDots.innerHTML = '';
+  // Update button states
+  prevBtn.disabled = currentPage === 0;
+  nextBtn.disabled = currentPage >= totalPages - 1;
   
-  // Create circular dots for each page
-  for (let i = 0; i < totalPages; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'pagination-dot';
-    if (i === currentPage) dot.classList.add('active');
-    
-    // Click to navigate to page
-    dot.addEventListener('click', () => goToPage(i));
-    
-    paginationDots.appendChild(dot);
-  }
-  
-  // Scroll to current page
-  scrollToPage(currentPage);
+  // Update page indicator
+  pageIndicator.textContent = `Page ${currentPage + 1} of ${totalPages}`;
 }
 
 /**
  * Setup pagination event listeners
  */
 function setupPaginationListeners() {
-  const mangaGrid = document.getElementById("mangaGrid");
+  const prevBtn = document.getElementById("prevPageBtn");
+  const nextBtn = document.getElementById("nextPageBtn");
   
-  // Scroll detection for updating active dot
-  let scrollTimeout;
-  mangaGrid.addEventListener('scroll', () => {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      const scrollLeft = mangaGrid.scrollLeft;
-      const pageWidth = mangaGrid.offsetWidth;
-      const newPage = Math.round(scrollLeft / pageWidth);
-      
-      if (newPage !== currentPage) {
-        currentPage = newPage;
-        updatePaginationUI();
-      }
-    }, 100);
-  });
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      goToPage(currentPage - 1);
+    });
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      goToPage(currentPage + 1);
+    });
+  }
   
   // Keyboard navigation (arrow keys)
-  mangaGrid.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') {
+  document.addEventListener('keydown', (e) => {
+    // Only handle if not in an input
+    if (document.activeElement.tagName === 'INPUT') return;
+    
+    if (e.key === 'ArrowLeft' && currentPage > 0) {
       e.preventDefault();
       goToPage(currentPage - 1);
     } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      goToPage(currentPage + 1);
-    }
-  });
-  
-  // Window resize - recalculate pages
-  let resizeTimeout;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      if (currentMangaData.length > 0) {
-        currentPage = 0; // Reset to first page
-        renderPagination(currentMangaData);
+      const itemsPerPage = getItemsPerPage();
+      const totalPages = Math.ceil(currentMangaData.length / itemsPerPage);
+      if (currentPage < totalPages - 1) {
+        e.preventDefault();
+        goToPage(currentPage + 1);
       }
-    }, 300);
+    }
   });
 }
 
@@ -1040,6 +994,22 @@ document.addEventListener('DOMContentLoaded', function() {
     console.error('❌ ERROR: mangaList not found!');
     return;
   }
+  
+  // ✅ Clear old manga cache to force refresh with top3Chapters
+  if (DEBUG_MODE) {
+    dLog('🔄 Clearing old manga cache to fetch fresh data with top3Chapters...');
+  }
+  mangaList.forEach(manga => {
+    const cacheKey = `manga_${manga.repo}`;
+    const cached = getCachedData(cacheKey, Infinity);
+    // Only clear if cache exists but doesn't have top3Chapters
+    if (cached && !cached.top3Chapters) {
+      if (DEBUG_MODE) {
+        dLog(`🗑️ Clearing cache for ${manga.repo} (missing top3Chapters)`);
+      }
+      localStorage.removeItem(cacheKey);
+    }
+  });
  
   setupKeyboardNavigation();
   setupSearchAccessibility();
@@ -1200,6 +1170,40 @@ initProtection();
 // ============================================
 // UPGRADE & CODE MODAL HANDLERS (GLOBAL)
 // ============================================
+
+// ✅ Close loginRequiredModal
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnCloseLoginRequired') {
+        const loginRequiredModal = document.getElementById('loginRequiredModal');
+        if (loginRequiredModal) {
+            loginRequiredModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+});
+
+// ✅ Open login modal from loginRequiredModal
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'btnLoginFromRequired') {
+        const loginRequiredModal = document.getElementById('loginRequiredModal');
+        const loginModal = document.getElementById('loginModal');
+        
+        if (loginRequiredModal) loginRequiredModal.style.display = 'none';
+        if (loginModal) {
+            loginModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+});
+
+// ✅ Close loginRequiredModal on overlay click
+document.addEventListener('click', (e) => {
+    const loginRequiredModal = document.getElementById('loginRequiredModal');
+    if (loginRequiredModal && e.target === loginRequiredModal) {
+        loginRequiredModal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
 
 // Close upgrade modal
 document.addEventListener('click', (e) => {
@@ -3451,3 +3455,90 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 500);
 });
+
+// ============================================
+// LOCKED CHAPTER HANDLING (Same as info-manga.js)
+// ============================================
+
+/**
+ * Show locked chapter modal - check login status first
+ */
+async function showLockedChapterModal(repoId, chapterFolder) {
+    dLog('🔒 showLockedChapterModal called');
+    dLog('   - Repo:', repoId);
+    dLog('   - Chapter:', chapterFolder);
+    
+    // ✅ Get manga type from MANGA_LIST
+    let mangaType = 'manga'; // default
+    if (typeof MANGA_LIST !== 'undefined') {
+        const manga = MANGA_LIST.find(m => m.id === repoId || m.repo === repoId);
+        if (manga && manga.type) {
+            mangaType = manga.type;
+        }
+    }
+    dLog('   - Manga Type:', mangaType);
+    
+    // ✅ Check if user is logged in
+    const isLoggedIn = isTokenValid();
+    
+    if (!isLoggedIn) {
+        // ✅ USER BELUM LOGIN - Show locked chapter modal
+        dLog('🔒 User belum login - Showing loginRequiredModal');
+        const loginRequiredModal = document.getElementById('loginRequiredModal');
+        if (loginRequiredModal) {
+            loginRequiredModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // ✅ Conditional: Hide trakteer button for webtoon type
+            const btnTrakteerPost = document.getElementById('btnTrakteerPost');
+            if (btnTrakteerPost) {
+                if (mangaType === 'webtoon') {
+                    btnTrakteerPost.style.display = 'none';
+                    dLog('   - Trakteer button: HIDDEN (webtoon)');
+                } else {
+                    btnTrakteerPost.style.display = 'block';
+                    dLog('   - Trakteer button: SHOWN (manga)');
+                }
+            }
+        }
+        return;
+    }
+    
+    // ✅ User is logged in - check if donatur
+    const isDonatur = await checkIsDonatur();
+    
+    if (isDonatur) {
+        dLog('✅ Donatur SETIA - Opening chapter directly');
+        window.location.href = `reader.html?repo=${encodeURIComponent(repoId)}&chapter=${encodeURIComponent(chapterFolder)}`;
+        return;
+    }
+    
+    // ✅ User logged in but not donatur - Show upgrade modal
+    dLog('🔒 PEMBACA SETIA (logged in but not donatur) - Showing upgradeModal');
+    const upgradeModal = document.getElementById('upgradeModal');
+    if (upgradeModal) {
+        upgradeModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+/**
+ * Handle chapter link click
+ */
+function handleChapterClick(event, repoId, chapterFolder, isLocked) {
+    dLog('🖱️ Chapter clicked');
+    dLog('   - Repo:', repoId);
+    dLog('   - Chapter:', chapterFolder);
+    dLog('   - Locked:', isLocked);
+    
+    if (isLocked) {
+        event.preventDefault();
+        event.stopPropagation();
+        showLockedChapterModal(repoId, chapterFolder);
+    }
+    // If not locked, let the default link behavior work
+}
+
+// Make functions available globally for onclick handlers
+window.handleChapterClick = handleChapterClick;
+window.showLockedChapterModal = showLockedChapterModal;
