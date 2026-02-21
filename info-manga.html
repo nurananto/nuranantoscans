@@ -12,6 +12,7 @@
                    img-src 'self' data: https:; 
                    font-src 'self' data:; 
                    connect-src 'self' 
+                     https://manga-view-counter.nuranantoadhien.workers.dev
                      https://manga-auth-worker.nuranantoadhien.workers.dev 
                      https://manga-code-validator.nuranantoadhien.workers.dev 
                      https://decrypt-manifest.nuranantoadhien.workers.dev
@@ -1927,6 +1928,36 @@ window.addEventListener('load', function() {
     // else {
     //     console.warn('⚠️ [PROFILE-LOAD] getAuthToken() not available - common.js might not be loaded');
     // }
+    
+    // ========================================
+    // 📊 VIEW COUNTER - Cloudflare Worker Integration
+    // ========================================
+    const WORKER_URL = 'https://manga-view-counter.nuranantoadhien.workers.dev';
+    
+    // Get manga name from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const mangaRepo = urlParams.get('manga');
+    
+    if (mangaRepo) {
+        // Increment manga view
+        fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                repo: mangaRepo,
+                type: 'page'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✅ Manga view recorded');
+            } else if (data.cooldown) {
+                console.log('⏳ View cooldown active');
+            }
+        })
+        .catch(err => console.warn('⚠️ View counter error:', err));
+    }
 });
 </script>
 

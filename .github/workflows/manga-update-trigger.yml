@@ -6,7 +6,7 @@ on:
       - manga-updated
   
   schedule:
-    - cron: '0 2 * * *'  # Daily at 02:00 UTC (09:00 WIB) - backup only
+    - cron: '0 18 * * *'  # Daily at 18:00 UTC (01:00 WIB) - process after Worker sync
   
   workflow_dispatch:
 

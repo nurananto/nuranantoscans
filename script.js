@@ -237,7 +237,7 @@ function formatViews(views) {
 /**
  * Create Trending Card HTML (Landscape Layout)
  */
-function createTrendingCard(manga, mangaData, views24h) {
+function createTrendingCard(manga, mangaData, views24h, rank) {
   const cdnUrls = getResponsiveCDN(manga.cover);
   
   // Get manga details
@@ -246,6 +246,7 @@ function createTrendingCard(manga, mangaData, views24h) {
   const genresText = genres.length > 0 ? genres.join(', ') : 'Genre not available';
   const synopsis = mangaData.manga?.description || 'Sinopsis tidak tersedia.';
   const status = (mangaData.manga?.status || 'ONGOING').toUpperCase();
+  const dailyViews = views24h || 0; // ✅ FIX: Use daily views instead of total views
   
   // Status badge class
   let statusClass = 'status-ongoing';
@@ -253,10 +254,28 @@ function createTrendingCard(manga, mangaData, views24h) {
   if (status === 'HIATUS') {
     statusClass = 'status-hiatus';
     statusText = 'Hiatus';
-  } else if (status === 'COMPLETED' || status === 'TAMAT') {
+  } else if (status === 'COMPLETED' || status === 'TAMAT' || status === 'END') {
     statusClass = 'status-completed';
     statusText = 'Tamat';
   }
+  
+  // Create wrapper for ranking label + card
+  const wrapper = document.createElement('div');
+  wrapper.className = 'trending-card-wrapper';
+  
+  // Create header with rank label and views
+  const header = document.createElement('div');
+  header.className = 'trending-card-header';
+  header.innerHTML = `
+    <div class="trending-rank-label">Populer #${rank}</div>
+    <div class="trending-views-counter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <span>${dailyViews.toLocaleString('id-ID')} views (24h)</span>
+    </div>
+  `;
   
   const card = document.createElement('div');
   card.className = 'trending-card';
@@ -267,13 +286,6 @@ function createTrendingCard(manga, mangaData, views24h) {
     <div class="trending-card-left">
       <div class="trending-badges-container">
         <span class="trending-status-badge ${statusClass}">${statusText}</span>
-        <div class="trending-24h-badge">
-          <svg class="trending-24h-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          TRENDING
-        </div>
       </div>
       <h3 class="trending-card-title">${escapeHTML(title)}</h3>
       <div class="trending-card-genres">${escapeHTML(genresText)}</div>
@@ -306,7 +318,11 @@ function createTrendingCard(manga, mangaData, views24h) {
     }
   });
   
-  return card;
+  // Append header and card to wrapper
+  wrapper.appendChild(header);
+  wrapper.appendChild(card);
+  
+  return wrapper;
 }
 
 /**
@@ -354,11 +370,11 @@ async function renderTrending(mangaList) {
     // Clear container
     container.innerHTML = '';
     
-    // Render cards
+    // Render cards with ranking
     const fragment = document.createDocumentFragment();
-    trending.forEach((item) => {
-      const card = createTrendingCard(item.manga, item.mangaData, item.views24h);
-      fragment.appendChild(card);
+    trending.forEach((item, index) => {
+      const cardWrapper = createTrendingCard(item.manga, item.mangaData, item.views24h, index + 1);
+      fragment.appendChild(cardWrapper);
     });
     
     container.appendChild(fragment);
@@ -562,28 +578,6 @@ function createCard(manga, mangaData, index = 0) {
       const timeText = getRelativeTime(chapter.uploadDate) || '';
       const lockIcon = chapter.locked ? (isDonaturSetia ? '🔓' : '🔒') : '';
       
-      // ✅ Badge END untuk manga tamat - matching logic dengan info-manga.js
-      const mangaStatus = (mangaData.manga?.status || mangaData.status || '').toUpperCase();
-      const endChapter = mangaData.manga?.endChapter;
-      const isEndChapter = mangaStatus === 'END' && endChapter && (
-        (typeof endChapter === 'string' && chapter.folder.toLowerCase() === endChapter.toLowerCase()) ||
-        parseFloat(chapter.folder) === parseFloat(endChapter) ||
-        String(chapter.folder) === String(endChapter)
-      );
-      const endBadgeHTML = isEndChapter ? `
-        <div class="manga-chapter-badge-end">
-          END
-        </div>
-      ` : '';
-      
-      // ✅ Badge HIATUS untuk manga hiatus (hanya di chapter terakhir)
-      const isLastChapter = idx === 0; // First in array is last chapter (newest)
-      const hiatusBadgeHTML = (isLastChapter && mangaStatus === 'HIATUS') ? `
-        <div class="manga-chapter-badge-hiatus">
-          HIATUS
-        </div>
-      ` : '';
-      
       // ✅ Badge UP for chapters updated within 48 hours (with glowing)
       const isChapterNew = isChapterRecent(chapter.uploadDate);
       const upBadgeHTML = isChapterNew ? `
@@ -616,8 +610,6 @@ function createCard(manga, mangaData, index = 0) {
            ${onclickHandler}>
           <div class="manga-chapter-left">
             <span class="manga-chapter-text">${safeChapterText}</span>
-            ${endBadgeHTML}
-            ${hiatusBadgeHTML}
             ${upBadgeHTML}
           </div>
           <span class="manga-chapter-time">${safeTimeText}</span>
@@ -633,21 +625,51 @@ function createCard(manga, mangaData, index = 0) {
   const fetchPriority = index < eagerLoadCount ? ' fetchpriority="high"' : '';
   const decodingAttr = index < eagerLoadCount ? ' decoding="sync"' : ' decoding="async"';
   
+  // Determine manga type badge
+  const mangaType = (manga.type || 'manga').toLowerCase();
+  let typeBadge = '';
+  
+  if (mangaType === 'webtoon' || mangaType === 'colour') {
+    typeBadge = '<div class="manga-type-badge badge-colour">COLOUR</div>';
+  } else if (mangaType === 'manga' || mangaType === 'bw') {
+    typeBadge = '<div class="manga-type-badge badge-bw">B/W</div>';
+  }
+  
+  // Determine status badge (below cover)
+  const mangaStatus = (mangaData.manga?.status || mangaData.status || 'ONGOING').toUpperCase();
+  let statusBadge = '';
+  let statusClass = 'status-ongoing';
+  let statusText = 'Ongoing';
+  
+  if (mangaStatus === 'HIATUS') {
+    statusClass = 'status-hiatus';
+    statusText = 'Hiatus';
+  } else if (mangaStatus === 'COMPLETED' || mangaStatus === 'TAMAT' || mangaStatus === 'END') {
+    statusClass = 'status-completed';
+    statusText = 'Tamat';
+  }
+  
+  statusBadge = `<div class="manga-card-status-badge ${statusClass}">${statusText}</div>`;
+  
   return `
     <div class="manga-card-horizontal" data-manga-id="${escapeHTML(manga.id)}">
       <a href="info-manga.html?repo=${safeRepoId}" class="manga-card-title-link">
         <h3 class="manga-card-title-text">${safeMangaTitle}</h3>
       </a>
       <div class="manga-card-content">
-        <a href="info-manga.html?repo=${safeRepoId}" class="manga-card-cover-link">
-          <img 
-            src="${escapeHTML(cdnUrls.medium)}"
-            alt="${safeMangaTitle} cover"
-            loading="${loadingAttr}"
-            ${fetchPriority}
-            ${decodingAttr}
-            class="manga-card-cover-img">
-        </a>
+        <div class="manga-card-cover-wrapper">
+          <a href="info-manga.html?repo=${safeRepoId}" class="manga-card-cover-link">
+            <img 
+              src="${escapeHTML(cdnUrls.medium)}"
+              alt="${safeMangaTitle} cover"
+              loading="${loadingAttr}"
+              ${fetchPriority}
+              ${decodingAttr}
+              class="manga-card-cover-img">
+            ${typeBadge}
+          </a>
+          ${statusBadge}
+        </div>
         <div class="manga-card-chapters">
           ${chaptersHTML}
         </div>

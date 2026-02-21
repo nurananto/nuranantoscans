@@ -345,8 +345,8 @@ async function showLockedChapterModal(chapterNumber = null, chapterFolder = null
     }
 }
 
-// Google Apps Script URL untuk view counter
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyItVREQwjL-hAwkeWxy1fj-0lggMbNnzOGta8XAOqT6tWzyxwOFvue8uthYoq-nQYBow/exec';
+// Cloudflare Worker URL untuk view counter
+const VIEW_COUNTER_URL = 'https://manga-view-counter.nuranantoadhien.workers.dev';
 
 let mangaData = null;
 
@@ -542,7 +542,7 @@ function updateStatusBadge(elementId, status) {
     if (normalizedStatus.includes('hiatus')) {
         badge.classList.add('hiatus');
         badge.textContent = 'HIATUS';
-    } else if (normalizedStatus.includes('tamat') || normalizedStatus.includes('completed')) {
+    } else if (normalizedStatus.includes('tamat') || normalizedStatus.includes('completed') || normalizedStatus.includes('end')) {
         badge.classList.add('tamat');
         badge.textContent = 'TAMAT';
     } else {
@@ -1040,7 +1040,15 @@ function createChapterElement(chapter, allChapters) {
     // ✅ BUILD BADGES
     const endBadge = isEndChapter ? '<span class="chapter-end-badge">END</span>' : '';
     const hiatusBadge = isHiatusChapter ? '<span class="chapter-hiatus-badge-modal">HIATUS</span>' : '';
-    const updatedBadge = isRecent ? '<span class="chapter-updated-badge">UPDATED</span>' : '';
+    const updatedBadge = isRecent ? `<span class="chapter-updated-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+          UP
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+        </span>` : '';
 
     const badges = (endBadge || hiatusBadge || updatedBadge) 
         ? `<div class="badge-container">${endBadge}${hiatusBadge}${updatedBadge}</div>` 
@@ -1223,19 +1231,39 @@ async function trackLockedChapterView(chapter) {
  */
 async function incrementPendingChapterViews(repo, chapter) {
     try {
-        await fetch(GOOGLE_SCRIPT_URL, {
+        const requestBody = { 
+            repo: repo,
+            chapter: chapter,
+            type: 'chapter',
+            timestamp: getWIBTimestamp()
+        };
+        
+        if (DEBUG_MODE) {
+            console.log('📤 Sending chapter view to Worker:', {
+                url: VIEW_COUNTER_URL,
+                body: requestBody
+            });
+        }
+        
+        const response = await fetch(VIEW_COUNTER_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'text/plain',
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                repo: repo,
-                chapter: chapter,
-                type: 'chapter',
-                timestamp: getWIBTimestamp()
-            }),
-            mode: 'no-cors'
+            body: JSON.stringify(requestBody)
         });
+        
+        const result = await response.json();
+        
+        if (DEBUG_MODE) {
+            console.log('📥 Worker response:', result);
+            
+            if (result.success) {
+                console.log('✅ Chapter view counted successfully');
+            } else if (result.alreadyCounted) {
+                console.log('ℹ️ Already counted today');
+            }
+        }
         
         dLog('✅ Chapter view increment request sent');
         
@@ -1330,18 +1358,38 @@ async function trackPageView() {
  */
 async function incrementPendingViews(repo) {
     try {
-        await fetch(GOOGLE_SCRIPT_URL, {
+        const requestBody = { 
+            repo: repo,
+            type: 'page',
+            timestamp: getWIBTimestamp()
+        };
+        
+        if (DEBUG_MODE) {
+            console.log('📤 Sending page view to Worker:', {
+                url: VIEW_COUNTER_URL,
+                body: requestBody
+            });
+        }
+        
+        const response = await fetch(VIEW_COUNTER_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'text/plain',
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                repo: repo,
-                type: 'page',
-                timestamp: getWIBTimestamp()
-            }),
-            mode: 'no-cors'
+            body: JSON.stringify(requestBody)
         });
+        
+        const result = await response.json();
+        
+        if (DEBUG_MODE) {
+            console.log('📥 Worker response:', result);
+            
+            if (result.success) {
+                console.log('✅ Page view counted successfully');
+            } else if (result.alreadyCounted) {
+                console.log('ℹ️ Already counted today');
+            }
+        }
         
         dLog('✅ View increment request sent');
         

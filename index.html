@@ -12,6 +12,7 @@
                        img-src 'self' data: https:; 
                        font-src 'self' data:; 
                        connect-src 'self' 
+                         https://manga-view-counter.nuranantoadhien.workers.dev
                          https://manga-auth-worker.nuranantoadhien.workers.dev 
                          https://manga-code-validator.nuranantoadhien.workers.dev 
                          https://decrypt-manifest.nuranantoadhien.workers.dev
@@ -177,9 +178,9 @@
 
             #searchInput {
                 width: 100%;
-                padding: 0.75rem 1.25rem;
-                font-size: 1rem;
-                border-radius: 12px;
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+                border-radius: 10px;
                 border: 2px solid rgba(255, 255, 255, 0.1);
                 outline: none;
                 background: #222;
@@ -272,11 +273,11 @@
             /* ✅ FIXED: Background & Shadow Transparent */
             .manga-card {
                 position: relative;
-                overflow: hidden;
+                overflow: visible; /* ✅ FIX: Allow badges to show fully without crop */
                 background: transparent;
                 border-radius: 0.8rem;
                 border: 1px solid rgba(255, 255, 255, 0.15);
-                padding: 0.5rem;
+                padding: 0.8rem; /* ✅ FIX: Increased padding untuk ruang badge */
                 box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
                 cursor: pointer;
                 transition:
@@ -296,7 +297,7 @@
             .manga-cover-wrapper {
                 position: relative;
                 width: 100%;
-                overflow: hidden;
+                overflow: visible; /* ✅ FIX: Allow badges to overflow without crop */
                 aspect-ratio: 3/4.2;
                 background: rgba(255, 255, 255, 0.05);
                 border-radius: 0.6rem;
@@ -305,8 +306,8 @@
 
             /* Type badge di manga card sama seperti trending */
             .manga-cover-wrapper .type-badge {
-                bottom: 0;
-                right: 0;
+                bottom: -2px; /* ✅ FIX: Match base style to prevent crop */
+                right: -2px; /* ✅ FIX: Match base style to prevent crop */
                 border-radius: 0.6rem 0 0.6rem 0;
             }
 
@@ -329,8 +330,8 @@
             /* Type Badge Base Styles */
             .type-badge {
                 position: absolute;
-                bottom: 0;
-                right: 0;
+                bottom: -2px; /* ✅ FIX: Slightly outside to prevent crop */
+                right: -2px; /* ✅ FIX: Slightly outside to prevent crop */
                 padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
                 border-radius: 0.6rem 0 0.6rem 0;
                 /* ✅ FIX: Fallback font-size untuk prevent glitch saat hard refresh */
@@ -393,8 +394,8 @@
             /* ✅ Status badge di pojok kiri atas (seperti trending badge) */
             .status-badge {
                 position: absolute;
-                top: 0;
-                left: 0;
+                top: -2px; /* ✅ FIX: Slightly outside to prevent crop */
+                left: -2px; /* ✅ FIX: Slightly outside to prevent crop */
                 padding: 6px 14px;
                 border-radius: 0.6rem 0 0.6rem 0;
                 font-size: 12px;
@@ -502,6 +503,7 @@
                 gap: 0;
                 transition: all 0.3s ease;
                 position: relative;
+                overflow: visible; /* ✅ FIX: Allow badges to show fully */
             }
 
             .manga-card-horizontal:hover {
@@ -544,12 +546,40 @@
 
             .manga-card-cover-link {
                 flex-shrink: 0;
-                width: 120px;
+                width: 150px; /* ✅ Larger cover size */
                 display: block;
                 position: relative;
                 border-radius: 8px;
-                overflow: hidden;
+                overflow: hidden; /* ✅ Keep overflow hidden for image only */
                 align-self: flex-start;
+            }
+
+            /* Manga Type Badge - B/W & Colour */
+            .manga-type-badge {
+                position: absolute;
+                bottom: 6px;
+                right: 6px;
+                padding: 3px 8px;
+                font-size: 0.65rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-radius: 4px;
+                line-height: 1;
+                z-index: 2;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+            }
+
+            .manga-type-badge.badge-bw {
+                background: linear-gradient(135deg, #2a2a2a 0%, #000000 100%);
+                color: #ffffff;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .manga-type-badge.badge-colour {
+                background: linear-gradient(135deg, #1e90ff 0%, #0066cc 100%);
+                color: #ffffff;
+                border: 1px solid rgba(255, 255, 255, 0.2);
             }
 
             .manga-card-cover-img {
@@ -565,6 +595,75 @@
 
             .manga-card-cover-link:hover .manga-card-cover-img {
                 transform: scale(1.05);
+            }
+
+            /* Manga Card Cover Wrapper with Status Badge */
+            .manga-card-cover-wrapper {
+                flex-shrink: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 10px; /* ✅ FIX: Increased gap between cover and badge */
+                align-self: flex-start;
+                padding-bottom: 6px; /* ✅ FIX: Extra space for badge border effect */
+                width: 150px; /* ✅ FIX: Larger cover size */
+            }
+
+            .manga-card-status-badge {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 5px 6px;
+                font-size: 0.65rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                border-radius: 4px;
+                white-space: nowrap;
+                line-height: 1;
+                position: relative;
+                z-index: 1;
+                width: 100%; /* ✅ FIX: Full width of cover */
+                box-sizing: border-box; /* ✅ Include padding in width */
+            }
+
+            /* Outer border effect - squircle dalam squircle */
+            .manga-card-status-badge::before {
+                content: '';
+                position: absolute;
+                top: -3px;
+                left: -3px;
+                right: -3px;
+                bottom: -3px;
+                border-radius: 6px;
+                z-index: -1;
+                opacity: 0.6;
+            }
+
+            .manga-card-status-badge.status-ongoing::before {
+                border: 2px solid rgba(34, 197, 94, 0.8);
+            }
+
+            .manga-card-status-badge.status-hiatus::before {
+                border: 2px solid rgba(107, 114, 128, 0.8);
+            }
+
+            .manga-card-status-badge.status-completed::before {
+                border: 2px solid rgba(220, 38, 38, 0.8);
+            }
+
+            .manga-card-status-badge.status-ongoing {
+                background: linear-gradient(135deg, rgba(34, 197, 94, 0.75) 0%, rgba(22, 163, 74, 0.75) 100%);
+                color: #fff;
+            }
+
+            .manga-card-status-badge.status-hiatus {
+                background: linear-gradient(135deg, rgba(107, 114, 128, 0.75) 0%, rgba(75, 85, 99, 0.75) 100%);
+                color: #fff;
+            }
+
+            .manga-card-status-badge.status-completed {
+                background: linear-gradient(135deg, rgba(220, 38, 38, 0.75) 0%, rgba(185, 28, 28, 0.75) 100%);
+                color: #fff;
             }
 
             .manga-card-chapters {
@@ -772,7 +871,7 @@
     .manga-list-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
+        gap: 1.5rem;
         max-width: 1400px;
         box-sizing: border-box;
         width: 100%;
@@ -790,7 +889,7 @@
         min-width: 0;
         box-sizing: border-box;
         padding: 0.85rem !important;
-        overflow: hidden;
+        overflow: visible !important; /* ✅ FIX: Allow badges to show fully */
     }
     
     .manga-card-title-link,
@@ -813,13 +912,25 @@
     .manga-list-page .manga-card-content {
         gap: 0.9rem !important;
         min-width: 0;
-        overflow: hidden;
+        overflow: visible; /* ✅ FIX: Allow status badge to show fully */
+    }
+    
+    .manga-card-cover-wrapper {
+        width: 130px; /* ✅ Larger cover size */
     }
     
     .manga-card-cover-link,
     .manga-list-page .manga-card-cover-link {
-        width: 100px !important;
+        width: 130px !important; /* ✅ Larger cover size */
         flex-shrink: 0;
+        overflow: hidden !important; /* ✅ Keep overflow hidden for image */
+    }
+    
+    .manga-type-badge {
+        bottom: 5px;
+        right: 5px;
+        padding: 2px 6px;
+        font-size: 0.6rem;
     }
     
     .manga-card-chapters,
@@ -897,7 +1008,7 @@
     .manga-list-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
+        gap: 1.5rem;
         max-width: 1400px;
         box-sizing: border-box;
         width: 100%;
@@ -915,7 +1026,7 @@
         min-width: 0;
         box-sizing: border-box;
         padding: 0.8rem !important;
-        overflow: hidden;
+        overflow: visible !important; /* ✅ FIX: Allow badges to show fully */
     }
     
     .manga-card-title-link,
@@ -938,13 +1049,18 @@
     .manga-list-page .manga-card-content {
         gap: 0.85rem !important;
         min-width: 0;
-        overflow: hidden;
+        overflow: visible; /* ✅ FIX: Allow status badge to show fully */
+    }
+    
+    .manga-card-cover-wrapper {
+        width: 125px; /* ✅ Larger cover size */
     }
     
     .manga-card-cover-link,
     .manga-list-page .manga-card-cover-link {
-        width: 95px !important;
+        width: 125px !important; /* ✅ Larger cover size */
         flex-shrink: 0;
+        overflow: hidden !important; /* ✅ Keep overflow hidden for image */
     }
     
     .manga-card-chapters,
@@ -1059,8 +1175,24 @@
         gap: 1.2rem;
     }
     
+    .manga-card-cover-wrapper {
+        width: 160px; /* ✅ Larger cover size */
+    }
+    
     .manga-card-cover-link {
-        width: 130px;
+        width: 160px; /* ✅ Larger cover size */
+    }
+    
+    .manga-type-badge {
+        bottom: 5px;
+        right: 5px;
+        padding: 2.5px 7px;
+        font-size: 0.62rem;
+    }
+    
+    .manga-card-status-badge {
+        padding: 4.5px 5.5px;
+        font-size: 0.62rem;
     }
     
     .manga-card-chapters {
@@ -1158,8 +1290,8 @@
         padding: 0;
     }
     #searchInput {
-        padding: 0.65rem 1rem;
-        font-size: 0.95rem;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.85rem;
     }
     /* Hide desktop buttons on mobile - Show login button only */
     .header-buttons {
@@ -1180,9 +1312,25 @@
         font-size: 1rem;
     }
     
+    .manga-card-cover-wrapper {
+        width: 120px; /* ✅ Larger cover size */
+    }
+    
     .manga-card-cover-link {
-        width: 100px;
+        width: 120px; /* ✅ Larger cover size */
         align-self: flex-start;
+    }
+    
+    .manga-type-badge {
+        bottom: 4px;
+        right: 4px;
+        padding: 2px 6px;
+        font-size: 0.6rem;
+    }
+    
+    .manga-card-status-badge {
+        padding: 4px 5px;
+        font-size: 0.6rem;
     }
     
     .manga-card-content {
@@ -1272,9 +1420,25 @@
         font-size: 0.95rem;
     }
     
+    .manga-card-cover-wrapper {
+        width: 105px; /* ✅ Larger cover size */
+    }
+    
     .manga-card-cover-link {
-        width: 85px;
+        width: 105px; /* ✅ Larger cover size */
         align-self: flex-start;
+    }
+    
+    .manga-type-badge {
+        bottom: 4px;
+        right: 4px;
+        padding: 2px 5px;
+        font-size: 0.55rem;
+    }
+    
+    .manga-card-status-badge {
+        padding: 4px 4px;
+        font-size: 0.57rem;
     }
     
     .manga-card-content {
@@ -1382,9 +1546,25 @@
         font-size: 0.85rem;
     }
     
+    .manga-card-cover-wrapper {
+        width: 95px; /* ✅ Larger cover size */
+    }
+    
     .manga-card-cover-link {
-        width: 75px;
+        width: 95px; /* ✅ Larger cover size */
         align-self: center;
+    }
+    
+    .manga-type-badge {
+        bottom: 3px;
+        right: 3px;
+        padding: 1.5px 4px;
+        font-size: 0.5rem;
+    }
+    
+    .manga-card-status-badge {
+        padding: 3.5px 3.5px;
+        font-size: 0.52rem;
     }
     
     .manga-card-content {
@@ -1458,8 +1638,19 @@
    ======================================== */
 .trending-section {
     max-width: 1400px;
-    margin: 0 auto 2.5rem;
+    margin: 0 auto 4.5rem;
     padding: 0;
+}
+
+/* Trending Section Heading */
+.trending-section-heading {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
 }
 
 .trending-container {
@@ -1494,9 +1685,68 @@
     display: none;
 }
 
+/* Trending Card Wrapper */
+.trending-card-wrapper {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    box-sizing: border-box;
+}
+
+/* Trending Card Header - Rank & Views */
+.trending-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.5rem;
+}
+
+/* Trending Rank Label - Mencolok dengan Glow Emas */
+.trending-rank-label {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ff9a00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.7)) drop-shadow(0 0 16px rgba(255, 215, 0, 0.4));
+    animation: rank-glow 2s ease-in-out infinite;
+}
+
+@keyframes rank-glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.7)) drop-shadow(0 0 16px rgba(255, 215, 0, 0.4));
+    }
+    50% {
+        filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.9)) drop-shadow(0 0 24px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 32px rgba(255, 215, 0, 0.4));
+    }
+}
+
+/* Trending Views Counter */
+.trending-views-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.trending-views-counter svg {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.6);
+}
+
 /* Trending Card - Landscape Layout */
 .trending-card {
-    flex: 0 0 100%;
     display: flex;
     gap: 1.5rem;
     width: 100%;
@@ -1504,8 +1754,6 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
     padding: clamp(1rem, 2vw, 1.5rem);
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     box-sizing: border-box;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -1671,11 +1919,34 @@
 
 @media (max-width: 768px) {
     .trending-section {
-        margin-bottom: 2rem;
+        margin-bottom: 3.5rem;
+    }
+    
+    .trending-section-heading {
+        font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+        margin-bottom: 1.2rem;
+        letter-spacing: 1px;
+    }
+    
+    .trending-card-header {
+        padding: 0 0.25rem;
+    }
+    
+    .trending-rank-label {
+        font-size: clamp(1rem, 2vw, 1.2rem);
+    }
+    
+    .trending-views-counter {
+        font-size: clamp(0.75rem, 1.2vw, 0.9rem);
+        gap: 0.3rem;
+    }
+    
+    .trending-views-counter svg {
+        width: 16px;
+        height: 16px;
     }
     
     .trending-card {
-        flex: 0 0 100%;
         gap: 1rem;
     }
     
@@ -1736,8 +2007,31 @@
 }
 
 @media (max-width: 480px) {
+    .trending-section-heading {
+        font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+        margin-bottom: 1rem;
+        letter-spacing: 0.8px;
+    }
+    
+    .trending-card-header {
+        padding: 0;
+    }
+    
+    .trending-rank-label {
+        font-size: clamp(0.9rem, 1.8vw, 1.1rem);
+    }
+    
+    .trending-views-counter {
+        font-size: clamp(0.7rem, 1vw, 0.8rem);
+        gap: 0.25rem;
+    }
+    
+    .trending-views-counter svg {
+        width: 14px;
+        height: 14px;
+    }
+    
     .trending-card {
-        flex: 0 0 100%;
         padding: 1rem;
     }
     
@@ -1795,6 +2089,87 @@
     
     .trending-card-synopsis {
         font-size: 0.65rem;
+        -webkit-line-clamp: 2;
+    }
+}
+
+@media (max-width: 399px) {
+    .trending-section-heading {
+        font-size: clamp(1rem, 2vw, 1.2rem);
+        margin-bottom: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .trending-card-header {
+        padding: 0;
+        gap: 0.5rem;
+    }
+    
+    .trending-rank-label {
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .trending-views-counter {
+        font-size: 0.65rem;
+        gap: 0.2rem;
+    }
+    
+    .trending-views-counter svg {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .trending-card {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .trending-card-wrapper {
+        gap: 0.5rem;
+        min-width: 100%;
+    }
+    
+    .trending-card-right {
+        width: 85px;
+    }
+    
+    .trending-badges-container {
+        gap: 3px;
+    }
+    
+    .trending-24h-badge {
+        padding: 2px 5px;
+        font-size: 0.55rem;
+        gap: 2px;
+        min-height: 20px;
+    }
+    
+    .trending-24h-icon {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .trending-status-badge {
+        padding: 2px 5px;
+        font-size: 0.55rem;
+        min-height: 20px;
+    }
+    
+    .trending-card-title {
+        font-size: 0.9rem;
+    }
+    
+    .trending-card-genres {
+        font-size: 0.6rem;
+    }
+    
+    .trending-card-synopsis-label {
+        font-size: 0.65rem;
+    }
+    
+    .trending-card-synopsis {
+        font-size: 0.6rem;
         -webkit-line-clamp: 2;
     }
 }
@@ -1857,23 +2232,23 @@
 .support-container {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: clamp(1rem, 2vw, 1.5rem);
+    gap: clamp(0.75rem, 1.5vw, 1rem);
     width: 100%;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
-    padding: clamp(1rem, 2vw, 1.5rem);
+    padding: clamp(0.75rem, 1.5vw, 1rem);
 }
 
 .support-button {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: clamp(8px, 1.5vw, 12px);
-    padding: clamp(14px, 2vw, 18px) clamp(20px, 3vw, 32px);
-    border-radius: clamp(10px, 1.5vw, 14px);
+    gap: clamp(6px, 1vw, 8px);
+    padding: clamp(10px, 1.5vw, 12px) clamp(16px, 2vw, 20px);
+    border-radius: clamp(8px, 1.2vw, 10px);
     text-decoration: none;
     font-weight: 700;
-    font-size: clamp(14px, 1.8vw, 18px);
+    font-size: clamp(12px, 1.5vw, 14px);
     color: #fff;
     transition: all 0.3s ease;
     border: 2px solid rgba(255, 255, 255, 0.2);
@@ -1912,8 +2287,8 @@
 }
 
 .support-icon {
-    width: clamp(20px, 2.5vw, 28px);
-    height: clamp(20px, 2.5vw, 28px);
+    width: clamp(18px, 2vw, 22px);
+    height: clamp(18px, 2vw, 22px);
     flex-shrink: 0;
 }
 
@@ -1933,7 +2308,7 @@
     }
     
     .support-button {
-        font-size: 14px;
+        font-size: 12px;
     }
     
     /* Hide "Donasi Chapter", show "Donasi" on tablet */
@@ -1954,7 +2329,7 @@
     
     .support-container {
         grid-template-columns: 1fr 1fr 1fr;
-        gap: 0.875rem;
+        gap: 0.75rem;
     }
     
     /* Hide all text on mobile - icon only */
@@ -1965,13 +2340,13 @@
     }
     
     .support-button {
-        padding: 12px 16px;
-        font-size: 13px;
+        padding: 10px 12px;
+        font-size: 12px;
     }
     
     .support-icon {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
     }
 }
 
@@ -2606,7 +2981,7 @@
         <main role="main" id="main-content">
             <!-- TRENDING SECTION -->
             <section class="trending-section" aria-labelledby="trending-heading">
-                <h2 id="trending-heading" class="visually-hidden">Trending Manga</h2>
+                <h2 id="trending-heading" class="trending-section-heading">Bacaan Populer 24 Jam Terakhir</h2>
                 <div class="trending-container" id="trendingContainer">
                     <!-- Trending content will be added here -->
                 </div>

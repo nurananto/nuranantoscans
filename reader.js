@@ -169,7 +169,7 @@ function convertToWIB(isoString) {
 // ============================================
 
 const TRAKTEER_LINK = 'https://trakteer.id/NuranantoScanlation';
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyItVREQwjL-hAwkeWxy1fj-0lggMbNnzOGta8XAOqT6tWzyxwOFvue8uthYoq-nQYBow/exec';
+const VIEW_COUNTER_URL = 'https://manga-view-counter.nuranantoadhien.workers.dev';
 
 // ============================================
 // SMART END CHAPTER LOGIC
@@ -1434,26 +1434,46 @@ async function trackChapterView() {
         if (DEBUG_MODE) dLog(`   GitHub repo: ${githubRepo}`);
         if (DEBUG_MODE) dLog(`   Chapter: ${currentChapterFolder}`);
         
-        await fetch(GOOGLE_SCRIPT_URL, {
+        const requestBody = { 
+            repo: githubRepo,
+            chapter: currentChapterFolder,
+            type: 'chapter',
+            timestamp: getWIBTimestamp()
+        };
+        
+        if (DEBUG_MODE) {
+            console.log('📤 Sending chapter view to Worker:', {
+                url: VIEW_COUNTER_URL,
+                body: requestBody
+            });
+        }
+        
+        const response = await fetch(VIEW_COUNTER_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'text/plain',
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                repo: githubRepo,
-                chapter: currentChapterFolder,
-                type: 'chapter',
-                timestamp: getWIBTimestamp()
-            }),
-            mode: 'no-cors'
+            body: JSON.stringify(requestBody)
         });
+        
+        const result = await response.json();
+        
+        if (DEBUG_MODE) {
+            console.log('📥 Worker response:', result);
+            
+            if (result.success) {
+                console.log('✅ Chapter view counted successfully');
+            } else if (result.alreadyCounted) {
+                console.log('ℹ️ Already counted today');
+            }
+        }
         
         sessionStorage.setItem(viewKey, 'true');
         
         if (DEBUG_MODE) dLog('✅ Chapter view tracked successfully (WIB)');
         
     } catch (error) {
-    if (DEBUG_MODE) console.error('❌ Error tracking chapter view:', error);
+        console.error('❌ Error tracking chapter view:', error);
     }
 }
 

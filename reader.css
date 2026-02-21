@@ -281,7 +281,7 @@ img {
     line-height: 1;
 }
 
-/* Same colors as info-manga.css */
+/* Same colors as info-manga.css and index.html */
 .nav-status-badge.status-ongoing {
     background: linear-gradient(135deg, rgba(34, 197, 94, 0.75) 0%, rgba(22, 163, 74, 0.75) 100%);
     color: #fff;
