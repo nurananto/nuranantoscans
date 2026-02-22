@@ -341,7 +341,7 @@ async function renderTrending(mangaList) {
       mangaList.map(async (manga) => {
         try {
           const mangaData = await fetchMangaData(manga.repo);
-          const views24h = await calculate24HourViews(manga.repo) || 0;
+          const views24h = await calculate24HourViews(manga.repo);
           const lastUpdate = mangaData.lastChapterUpdate ? new Date(mangaData.lastChapterUpdate) : new Date(0);
           return { manga, mangaData, views24h, lastUpdate };
         } catch (error) {
@@ -351,21 +351,22 @@ async function renderTrending(mangaList) {
       })
     );
     
-    // Check if we have views data
-    const hasViewsData = mangaWithData.some(item => item.views24h > 0);
-    
-    let trending;
-    if (hasViewsData) {
-      // Sort by 24h views (descending) and take top 5
-      trending = mangaWithData
-        .sort((a, b) => b.views24h - a.views24h)
-        .slice(0, 5);
-    } else {
-      // Fallback: Sort by latest chapter update
-      trending = mangaWithData
-        .sort((a, b) => b.lastUpdate - a.lastUpdate)
-        .slice(0, 5);
+    if (DEBUG_MODE) {
+      dLog('📊 Trending data:', mangaWithData.map(m => ({ repo: m.manga.repo, views: m.views24h })));
     }
+    
+    // Always sort by 24h views (descending) and take top 5
+    // Manga with higher views will be shown first, those with 0 views will be at the end
+    const trending = mangaWithData
+      .sort((a, b) => {
+        // Primary sort: by views (descending)
+        if (b.views24h !== a.views24h) {
+          return b.views24h - a.views24h;
+        }
+        // Secondary sort: by latest update (descending)
+        return b.lastUpdate - a.lastUpdate;
+      })
+      .slice(0, 5);
     
     // Clear container
     container.innerHTML = '';
@@ -680,9 +681,12 @@ function createCard(manga, mangaData, index = 0) {
 async function calculate24HourViews(repo) {
   try {
     const cacheKey = `daily_${repo}`;
-    const cached = getCachedData(cacheKey, 600000); // 10 min
+    const cached = getCachedData(cacheKey, 300000); // 5 min cache (reduced from 10)
     
     if (cached !== null) {
+      if (DEBUG_MODE) {
+        dLog(`📊 [CACHE HIT] ${repo}: ${cached} views`);
+      }
       return cached;
     }
     
@@ -691,27 +695,53 @@ async function calculate24HourViews(repo) {
     const data = await fetchFreshJSON(url);
     
     if (!data || !data.dailyRecords) {
-      setCachedData(cacheKey, null);
-      return null;
+      if (DEBUG_MODE) {
+        dLog(`📊 No daily views data for ${repo}`);
+      }
+      setCachedData(cacheKey, 0);
+      return 0;
     }
     
-    const now = new Date();
-    const todayStr = now.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).split(' ')[0];
+    // Get all available dates sorted descending (newest first)
+    const availableDates = Object.keys(data.dailyRecords).sort().reverse();
     
-    const todayRecord = data.dailyRecords[todayStr];
-    const result = todayRecord ? (todayRecord.manga || 0) : null;
+    if (DEBUG_MODE) {
+      dLog(`📊 Available dates for ${repo}:`, availableDates.slice(0, 3));
+    }
+    
+    if (availableDates.length === 0) {
+      if (DEBUG_MODE) {
+        dLog(`📊 No records found for ${repo}`);
+      }
+      setCachedData(cacheKey, 0);
+      return 0;
+    }
+    
+    // Get the most recent date (first in sorted descending array)
+    const latestDate = availableDates[0];
+    const latestRecord = data.dailyRecords[latestDate];
+    const result = latestRecord ? (latestRecord.manga || 0) : 0;
+    
+    if (DEBUG_MODE) {
+      dLog(`📊 Daily views for ${repo}: ${result} views (date: ${latestDate})`);
+    }
     
     // ✅ SAVE TO CACHE
     setCachedData(cacheKey, result);
     return result;
     
   } catch (error) {
+    if (DEBUG_MODE) {
+      dWarn(`⚠️ Error fetching daily views for ${repo}:`, error);
+    }
     const staleCache = getCachedData(`daily_${repo}`, Infinity);
     if (staleCache !== null) {
-      dWarn('⚠️ Using stale daily views cache');
+      if (DEBUG_MODE) {
+        dWarn(`⚠️ Using stale cache for ${repo}: ${staleCache}`);
+      }
       return staleCache;
     }
-    return null;
+    return 0;
   }
 }
 
@@ -2778,6 +2808,161 @@ const codeModal = document.getElementById('codeModal');
             if (!registerButton) console.error('  - Missing: registerButton');
         }
     }
+
+    // ============= GOOGLE OAUTH CONFIGURATION =============
+    const GOOGLE_CLIENT_ID = '729629270107-kv2m7vngrmrnh9hp18va6765autf8g5a.apps.googleusercontent.com';
+
+    /**
+     * Handle Google Sign-In response
+     */
+    async function handleGoogleSignIn(response) {
+        dLog('🔐 [GOOGLE] ========================================');
+        dLog('🔐 [GOOGLE] Sign-In initiated');
+        dLog('🔐 [GOOGLE] Time:', new Date().toISOString());
+        
+        try {
+            dLog('🌐 [GOOGLE] Sending credential to backend...');
+            const apiResponse = await fetch(`${API_URL}/auth/google-login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: response.credential })
+            });
+            
+            dLog('📥 [GOOGLE] Response status:', apiResponse.status);
+            const data = await apiResponse.json();
+            dLog('📥 [GOOGLE] Response data:', data);
+            
+            if (data.success) {
+                dLog('✅ [GOOGLE] Login successful!');
+                dLog('💾 [GOOGLE] Saving to localStorage...');
+                
+                // Clear old donatur status cache
+                localStorage.removeItem('userDonaturStatus');
+                dLog('🧹 [GOOGLE] Cleared old donatur status cache');
+                
+                // Save auth data
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('userEmail', data.user.email);
+                localStorage.setItem('userUid', data.user.uid);
+                localStorage.setItem('username', data.user.username);
+                if (data.user.avatar_url) {
+                    localStorage.setItem('userAvatar', data.user.avatar_url);
+                    dLog('✅ [GOOGLE] Avatar URL saved:', data.user.avatar_url);
+                }
+                
+                dLog('✅ [GOOGLE] Data saved to localStorage');
+                dLog('🔄 [GOOGLE] Reloading page...');
+                
+                // Close modal and reload
+                const modal = document.getElementById('loginModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+                
+                location.reload();
+            } else {
+                dLog('❌ [GOOGLE] Login failed:', data.error);
+                showFormMessage('loginMessage', `❌ ${data.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('❌ [GOOGLE] Error during sign-in:', error);
+            showFormMessage('loginMessage', '❌ Terjadi kesalahan saat login dengan Google', 'error');
+        }
+    }
+
+    /**
+     * Initialize Google Sign-In
+     */
+    function initGoogleSignIn() {
+        if (typeof google !== 'undefined' && google.accounts) {
+            dLog('✅ [GOOGLE] Initializing Google Sign-In...');
+            
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleGoogleSignIn
+            });
+            
+            // Attach to both buttons using renderButton (no FedCM)
+            const loginButton = document.getElementById('googleSignInLogin');
+            const registerButton = document.getElementById('googleSignInRegister');
+            
+            if (loginButton) {
+                // Create hidden container for Google button
+                const hiddenDiv = document.createElement('div');
+                hiddenDiv.style.display = 'none';
+                loginButton.parentElement.appendChild(hiddenDiv);
+                
+                // Render Google button
+                google.accounts.id.renderButton(hiddenDiv, {
+                    type: 'standard',
+                    theme: 'outline',
+                    size: 'large'
+                });
+                
+                // Click hidden button when custom button clicked
+                loginButton.addEventListener('click', () => {
+                    dLog('🔐 [GOOGLE] Login button clicked');
+                    const googleBtn = hiddenDiv.querySelector('div[role="button"]');
+                    if (googleBtn) googleBtn.click();
+                });
+            }
+            
+            if (registerButton) {
+                // Create hidden container for Google button
+                const hiddenDiv = document.createElement('div');
+                hiddenDiv.style.display = 'none';
+                registerButton.parentElement.appendChild(hiddenDiv);
+                
+                // Render Google button
+                google.accounts.id.renderButton(hiddenDiv, {
+                    type: 'standard',
+                    theme: 'outline',
+                    size: 'large'
+                });
+                
+                // Click hidden button when custom button clicked
+                registerButton.addEventListener('click', () => {
+                    dLog('🔐 [GOOGLE] Register button clicked');
+                    const googleBtn = hiddenDiv.querySelector('div[role="button"]');
+                    if (googleBtn) googleBtn.click();
+                });
+            }
+            
+            dLog('✅ [GOOGLE] Sign-In initialized successfully');
+        } else {
+            dLog('⚠️ [GOOGLE] Google Sign-In library not loaded yet, retrying...');
+            setTimeout(initGoogleSignIn, 500);
+        }
+    }
+
+    /**
+     * Attach helper link click handlers
+     */
+    function attachHelperLinkHandlers() {
+        const linkToRegister = document.getElementById('linkToRegister');
+        const linkToLogin = document.getElementById('linkToLogin');
+        
+        if (linkToRegister) {
+            linkToRegister.addEventListener('click', (e) => {
+                e.preventDefault();
+                dLog('🔄 [HELPER] Switching to Register panel');
+                document.getElementById('tabRegister')?.click();
+            });
+        }
+        
+        if (linkToLogin) {
+            linkToLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                dLog('🔄 [HELPER] Switching to Login panel');
+                document.getElementById('tabLogin')?.click();
+            });
+        }
+    }
+
+    // Initialize Google Sign-In and helper links
+    initGoogleSignIn();
+    attachHelperLinkHandlers();
 
     document.querySelector('#panelLogin form').addEventListener('submit', async (e) => {
         e.preventDefault();

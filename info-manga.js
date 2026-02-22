@@ -3592,6 +3592,161 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
         }
     }
 
+    // ============= GOOGLE OAUTH CONFIGURATION =============
+    const GOOGLE_CLIENT_ID = '729629270107-kv2m7vngrmrnh9hp18va6765autf8g5a.apps.googleusercontent.com';
+
+    /**
+     * Handle Google Sign-In response
+     */
+    async function handleGoogleSignIn(response) {
+        dLog('🔐 [GOOGLE] ========================================');
+        dLog('🔐 [GOOGLE] Sign-In initiated');
+        dLog('🔐 [GOOGLE] Time:', new Date().toISOString());
+        
+        try {
+            dLog('🌐 [GOOGLE] Sending credential to backend...');
+            const apiResponse = await fetch(`${API_URL}/auth/google-login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: response.credential })
+            });
+            
+            dLog('📥 [GOOGLE] Response status:', apiResponse.status);
+            const data = await apiResponse.json();
+            dLog('📥 [GOOGLE] Response data:', data);
+            
+            if (data.success) {
+                dLog('✅ [GOOGLE] Login successful!');
+                dLog('💾 [GOOGLE] Saving to localStorage...');
+                
+                // Clear old donatur status cache
+                localStorage.removeItem('userDonaturStatus');
+                dLog('🧹 [GOOGLE] Cleared old donatur status cache');
+                
+                // Save auth data
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('userEmail', data.user.email);
+                localStorage.setItem('userUid', data.user.uid);
+                localStorage.setItem('username', data.user.username);
+                if (data.user.avatar_url) {
+                    localStorage.setItem('userAvatar', data.user.avatar_url);
+                    dLog('✅ [GOOGLE] Avatar URL saved:', data.user.avatar_url);
+                }
+                
+                dLog('✅ [GOOGLE] Data saved to localStorage');
+                dLog('🔄 [GOOGLE] Reloading page...');
+                
+                // Close modal and reload
+                const modal = document.getElementById('loginModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+                
+                location.reload();
+            } else {
+                dLog('❌ [GOOGLE] Login failed:', data.error);
+                showFormMessage('loginMessage', `❌ ${data.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('❌ [GOOGLE] Error during sign-in:', error);
+            showFormMessage('loginMessage', '❌ Terjadi kesalahan saat login dengan Google', 'error');
+        }
+    }
+
+    /**
+     * Initialize Google Sign-In
+     */
+    function initGoogleSignIn() {
+        if (typeof google !== 'undefined' && google.accounts) {
+            dLog('✅ [GOOGLE] Initializing Google Sign-In...');
+            
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleGoogleSignIn
+            });
+            
+            // Attach to both buttons using renderButton (no FedCM)
+            const loginButton = document.getElementById('googleSignInLogin');
+            const registerButton = document.getElementById('googleSignInRegister');
+            
+            if (loginButton) {
+                // Create hidden container for Google button
+                const hiddenDiv = document.createElement('div');
+                hiddenDiv.style.display = 'none';
+                loginButton.parentElement.appendChild(hiddenDiv);
+                
+                // Render Google button
+                google.accounts.id.renderButton(hiddenDiv, {
+                    type: 'standard',
+                    theme: 'outline',
+                    size: 'large'
+                });
+                
+                // Click hidden button when custom button clicked
+                loginButton.addEventListener('click', () => {
+                    dLog('🔐 [GOOGLE] Login button clicked');
+                    const googleBtn = hiddenDiv.querySelector('div[role="button"]');
+                    if (googleBtn) googleBtn.click();
+                });
+            }
+            
+            if (registerButton) {
+                // Create hidden container for Google button
+                const hiddenDiv = document.createElement('div');
+                hiddenDiv.style.display = 'none';
+                registerButton.parentElement.appendChild(hiddenDiv);
+                
+                // Render Google button
+                google.accounts.id.renderButton(hiddenDiv, {
+                    type: 'standard',
+                    theme: 'outline',
+                    size: 'large'
+                });
+                
+                // Click hidden button when custom button clicked
+                registerButton.addEventListener('click', () => {
+                    dLog('🔐 [GOOGLE] Register button clicked');
+                    const googleBtn = hiddenDiv.querySelector('div[role="button"]');
+                    if (googleBtn) googleBtn.click();
+                });
+            }
+            
+            dLog('✅ [GOOGLE] Sign-In initialized successfully');
+        } else {
+            dLog('⚠️ [GOOGLE] Google Sign-In library not loaded yet, retrying...');
+            setTimeout(initGoogleSignIn, 500);
+        }
+    }
+
+    /**
+     * Attach helper link click handlers
+     */
+    function attachHelperLinkHandlers() {
+        const linkToRegister = document.getElementById('linkToRegister');
+        const linkToLogin = document.getElementById('linkToLogin');
+        
+        if (linkToRegister) {
+            linkToRegister.addEventListener('click', (e) => {
+                e.preventDefault();
+                dLog('🔄 [HELPER] Switching to Register panel');
+                document.getElementById('tabRegister')?.click();
+            });
+        }
+        
+        if (linkToLogin) {
+            linkToLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                dLog('🔄 [HELPER] Switching to Login panel');
+                document.getElementById('tabLogin')?.click();
+            });
+        }
+    }
+
+    // Initialize Google Sign-In and helper links
+    initGoogleSignIn();
+    attachHelperLinkHandlers();
+
     document.querySelector('#panelLogin form').addEventListener('submit', async (e) => {
         e.preventDefault();
         dLog('🔐 [LOGIN] ========================================');
