@@ -1773,6 +1773,42 @@ document.addEventListener('DOMContentLoaded', () => {
             dLog('✅ [PROFILE] Username updated to (temporary):', user.username);
         }
         
+        // 🔥 Update avatar from Google or localStorage
+        const avatarEl = profileModal.querySelector('#profileAvatar');
+        if (avatarEl) {
+            // Priority: user.avatar_url > localStorage.userAvatar > default logo
+            const googleAvatar = user && user.avatar_url && user.avatar_url !== 'null' ? user.avatar_url : null;
+            const storedAvatar = localStorage.getItem('userAvatar');
+            const hasStoredAvatar = storedAvatar && storedAvatar !== 'null' && storedAvatar !== 'undefined';
+            
+            console.log('🖼️ [PROFILE-MODAL] Avatar sources:');
+            console.log('   - user.avatar_url:', googleAvatar || 'NONE');
+            console.log('   - localStorage.userAvatar:', hasStoredAvatar ? storedAvatar : 'NONE');
+            
+            if (googleAvatar) {
+                console.log('✅ [PROFILE-MODAL] Using Google avatar:', googleAvatar);
+                avatarEl.src = googleAvatar;
+                avatarEl.onerror = function() {
+                    console.error('❌ [PROFILE-MODAL] Google avatar failed to load, using default');
+                    this.src = 'assets/Logo 2.png';
+                    this.onerror = null; // Prevent infinite loop
+                };
+            } else if (hasStoredAvatar) {
+                console.log('✅ [PROFILE-MODAL] Using stored avatar:', storedAvatar);
+                avatarEl.src = storedAvatar;
+                avatarEl.onerror = function() {
+                    console.error('❌ [PROFILE-MODAL] Stored avatar failed to load, using default');
+                    this.src = 'assets/Logo 2.png';
+                    this.onerror = null;
+                };
+            } else {
+                console.log('✅ [PROFILE-MODAL] No avatar, using default logo');
+                avatarEl.src = 'assets/Logo 2.png';
+            }
+        } else {
+            console.error('❌ [PROFILE-MODAL] Avatar element not found!');
+        }
+        
         // ✅ Tampilkan modal DULU (sebelum check status) agar tidak stuck
         profileModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -2893,11 +2929,14 @@ const codeModal = document.getElementById('codeModal');
                 localStorage.setItem('username', data.user.username);
                 console.log('✅ [GOOGLE-LOGIN] Saved username:', data.user.username);
                 
-                if (data.user.avatar_url) {
+                // 🔥 Only save avatar if it exists and is not null
+                if (data.user.avatar_url && data.user.avatar_url !== 'null') {
                     localStorage.setItem('userAvatar', data.user.avatar_url);
                     console.log('✅ [GOOGLE-LOGIN] Saved avatar_url:', data.user.avatar_url);
                 } else {
-                    console.log('ℹ️ [GOOGLE-LOGIN] No avatar_url from backend');
+                    // Remove avatar from localStorage if null, so default logo is used
+                    localStorage.removeItem('userAvatar');
+                    console.log('ℹ️ [GOOGLE-LOGIN] No avatar from Google, using default logo');
                 }
                 
                 console.log('✅ [GOOGLE-LOGIN] All data saved to localStorage');

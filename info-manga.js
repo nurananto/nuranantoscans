@@ -2295,6 +2295,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ [PROFILE] Username element not found or user data invalid!');
             }
             
+            // 🔥 Update avatar from Google or localStorage
+            const avatarEl = profileModal.querySelector('#profileAvatar');
+            if (avatarEl) {
+                // Priority: user.avatar_url > localStorage.userAvatar > default logo
+                const googleAvatar = user && user.avatar_url && user.avatar_url !== 'null' ? user.avatar_url : null;
+                const storedAvatar = localStorage.getItem('userAvatar');
+                const hasStoredAvatar = storedAvatar && storedAvatar !== 'null' && storedAvatar !== 'undefined';
+                
+                dLog('🖼️ [PROFILE] Avatar sources:');
+                dLog('🖼️ [PROFILE] - user.avatar_url:', googleAvatar || 'NONE');
+                dLog('🖼️ [PROFILE] - localStorage.userAvatar:', hasStoredAvatar ? storedAvatar : 'NONE');
+                
+                if (googleAvatar) {
+                    dLog('✅ [PROFILE] Using Google avatar:', googleAvatar);
+                    avatarEl.src = googleAvatar;
+                    avatarEl.onerror = function() {
+                        console.error('❌ [PROFILE] Google avatar failed to load, using default');
+                        this.src = 'assets/Logo 2.png';
+                        this.onerror = null; // Prevent infinite loop
+                    };
+                } else if (hasStoredAvatar) {
+                    dLog('✅ [PROFILE] Using stored avatar:', storedAvatar);
+                    avatarEl.src = storedAvatar;
+                    avatarEl.onerror = function() {
+                        console.error('❌ [PROFILE] Stored avatar failed to load, using default');
+                        this.src = 'assets/Logo 2.png';
+                        this.onerror = null;
+                    };
+                } else {
+                    dLog('✅ [PROFILE] No avatar, using default logo');
+                    avatarEl.src = 'assets/Logo 2.png';
+                }
+            } else {
+                console.error('❌ [PROFILE] Avatar element not found!');
+            }
+            
             // 🔥 NOTE: Status checking is now handled BEFORE showProfileModal is called
             // No need to call checkDonaturStatus here to avoid double-call race condition
             // The status is already fresh from the login handler or caller
@@ -3629,9 +3665,15 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                 localStorage.setItem('userEmail', data.user.email);
                 localStorage.setItem('userUid', data.user.uid);
                 localStorage.setItem('username', data.user.username);
-                if (data.user.avatar_url) {
+                
+                // 🔥 Only save avatar if it exists and is not null
+                if (data.user.avatar_url && data.user.avatar_url !== 'null') {
                     localStorage.setItem('userAvatar', data.user.avatar_url);
                     dLog('✅ [GOOGLE] Avatar URL saved:', data.user.avatar_url);
+                } else {
+                    // Remove avatar from localStorage if null, so default logo is used
+                    localStorage.removeItem('userAvatar');
+                    dLog('ℹ️ [GOOGLE] No avatar from Google, using default logo');
                 }
                 
                 dLog('✅ [GOOGLE] Data saved to localStorage');
