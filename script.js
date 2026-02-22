@@ -1567,46 +1567,76 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ✅ Function to update profile button text
     function updateProfileButtonText() {
+        console.log('🔄 [BUTTON-UPDATE] ======================================== START');
         const storedUser = localStorage.getItem('user');
+        console.log('🔄 [BUTTON-UPDATE] storedUser from localStorage:', storedUser);
         const isLoggedIn = !!storedUser;
+        console.log('🔄 [BUTTON-UPDATE] isLoggedIn:', isLoggedIn);
         
         // Update desktop button
+        console.log('🔄 [BUTTON-UPDATE] Updating desktop button...');
         const desktopButtonText = btnOpen.querySelector('.button-text');
+        console.log('🔄 [BUTTON-UPDATE] Desktop button element:', desktopButtonText);
         if (desktopButtonText) {
-            desktopButtonText.textContent = isLoggedIn ? 'Profile' : 'Login';
+            const newText = isLoggedIn ? 'Profile' : 'Login';
+            console.log('🔄 [BUTTON-UPDATE] Setting desktop button text to:', newText);
+            desktopButtonText.textContent = newText;
+            console.log('🔄 [BUTTON-UPDATE] Desktop button text now:', desktopButtonText.textContent);
+        } else {
+            console.error('❌ [BUTTON-UPDATE] Desktop button .button-text NOT FOUND!');
         }
         
         // Update mobile button
+        console.log('🔄 [BUTTON-UPDATE] Updating mobile button...');
         const btnOpenMobile = document.getElementById('btnOpenLoginMobile');
+        console.log('🔄 [BUTTON-UPDATE] Mobile button element:', btnOpenMobile);
         if (btnOpenMobile) {
             const mobileButtonText = btnOpenMobile.querySelector('span');
+            console.log('🔄 [BUTTON-UPDATE] Mobile button span:', mobileButtonText);
             if (mobileButtonText) {
-                mobileButtonText.textContent = isLoggedIn ? 'Profile' : 'Login';
+                const newText = isLoggedIn ? 'Profile' : 'Login';
+                console.log('🔄 [BUTTON-UPDATE] Setting mobile button text to:', newText);
+                mobileButtonText.textContent = newText;
+                console.log('🔄 [BUTTON-UPDATE] Mobile button text now:', mobileButtonText.textContent);
+            } else {
+                console.error('❌ [BUTTON-UPDATE] Mobile button span NOT FOUND!');
             }
+        } else {
+            console.log('ℹ️ [BUTTON-UPDATE] Mobile button not found (may not exist on this page)');
         }
         
-        dLog('🔄 [UPDATE] Profile button updated:', isLoggedIn ? 'Profile' : 'Login');
+        console.log('✅ [BUTTON-UPDATE] Profile button updated to:', isLoggedIn ? 'Profile' : 'Login');
+        console.log('🔄 [BUTTON-UPDATE] ======================================== END');
     }
     
     // ✅ Make function globally accessible
     window.updateProfileButtonText = updateProfileButtonText;
+    console.log('✅ [MAIN] updateProfileButtonText added to window object');
 
     // ✅ STEP 1: Check localStorage on page load and update button
-    dLog('📦 [STORAGE] ========================================');
-    dLog('📦 [STORAGE] Checking localStorage...');
+    console.log('📦 [PAGE-LOAD] ======================================== START');
+    console.log('📦 [PAGE-LOAD] Checking localStorage on page load...');
     const storedUser = localStorage.getItem('user');
     const storedToken = localStorage.getItem('authToken');
+    const storedEmail = localStorage.getItem('userEmail');
+    const storedUsername = localStorage.getItem('username');
+    console.log('📦 [PAGE-LOAD] localStorage contents:');
+    console.log('   - user:', storedUser);
+    console.log('   - authToken:', storedToken ? 'EXISTS (length: ' + storedToken.length + ')' : 'NULL');
+    console.log('   - userEmail:', storedEmail);
+    console.log('   - username:', storedUsername);
+    console.log('📦 [PAGE-LOAD] Calling updateProfileButtonText()...');
     updateProfileButtonText();
+    console.log('📦 [PAGE-LOAD] updateProfileButtonText() completed');
     
-    dLog('📦 [STORAGE] Raw user data:', storedUser);
-    dLog('📦 [STORAGE] Has token:', !!storedToken);
+    console.log('📦 [PAGE-LOAD] Has token?', !!storedToken);
     
     if (storedUser) {
         try {
             const parsedUser = JSON.parse(storedUser);
-            dLog('📦 [STORAGE] Parsed user:', parsedUser);
+            console.log('📦 [PAGE-LOAD] Parsed user object:', parsedUser);
         } catch (e) {
-            console.error('❌ [STORAGE] JSON parse error:', e);
+            console.error('❌ [PAGE-LOAD] JSON parse error:', e);
         }
     }
     dLog('📦 [STORAGE] ========================================');
@@ -1707,9 +1737,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ✅ STEP 4: Show Profile Modal Function
     async function showProfileModal(user) {
     try {
-        dLog('🎭 [PROFILE] ========================================');
-        dLog('🎭 [PROFILE] showProfileModal called');
-        dLog('🎭 [PROFILE] User object:', user);
+        console.log('🎭 [PROFILE-MODAL] ======================================== START');
+        console.log('🎭 [PROFILE-MODAL] showProfileModal CALLED');
+        console.log('🎭 [PROFILE-MODAL] User parameter:', user);
+        console.log('🎭 [PROFILE-MODAL] User type:', typeof user);
         
         const loginModal = document.getElementById('loginModal');
         let profileModal = document.getElementById('profileModal');
@@ -2816,111 +2847,185 @@ const codeModal = document.getElementById('codeModal');
      * Handle Google Sign-In response
      */
     async function handleGoogleSignIn(response) {
-        dLog('🔐 [GOOGLE] ========================================');
-        dLog('🔐 [GOOGLE] Sign-In initiated');
-        dLog('🔐 [GOOGLE] Time:', new Date().toISOString());
+        console.log('🔥🔥🔥 [GOOGLE-LOGIN] ======================================== START');
+        console.log('🔥 [GOOGLE-LOGIN] handleGoogleSignIn CALLED');
+        console.log('🔥 [GOOGLE-LOGIN] Time:', new Date().toISOString());
+        console.log('🔥 [GOOGLE-LOGIN] Response object:', response);
+        console.log('🔥 [GOOGLE-LOGIN] Has credential?', !!response.credential);
         
         try {
-            dLog('🌐 [GOOGLE] Sending credential to backend...');
+            console.log('🌐 [GOOGLE-LOGIN] Sending credential to backend:', API_URL + '/auth/google-login');
             const apiResponse = await fetch(`${API_URL}/auth/google-login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ credential: response.credential })
             });
             
-            dLog('📥 [GOOGLE] Response status:', apiResponse.status);
+            console.log('📥 [GOOGLE-LOGIN] Response status:', apiResponse.status);
+            console.log('📥 [GOOGLE-LOGIN] Response ok?', apiResponse.ok);
             const data = await apiResponse.json();
-            dLog('📥 [GOOGLE] Response data:', data);
+            console.log('📥 [GOOGLE-LOGIN] Response data:', JSON.stringify(data, null, 2));
             
             if (data.success) {
-                dLog('✅ [GOOGLE] Login successful!');
-                dLog('💾 [GOOGLE] Saving to localStorage...');
+                console.log('✅ [GOOGLE-LOGIN] Login successful!');
+                console.log('💾 [GOOGLE-LOGIN] Data received from backend:');
+                console.log('   - Token:', data.token ? 'YES (length: ' + data.token.length + ')' : 'NO');
+                console.log('   - User object:', data.user);
+                console.log('💾 [GOOGLE-LOGIN] Saving to localStorage...');
                 
                 // Clear old donatur status cache
                 localStorage.removeItem('userDonaturStatus');
-                dLog('🧹 [GOOGLE] Cleared old donatur status cache');
+                console.log('🧹 [GOOGLE-LOGIN] Cleared old donatur status cache');
                 
                 // Save auth data
                 localStorage.setItem('authToken', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user)); // 🔥 Save user object
+                console.log('✅ [GOOGLE-LOGIN] Saved authToken');
+                
+                localStorage.setItem('user', JSON.stringify(data.user));
+                console.log('✅ [GOOGLE-LOGIN] Saved user object:', JSON.stringify(data.user));
+                
                 localStorage.setItem('userEmail', data.user.email);
+                console.log('✅ [GOOGLE-LOGIN] Saved userEmail:', data.user.email);
+                
                 localStorage.setItem('userUid', data.user.uid);
+                console.log('✅ [GOOGLE-LOGIN] Saved userUid:', data.user.uid);
+                
                 localStorage.setItem('username', data.user.username);
+                console.log('✅ [GOOGLE-LOGIN] Saved username:', data.user.username);
+                
                 if (data.user.avatar_url) {
                     localStorage.setItem('userAvatar', data.user.avatar_url);
-                    dLog('✅ [GOOGLE] Avatar URL saved:', data.user.avatar_url);
+                    console.log('✅ [GOOGLE-LOGIN] Saved avatar_url:', data.user.avatar_url);
+                } else {
+                    console.log('ℹ️ [GOOGLE-LOGIN] No avatar_url from backend');
                 }
                 
-                dLog('✅ [GOOGLE] Data saved to localStorage');
+                console.log('✅ [GOOGLE-LOGIN] All data saved to localStorage');
+                console.log('📦 [GOOGLE-LOGIN] Verifying localStorage:');
+                console.log('   - authToken:', localStorage.getItem('authToken') ? 'EXISTS' : 'MISSING');
+                console.log('   - user:', localStorage.getItem('user') ? 'EXISTS' : 'MISSING');
+                console.log('   - userEmail:', localStorage.getItem('userEmail'));
+                console.log('   - username:', localStorage.getItem('username'));
                 
                 // Update button text immediately
+                console.log('🔄 [GOOGLE-LOGIN] Checking updateProfileButtonText function...');
                 if (window.updateProfileButtonText) {
-                    window.updateProfileButtonText();
-                    dLog('✅ [GOOGLE] Button text updated');
+                    console.log('✅ [GOOGLE-LOGIN] updateProfileButtonText EXISTS, calling it...');
+                    try {
+                        window.updateProfileButtonText();
+                        console.log('✅ [GOOGLE-LOGIN] updateProfileButtonText executed');
+                        const btnText = document.querySelector('#btnOpenLogin .button-text');
+                        console.log('🔍 [GOOGLE-LOGIN] Button text now:', btnText ? btnText.textContent : 'BUTTON NOT FOUND');
+                    } catch (e) {
+                        console.error('❌ [GOOGLE-LOGIN] Error calling updateProfileButtonText:', e);
+                    }
+                } else {
+                    console.error('❌ [GOOGLE-LOGIN] updateProfileButtonText NOT FOUND on window!');
                 }
                 
                 // Start periodic status check
+                console.log('🔄 [GOOGLE-LOGIN] Checking startPeriodicStatusCheck...');
                 if (window.startPeriodicStatusCheck) {
+                    console.log('✅ [GOOGLE-LOGIN] startPeriodicStatusCheck exists, calling...');
                     window.startPeriodicStatusCheck();
+                } else {
+                    console.log('⚠️ [GOOGLE-LOGIN] startPeriodicStatusCheck not found');
                 }
                 
                 // Update notification badge
+                console.log('🔄 [GOOGLE-LOGIN] Checking updateNotificationBadge...');
                 if (window.updateNotificationBadge) {
+                    console.log('✅ [GOOGLE-LOGIN] updateNotificationBadge exists, calling...');
                     window.updateNotificationBadge();
+                } else {
+                    console.log('⚠️ [GOOGLE-LOGIN] updateNotificationBadge not found');
                 }
                 
                 // Close login modal
+                console.log('🚪 [GOOGLE-LOGIN] Closing login modal...');
                 const modal = document.getElementById('loginModal');
                 if (modal) {
                     modal.style.display = 'none';
                     document.body.style.overflow = '';
+                    console.log('✅ [GOOGLE-LOGIN] Login modal closed');
+                } else {
+                    console.error('❌ [GOOGLE-LOGIN] Login modal not found!');
                 }
                 
                 // Show success message briefly then open profile
+                console.log('📢 [GOOGLE-LOGIN] Showing success message...');
                 showFormMessage('loginMessage', '✅ Login berhasil!', 'success', 1000);
                 
                 // Open profile modal directly (showProfileModal is in same scope)
+                console.log('⏰ [GOOGLE-LOGIN] Setting timeout to open profile modal in 1 second...');
                 setTimeout(async () => {
                     try {
-                        dLog('✅ [GOOGLE] Opening profile modal...');
-                        await showProfileModal(data.user);
+                        console.log('🎭 [GOOGLE-LOGIN] Timeout fired! Opening profile modal...');
+                        console.log('🎭 [GOOGLE-LOGIN] Checking showProfileModal function...');
+                        if (typeof showProfileModal === 'function') {
+                            console.log('✅ [GOOGLE-LOGIN] showProfileModal EXISTS, calling with user:', data.user);
+                            await showProfileModal(data.user);
+                            console.log('✅ [GOOGLE-LOGIN] showProfileModal completed');
+                        } else {
+                            console.error('❌ [GOOGLE-LOGIN] showProfileModal is NOT a function! Type:', typeof showProfileModal);
+                            console.log('🔄 [GOOGLE-LOGIN] Reloading page as fallback...');
+                            location.reload();
+                        }
                     } catch (error) {
-                        console.error('❌ [GOOGLE] Error opening profile modal:', error);
+                        console.error('❌ [GOOGLE-LOGIN] Error opening profile modal:', error);
+                        console.error('❌ [GOOGLE-LOGIN] Error stack:', error.stack);
                         // Fallback: reload page
+                        console.log('🔄 [GOOGLE-LOGIN] Reloading page as fallback...');
                         location.reload();
                     }
                 }, 1000);
             } else {
-                dLog('❌ [GOOGLE] Login failed:', data.error);
+                console.error('❌ [GOOGLE-LOGIN] Login FAILED:', data.error);
+                console.error('❌ [GOOGLE-LOGIN] Full response:', data);
                 showFormMessage('loginMessage', `❌ ${data.error}`, 'error');
             }
         } catch (error) {
-            console.error('❌ [GOOGLE] Error during sign-in:', error);
+            console.error('❌ [GOOGLE-LOGIN] EXCEPTION during sign-in:', error);
+            console.error('❌ [GOOGLE-LOGIN] Error message:', error.message);
+            console.error('❌ [GOOGLE-LOGIN] Error stack:', error.stack);
             showFormMessage('loginMessage', '❌ Terjadi kesalahan saat login dengan Google', 'error');
         }
+        console.log('🔥🔥🔥 [GOOGLE-LOGIN] ======================================== END');
     }
 
     /**
      * Initialize Google Sign-In
      */
     function initGoogleSignIn() {
+        console.log('🔧 [GOOGLE-INIT] ======================================== START');
+        console.log('🔧 [GOOGLE-INIT] Checking Google library...');
+        console.log('🔧 [GOOGLE-INIT] typeof google:', typeof google);
+        console.log('🔧 [GOOGLE-INIT] google.accounts exists?', typeof google !== 'undefined' && google.accounts ? 'YES' : 'NO');
+        
         if (typeof google !== 'undefined' && google.accounts) {
-            dLog('✅ [GOOGLE] Initializing Google Sign-In...');
+            console.log('✅ [GOOGLE-INIT] Google library loaded! Initializing...');
+            console.log('✅ [GOOGLE-INIT] Client ID:', GOOGLE_CLIENT_ID);
             
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleGoogleSignIn
             });
+            console.log('✅ [GOOGLE-INIT] google.accounts.id.initialize called');
             
             // Attach to both buttons using renderButton (no FedCM)
             const loginButton = document.getElementById('googleSignInLogin');
             const registerButton = document.getElementById('googleSignInRegister');
+            console.log('🔍 [GOOGLE-INIT] Login button:', loginButton);
+            console.log('🔍 [GOOGLE-INIT] Register button:', registerButton);
             
             if (loginButton) {
+                console.log('🔧 [GOOGLE-INIT] Setting up LOGIN button...');
                 // Create hidden container for Google button
                 const hiddenDiv = document.createElement('div');
                 hiddenDiv.style.display = 'none';
+                hiddenDiv.id = 'hiddenGoogleLoginDiv';
                 loginButton.parentElement.appendChild(hiddenDiv);
+                console.log('✅ [GOOGLE-INIT] Hidden div created for login button');
                 
                 // Render Google button
                 google.accounts.id.renderButton(hiddenDiv, {
@@ -2928,20 +3033,35 @@ const codeModal = document.getElementById('codeModal');
                     theme: 'outline',
                     size: 'large'
                 });
+                console.log('✅ [GOOGLE-INIT] Google button rendered in hidden div');
                 
                 // Click hidden button when custom button clicked
                 loginButton.addEventListener('click', () => {
-                    dLog('🔐 [GOOGLE] Login button clicked');
+                    console.log('🖱️ [GOOGLE-INIT] 🔥🔥🔥 CUSTOM GOOGLE LOGIN BUTTON CLICKED!');
                     const googleBtn = hiddenDiv.querySelector('div[role="button"]');
-                    if (googleBtn) googleBtn.click();
+                    console.log('🔍 [GOOGLE-INIT] Looking for Google button in hidden div...');
+                    console.log('🔍 [GOOGLE-INIT] Found Google button?', googleBtn ? 'YES' : 'NO');
+                    if (googleBtn) {
+                        console.log('✅ [GOOGLE-INIT] Clicking hidden Google button...');
+                        googleBtn.click();
+                        console.log('✅ [GOOGLE-INIT] Hidden Google button clicked!');
+                    } else {
+                        console.error('❌ [GOOGLE-INIT] Hidden Google button NOT FOUND!');
+                    }
                 });
+                console.log('✅ [GOOGLE-INIT] Click handler attached to login button');
+            } else {
+                console.error('❌ [GOOGLE-INIT] Login button NOT FOUND in DOM!');
             }
             
             if (registerButton) {
+                console.log('🔧 [GOOGLE-INIT] Setting up REGISTER button...');
                 // Create hidden container for Google button
                 const hiddenDiv = document.createElement('div');
                 hiddenDiv.style.display = 'none';
+                hiddenDiv.id = 'hiddenGoogleRegisterDiv';
                 registerButton.parentElement.appendChild(hiddenDiv);
+                console.log('✅ [GOOGLE-INIT] Hidden div created for register button');
                 
                 // Render Google button
                 google.accounts.id.renderButton(hiddenDiv, {
@@ -2949,18 +3069,32 @@ const codeModal = document.getElementById('codeModal');
                     theme: 'outline',
                     size: 'large'
                 });
+                console.log('✅ [GOOGLE-INIT] Google button rendered in hidden div');
                 
                 // Click hidden button when custom button clicked
                 registerButton.addEventListener('click', () => {
-                    dLog('🔐 [GOOGLE] Register button clicked');
+                    console.log('🖱️ [GOOGLE-INIT] 🔥🔥🔥 CUSTOM GOOGLE REGISTER BUTTON CLICKED!');
                     const googleBtn = hiddenDiv.querySelector('div[role="button"]');
-                    if (googleBtn) googleBtn.click();
+                    console.log('🔍 [GOOGLE-INIT] Looking for Google button in hidden div...');
+                    console.log('🔍 [GOOGLE-INIT] Found Google button?', googleBtn ? 'YES' : 'NO');
+                    if (googleBtn) {
+                        console.log('✅ [GOOGLE-INIT] Clicking hidden Google button...');
+                        googleBtn.click();
+                        console.log('✅ [GOOGLE-INIT] Hidden Google button clicked!');
+                    } else {
+                        console.error('❌ [GOOGLE-INIT] Hidden Google button NOT FOUND!');
+                    }
                 });
+                console.log('✅ [GOOGLE-INIT] Click handler attached to register button');
+            } else {
+                console.error('❌ [GOOGLE-INIT] Register button NOT FOUND in DOM!');
             }
             
-            dLog('✅ [GOOGLE] Sign-In initialized successfully');
+            console.log('✅ [GOOGLE-INIT] Sign-In initialized successfully');
+            console.log('🔧 [GOOGLE-INIT] ======================================== END');
         } else {
-            dLog('⚠️ [GOOGLE] Google Sign-In library not loaded yet, retrying...');
+            console.log('⚠️ [GOOGLE-INIT] Google library not loaded yet, retrying in 500ms...');
+            console.log('🔧 [GOOGLE-INIT] ======================================== RETRY');
             setTimeout(initGoogleSignIn, 500);
         }
     }
@@ -2990,8 +3124,11 @@ const codeModal = document.getElementById('codeModal');
     }
 
     // Initialize Google Sign-In and helper links
+    console.log('🚀 [MAIN] Calling initGoogleSignIn...');
     initGoogleSignIn();
+    console.log('🚀 [MAIN] Calling attachHelperLinkHandlers...');
     attachHelperLinkHandlers();
+    console.log('🚀 [MAIN] Google OAuth initialization complete');
 
     document.querySelector('#panelLogin form').addEventListener('submit', async (e) => {
         e.preventDefault();
