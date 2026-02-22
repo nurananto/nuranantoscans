@@ -2328,7 +2328,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     avatarEl.src = 'assets/Logo 2.png';
                 }
             } else {
-                console.error('❌ [PROFILE] Avatar element not found!');
+                // Avatar element not found - not an error, modal may not have avatar element
+                dLog('ℹ️ [PROFILE] Avatar element not found (optional)');
             }
             
             // 🔥 NOTE: Status checking is now handled BEFORE showProfileModal is called

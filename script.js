@@ -1806,7 +1806,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 avatarEl.src = 'assets/Logo 2.png';
             }
         } else {
-            console.error('❌ [PROFILE-MODAL] Avatar element not found!');
+            // Avatar element not found - not an error, modal may not have avatar element
+            dLog('ℹ️ [PROFILE-MODAL] Avatar element not found (optional)');
         }
         
         // ✅ Tampilkan modal DULU (sebelum check status) agar tidak stuck
