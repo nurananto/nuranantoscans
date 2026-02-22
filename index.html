@@ -2743,6 +2743,7 @@
     flex-direction: column;
     gap: 12px;
     width: 100%;
+    align-items: center;
 }
 
 .btn-save-profile {
@@ -2756,8 +2757,11 @@
     cursor: pointer;
     transition: all 0.3s ease;
     width: 100%;
+    max-width: 400px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
 }
 
 .btn-save-profile:hover:not(:disabled) {
@@ -2784,6 +2788,9 @@
     cursor: pointer;
     transition: all 0.3s ease;
     width: 100%;
+    max-width: 400px;
+    position: relative;
+    z-index: 1;
 }
 
 .btn-cancel-edit:hover {
