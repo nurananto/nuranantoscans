@@ -3654,6 +3654,7 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
             if (data.success) {
                 dLog('✅ [GOOGLE] Login successful!');
                 dLog('💾 [GOOGLE] Saving to localStorage...');
+                dLog('   - isNewUser:', data.isNewUser);
                 
                 // Clear old donatur status cache
                 localStorage.removeItem('userDonaturStatus');
@@ -3701,37 +3702,76 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                     document.body.style.overflow = '';
                 }
                 
-                // Show success message briefly then open profile
+                // Show success message
                 showFormMessage('loginMessage', '✅ Login berhasil!', 'success', 1000);
                 
-                // 🔥 FORCE REFRESH STATUS immediately after login (before showing modal)
-                // This ensures fresh status without needing page reload
-                dLog('🔍 [GOOGLE] Force refreshing donatur status...');
-                checkDonaturStatus().then(() => {
-                    dLog('✅ [GOOGLE] Status refreshed, showing profile modal...');
-                    // Show profile modal after status is refreshed
-                    setTimeout(async () => {
-                        try {
-                            dLog('✅ [GOOGLE] Opening profile modal...');
-                            await showProfileModal(data.user);
-                        } catch (error) {
-                            console.error('❌ [GOOGLE] Error opening profile modal:', error);
-                            // Fallback: reload page
-                            location.reload();
+                // 🆕 Check if this is a new user registration
+                if (data.isNewUser) {
+                    dLog('🆕 [GOOGLE] New user detected - opening Edit Profile Modal...');
+                    
+                    // Set global flag to track this is from Google registration
+                    window.isFromGoogleRegistration = true;
+                    
+                    setTimeout(() => {
+                        // Open edit profile modal instead of profile modal
+                        const editProfileModal = document.getElementById('editProfileModal');
+                        const displayNameInput = document.getElementById('displayNameInput');
+                        const avatarPreview = document.getElementById('avatarPreview');
+                        
+                        if (editProfileModal && displayNameInput && avatarPreview) {
+                            // Pre-fill with Google data
+                            displayNameInput.value = data.user.username || '';
+                            avatarPreview.src = 'assets/Logo 2.png'; // Default logo
+                            
+                            // Show edit profile modal
+                            editProfileModal.style.display = 'flex';
+                            document.body.style.overflow = 'hidden';
+                            
+                            dLog('✅ [GOOGLE] Edit Profile Modal opened for new user');
+                        } else {
+                            console.error('❌ [GOOGLE] Edit Profile Modal elements not found!');
+                            // Fallback: show profile modal
+                            checkDonaturStatus().then(() => {
+                                setTimeout(() => showProfileModal(data.user), 500);
+                            });
                         }
                     }, 500);
-                }).catch(err => {
-                    dLog('⚠️ [GOOGLE] Status refresh error:', err);
-                    // Show modal anyway even if status check fails
-                    setTimeout(async () => {
-                        try {
-                            await showProfileModal(data.user);
-                        } catch (error) {
-                            console.error('❌ [GOOGLE] Error opening profile modal:', error);
-                            location.reload();
-                        }
-                    }, 500);
-                });
+                } else {
+                    // Existing user - normal flow
+                    dLog('👤 [GOOGLE] Existing user - showing Profile Modal...');
+                    
+                    // Clear flag
+                    window.isFromGoogleRegistration = false;
+                    
+                    // 🔥 FORCE REFRESH STATUS immediately after login (before showing modal)
+                    // This ensures fresh status without needing page reload
+                    dLog('🔍 [GOOGLE] Force refreshing donatur status...');
+                    checkDonaturStatus().then(() => {
+                        dLog('✅ [GOOGLE] Status refreshed, showing profile modal...');
+                        // Show profile modal after status is refreshed
+                        setTimeout(async () => {
+                            try {
+                                dLog('✅ [GOOGLE] Opening profile modal...');
+                                await showProfileModal(data.user);
+                            } catch (error) {
+                                console.error('❌ [GOOGLE] Error opening profile modal:', error);
+                                // Fallback: reload page
+                                location.reload();
+                            }
+                        }, 500);
+                    }).catch(err => {
+                        dLog('⚠️ [GOOGLE] Status refresh error:', err);
+                        // Show modal anyway even if status check fails
+                        setTimeout(async () => {
+                            try {
+                                await showProfileModal(data.user);
+                            } catch (error) {
+                                console.error('❌ [GOOGLE] Error opening profile modal:', error);
+                                location.reload();
+                            }
+                        }, 500);
+                    });
+                }
             } else {
                 dLog('❌ [GOOGLE] Login failed:', data.error);
                 showFormMessage('loginMessage', `❌ ${data.error}`, 'error');

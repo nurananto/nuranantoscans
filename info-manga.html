@@ -1494,16 +1494,53 @@ window.initEditProfile = function() {
         btnCancelEdit.addEventListener('click', function() {
             // console.log('❌ [CANCEL] ========================================');
             // console.log('❌ [CANCEL] Cancel button clicked!');
-            // console.log('❌ [CANCEL] Closing edit modal...');
             
-            editProfileModal.style.display = 'none';
-            profileModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            // 🆕 Check if this is from Google registration
+            if (window.isFromGoogleRegistration) {
+                console.log('🚪 [CANCEL] New user canceling edit - showing Profile Modal with defaults...');
+                
+                // Clear flag
+                window.isFromGoogleRegistration = false;
+                
+                // Get user data from localStorage
+                const userStr = localStorage.getItem('user');
+                const user = userStr ? JSON.parse(userStr) : null;
+                
+                // Close edit modal
+                editProfileModal.style.display = 'none';
+                
+                // Check donatur status first, then show profile modal with defaults
+                if (typeof checkDonaturStatus === 'function' && typeof showProfileModal === 'function') {
+                    checkDonaturStatus().then(() => {
+                        console.log('✅ [CANCEL] Status refreshed, showing profile modal...');
+                        setTimeout(() => {
+                            showProfileModal(user);
+                            console.log('✅ [CANCEL] Profile modal shown with default name and avatar');
+                        }, 300);
+                    }).catch(err => {
+                        console.log('⚠️ [CANCEL] Status check error, showing profile anyway:', err);
+                        setTimeout(() => {
+                            showProfileModal(user);
+                        }, 300);
+                    });
+                } else {
+                    console.log('⚠️ [CANCEL] Functions not available, showing profile modal directly');
+                    profileModal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            } else {
+                // Normal cancel - just close edit and show profile
+                // console.log('❌ [CANCEL] Closing edit modal...');
+                editProfileModal.style.display = 'none';
+                profileModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                // ✅ Dispatch event untuk notify system bahwa modal ditutup
+                window.dispatchEvent(new Event('profileModalClosed'));
+                
+                // console.log('✅ [CANCEL] Edit modal closed, profile modal shown');
+            }
             
-            // ✅ Dispatch event untuk notify system bahwa modal ditutup
-            window.dispatchEvent(new Event('profileModalClosed'));
-            
-            // console.log('✅ [CANCEL] Edit modal closed, profile modal shown');
             // console.log('❌ [CANCEL] ========================================');
         });
         // console.log('✅ [EDIT-PROFILE] Cancel button listener added');
@@ -1846,15 +1883,47 @@ window.initEditProfile = function() {
                         if (DEBUG) console.log('✅ [SAVE] Comment input avatar reload initiated');
                     }
                     
+                    // 🆕 Check if this is from Google registration
+                    const isFromGoogleReg = window.isFromGoogleRegistration;
+                    
                     setTimeout(() => {
                         if (DEBUG) console.log('🔄 [SAVE] Closing edit modal...');
                         editProfileModal.style.display = 'none';
-                        profileModal.style.display = 'flex';
                         selectedAvatarFile = null;
                         hasChanges = false;
                         
-                        // ✅ Dispatch event untuk notify system
-                        window.dispatchEvent(new Event('profileModalClosed'));
+                        // 🆕 If from Google registration, refresh status and show profile modal
+                        if (isFromGoogleReg) {
+                            console.log('🆕 [SAVE] From Google registration - showing Profile Modal...');
+                            
+                            // Clear flag
+                            window.isFromGoogleRegistration = false;
+                            
+                            // Get user data from localStorage
+                            const userStr = localStorage.getItem('user');
+                            const user = userStr ? JSON.parse(userStr) : null;
+                            
+                            // Check donatur status first, then show profile modal
+                            if (typeof checkDonaturStatus === 'function' && typeof showProfileModal === 'function') {
+                                checkDonaturStatus().then(() => {
+                                    console.log('✅ [SAVE] Status refreshed, showing profile modal...');
+                                    setTimeout(() => showProfileModal(user), 300);
+                                }).catch(err => {
+                                    console.log('⚠️ [SAVE] Status check error, showing profile anyway:', err);
+                                    setTimeout(() => showProfileModal(user), 300);
+                                });
+                            } else {
+                                console.log('⚠️ [SAVE] Functions not available, showing profile modal directly');
+                                profileModal.style.display = 'flex';
+                                document.body.style.overflow = 'hidden';
+                            }
+                        } else {
+                            // Normal edit - just show profile modal
+                            profileModal.style.display = 'flex';
+                            
+                            // ✅ Dispatch event untuk notify system
+                            window.dispatchEvent(new Event('profileModalClosed'));
+                        }
                         
                         if (DEBUG) console.log('✅ [SAVE] Modal switched, state reset');
                     }, 2000);

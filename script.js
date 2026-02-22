@@ -2907,6 +2907,7 @@ const codeModal = document.getElementById('codeModal');
                 console.log('💾 [GOOGLE-LOGIN] Data received from backend:');
                 console.log('   - Token:', data.token ? 'YES (length: ' + data.token.length + ')' : 'NO');
                 console.log('   - User object:', data.user);
+                console.log('   - isNewUser:', data.isNewUser);
                 console.log('💾 [GOOGLE-LOGIN] Saving to localStorage...');
                 
                 // Clear old donatur status cache
@@ -2991,52 +2992,91 @@ const codeModal = document.getElementById('codeModal');
                     console.error('❌ [GOOGLE-LOGIN] Login modal not found!');
                 }
                 
-                // Show success message briefly then open profile
+                // Show success message
                 console.log('📢 [GOOGLE-LOGIN] Showing success message...');
                 showFormMessage('loginMessage', '✅ Login berhasil!', 'success', 1000);
                 
-                // 🔥 FORCE REFRESH STATUS immediately after login (before showing modal)
-                // This ensures fresh status without needing page reload
-                console.log('🔍 [GOOGLE-LOGIN] Force refreshing donatur status...');
-                checkDonaturStatus().then(() => {
-                    console.log('✅ [GOOGLE-LOGIN] Status refreshed, showing profile modal...');
-                    // Show profile modal after status is refreshed
-                    setTimeout(async () => {
-                        try {
-                            console.log('🎭 [GOOGLE-LOGIN] Opening profile modal...');
-                            if (typeof showProfileModal === 'function') {
-                                console.log('✅ [GOOGLE-LOGIN] showProfileModal EXISTS, calling with user:', data.user);
-                                await showProfileModal(data.user);
-                                console.log('✅ [GOOGLE-LOGIN] showProfileModal completed');
-                            } else {
-                                console.error('❌ [GOOGLE-LOGIN] showProfileModal is NOT a function! Type:', typeof showProfileModal);
+                // 🆕 Check if this is a new user registration
+                if (data.isNewUser) {
+                    console.log('🆕 [GOOGLE-LOGIN] New user detected - opening Edit Profile Modal...');
+                    
+                    // Set global flag to track this is from Google registration
+                    window.isFromGoogleRegistration = true;
+                    
+                    setTimeout(() => {
+                        // Open edit profile modal instead of profile modal
+                        const editProfileModal = document.getElementById('editProfileModal');
+                        const displayNameInput = document.getElementById('displayNameInput');
+                        const avatarPreview = document.getElementById('avatarPreview');
+                        
+                        if (editProfileModal && displayNameInput && avatarPreview) {
+                            // Pre-fill with Google data
+                            displayNameInput.value = data.user.username || '';
+                            avatarPreview.src = 'assets/Logo 2.png'; // Default logo
+                            
+                            // Show edit profile modal
+                            editProfileModal.style.display = 'flex';
+                            document.body.style.overflow = 'hidden';
+                            
+                            console.log('✅ [GOOGLE-LOGIN] Edit Profile Modal opened for new user');
+                        } else {
+                            console.error('❌ [GOOGLE-LOGIN] Edit Profile Modal elements not found!');
+                            // Fallback: show profile modal
+                            checkDonaturStatus().then(() => {
+                                setTimeout(() => showProfileModal(data.user), 500);
+                            });
+                        }
+                    }, 500);
+                } else {
+                    // Existing user - normal flow
+                    console.log('👤 [GOOGLE-LOGIN] Existing user - showing Profile Modal...');
+                    
+                    // Clear flag
+                    window.isFromGoogleRegistration = false;
+                    
+                    // 🔥 FORCE REFRESH STATUS immediately after login (before showing modal)
+                    // This ensures fresh status without needing page reload
+                    console.log('🔍 [GOOGLE-LOGIN] Force refreshing donatur status...');
+                    checkDonaturStatus().then(() => {
+                        console.log('✅ [GOOGLE-LOGIN] Status refreshed, showing profile modal...');
+                        // Show profile modal after status is refreshed
+                        setTimeout(async () => {
+                            try {
+                                console.log('🎭 [GOOGLE-LOGIN] Opening profile modal...');
+                                if (typeof showProfileModal === 'function') {
+                                    console.log('✅ [GOOGLE-LOGIN] showProfileModal EXISTS, calling with user:', data.user);
+                                    await showProfileModal(data.user);
+                                    console.log('✅ [GOOGLE-LOGIN] showProfileModal completed');
+                                } else {
+                                    console.error('❌ [GOOGLE-LOGIN] showProfileModal is NOT a function! Type:', typeof showProfileModal);
+                                    console.log('🔄 [GOOGLE-LOGIN] Reloading page as fallback...');
+                                    location.reload();
+                                }
+                            } catch (error) {
+                                console.error('❌ [GOOGLE-LOGIN] Error opening profile modal:', error);
+                                console.error('❌ [GOOGLE-LOGIN] Error stack:', error.stack);
+                                // Fallback: reload page
                                 console.log('🔄 [GOOGLE-LOGIN] Reloading page as fallback...');
                                 location.reload();
                             }
-                        } catch (error) {
-                            console.error('❌ [GOOGLE-LOGIN] Error opening profile modal:', error);
-                            console.error('❌ [GOOGLE-LOGIN] Error stack:', error.stack);
-                            // Fallback: reload page
-                            console.log('🔄 [GOOGLE-LOGIN] Reloading page as fallback...');
-                            location.reload();
-                        }
-                    }, 500);
-                }).catch(err => {
-                    console.log('⚠️ [GOOGLE-LOGIN] Status refresh error:', err);
-                    // Show modal anyway even if status check fails
-                    setTimeout(async () => {
-                        try {
-                            if (typeof showProfileModal === 'function') {
-                                await showProfileModal(data.user);
-                            } else {
+                        }, 500);
+                    }).catch(err => {
+                        console.log('⚠️ [GOOGLE-LOGIN] Status refresh error:', err);
+                        // Show modal anyway even if status check fails
+                        setTimeout(async () => {
+                            try {
+                                if (typeof showProfileModal === 'function') {
+                                    await showProfileModal(data.user);
+                                } else {
+                                    location.reload();
+                                }
+                            } catch (error) {
+                                console.error('❌ [GOOGLE-LOGIN] Error opening profile modal:', error);
                                 location.reload();
                             }
-                        } catch (error) {
-                            console.error('❌ [GOOGLE-LOGIN] Error opening profile modal:', error);
-                            location.reload();
-                        }
-                    }, 500);
-                });
+                        }, 500);
+                    });
+                }
             } else {
                 console.error('❌ [GOOGLE-LOGIN] Login FAILED:', data.error);
                 console.error('❌ [GOOGLE-LOGIN] Full response:', data);
