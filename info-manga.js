@@ -3625,6 +3625,7 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                 
                 // Save auth data
                 localStorage.setItem('authToken', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user)); // 🔥 Save user object
                 localStorage.setItem('userEmail', data.user.email);
                 localStorage.setItem('userUid', data.user.uid);
                 localStorage.setItem('username', data.user.username);
@@ -3634,16 +3635,44 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                 }
                 
                 dLog('✅ [GOOGLE] Data saved to localStorage');
-                dLog('🔄 [GOOGLE] Reloading page...');
                 
-                // Close modal and reload
+                // Update button text immediately
+                if (window.updateProfileButtonText) {
+                    window.updateProfileButtonText();
+                    dLog('✅ [GOOGLE] Button text updated');
+                }
+                
+                // Start periodic status check
+                if (window.startPeriodicStatusCheck) {
+                    window.startPeriodicStatusCheck();
+                }
+                
+                // Update notification badge
+                if (window.updateNotificationBadge) {
+                    window.updateNotificationBadge();
+                }
+                
+                // Close login modal
                 const modal = document.getElementById('loginModal');
                 if (modal) {
                     modal.style.display = 'none';
                     document.body.style.overflow = '';
                 }
                 
-                location.reload();
+                // Show success message briefly then open profile
+                showFormMessage('loginMessage', '✅ Login berhasil!', 'success', 1000);
+                
+                // Open profile modal directly (showProfileModal is in same scope)
+                setTimeout(async () => {
+                    try {
+                        dLog('✅ [GOOGLE] Opening profile modal...');
+                        await showProfileModal(data.user);
+                    } catch (error) {
+                        console.error('❌ [GOOGLE] Error opening profile modal:', error);
+                        // Fallback: reload page
+                        location.reload();
+                    }
+                }, 1000);
             } else {
                 dLog('❌ [GOOGLE] Login failed:', data.error);
                 showFormMessage('loginMessage', `❌ ${data.error}`, 'error');
