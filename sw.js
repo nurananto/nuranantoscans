@@ -1,9 +1,9 @@
-// Service Worker for Nurananto Scanlation v4.0
-// ✅ FULLY FIXED: CORS preflight & cache cleanup
-// 📅 Last updated: 2025-12-22
+// Service Worker for Nurananto Scanlation v4.1
+// ✅ Silent mode: Removed non-critical console warnings
+// 📅 Last updated: 2026-02-22
 
 // ✅ STABLE CACHE NAMES
-const CACHE_VERSION = 'v2'; // ✅ Updated to force cache refresh
+const CACHE_VERSION = 'v3'; // ✅ Updated to force cache refresh
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
@@ -54,7 +54,8 @@ self.addEventListener('install', (event) => {
         caches.open(STATIC_CACHE).then((cache) => {
             console.log('📦 SW: Caching static assets');
             return cache.addAll(STATIC_ASSETS).catch(err => {
-                console.warn('⚠️ Some assets failed:', err);
+                // Silently ignore cache failures - some assets may not exist
+                // This is normal during initial install
             });
         })
     );
@@ -199,7 +200,7 @@ async function handleGitHubRequest(request) {
         }
         return response;
     } catch (err) {
-        console.warn('⚠️ GitHub fetch failed, trying cache:', err.message);
+        // Silently fallback to cache if GitHub fetch fails
         
         // Fallback to cache (even if stale)
         const cached = await cache.match(request);
@@ -250,7 +251,7 @@ async function handleCDNRequest(request) {
         }
         return response;
     } catch (err) {
-        console.warn('⚠️ CDN fetch failed:', err);
+        // Silently return 404 for failed CDN requests
         return new Response('Image not found', { status: 404 });
     }
 }
@@ -271,7 +272,7 @@ async function handleImageRequest(request) {
         }
         return response;
     } catch (err) {
-        console.warn('⚠️ Image fetch failed:', err);
+        // Silently return cached or 404
         return cached || new Response('Image not found', { status: 404 });
     }
 }
@@ -292,7 +293,7 @@ async function handleStaticRequest(request) {
         }
         return response;
     } catch (err) {
-        console.warn('⚠️ Static fetch failed:', err);
+        // Silently return cached or 404
         return cached || new Response('Not found', { status: 404 });
     }
 }
@@ -310,7 +311,7 @@ async function handleDynamicRequest(request, url) {
         
         return response;
     } catch (err) {
-        console.warn('⚠️ Dynamic fetch failed:', err);
+        // Silently fallback to cache
         
         // Fallback to cache
         const cached = await caches.match(request);

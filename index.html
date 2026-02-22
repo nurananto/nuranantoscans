@@ -3,41 +3,10 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <!-- Content Security Policy - Bank-Grade Protection -->
-        <!-- CSP Reporting: To enable violation reports, add report-uri https://your-endpoint.com/csp-report -->
-        <meta http-equiv="Content-Security-Policy" 
-              content="default-src 'self'; 
-                       script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://api.anthropic.com https://accounts.google.com; 
-                       style-src 'self' 'unsafe-inline' https://accounts.google.com; 
-                       img-src 'self' data: https:; 
-                       font-src 'self' data:; 
-                       connect-src 'self' 
-                         https://manga-view-counter.nuranantoadhien.workers.dev
-                         https://manga-auth-worker.nuranantoadhien.workers.dev 
-                         https://manga-code-validator.nuranantoadhien.workers.dev 
-                         https://decrypt-manifest.nuranantoadhien.workers.dev
-                         https://profile-worker.nuranantoadhien.workers.dev
-                         https://cdn.jsdelivr.net
-                         https://accounts.google.com
-                         https://oauth2.googleapis.com
-                         https://unpkg.com
-                         https://cdnjs.cloudflare.com
-                         https://script.google.com 
-                         https://*.googleusercontent.com 
-                         https://raw.githubusercontent.com 
-                         https://images.weserv.nl
-                         https://api.anthropic.com;
-                       form-action 'self' https://manga-auth-worker.nuranantoadhien.workers.dev;
-                       frame-src https://accounts.google.com;
-                       frame-ancestors 'none';
-                       upgrade-insecure-requests;
-                       base-uri 'self';">
-        <!-- Security Headers -->
+        <!-- Security Headers: CSP, X-Frame-Options, HSTS configured in _headers file (Cloudflare Pages) -->
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
-        <meta http-equiv="X-Frame-Options" content="DENY">
         <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
         <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), payment=(), usb=(), identity-credentials-get=(self)">
-        <!-- HSTS: Strict-Transport-Security configured in Cloudflare Worker responses -->
         <meta name="robots" content="noindex, nofollow" />
         <meta name="googlebot" content="noindex, nofollow" />
         <meta
@@ -3193,7 +3162,7 @@
         <!-- ✅ Scripts -->
         <script defer src="common.js?v=20260222c"></script>
         <script defer src="manga-config.js?v=20260222c"></script>
-        <script defer src="script.js?v=20260222c"></script>
+        <script defer src="script.js?v=20260222d"></script>
         <script defer src="auto-reload.js?v=20260222c"></script>
 
         <!-- Browser Image Compression Library - Load with error handling -->
