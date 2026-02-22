@@ -675,6 +675,10 @@ function displayMangaInfo() {
     // ✅ Set data-original for error handling
     coverImg.setAttribute('data-original', manga.cover);
     
+    // ✅ Error handler: Fallback to original URL, then to placeholder if both fail
+    const placeholderCover = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='450'%3E%3Crect width='300' height='450' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='16' font-family='Arial'%3ECover Not Available%3C/text%3E%3C/svg%3E";
+    coverImg.onerror = createImageErrorHandler(manga.cover, placeholderCover);
+    
     dLog('✅ Cover loaded with CDN optimization');
     
     // Update Author & Artist (Main Container - Hero Info)

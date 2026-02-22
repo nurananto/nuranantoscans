@@ -449,9 +449,9 @@ function getResponsiveCDN(originalUrl) {
 /**
  * ✅ Safe image error handler - prevents infinite loop
  */
-function createImageErrorHandler(originalUrl) {
+function createImageErrorHandler(originalUrl, placeholder = null) {
     let errorCount = 0;
-    const maxErrors = 1; // Only allow 1 error before fallback
+    const maxErrors = placeholder ? 2 : 1; // Allow 2 errors if placeholder provided
     
     return function() {
         errorCount++;
@@ -462,13 +462,20 @@ function createImageErrorHandler(originalUrl) {
             return;
         }
         
-        // Fallback to original URL
-        if (this.src !== originalUrl) {
-            dLog('🔄 [CDN] Fallback to original URL:', originalUrl);
+        // First fallback: Try original URL
+        if (this.src !== originalUrl && errorCount === 1) {
+            dLog('🔄 [IMAGE] Fallback to original URL:', originalUrl);
             this.src = originalUrl;
             this.srcset = ''; // Remove srcset to prevent further CDN attempts
-        } else {
-            // Already using original, remove handler
+        } 
+        // Second fallback: Try placeholder (if provided)
+        else if (placeholder && this.src !== placeholder && errorCount === 2) {
+            dLog('🔄 [IMAGE] Fallback to placeholder:', placeholder);
+            this.src = placeholder;
+            this.srcset = ''; // Clear srcset
+        } 
+        // No more fallbacks
+        else {
             this.onerror = null;
         }
     };
