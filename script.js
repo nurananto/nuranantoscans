@@ -300,6 +300,7 @@ function createTrendingCard(manga, mangaData, views24h, rank) {
         alt="Cover ${escapeHTML(title)}" 
         class="trending-card-cover"
         loading="eager"
+        onerror="if(this.src!=='${escapeHTML(manga.cover)}'){this.src='${escapeHTML(manga.cover)}';this.srcset='';}else{this.onerror=null;}"
       />
     </div>
   `;
@@ -666,7 +667,8 @@ function createCard(manga, mangaData, index = 0) {
               loading="${loadingAttr}"
               ${fetchPriority}
               ${decodingAttr}
-              class="manga-card-cover-img">
+              class="manga-card-cover-img"
+              onerror="if(this.src!=='${escapeHTML(manga.cover)}'){this.src='${escapeHTML(manga.cover)}';this.srcset='';}else{this.onerror=null;}">
             ${typeBadge}
           </a>
           ${statusBadge}
