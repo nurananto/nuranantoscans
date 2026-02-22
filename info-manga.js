@@ -3704,17 +3704,34 @@ dLog('ℹ️ [INIT] Profile modal ready - waiting for user click');
                 // Show success message briefly then open profile
                 showFormMessage('loginMessage', '✅ Login berhasil!', 'success', 1000);
                 
-                // Open profile modal directly (showProfileModal is in same scope)
-                setTimeout(async () => {
-                    try {
-                        dLog('✅ [GOOGLE] Opening profile modal...');
-                        await showProfileModal(data.user);
-                    } catch (error) {
-                        console.error('❌ [GOOGLE] Error opening profile modal:', error);
-                        // Fallback: reload page
-                        location.reload();
-                    }
-                }, 1000);
+                // 🔥 FORCE REFRESH STATUS immediately after login (before showing modal)
+                // This ensures fresh status without needing page reload
+                dLog('🔍 [GOOGLE] Force refreshing donatur status...');
+                checkDonaturStatus().then(() => {
+                    dLog('✅ [GOOGLE] Status refreshed, showing profile modal...');
+                    // Show profile modal after status is refreshed
+                    setTimeout(async () => {
+                        try {
+                            dLog('✅ [GOOGLE] Opening profile modal...');
+                            await showProfileModal(data.user);
+                        } catch (error) {
+                            console.error('❌ [GOOGLE] Error opening profile modal:', error);
+                            // Fallback: reload page
+                            location.reload();
+                        }
+                    }, 500);
+                }).catch(err => {
+                    dLog('⚠️ [GOOGLE] Status refresh error:', err);
+                    // Show modal anyway even if status check fails
+                    setTimeout(async () => {
+                        try {
+                            await showProfileModal(data.user);
+                        } catch (error) {
+                            console.error('❌ [GOOGLE] Error opening profile modal:', error);
+                            location.reload();
+                        }
+                    }, 500);
+                });
             } else {
                 dLog('❌ [GOOGLE] Login failed:', data.error);
                 showFormMessage('loginMessage', `❌ ${data.error}`, 'error');

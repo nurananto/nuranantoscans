@@ -2995,29 +2995,48 @@ const codeModal = document.getElementById('codeModal');
                 console.log('📢 [GOOGLE-LOGIN] Showing success message...');
                 showFormMessage('loginMessage', '✅ Login berhasil!', 'success', 1000);
                 
-                // Open profile modal directly (showProfileModal is in same scope)
-                console.log('⏰ [GOOGLE-LOGIN] Setting timeout to open profile modal in 1 second...');
-                setTimeout(async () => {
-                    try {
-                        console.log('🎭 [GOOGLE-LOGIN] Timeout fired! Opening profile modal...');
-                        console.log('🎭 [GOOGLE-LOGIN] Checking showProfileModal function...');
-                        if (typeof showProfileModal === 'function') {
-                            console.log('✅ [GOOGLE-LOGIN] showProfileModal EXISTS, calling with user:', data.user);
-                            await showProfileModal(data.user);
-                            console.log('✅ [GOOGLE-LOGIN] showProfileModal completed');
-                        } else {
-                            console.error('❌ [GOOGLE-LOGIN] showProfileModal is NOT a function! Type:', typeof showProfileModal);
+                // 🔥 FORCE REFRESH STATUS immediately after login (before showing modal)
+                // This ensures fresh status without needing page reload
+                console.log('🔍 [GOOGLE-LOGIN] Force refreshing donatur status...');
+                checkDonaturStatus().then(() => {
+                    console.log('✅ [GOOGLE-LOGIN] Status refreshed, showing profile modal...');
+                    // Show profile modal after status is refreshed
+                    setTimeout(async () => {
+                        try {
+                            console.log('🎭 [GOOGLE-LOGIN] Opening profile modal...');
+                            if (typeof showProfileModal === 'function') {
+                                console.log('✅ [GOOGLE-LOGIN] showProfileModal EXISTS, calling with user:', data.user);
+                                await showProfileModal(data.user);
+                                console.log('✅ [GOOGLE-LOGIN] showProfileModal completed');
+                            } else {
+                                console.error('❌ [GOOGLE-LOGIN] showProfileModal is NOT a function! Type:', typeof showProfileModal);
+                                console.log('🔄 [GOOGLE-LOGIN] Reloading page as fallback...');
+                                location.reload();
+                            }
+                        } catch (error) {
+                            console.error('❌ [GOOGLE-LOGIN] Error opening profile modal:', error);
+                            console.error('❌ [GOOGLE-LOGIN] Error stack:', error.stack);
+                            // Fallback: reload page
                             console.log('🔄 [GOOGLE-LOGIN] Reloading page as fallback...');
                             location.reload();
                         }
-                    } catch (error) {
-                        console.error('❌ [GOOGLE-LOGIN] Error opening profile modal:', error);
-                        console.error('❌ [GOOGLE-LOGIN] Error stack:', error.stack);
-                        // Fallback: reload page
-                        console.log('🔄 [GOOGLE-LOGIN] Reloading page as fallback...');
-                        location.reload();
-                    }
-                }, 1000);
+                    }, 500);
+                }).catch(err => {
+                    console.log('⚠️ [GOOGLE-LOGIN] Status refresh error:', err);
+                    // Show modal anyway even if status check fails
+                    setTimeout(async () => {
+                        try {
+                            if (typeof showProfileModal === 'function') {
+                                await showProfileModal(data.user);
+                            } else {
+                                location.reload();
+                            }
+                        } catch (error) {
+                            console.error('❌ [GOOGLE-LOGIN] Error opening profile modal:', error);
+                            location.reload();
+                        }
+                    }, 500);
+                });
             } else {
                 console.error('❌ [GOOGLE-LOGIN] Login FAILED:', data.error);
                 console.error('❌ [GOOGLE-LOGIN] Full response:', data);
