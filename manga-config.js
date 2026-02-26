@@ -20,7 +20,7 @@ MANGA_LIST = [
   {
     id: 'chitosekun',
     title: 'Chitose-kun wa Ramune Bin no Naka',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/Chitose-kun.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/chitosekun-b181d3d9-1eb9-411a-8e25-871103730954.webp',
     repo: 'Chitose-kun',
     type: 'webtoon'
   },
