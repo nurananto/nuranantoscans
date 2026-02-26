@@ -18,13 +18,6 @@
 
 MANGA_LIST = [
   {
-    id: 'chitosekun',
-    title: 'Chitose-kun wa Ramune Bin no Naka',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/chitosekun-b181d3d9-1eb9-411a-8e25-871103730954.webp',
-    repo: 'Chitose-kun',
-    type: 'webtoon'
-  },
-  {
     id: 'ikemenjoshi',
     title: 'Ikemen Joshi Demo Kawaii Heroine ni Naremasu ka?',
     cover: 'https://cdn.nuranantoscans.my.id/covers/ikemenjoshi-6beb2e72-2c1b-443f-8348-b6a0a96e7d6a.webp',
