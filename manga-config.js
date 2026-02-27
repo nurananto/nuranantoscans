@@ -181,7 +181,7 @@ MANGA_LIST = [
   {
     id: 'negatte',
     title: 'Negatte mo Nai Tsuihou Go kara no Slow Life? ~Intai Shita Hazu ga Nariyuki de Bishoujo Gal no Shishou ni Nattara Naze ka Mechakucha Natsukareta~',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/negatte-dee7c542-0efd-4e72-8df1-5d71a2b08c6d.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/negatte-f14fd775-bc38-4a38-af0a-2c5032f29217.webp',
     repo: 'NegattemoNai',
     type: 'manga'
   },
