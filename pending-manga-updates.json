@@ -1,4 +1,9 @@
 {
-  "pending": [],
+  "pending": [
+    {
+      "repo": "UchinoSeiso-kei",
+      "timestamp": "2026-02-27T12:18:41Z"
+    }
+  ],
   "lastRebuild": "2026-02-27T01:51:52Z"
 }
