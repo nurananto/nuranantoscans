@@ -17,6 +17,13 @@
 // ============================================
 
 MANGA_LIST = [
+    {
+    id: 'osananajimi',
+    title: 'Osananajimi ni Kage de Tsugou no Yoi Otoko Yobawari Sareta Ore wa, Koui wo Risetto Shite Futsuu ni Seishun o Okuritai',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/Osananajimi.webp',
+    repo: 'Osananajimi',
+    type: 'manga'
+  },
   {
     id: 'ikemenjoshi',
     title: 'Ikemen Joshi Demo Kawaii Heroine ni Naremasu ka?',
