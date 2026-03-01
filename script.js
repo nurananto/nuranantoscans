@@ -576,7 +576,7 @@ function createCard(manga, mangaData, index = 0) {
   if (top3Chapters.length > 0) {
     chaptersHTML = top3Chapters.map((chapter, idx) => {
       const chapterNumber = formatChapter(chapter.folder);
-      const chapterText = chapterNumber === 'Oneshot' ? 'Oneshot' : 'Chapter ' + chapterNumber;
+      const chapterText = chapterNumber === 'Oneshot' ? 'Oneshot' : 'Ch. ' + chapterNumber;
       const timeText = getRelativeTime(chapter.uploadDate) || '';
       const lockIcon = chapter.locked ? (isDonaturSetia ? '🔓' : '🔒') : '';
       
@@ -3701,7 +3701,7 @@ function renderHistoryList(history) {
              onerror="this.onerror=null; this.src='assets/Logo 2.png';">
         <div class="history-info">
           <div class="history-manga-title">${safeMangaTitle}</div>
-          <div class="history-chapter">Chapter ${safeChapterNum}</div>
+          <div class="history-chapter">Ch. ${safeChapterNum}</div>
           <div class="history-time">${safeTimeAgo}</div>
         </div>
       </div>
