@@ -1597,16 +1597,31 @@ function initProtection() {
 }
 
 function setupEnhancedEventListeners() {
-    // Toggle expanded view on progress bar click
+    // MangaDex-style: click on progress bar → show page indicators, scroll to clicked position
     navProgressBar.addEventListener('click', (e) => {
         e.stopPropagation();
+        
+        const isOpening = !navProgressExpanded.classList.contains('active');
         navProgressExpanded.classList.toggle('active');
-        // Scroll active page indicator into view when panel opens
-        if (navProgressExpanded.classList.contains('active')) {
-            const activeThumb = pageThumbnails.querySelector('.page-thumb-item.active');
-            if (activeThumb) {
-                activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+        
+        if (isOpening && totalPages > 0) {
+            // Calculate which page was clicked based on X position on the progress bar
+            const progressTrack = navProgressBar.querySelector('.progress-track');
+            const rect = progressTrack.getBoundingClientRect();
+            const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const clickedPage = Math.max(1, Math.min(totalPages, Math.round(clickRatio * totalPages)));
+            
+            // Scroll the page indicators so the clicked page is centered
+            requestAnimationFrame(() => {
+                const thumbItems = pageThumbnails.querySelectorAll('.page-thumb-item');
+                const targetThumb = thumbItems[clickedPage - 1];
+                if (targetThumb) {
+                    const containerWidth = pageThumbnails.offsetWidth;
+                    const thumbLeft = targetThumb.offsetLeft;
+                    const thumbWidth = targetThumb.offsetWidth;
+                    pageThumbnails.scrollLeft = thumbLeft - (containerWidth / 2) + (thumbWidth / 2);
+                }
+            });
         }
     });
     
