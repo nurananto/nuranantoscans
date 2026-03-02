@@ -847,6 +847,15 @@ img {
     transform: translateX(-50%) scale(1);
 }
 
+/* Unread pages get gray tooltip */
+.page-tooltip.unread {
+    background: #6b7280;
+}
+
+.page-tooltip.unread::after {
+    border-top-color: #6b7280;
+}
+
 .progress-fill {
     display: none;
 }

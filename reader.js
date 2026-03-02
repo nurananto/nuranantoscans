@@ -1089,6 +1089,8 @@ function renderPageThumbnails(pageUrls) {
             clearTimeout(hideTimeout);
             tooltip.textContent = pageNum;
             tooltip.classList.add('visible');
+            // Tooltip color: blue if read, gray if unread
+            tooltip.classList.toggle('unread', !pill.classList.contains('read'));
             // Position tooltip centered above this pill
             const pillRect = pill.getBoundingClientRect();
             const trackRect = progressTrack.getBoundingClientRect();
@@ -1108,6 +1110,7 @@ function renderPageThumbnails(pageUrls) {
             clearTimeout(hideTimeout);
             tooltip.textContent = pageNum;
             tooltip.classList.add('visible');
+            tooltip.classList.toggle('unread', !pill.classList.contains('read'));
             const pillRect = pill.getBoundingClientRect();
             const trackRect = progressTrack.getBoundingClientRect();
             const pillCenter = pillRect.left + pillRect.width / 2 - trackRect.left;
