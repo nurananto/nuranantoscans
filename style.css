@@ -3301,8 +3301,38 @@ opacity: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   overflow: hidden;
+  min-width: 0;
+}
+
+.bookmark-status-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.bookmark-status-badge.status-ongoing {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.75) 0%, rgba(22, 163, 74, 0.75) 100%);
+  color: #fff;
+}
+
+.bookmark-status-badge.status-hiatus {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.75) 0%, rgba(75, 85, 99, 0.75) 100%);
+  color: #fff;
+}
+
+.bookmark-status-badge.status-completed {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.75) 0%, rgba(185, 28, 28, 0.75) 100%);
+  color: #fff;
 }
 
 .bookmark-manga-title {
@@ -3331,11 +3361,11 @@ opacity: 1;
 /* Unbookmark button inside card */
 .btn-unbookmark {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -3343,12 +3373,13 @@ opacity: 1;
   transition: all 0.3s ease;
   color: #ef4444;
   padding: 0;
+  opacity: 0.7;
 }
 
 .btn-unbookmark:hover {
-  background: rgba(239, 68, 68, 0.3);
-  border-color: #ef4444;
-  transform: scale(1.1);
+  opacity: 1;
+  transform: scale(1.15);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .bookmark-list > .bookmark-card:last-child {

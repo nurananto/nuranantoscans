@@ -3127,8 +3127,8 @@ async function renderBookmarkList(bookmarks) {
   const listEl = document.getElementById('bookmarkList');
   if (!bookmarks || bookmarks.length === 0) return;
 
-  // Fetch genre data for all bookmarks in parallel
-  const genreMap = {};
+  // Fetch manga data (genre + status) for all bookmarks in parallel
+  const mangaInfoMap = {};
   try {
     await Promise.all(bookmarks.map(async (item) => {
       try {
@@ -3141,7 +3141,10 @@ async function renderBookmarkList(bookmarks) {
         const cacheKey = `manga_${repoName}`;
         const cached = getCachedData(cacheKey, 300000);
         if (cached) {
-          genreMap[item.manga_id] = cached.manga?.genre || [];
+          mangaInfoMap[item.manga_id] = {
+            genres: cached.manga?.genre || [],
+            status: (cached.manga?.status || 'ONGOING').toUpperCase()
+          };
           return;
         }
 
@@ -3149,14 +3152,17 @@ async function renderBookmarkList(bookmarks) {
         const data = await fetchFreshJSON(url);
         if (data) {
           setCachedData(cacheKey, data);
-          genreMap[item.manga_id] = data.manga?.genre || [];
+          mangaInfoMap[item.manga_id] = {
+            genres: data.manga?.genre || [],
+            status: (data.manga?.status || 'ONGOING').toUpperCase()
+          };
         }
       } catch (e) {
-        genreMap[item.manga_id] = [];
+        mangaInfoMap[item.manga_id] = { genres: [], status: 'ONGOING' };
       }
     }));
   } catch (e) {
-    console.error('[BOOKMARK] Genre fetch error:', e);
+    console.error('[BOOKMARK] Manga info fetch error:', e);
   }
 
   listEl.innerHTML = bookmarks.map(item => {
@@ -3164,8 +3170,19 @@ async function renderBookmarkList(bookmarks) {
     const safeMangaId = escapeHTML(item.manga_id);
     const safeMangaTitle = escapeHTML(item.manga_title);
     const safeCover = escapeHTML(cover);
-    const genres = genreMap[item.manga_id] || [];
-    const genresText = genres.length > 0 ? genres.join(', ') : '';
+    const info = mangaInfoMap[item.manga_id] || { genres: [], status: 'ONGOING' };
+    const genresText = info.genres.length > 0 ? info.genres.join(', ') : '';
+
+    // Status badge
+    let statusClass = 'status-ongoing';
+    let statusText = 'Ongoing';
+    if (info.status === 'HIATUS') {
+      statusClass = 'status-hiatus';
+      statusText = 'Hiatus';
+    } else if (info.status === 'COMPLETED' || info.status === 'TAMAT' || info.status === 'END') {
+      statusClass = 'status-completed';
+      statusText = 'Tamat';
+    }
 
     return `
       <div class="bookmark-card" data-manga-id="${safeMangaId}" tabindex="0" role="button">
@@ -3175,13 +3192,13 @@ async function renderBookmarkList(bookmarks) {
              loading="lazy"
              onerror="this.onerror=null; this.src='assets/Logo 2.png';">
         <div class="bookmark-info">
+          <span class="bookmark-status-badge ${statusClass}">${statusText}</span>
           <div class="bookmark-manga-title">${safeMangaTitle}</div>
           ${genresText ? `<div class="bookmark-genres">${escapeHTML(genresText)}</div>` : ''}
         </div>
         <button class="btn-unbookmark" data-manga-id="${safeMangaId}" title="Hapus Bookmark">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M5 2h14a1 1 0 0 1 1 1v19.143a.5.5 0 0 1-.766.424L12 18.03l-7.234 4.536A.5.5 0 0 1 4 22.143V3a1 1 0 0 1 1-1z"/>
           </svg>
         </button>
       </div>
