@@ -24,6 +24,55 @@ window.addEventListener('unhandledrejection', function(event) {
 dLog('✅ Error handlers registered');
 
 // ============================================
+// 🔒 TURNSTILE HELPER (anti-bot verification)
+// ============================================
+const TURNSTILE_SITE_KEY = '0x4AAAAAAClGo7oYQZ9NW9J1';
+let turnstileWidgetId = null;
+let turnstileReady = false;
+
+// Wait for Turnstile API to load
+function waitForTurnstile(timeout = 5000) {
+    return new Promise((resolve) => {
+        if (window.turnstile) { resolve(true); return; }
+        const start = Date.now();
+        const interval = setInterval(() => {
+            if (window.turnstile) { clearInterval(interval); resolve(true); }
+            else if (Date.now() - start > timeout) { clearInterval(interval); resolve(false); }
+        }, 100);
+    });
+}
+
+// Get a fresh Turnstile token (invisible challenge)
+async function getTurnstileToken() {
+    const ready = await waitForTurnstile();
+    if (!ready) throw new Error('Turnstile not loaded');
+    
+    return new Promise((resolve, reject) => {
+        try {
+            // Remove old widget if exists
+            if (turnstileWidgetId !== null) {
+                try { turnstile.remove(turnstileWidgetId); } catch(e) {}
+                turnstileWidgetId = null;
+            }
+            
+            const container = document.getElementById('turnstile-container');
+            if (!container) { reject(new Error('Turnstile container not found')); return; }
+            
+            turnstileWidgetId = turnstile.render(container, {
+                sitekey: TURNSTILE_SITE_KEY,
+                size: 'invisible',
+                callback: (token) => resolve(token),
+                'error-callback': () => reject(new Error('Turnstile challenge failed')),
+                'expired-callback': () => reject(new Error('Turnstile token expired')),
+                'timeout-callback': () => reject(new Error('Turnstile timeout'))
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+// ============================================
 // CHECK DEPENDENCIES
 // ============================================
 dLog('🔍 Checking dependencies...');
@@ -858,6 +907,16 @@ async function loadChapterPages() {
             // Call Worker untuk decrypt manifest
             if (DEBUG_MODE) dLog(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
             
+            // 🔒 SECURITY: Get Turnstile token before calling decrypt worker
+            let turnstileToken = '';
+            try {
+                turnstileToken = await getTurnstileToken();
+                if (DEBUG_MODE) dLog(`✅ Turnstile token obtained`);
+            } catch (e) {
+                console.error('Turnstile error:', e.message);
+                // Continue anyway - server will reject if required
+            }
+            
             const workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
                 method: 'POST',
                 headers: {
@@ -865,7 +924,8 @@ async function loadChapterPages() {
                 },
                 body: JSON.stringify({
                     repo: `${repoOwner}/${repoName}`,
-                    chapter: currentChapterFolder
+                    chapter: currentChapterFolder,
+                    turnstileToken: turnstileToken
                 })
             });
             
