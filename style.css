@@ -3430,9 +3430,9 @@ opacity: 1;
 .btn-close-bookmark {
   width: 100%;
   padding: 14px 20px;
-  background: #3a3a3a;
+  background: #0a0a0a;
   color: #fff;
-  border: none;
+  border: 1px solid #3a3a3a;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
@@ -3444,7 +3444,7 @@ opacity: 1;
 }
 
 .btn-close-bookmark:hover {
-  background: #444;
+  background: #1a1a1a;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
