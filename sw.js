@@ -1,9 +1,9 @@
-// Service Worker for Nurananto Scanlation v4.1
-// ✅ Silent mode: Removed non-critical console warnings
-// 📅 Last updated: 2026-02-22
+// Service Worker for Nurananto Scanlation v4.2
+// ✅ FIX: CDN images now cached by pathname (strip ?token&expires)
+// 📅 Last updated: 2026-03-02
 
 // ✅ STABLE CACHE NAMES
-const CACHE_VERSION = 'v3'; // ✅ Updated to force cache refresh
+const CACHE_VERSION = 'v4'; // ✅ v4: Fix CDN cache key normalization
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
@@ -216,29 +216,29 @@ async function handleGitHubRequest(request) {
     }
 }
 
-// ✅ CDN request handler - stale-while-revalidate
+// ✅ CDN request handler - CACHE FIRST with normalized key
+// Images are immutable, so strip ?token=&expires= to maximize cache hits.
+// r2-proxy already validates tokens, so cached responses are safe to reuse.
 async function handleCDNRequest(request) {
     const cache = await caches.open(IMAGE_CACHE);
-    const cached = await cache.match(request);
+    const url = new URL(request.url);
     
-    // Return cached immediately if available
+    // 🚀 CRITICAL: Normalize cache key by stripping query params
+    // Without this, every new token generates a cache MISS for the same image,
+    // causing redundant worker invocations (~2.4x over free tier limit).
+    const normalizedUrl = url.origin + url.pathname;
+    const cacheKey = new Request(normalizedUrl, {
+        method: 'GET',
+        headers: { 'Accept': request.headers.get('Accept') || 'image/webp' }
+    });
+    
+    // Cache first - images are immutable (filename includes content hash)
+    const cached = await cache.match(cacheKey);
     if (cached) {
-        // Update in background (don't await)
-        fetch(request, {
-            mode: 'cors',
-            credentials: 'omit'
-        })
-            .then(response => {
-                if (response && response.ok) {
-                    cache.put(request, response.clone());
-                }
-            })
-            .catch(() => {});
-        
         return cached;
     }
     
-    // No cache - fetch fresh
+    // Cache miss - fetch from worker (with original token URL)
     try {
         const response = await fetch(request, {
             mode: 'cors',
@@ -246,12 +246,11 @@ async function handleCDNRequest(request) {
         });
         
         if (response && response.ok) {
-            const clonedResponse = response.clone();
-            cache.put(request, clonedResponse).catch(() => {});
+            // Store under normalized key so future requests with different tokens hit cache
+            cache.put(cacheKey, response.clone()).catch(() => {});
         }
         return response;
     } catch (err) {
-        // Silently return 404 for failed CDN requests
         return new Response('Image not found', { status: 404 });
     }
 }
