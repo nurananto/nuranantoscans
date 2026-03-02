@@ -60,7 +60,7 @@ async function getTurnstileToken() {
             
             turnstileWidgetId = turnstile.render(container, {
                 sitekey: TURNSTILE_SITE_KEY,
-                size: 'invisible',
+                size: 'compact',
                 callback: (token) => resolve(token),
                 'error-callback': () => reject(new Error('Turnstile challenge failed')),
                 'expired-callback': () => reject(new Error('Turnstile token expired')),
