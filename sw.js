@@ -1,9 +1,9 @@
-// Service Worker for Nurananto Scanlation v4.3
-// ✅ FIX: Bump cache to v5 - purge bad weserv.nl entries from v4
+// Service Worker for Nurananto Scanlation v4.4
+// ✅ FIX: v6 - Add in-flight request deduplication for R2 CDN
 // 📅 Last updated: 2026-03-02
 
 // ✅ STABLE CACHE NAMES
-const CACHE_VERSION = 'v5'; // ✅ v5: Purge corrupted weserv.nl cache from v4
+const CACHE_VERSION = 'v6'; // ✅ v6: R2 request deduplication + deferred thumbnails
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
@@ -248,6 +248,12 @@ async function handleWeservRequest(request) {
     }
 }
 
+// 🚀 OPTIMIZATION: In-flight request deduplication map
+// Prevents duplicate concurrent fetches for the same normalized URL.
+// When main image + thumbnail request the same URL simultaneously,
+// only ONE fetch goes to the worker; the second waits for the first.
+const r2InFlight = new Map();
+
 // ✅ R2 CDN handler - CACHE FIRST with normalized key (strip token/expires)
 // r2-proxy URLs: /Repo/ch/Image.webp?token=xxx&expires=yyy
 // Token changes every navigation, but the image is the same.
@@ -270,16 +276,42 @@ async function handleR2CDNRequest(request) {
         return cached;
     }
     
-    try {
-        const response = await fetch(request, {
-            mode: 'cors',
-            credentials: 'omit'
-        });
-        
-        if (response && response.ok) {
-            cache.put(cacheKey, response.clone()).catch(() => {});
+    // 🚀 DEDUP: If a fetch for this URL is already in-flight, wait for it
+    // instead of sending a duplicate request to the worker.
+    if (r2InFlight.has(normalizedUrl)) {
+        try {
+            const response = await r2InFlight.get(normalizedUrl);
+            return response.clone();
+        } catch (err) {
+            // If the in-flight request failed, fall through to fetch
         }
-        return response;
+    }
+    
+    // Create the fetch promise and store it for deduplication
+    const fetchPromise = (async () => {
+        try {
+            const response = await fetch(request, {
+                mode: 'cors',
+                credentials: 'omit'
+            });
+            
+            if (response && response.ok) {
+                cache.put(cacheKey, response.clone()).catch(() => {});
+            }
+            return response;
+        } catch (err) {
+            return new Response('Image not found', { status: 404 });
+        } finally {
+            // Clean up in-flight entry after completion
+            r2InFlight.delete(normalizedUrl);
+        }
+    })();
+    
+    r2InFlight.set(normalizedUrl, fetchPromise);
+    
+    try {
+        const response = await fetchPromise;
+        return response.clone();
     } catch (err) {
         return new Response('Image not found', { status: 404 });
     }

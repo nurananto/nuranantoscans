@@ -1049,8 +1049,12 @@ function goToPage(pageNum) {
 }
 
 
+// 🚀 OPTIMIZATION: Track whether thumbnails have been loaded to avoid re-triggering
+let thumbnailsLoaded = false;
+
 function renderPageThumbnails(pageUrls) {
     pageThumbnails.innerHTML = '';
+    thumbnailsLoaded = false; // Reset on new chapter
     
     pageUrls.forEach((imageUrl, index) => {
         const pageNum = index + 1;
@@ -1067,7 +1071,12 @@ function renderPageThumbnails(pageUrls) {
         
         img.style.backgroundColor = 'var(--secondary-bg)';
         
-		img.src = imageUrl;
+        // 🚀 OPTIMIZATION: Don't set src immediately — store URL in data-src.
+        // Thumbnails use the SAME URL as main images, so setting src here
+        // causes every image to be fetched 2x from the worker (main + thumbnail).
+        // We defer loading until the thumbnail panel is opened, by which time
+        // the browser/SW cache already has the image → 0 extra worker requests.
+        img.dataset.src = imageUrl;
         
         img.onload = () => {
             thumbItem.classList.add('loaded');
@@ -1105,7 +1114,25 @@ function renderPageThumbnails(pageUrls) {
         pageThumbnails.appendChild(thumbItem);
     });
     
-	if (DEBUG_MODE) dLog(`🖼️ Generated ${pageUrls.length} thumbnails (direct signed URLs)`);}
+	if (DEBUG_MODE) dLog(`🖼️ Generated ${pageUrls.length} thumbnails (deferred loading)`);}
+
+/**
+ * 🚀 OPTIMIZATION: Load thumbnail images only when panel is opened.
+ * By this time, main reader images are already in browser/SW cache,
+ * so thumbnails load instantly from cache with 0 extra worker requests.
+ */
+function loadDeferredThumbnails() {
+    if (thumbnailsLoaded) return;
+    thumbnailsLoaded = true;
+    
+    const thumbImages = pageThumbnails.querySelectorAll('img[data-src]');
+    thumbImages.forEach(img => {
+        if (!img.src || img.src === '' || img.src === window.location.href) {
+            img.src = img.dataset.src;
+        }
+    });
+    if (DEBUG_MODE) dLog(`🖼️ Loaded ${thumbImages.length} deferred thumbnails`);
+}
 
 function updatePageNavigation() {
     document.querySelectorAll('.page-thumb-item').forEach((thumb, index) => {
@@ -1619,6 +1646,10 @@ function setupEnhancedEventListeners() {
     navProgressBar.addEventListener('click', (e) => {
         e.stopPropagation();
         navProgressExpanded.classList.toggle('active');
+        // 🚀 OPTIMIZATION: Load thumbnail images on first panel open
+        if (navProgressExpanded.classList.contains('active')) {
+            loadDeferredThumbnails();
+        }
     });
     
     // Close expanded view when clicking outside
