@@ -758,9 +758,16 @@ img {
     padding-bottom: max(0.6rem, calc(env(safe-area-inset-bottom) + 0.4rem));
     z-index: 1001;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
     box-shadow: none;
     opacity: 1;
+    transform: translateY(0);
+}
+
+.nav-progress-bar.hidden {
+    opacity: 0;
+    transform: translateY(100%);
+    pointer-events: none;
 }
 
 /* MangaDex-style: progress track is a row of pill segments */

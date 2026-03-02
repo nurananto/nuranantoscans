@@ -1722,6 +1722,21 @@ function setupEnhancedEventListeners() {
             }
         }, 250);
     });
+
+    // Hide progress bar when comment section is visible (scrolled past manga pages)
+    const commentSection = document.getElementById('readerCommentContainer');
+    if (commentSection && navProgressBar) {
+        const commentObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navProgressBar.classList.add('hidden');
+                } else {
+                    navProgressBar.classList.remove('hidden');
+                }
+            });
+        }, { threshold: 0.05 });
+        commentObserver.observe(commentSection);
+    }
 }
 
 // ============================================
