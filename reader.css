@@ -121,9 +121,9 @@ img {
 }
 
 .nav-btn {
-    background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
+    background: var(--primary-bg) !important;
     color: #ffffff !important;
-    border: 3px solid rgba(255, 255, 255, 0.3) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
     padding: 0.6rem 1.2rem;
     border-radius: 12px !important;
     cursor: pointer;
@@ -138,7 +138,7 @@ img {
     white-space: nowrap;
     box-sizing: border-box;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(55, 65, 81, 0.4) !important;
+    box-shadow: none !important;
     letter-spacing: 0.3px;
 }
 
@@ -148,19 +148,19 @@ img {
 }
 
 .nav-btn:hover {
-    background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.6) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 /* ✅ Hover effects untuk tombol di navbar-top */
 .navbar-top .nav-btn:hover {
-    background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.6) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 .nav-btn svg {
@@ -229,10 +229,10 @@ img {
 
 /* ✅ Hover effects untuk tombol di navbar-bottom */
 .navbar-bottom .nav-btn:hover {
-    background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(75, 85, 99, 0.6) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: none !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 /* Navbar Title Card - Trending-like Layout */

@@ -604,6 +604,40 @@ function setupUI() {
     if (chapterTitleBottomElement) {
         chapterTitleBottomElement.textContent = currentChapter.title;
     }
+
+    // ✅ Update bottom card: genres, status badge, cover (mirror top card)
+    const navCardGenresBottomEl = document.getElementById('navCardGenresBottom');
+    if (navCardGenresBottomEl && mangaData.manga.genre) {
+        const genres = mangaData.manga.genre;
+        navCardGenresBottomEl.textContent = genres.length > 0 ? genres.join(', ') : 'Genre not available';
+    }
+
+    const navStatusBadgeBottomEl = document.getElementById('navStatusBadgeBottom');
+    if (navStatusBadgeBottomEl && mangaData.manga.status) {
+        const status = mangaData.manga.status.toUpperCase();
+        navStatusBadgeBottomEl.className = 'nav-status-badge';
+        if (status === 'HIATUS') {
+            navStatusBadgeBottomEl.classList.add('status-hiatus');
+            navStatusBadgeBottomEl.textContent = 'Hiatus';
+        } else if (status === 'END' || status === 'COMPLETED' || status === 'TAMAT') {
+            navStatusBadgeBottomEl.classList.add('status-completed');
+            navStatusBadgeBottomEl.textContent = 'Tamat';
+        } else {
+            navStatusBadgeBottomEl.classList.add('status-ongoing');
+            navStatusBadgeBottomEl.textContent = 'Ongoing';
+        }
+    }
+
+    const navCardCoverBottomEl = document.getElementById('navCardCoverBottom');
+    if (navCardCoverBottomEl && typeof MANGA_LIST !== 'undefined') {
+        const urlParams2 = new URLSearchParams(window.location.search);
+        const repoId2 = urlParams2.get('repo') || urlParams2.get('manga');
+        const mangaInfo2 = MANGA_LIST.find(m => m.id === repoId2);
+        if (mangaInfo2 && mangaInfo2.cover) {
+            navCardCoverBottomEl.src = mangaInfo2.cover;
+            navCardCoverBottomEl.alt = `Cover ${mangaData.manga.title}`;
+        }
+    }
     
     if (DEBUG_MODE) dLog(`📖 Read mode: ${readMode}`);
     
@@ -674,22 +708,15 @@ function setupUI() {
     if (DEBUG_MODE) dLog('✅ [BACK-BOTTOM] Button handler attached');
     }
 
-    const btnHomeBottom = document.getElementById('btnHomeBottom');
-    if (btnHomeBottom) {
-        btnHomeBottom.addEventListener('click', (e) => {
+    const btnChapterListBottom = document.getElementById('btnChapterListBottom');
+    if (btnChapterListBottom) {
+        btnChapterListBottom.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-    if (DEBUG_MODE) dLog('🏠 [HOME-BOTTOM] Navigating to info-manga page');
-            const urlParams = new URLSearchParams(window.location.search);
-            const repo = urlParams.get('repo');
-            if (repo) {
-                window.location.href = `info-manga.html?repo=${repo}`;
-            } else {
-                // Fallback ke index jika tidak ada repo parameter
-                window.location.href = 'index.html';
-            }
+    if (DEBUG_MODE) dLog('📋 [LIST-BOTTOM] Opening chapter list modal');
+            openChapterListModal();
         }, { passive: false });
-    if (DEBUG_MODE) dLog('✅ [HOME-BOTTOM] Button handler attached');
+    if (DEBUG_MODE) dLog('✅ [LIST-BOTTOM] Button handler attached');
     }
 
     const btnPrevChapterBottom = document.getElementById('btnPrevChapterBottom');
