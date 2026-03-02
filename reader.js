@@ -1050,68 +1050,113 @@ function goToPage(pageNum) {
 
 
 /**
- * 🚀 MANGADEX-STYLE PAGE INDICATORS (zero image requests)
- * Replaces image thumbnails with numbered page dots/pills.
- * This eliminates ALL thumbnail-related worker requests.
+ * 🚀 MANGADEX-STYLE PROGRESS BAR (zero image requests)
+ * Builds individual pill segments inside progress-track.
+ * Hover/click a pill → floating tooltip shows page number above it.
  */
 function renderPageThumbnails(pageUrls) {
-    pageThumbnails.innerHTML = '';
+    const progressTrack = document.querySelector('.progress-track');
+    if (!progressTrack) return;
     
-    pageUrls.forEach((imageUrl, index) => {
+    // Remove old pills, keep progressFill (hidden by CSS)
+    progressTrack.querySelectorAll('.progress-pill').forEach(p => p.remove());
+    
+    // Create tooltip element (reused across all pills)
+    let tooltip = progressTrack.querySelector('.page-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.className = 'page-tooltip';
+        progressTrack.appendChild(tooltip);
+    }
+    
+    let hideTimeout = null;
+    
+    pageUrls.forEach((url, index) => {
         const pageNum = index + 1;
+        const pill = document.createElement('div');
+        pill.className = 'progress-pill';
+        pill.setAttribute('data-page', pageNum);
         
-        const thumbItem = document.createElement('div');
-        thumbItem.className = 'page-thumb-item';
+        if (pageNum <= currentPage) {
+            pill.classList.add('read');
+        }
         if (pageNum === currentPage) {
-            thumbItem.classList.add('active');
+            pill.classList.add('current');
         }
         
-        // 🚀 NO IMAGE — just a page number indicator
-        const pageNumSpan = document.createElement('span');
-        pageNumSpan.className = 'page-number';
-        pageNumSpan.textContent = pageNum;
-        
-        thumbItem.appendChild(pageNumSpan);
-        
-        thumbItem.addEventListener('click', (e) => {
-            // Prevent click if user was dragging
-            if (window.thumbnailDragState && window.thumbnailDragState.hasMoved()) {
-                e.preventDefault();
-                return;
-            }
-            goToPage(pageNum);
-            navProgressExpanded.classList.remove('active');
+        // Hover → show tooltip with page number
+        pill.addEventListener('mouseenter', () => {
+            clearTimeout(hideTimeout);
+            tooltip.textContent = pageNum;
+            tooltip.classList.add('visible');
+            // Position tooltip centered above this pill
+            const pillRect = pill.getBoundingClientRect();
+            const trackRect = progressTrack.getBoundingClientRect();
+            const pillCenter = pillRect.left + pillRect.width / 2 - trackRect.left;
+            tooltip.style.left = pillCenter + 'px';
         });
         
-        pageThumbnails.appendChild(thumbItem);
+        pill.addEventListener('mouseleave', () => {
+            hideTimeout = setTimeout(() => {
+                tooltip.classList.remove('visible');
+            }, 100);
+        });
+        
+        // Touch: show tooltip on touchstart
+        pill.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            clearTimeout(hideTimeout);
+            tooltip.textContent = pageNum;
+            tooltip.classList.add('visible');
+            const pillRect = pill.getBoundingClientRect();
+            const trackRect = progressTrack.getBoundingClientRect();
+            const pillCenter = pillRect.left + pillRect.width / 2 - trackRect.left;
+            tooltip.style.left = pillCenter + 'px';
+        }, { passive: false });
+        
+        // Click → go to page
+        pill.addEventListener('click', (e) => {
+            e.stopPropagation();
+            goToPage(pageNum);
+        });
+        
+        // Insert before tooltip
+        progressTrack.insertBefore(pill, tooltip);
     });
     
-    if (DEBUG_MODE) dLog(`📄 Generated ${pageUrls.length} page indicators (MangaDex style, 0 image requests)`);
+    // Hide tooltip when leaving the track
+    progressTrack.addEventListener('mouseleave', () => {
+        hideTimeout = setTimeout(() => {
+            tooltip.classList.remove('visible');
+        }, 100);
+    });
+    
+    // Hide tooltip on touch outside
+    document.addEventListener('touchstart', (e) => {
+        if (!progressTrack.contains(e.target)) {
+            tooltip.classList.remove('visible');
+        }
+    }, { passive: true });
+    
+    if (DEBUG_MODE) dLog(`📊 Generated ${pageUrls.length} progress pills (MangaDex style, 0 image requests)`);
 }
 
 function updatePageNavigation() {
-    document.querySelectorAll('.page-thumb-item').forEach((thumb, index) => {
-        thumb.classList.toggle('active', index === currentPage - 1);
+    // Update pill states: read / current
+    document.querySelectorAll('.progress-pill').forEach((pill) => {
+        const pageNum = parseInt(pill.getAttribute('data-page'));
+        pill.classList.toggle('read', pageNum <= currentPage);
+        pill.classList.toggle('current', pageNum === currentPage);
     });
-    
-    const activeThumb = document.querySelector('.page-thumb-item.active');
-    if (activeThumb && navProgressExpanded.classList.contains('active')) {
-        activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
     
     updateProgressBar();
 }
 
 function updateProgressBar() {
-    if (!progressFill || !totalPages || totalPages === 0) {
-        // Set to 0% if not ready yet
-        if (progressFill) progressFill.style.width = '0%';
-        return;
-    }
-    
-    // Simple progress: currentPage / totalPages
-    const progress = ((currentPage - 1) / Math.max(1, totalPages - 1)) * 100;
-    progressFill.style.width = `${progress}%`;
+    // Progress bar is now pill-based, no fill width needed.
+    // Pills are updated in updatePageNavigation().
+    // Keep progressFill hidden as fallback.
+    if (progressFill) progressFill.style.width = '0%';
 }
 
 async function updateNavigationButtons() {
@@ -1597,139 +1642,31 @@ function initProtection() {
 }
 
 function setupEnhancedEventListeners() {
-    // MangaDex-style: click on progress bar → show page indicators, scroll to clicked position
+    // Progress bar click → navigate to page based on click position (fallback if pills missed)
     navProgressBar.addEventListener('click', (e) => {
-        e.stopPropagation();
-        
-        const isOpening = !navProgressExpanded.classList.contains('active');
-        navProgressExpanded.classList.toggle('active');
-        
-        if (isOpening && totalPages > 0) {
-            // Calculate which page was clicked based on X position on the progress bar
+        if (totalPages > 0) {
             const progressTrack = navProgressBar.querySelector('.progress-track');
             const rect = progressTrack.getBoundingClientRect();
             const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-            const clickedPage = Math.max(1, Math.min(totalPages, Math.round(clickRatio * totalPages)));
-            
-            // Scroll the page indicators so the clicked page is centered
-            requestAnimationFrame(() => {
-                const thumbItems = pageThumbnails.querySelectorAll('.page-thumb-item');
-                const targetThumb = thumbItems[clickedPage - 1];
-                if (targetThumb) {
-                    const containerWidth = pageThumbnails.offsetWidth;
-                    const thumbLeft = targetThumb.offsetLeft;
-                    const thumbWidth = targetThumb.offsetWidth;
-                    pageThumbnails.scrollLeft = thumbLeft - (containerWidth / 2) + (thumbWidth / 2);
-                }
-            });
+            const clickedPage = Math.max(1, Math.min(totalPages, Math.ceil(clickRatio * totalPages)));
+            goToPage(clickedPage);
         }
     });
     
-    // Close expanded view when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!navProgressExpanded.contains(e.target) && !navProgressBar.contains(e.target)) {
-            navProgressExpanded.classList.remove('active');
-        }
-    });
+    // Close tooltip on scroll (webtoon mode)
+    const hideTooltipOnScroll = () => {
+        const tooltip = document.querySelector('.page-tooltip');
+        if (tooltip) tooltip.classList.remove('visible');
+    };
     
-    // Prevent closing when clicking inside expanded view
-    navProgressExpanded.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
-    
-    // ============================================
-    // DRAG TO SCROLL FOR PAGE THUMBNAILS
-    // ============================================
-    let isDown = false;
-    let startX;
-    let startY;
-    let scrollLeft;
-    let hasMoved = false; // Track if mouse has moved significantly during drag
-    const DRAG_THRESHOLD = 5; // Minimum pixels to consider it a drag
-    
-    pageThumbnails.addEventListener('mousedown', (e) => {
-        isDown = true;
-        hasMoved = false;
-        startX = e.pageX - pageThumbnails.offsetLeft;
-        startY = e.pageY;
-        scrollLeft = pageThumbnails.scrollLeft;
-        pageThumbnails.style.cursor = 'grabbing';
-    });
-    
-    pageThumbnails.addEventListener('mouseleave', () => {
-        isDown = false;
-        pageThumbnails.classList.remove('dragging');
-        pageThumbnails.style.cursor = 'grab';
-        hasMoved = false;
-    });
-    
-    pageThumbnails.addEventListener('mouseup', () => {
-        isDown = false;
-        pageThumbnails.classList.remove('dragging');
-        pageThumbnails.style.cursor = 'grab';
-        // Reset hasMoved immediately after a microtask to allow click to read it first
-        setTimeout(() => { hasMoved = false; }, 0);
-    });
-    
-    pageThumbnails.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        
-        const x = e.pageX - pageThumbnails.offsetLeft;
-        const distance = Math.abs(x - startX);
-        
-        // Only start dragging if moved beyond threshold
-        if (distance > DRAG_THRESHOLD) {
-            if (!hasMoved) {
-                hasMoved = true;
-                pageThumbnails.classList.add('dragging');
-            }
-            e.preventDefault();
-            const walk = (x - startX) * 2; // Multiply by 2 for faster scrolling
-            pageThumbnails.scrollLeft = scrollLeft - walk;
-        }
-    });
-    
-    // Expose hasMoved flag to global scope for thumbnail click handler
-    window.thumbnailDragState = { hasMoved: () => hasMoved };
-    
-    // Touch support for mobile
-    let touchStartX = 0;
-    let touchScrollLeft = 0;
-    
-    pageThumbnails.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].pageX - pageThumbnails.offsetLeft;
-        touchScrollLeft = pageThumbnails.scrollLeft;
-    }, { passive: true });
-    
-    pageThumbnails.addEventListener('touchmove', (e) => {
-        const x = e.touches[0].pageX - pageThumbnails.offsetLeft;
-        const walk = (x - touchStartX) * 2;
-        pageThumbnails.scrollLeft = touchScrollLeft - walk;
-    }, { passive: true });
-    
-    // Close expanded view when user scrolls
     const readerContainer = document.querySelector('.reader-container');
     if (readerContainer) {
-        readerContainer.addEventListener('scroll', () => {
-            if (navProgressExpanded.classList.contains('active')) {
-                navProgressExpanded.classList.remove('active');
-            }
-        }, { passive: true });
+        readerContainer.addEventListener('scroll', hideTooltipOnScroll, { passive: true });
     }
+    window.addEventListener('scroll', hideTooltipOnScroll, { passive: true });
     
-    // Also close on window scroll for webtoon mode
-    window.addEventListener('scroll', () => {
-        if (navProgressExpanded.classList.contains('active')) {
-            navProgressExpanded.classList.remove('active');
-        }
-    }, { passive: true });
-    
-    // Close on escape key and arrow navigation
+    // Arrow key navigation
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && navProgressExpanded.classList.contains('active')) {
-            navProgressExpanded.classList.remove('active');
-        }
-        
         if (e.ctrlKey || e.shiftKey) return;
         
         switch(e.key) {

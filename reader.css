@@ -754,8 +754,8 @@ img {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     border-top: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 0.8rem 1rem;
-    padding-bottom: max(0.8rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+    padding: 0.6rem 1rem;
+    padding-bottom: max(0.6rem, calc(env(safe-area-inset-bottom) + 0.4rem));
     z-index: 1001;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -763,123 +763,101 @@ img {
     opacity: 1;
 }
 
+/* MangaDex-style: progress track is a row of pill segments */
 .progress-track {
-    width: calc(100% - 2rem);
-    height: 5px;
-    background: rgba(255, 255, 255, 0.2);
+    width: calc(100% - 1rem);
+    height: 8px;
+    background: none;
     position: relative;
-    overflow: hidden;
-    border-radius: 10px;
-    margin: 0 1rem;
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    margin: 0 0.5rem;
+    border-radius: 0;
+    overflow: visible;
+}
+
+/* Individual page pill segment */
+.progress-pill {
+    flex: 1;
+    height: 100%;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    transition: background 0.2s ease, transform 0.15s ease;
+    cursor: pointer;
+    position: relative;
+    min-width: 2px;
+}
+
+.progress-pill:hover {
+    transform: scaleY(1.8);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.progress-pill.read {
+    background: var(--accent-color, #f97316);
+}
+
+.progress-pill.read:hover {
+    background: var(--accent-hover, #ea580c);
+    transform: scaleY(1.8);
+}
+
+.progress-pill.current {
+    background: var(--accent-color, #f97316);
+    box-shadow: 0 0 6px rgba(249, 115, 22, 0.6);
+}
+
+/* Floating page tooltip (shows on hover/click) */
+.page-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-color, #f97316);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 1002;
+    user-select: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.page-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--accent-color, #f97316);
+}
+
+.page-tooltip.visible {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
 }
 
 .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #6b7280 0%, #9ca3af 100%);
-    width: 0%;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(107, 114, 128, 0.6);
-    border-radius: 10px;
+    display: none;
 }
 
 .progress-percentage {
     display: none;
 }
 
-/* MangaDex-style: Expanded View (no background, floats above progress bar) */
+/* MangaDex-style: expanded panel no longer needed (tooltip is inline) */
 .nav-progress-expanded {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: none;
-    padding: 0 1rem;
-    padding-bottom: calc(40px + env(safe-area-inset-bottom));
-    z-index: 1000;
-    pointer-events: none;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.nav-progress-expanded.active {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-}
-
-.page-thumbnails {
-    display: flex;
-    gap: 0.4rem;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-behavior: smooth;
-    padding: 0.4rem 0;
-    scrollbar-width: none;
-    cursor: grab;
-    user-select: none;
-    align-items: center;
-    flex-wrap: nowrap;
-}
-
-.page-thumbnails:active {
-    cursor: grabbing;
-}
-
-.page-thumbnails.dragging {
-    cursor: grabbing;
-    scroll-behavior: auto;
-}
-
-.page-thumbnails.dragging .page-thumb-item {
-    pointer-events: none;
-}
-
-.page-thumbnails::-webkit-scrollbar {
     display: none;
-}
-
-/* MangaDex-style page number circles */
-.page-thumb-item {
-    min-width: 36px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.page-thumb-item:hover {
-    transform: scale(1.15);
-    border-color: var(--accent-color);
-    background: rgba(0, 0, 0, 0.7);
-}
-
-.page-thumb-item.active {
-    background: var(--accent-color, #f97316);
-    border-color: var(--accent-color, #f97316);
-    box-shadow: 0 2px 10px rgba(249, 115, 22, 0.5);
-    transform: scale(1.15);
-}
-
-.page-thumb-item .page-number {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1;
-    user-select: none;
-}
-
-.page-thumb-item.active .page-number {
-    color: #ffffff;
 }
 
 /* Modal Styles - FIXED */
@@ -1592,37 +1570,26 @@ img {
     }
 
     .nav-progress-bar {
-        padding: 0.6rem 1rem;
-        padding-bottom: max(0.6rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+        padding: 0.5rem 0.6rem;
+        padding-bottom: max(0.5rem, calc(env(safe-area-inset-bottom) + 0.4rem));
     }
 
     .progress-track {
         width: 100%;
-        height: 4px;
+        height: 6px;
         margin: 0;
+        gap: 1px;
     }
 
     .progress-percentage {
         display: none;
     }
 
-    .nav-progress-expanded {
-        padding: 0 0.5rem;
-        padding-bottom: calc(35px + env(safe-area-inset-bottom));
-    }
-
-    .page-thumbnails {
-        gap: 0.3rem;
-    }
-
-    .page-thumb-item {
-        min-width: 32px;
-        width: 32px;
-        height: 32px;
-    }
-
-    .page-thumb-item .page-number {
+    .page-tooltip {
+        width: 28px;
+        height: 28px;
         font-size: 0.65rem;
+        bottom: calc(100% + 8px);
     }
     
     .back-to-info-btn-large {
