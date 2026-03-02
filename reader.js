@@ -1049,12 +1049,13 @@ function goToPage(pageNum) {
 }
 
 
-// 🚀 OPTIMIZATION: Track whether thumbnails have been loaded to avoid re-triggering
-let thumbnailsLoaded = false;
-
+/**
+ * 🚀 MANGADEX-STYLE PAGE INDICATORS (zero image requests)
+ * Replaces image thumbnails with numbered page dots/pills.
+ * This eliminates ALL thumbnail-related worker requests.
+ */
 function renderPageThumbnails(pageUrls) {
     pageThumbnails.innerHTML = '';
-    thumbnailsLoaded = false; // Reset on new chapter
     
     pageUrls.forEach((imageUrl, index) => {
         const pageNum = index + 1;
@@ -1065,41 +1066,12 @@ function renderPageThumbnails(pageUrls) {
             thumbItem.classList.add('active');
         }
         
-        const img = document.createElement('img');
-        img.loading = 'lazy';
-        img.alt = `Page ${pageNum}`;
+        // 🚀 NO IMAGE — just a page number indicator
+        const pageNumSpan = document.createElement('span');
+        pageNumSpan.className = 'page-number';
+        pageNumSpan.textContent = pageNum;
         
-        img.style.backgroundColor = 'var(--secondary-bg)';
-        
-        // 🚀 OPTIMIZATION: Don't set src immediately — store URL in data-src.
-        // Thumbnails use the SAME URL as main images, so setting src here
-        // causes every image to be fetched 2x from the worker (main + thumbnail).
-        // We defer loading until the thumbnail panel is opened, by which time
-        // the browser/SW cache already has the image → 0 extra worker requests.
-        img.dataset.src = imageUrl;
-        
-        img.onload = () => {
-            thumbItem.classList.add('loaded');
-        };
-        
-		img.onerror = () => {
-    if (DEBUG_MODE) console.error(`❌ Failed to load thumbnail for page ${pageNum}`);
-			thumbItem.classList.add('error');
-    
-			// Fallback: show page number only
-			img.style.display = 'none';
-			thumbItem.style.backgroundColor = 'var(--secondary-bg)';
-			thumbItem.style.display = 'flex';
-			thumbItem.style.alignItems = 'center';
-			thumbItem.style.justifyContent = 'center';
-		};
-        
-        const pageNumDiv = document.createElement('div');
-        pageNumDiv.className = 'page-number';
-        pageNumDiv.textContent = `Page ${pageNum}`;
-        
-        thumbItem.appendChild(img);
-        thumbItem.appendChild(pageNumDiv);
+        thumbItem.appendChild(pageNumSpan);
         
         thumbItem.addEventListener('click', (e) => {
             // Prevent click if user was dragging
@@ -1114,24 +1086,7 @@ function renderPageThumbnails(pageUrls) {
         pageThumbnails.appendChild(thumbItem);
     });
     
-	if (DEBUG_MODE) dLog(`🖼️ Generated ${pageUrls.length} thumbnails (deferred loading)`);}
-
-/**
- * 🚀 OPTIMIZATION: Load thumbnail images only when panel is opened.
- * By this time, main reader images are already in browser/SW cache,
- * so thumbnails load instantly from cache with 0 extra worker requests.
- */
-function loadDeferredThumbnails() {
-    if (thumbnailsLoaded) return;
-    thumbnailsLoaded = true;
-    
-    const thumbImages = pageThumbnails.querySelectorAll('img[data-src]');
-    thumbImages.forEach(img => {
-        if (!img.src || img.src === '' || img.src === window.location.href) {
-            img.src = img.dataset.src;
-        }
-    });
-    if (DEBUG_MODE) dLog(`🖼️ Loaded ${thumbImages.length} deferred thumbnails`);
+    if (DEBUG_MODE) dLog(`📄 Generated ${pageUrls.length} page indicators (MangaDex style, 0 image requests)`);
 }
 
 function updatePageNavigation() {
@@ -1646,9 +1601,12 @@ function setupEnhancedEventListeners() {
     navProgressBar.addEventListener('click', (e) => {
         e.stopPropagation();
         navProgressExpanded.classList.toggle('active');
-        // 🚀 OPTIMIZATION: Load thumbnail images on first panel open
+        // Scroll active page indicator into view when panel opens
         if (navProgressExpanded.classList.contains('active')) {
-            loadDeferredThumbnails();
+            const activeThumb = pageThumbnails.querySelector('.page-thumb-item.active');
+            if (activeThumb) {
+                activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
         }
     });
     
