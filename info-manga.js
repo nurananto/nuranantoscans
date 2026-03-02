@@ -3059,7 +3059,7 @@ async function checkBookmarkStatus() {
       const data = await response.json();
       if (data.success) {
         const count = data.count || 0;
-        bookmarkText.textContent = count > 0 ? `Dibookmark ${count} orang` : 'Belum ada bookmark';
+        bookmarkText.textContent = count > 0 ? `Dibookmark ${count} orang` : '- Bookmark';
       } else {
         bookmarkText.textContent = 'Bookmark';
       }
