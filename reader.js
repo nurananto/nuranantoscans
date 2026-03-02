@@ -30,6 +30,10 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAAClGo7oYQZ9NW9J1';
 let turnstileWidgetId = null;
 let turnstileReady = false;
 
+// 🚀 PRE-FETCH: Cache token so it's ready before user clicks chapter
+let prefetchedToken = null;
+let prefetchPromise = null;
+
 // Wait for Turnstile API to load
 function waitForTurnstile(timeout = 5000) {
     return new Promise((resolve) => {
@@ -42,13 +46,42 @@ function waitForTurnstile(timeout = 5000) {
     });
 }
 
-// Get a fresh Turnstile token (invisible challenge)
+// Get a fresh Turnstile token
 async function getTurnstileToken() {
-    const ready = await waitForTurnstile();
-    if (!ready) throw new Error('Turnstile not loaded');
+    // 🚀 Use pre-fetched token if available (saves ~500-1000ms)
+    if (prefetchedToken) {
+        const token = prefetchedToken;
+        prefetchedToken = null; // Single use — clear after consuming
+        // Start pre-fetching next token in background
+        prefetchTurnstileToken();
+        return token;
+    }
     
-    return new Promise((resolve, reject) => {
+    // If pre-fetch is in progress, wait for it
+    if (prefetchPromise) {
         try {
+            const token = await prefetchPromise;
+            prefetchedToken = null;
+            prefetchPromise = null;
+            // Start pre-fetching next token in background
+            prefetchTurnstileToken();
+            return token;
+        } catch (e) {
+            prefetchPromise = null;
+            // Fall through to render fresh
+        }
+    }
+    
+    return renderTurnstileWidget();
+}
+
+// Render widget and return token via promise
+function renderTurnstileWidget() {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const ready = await waitForTurnstile();
+            if (!ready) { reject(new Error('Turnstile not loaded')); return; }
+            
             // Remove old widget if exists
             if (turnstileWidgetId !== null) {
                 try { turnstile.remove(turnstileWidgetId); } catch(e) {}
@@ -71,6 +104,23 @@ async function getTurnstileToken() {
         }
     });
 }
+
+// 🚀 Pre-fetch: Start getting token in background as soon as page loads
+function prefetchTurnstileToken() {
+    if (prefetchPromise) return; // Already in progress
+    prefetchPromise = renderTurnstileWidget().then(token => {
+        prefetchedToken = token;
+        prefetchPromise = null;
+        return token;
+    }).catch(() => {
+        prefetchPromise = null;
+    });
+}
+
+// 🚀 Start pre-fetch immediately when page loads
+waitForTurnstile(10000).then(ready => {
+    if (ready) prefetchTurnstileToken();
+});
 
 // ============================================
 // CHECK DEPENDENCIES
