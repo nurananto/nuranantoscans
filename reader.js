@@ -830,28 +830,67 @@ async function loadChapterPages() {
         const repoOwner = mangaData.manga.repoUrl.split('/')[3];
         const repoName = mangaData.manga.repoUrl.split('/')[4];
         
-        // Call Worker untuk decrypt manifest
-        if (DEBUG_MODE) dLog(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
+        // 🚀 CACHE OPTIMIZATION: Reuse signed URLs from sessionStorage
+        // Prevents duplicate decrypt-manifest AND r2-proxy invocations
+        // when user navigates back to the same chapter
+        const cacheKey = `signedPages_${repoOwner}_${repoName}_${currentChapterFolder}`;
+        let workerData = null;
         
-        const workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                repo: `${repoOwner}/${repoName}`,
-                chapter: currentChapterFolder
-            })
-        });
-        
-        if (!workerResponse.ok) {
-            throw new Error(`Worker error: ${workerResponse.status}`);
+        try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                const data = JSON.parse(cached);
+                const nowSeconds = Math.floor(Date.now() / 1000);
+                // Use cached if tokens still valid with 5-minute buffer
+                if (data.expiresAt && data.expiresAt > nowSeconds + 300) {
+                    workerData = data;
+                    if (DEBUG_MODE) dLog(`🚀 Using cached signed URLs (expires in ${Math.floor((data.expiresAt - nowSeconds) / 60)} min)`);
+                } else {
+                    sessionStorage.removeItem(cacheKey);
+                    if (DEBUG_MODE) dLog(`⏰ Cached signed URLs expired, fetching fresh`);
+                }
+            }
+        } catch (e) {
+            // sessionStorage may be disabled or full - continue without cache
         }
         
-        const workerData = await workerResponse.json();
-        
-        if (!workerData.success || !workerData.pages) {
-            throw new Error('Failed to decrypt manifest');
+        if (!workerData) {
+            // Call Worker untuk decrypt manifest
+            if (DEBUG_MODE) dLog(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
+            
+            const workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    repo: `${repoOwner}/${repoName}`,
+                    chapter: currentChapterFolder
+                })
+            });
+            
+            if (!workerResponse.ok) {
+                throw new Error(`Worker error: ${workerResponse.status}`);
+            }
+            
+            workerData = await workerResponse.json();
+            
+            if (!workerData.success || !workerData.pages) {
+                throw new Error('Failed to decrypt manifest');
+            }
+            
+            // 🚀 Cache signed URLs for reuse
+            try {
+                sessionStorage.setItem(cacheKey, JSON.stringify({
+                    success: workerData.success,
+                    pages: workerData.pages,
+                    total: workerData.total,
+                    expiresIn: workerData.expiresIn,
+                    expiresAt: workerData.expiresAt
+                }));
+            } catch (e) {
+                // sessionStorage full - silently ignore
+            }
         }
         
         const signedPages = workerData.pages;
