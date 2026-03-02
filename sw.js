@@ -1,9 +1,9 @@
-// Service Worker for Nurananto Scanlation v4.2
-// ✅ FIX: CDN images now cached by pathname (strip ?token&expires)
+// Service Worker for Nurananto Scanlation v4.3
+// ✅ FIX: Bump cache to v5 - purge bad weserv.nl entries from v4
 // 📅 Last updated: 2026-03-02
 
 // ✅ STABLE CACHE NAMES
-const CACHE_VERSION = 'v4'; // ✅ v4: Fix CDN cache key normalization
+const CACHE_VERSION = 'v5'; // ✅ v5: Purge corrupted weserv.nl cache from v4
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
