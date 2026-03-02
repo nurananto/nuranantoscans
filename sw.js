@@ -133,9 +133,15 @@ self.addEventListener('fetch', (event) => {
             return;
         }
         
-        // ✅ CDN images (images.weserv.nl, cdn.nuranantoscans.my.id)
-        if (url.hostname.includes('weserv.nl') || url.hostname.includes('cdn.nuranantoscans.my.id')) {
-            event.respondWith(handleCDNRequest(request));
+        // ✅ CDN cover images (weserv.nl) - query params ARE the content key
+        if (url.hostname.includes('weserv.nl')) {
+            event.respondWith(handleWeservRequest(request));
+            return;
+        }
+        
+        // ✅ R2 manga images (cdn.nuranantoscans.my.id) - strip token/expires
+        if (url.hostname.includes('cdn.nuranantoscans.my.id')) {
+            event.respondWith(handleR2CDNRequest(request));
             return;
         }
         
@@ -216,29 +222,17 @@ async function handleGitHubRequest(request) {
     }
 }
 
-// ✅ CDN request handler - CACHE FIRST with normalized key
-// Images are immutable, so strip ?token=&expires= to maximize cache hits.
-// r2-proxy already validates tokens, so cached responses are safe to reuse.
-async function handleCDNRequest(request) {
+// ✅ Weserv.nl handler - CACHE FIRST (full URL as key)
+// weserv.nl URLs: ?url=xxx&w=500&q=90&output=webp
+// Query params define the image variant, so they MUST be part of the cache key.
+async function handleWeservRequest(request) {
     const cache = await caches.open(IMAGE_CACHE);
-    const url = new URL(request.url);
+    const cached = await cache.match(request);
     
-    // 🚀 CRITICAL: Normalize cache key by stripping query params
-    // Without this, every new token generates a cache MISS for the same image,
-    // causing redundant worker invocations (~2.4x over free tier limit).
-    const normalizedUrl = url.origin + url.pathname;
-    const cacheKey = new Request(normalizedUrl, {
-        method: 'GET',
-        headers: { 'Accept': request.headers.get('Accept') || 'image/webp' }
-    });
-    
-    // Cache first - images are immutable (filename includes content hash)
-    const cached = await cache.match(cacheKey);
     if (cached) {
         return cached;
     }
     
-    // Cache miss - fetch from worker (with original token URL)
     try {
         const response = await fetch(request, {
             mode: 'cors',
@@ -246,7 +240,43 @@ async function handleCDNRequest(request) {
         });
         
         if (response && response.ok) {
-            // Store under normalized key so future requests with different tokens hit cache
+            cache.put(request, response.clone()).catch(() => {});
+        }
+        return response;
+    } catch (err) {
+        return new Response('Image not found', { status: 404 });
+    }
+}
+
+// ✅ R2 CDN handler - CACHE FIRST with normalized key (strip token/expires)
+// r2-proxy URLs: /Repo/ch/Image.webp?token=xxx&expires=yyy
+// Token changes every navigation, but the image is the same.
+// r2-proxy already validates token, so cached response is safe to reuse.
+async function handleR2CDNRequest(request) {
+    const cache = await caches.open(IMAGE_CACHE);
+    const url = new URL(request.url);
+    
+    // 🚀 CRITICAL: Strip token/expires to normalize cache key
+    // Without this, every new token causes a cache MISS for the same image,
+    // resulting in ~2.4x over free tier worker invocation limit.
+    const normalizedUrl = url.origin + url.pathname;
+    const cacheKey = new Request(normalizedUrl, {
+        method: 'GET',
+        headers: { 'Accept': request.headers.get('Accept') || 'image/webp' }
+    });
+    
+    const cached = await cache.match(cacheKey);
+    if (cached) {
+        return cached;
+    }
+    
+    try {
+        const response = await fetch(request, {
+            mode: 'cors',
+            credentials: 'omit'
+        });
+        
+        if (response && response.ok) {
             cache.put(cacheKey, response.clone()).catch(() => {});
         }
         return response;
