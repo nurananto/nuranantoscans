@@ -3541,185 +3541,115 @@ document.querySelector('#panelRegister form').addEventListener('submit', async (
 
 // ============================================
 // ============================================
-// HISTORY MODAL - FULL VERSION
+// BOOKMARK MODAL
 // ============================================
 
-/**
- * ✅ Fetch reading history from API with limit
- */
-let historyCache = null;
-let historyCacheTime = 0;
-const HISTORY_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-async function fetchReadingHistory(limit = 3, skipCache = false) {
-  const now = Date.now();
-  
-  // ✅ Cache per limit (3 vs all)
-  const cacheKey = `history_${limit}`;
-  
-  // Return cached data if fresh (unless skipCache is true)
-  if (!skipCache && historyCache?.[cacheKey] && (now - historyCacheTime) < HISTORY_CACHE_DURATION) {
-    dLog(`📦 [HISTORY] Using cached data (limit=${limit})`);
-    return historyCache[cacheKey];
-  }
-  
-  const token = localStorage.getItem('authToken');
-  if (!token) return { history: [], total: 0, showing: 0 };
-  
-  const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
-  
-  try {
-    dLog(`🌐 [HISTORY] Fetching from API (limit=${limit}, skipCache=${skipCache})...`);
-    // Add timestamp to prevent browser cache
-    const response = await fetch(`${API_URL}/reading/history?limit=${limit}&_t=${now}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      // Initialize cache object if needed
-      if (!historyCache) historyCache = {};
-      
-      historyCache[cacheKey] = data;
-      historyCacheTime = now;
-      dLog('✅ [HISTORY] Fetched:', data.showing, 'of', data.total, 'items');
-      return data;
-    }
-    
-    return { history: [], total: 0, showing: 0 };
-  } catch (error) {
-    console.error('[HISTORY] Fetch error:', error);
-    return { history: [], total: 0, showing: 0 };
-  }
-}
+const BOOKMARK_API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
 
 /**
- * ✅ Format relative time
- */
-function formatRelativeTime(isoString) {
-  if (!isoString) return 'Tidak diketahui';
-  
-  // ✅ Parse waktu dari database
-  let date;
-  
-  if (isoString.includes('T') && (isoString.includes('Z') || isoString.includes('+'))) {
-    // ISO format dengan timezone (dari backend yang sudah diperbaiki)
-    date = new Date(isoString);
-  } else if (isoString.includes('T')) {
-    // ISO format tanpa timezone - assume UTC
-    date = new Date(isoString + 'Z');
-  } else if (isoString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
-    // SQLite datetime format (YYYY-MM-DD HH:MM:SS) - assume UTC
-    // Convert to ISO format first
-    const isoFormat = isoString.replace(' ', 'T') + 'Z';
-    date = new Date(isoFormat);
-  } else {
-    // Try parsing as-is
-    date = new Date(isoString);
-  }
-  
-  // ✅ Validate date
-  if (isNaN(date.getTime())) {
-    dWarn('Invalid date format:', isoString);
-    return 'Tidak diketahui';
-  }
-  
-  const now = new Date();
-  const diffMs = now - date;
-  
-  // ✅ Handle negative difference (future time) - should not happen but just in case
-  if (diffMs < 0) {
-    return 'Baru saja';
-  }
-  
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  
-  if (diffMins < 1) return 'Baru saja';
-  if (diffMins < 60) return `${diffMins} menit yang lalu`;
-  if (diffHours < 24) return `${diffHours} jam yang lalu`;
-  if (diffDays === 1) return 'Kemarin';
-  if (diffDays < 7) return `${diffDays} hari yang lalu`;
-  
-  // ✅ Format tanggal dengan timezone lokal Indonesia
-  return date.toLocaleDateString('id-ID', { 
-    day: 'numeric', 
-    month: 'short', 
-    year: 'numeric',
-    timeZone: 'Asia/Jakarta'
-  });
-}
-
-/**
- * ✅ Get manga cover from manga-config.js
+ * Get manga cover from manga-config.js
  */
 function getMangaCover(mangaId) {
-  const manga = mangaList.find(m => m.id === mangaId);
-  if (!manga) return 'assets/Logo 2.png';
-  
-  // Return original URL directly to avoid CDN issues
-  // CDN will be handled by getResponsiveCDN when needed
-  return manga.cover;
+  if (typeof mangaList !== 'undefined' && mangaList) {
+    const manga = mangaList.find(m => m.id === mangaId);
+    if (manga) return manga.cover;
+  }
+  if (typeof MANGA_LIST !== 'undefined' && MANGA_LIST) {
+    const manga = MANGA_LIST.find(m => m.id === mangaId);
+    if (manga) return manga.cover;
+  }
+  return 'assets/Logo 2.png';
 }
 
 /**
- * ✅ Render history list
+ * Fetch bookmarks from API
  */
-function renderHistoryList(history) {
-  const listEl = document.getElementById('historyList');
-  
-  if (!history || history.length === 0) {
-    return;
+async function fetchBookmarks() {
+  const token = localStorage.getItem('authToken');
+  if (!token) return { bookmarks: [] };
+
+  try {
+    dLog('[BOOKMARK] Fetching bookmarks...');
+    const response = await fetch(`${BOOKMARK_API_URL}/bookmarks`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+    if (data.success) {
+      dLog('[BOOKMARK] Fetched', data.bookmarks.length, 'bookmarks');
+      return data;
+    }
+    return { bookmarks: [] };
+  } catch (error) {
+    console.error('[BOOKMARK] Fetch error:', error);
+    return { bookmarks: [] };
   }
-  
-  listEl.innerHTML = history.map(item => {
+}
+
+/**
+ * Remove bookmark
+ */
+async function removeBookmark(mangaId) {
+  const token = localStorage.getItem('authToken');
+  if (!token) return { success: false, error: 'Not logged in' };
+
+  try {
+    const response = await fetch(`${BOOKMARK_API_URL}/bookmarks/remove`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ mangaId })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('[BOOKMARK] Remove error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Render bookmark list in modal
+ */
+function renderBookmarkList(bookmarks) {
+  const listEl = document.getElementById('bookmarkList');
+  if (!bookmarks || bookmarks.length === 0) return;
+
+  listEl.innerHTML = bookmarks.map(item => {
     const cover = getMangaCover(item.manga_id);
-    const chapterNum = item.chapter_id.replace(/^ch\.?/i, '');
-    const timeAgo = formatRelativeTime(item.read_at);
-    
-    // ✅ Security: Escape all dynamic data
     const safeMangaId = escapeHTML(item.manga_id);
-    const safeChapterId = escapeHTML(item.chapter_id);
     const safeMangaTitle = escapeHTML(item.manga_title);
     const safeCover = escapeHTML(cover);
-    const safeChapterNum = escapeHTML(chapterNum);
-    const safeTimeAgo = escapeHTML(timeAgo);
-    
+
     return `
-      <div class="history-card" 
-           data-manga-id="${safeMangaId}" 
-           data-chapter="${safeChapterId}"
-           tabindex="0"
-           role="button">
+      <div class="bookmark-card" data-manga-id="${safeMangaId}" tabindex="0" role="button">
         <img src="${safeCover}" 
              alt="${safeMangaTitle} cover" 
-             class="history-cover"
+             class="bookmark-cover"
              loading="lazy"
-             data-original="${safeCover}"
              onerror="this.onerror=null; this.src='assets/Logo 2.png';">
-        <div class="history-info">
-          <div class="history-manga-title">${safeMangaTitle}</div>
-          <div class="history-chapter">Ch. ${safeChapterNum}</div>
-          <div class="history-time">${safeTimeAgo}</div>
+        <div class="bookmark-info">
+          <div class="bookmark-manga-title">${safeMangaTitle}</div>
         </div>
+        <button class="btn-unbookmark" data-manga-id="${safeMangaId}" title="Hapus Bookmark">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
     `;
   }).join('');
-  
-  // Add click handlers
-  listEl.querySelectorAll('.history-card').forEach(card => {
-    card.addEventListener('click', () => {
+
+  // Click on card → go to info page
+  listEl.querySelectorAll('.bookmark-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-unbookmark')) return;
       const mangaId = card.getAttribute('data-manga-id');
-      const chapterId = card.getAttribute('data-chapter');
-      // ✅ Security: Validate parameters before redirect
-      if (validateRepoParam(mangaId) && validateChapterParam(chapterId)) {
-        window.location.href = `reader.html?repo=${encodeURIComponent(mangaId)}&chapter=${encodeURIComponent(chapterId)}`;
+      if (mangaId) {
+        window.location.href = `info-manga.html?repo=${encodeURIComponent(mangaId)}`;
       }
     });
-    
-    // Keyboard support
     card.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -3727,150 +3657,101 @@ function renderHistoryList(history) {
       }
     });
   });
+
+  // Unbookmark buttons
+  listEl.querySelectorAll('.btn-unbookmark').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const mangaId = btn.getAttribute('data-manga-id');
+      btn.disabled = true;
+      const result = await removeBookmark(mangaId);
+      if (result.success) {
+        const card = btn.closest('.bookmark-card');
+        if (card) {
+          card.style.transition = 'opacity 0.3s, transform 0.3s';
+          card.style.opacity = '0';
+          card.style.transform = 'translateX(20px)';
+          setTimeout(() => {
+            card.remove();
+            const remaining = listEl.querySelectorAll('.bookmark-card');
+            if (remaining.length === 0) {
+              listEl.style.display = 'none';
+              document.getElementById('bookmarkEmpty').style.display = 'block';
+            }
+          }, 300);
+        }
+      } else {
+        btn.disabled = false;
+        if (typeof showToast === 'function') showToast(result.error || 'Gagal menghapus', 'error');
+      }
+    });
+  });
 }
 
 /**
- * ✅ Show history modal with expand/collapse toggle
+ * Show bookmark modal
  */
-let currentHistoryLimit = 3; // Track current state
+async function showBookmarkModal() {
+  dLog('[BOOKMARK] Opening modal...');
 
-async function showHistoryModal(expandAll = false) {
-  dLog('📖 [HISTORY] Opening modal...', expandAll ? '(expand all)' : '(show 3)');
-  
-  const historyModal = document.getElementById('historyModal');
-  const historyLoading = document.getElementById('historyLoading');
-  const historyList = document.getElementById('historyList');
-  const historyEmpty = document.getElementById('historyEmpty');
-  const historyTitle = historyModal.querySelector('.history-title');
-  const btnCloseHistory = document.getElementById('btnCloseHistory');
-  
-  // ✅ Determine limit
-  const limit = expandAll ? 0 : 3; // 0 = fetch all
-  currentHistoryLimit = limit;
-  
-  dLog('🔢 [HISTORY] Using limit:', limit);
-  
-  // Show modal with loading
-  historyModal.style.display = 'flex';
-  historyLoading.style.display = 'block';
-  historyList.style.display = 'none';
-  historyEmpty.style.display = 'none';
-  
-  // ✅ Lock body scroll when modal is open
+  const bookmarkModal = document.getElementById('bookmarkModal');
+  const bookmarkLoading = document.getElementById('bookmarkLoading');
+  const bookmarkList = document.getElementById('bookmarkList');
+  const bookmarkEmpty = document.getElementById('bookmarkEmpty');
+
+  bookmarkModal.style.display = 'flex';
+  bookmarkLoading.style.display = 'block';
+  bookmarkList.style.display = 'none';
+  bookmarkEmpty.style.display = 'none';
   document.body.style.overflow = 'hidden';
-  
-  // Fetch history (skip cache when toggling)
-  const data = await fetchReadingHistory(limit, true);
-  const { history, total, showing } = data;
-  
-  // Hide loading
-  historyLoading.style.display = 'none';
-  
-  if (history.length === 0) {
-    historyEmpty.style.display = 'block';
-    if (historyTitle) {
-      historyTitle.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-        History Baca
-      `;
-    }
+
+  const data = await fetchBookmarks();
+  const { bookmarks } = data;
+
+  bookmarkLoading.style.display = 'none';
+
+  if (!bookmarks || bookmarks.length === 0) {
+    bookmarkEmpty.style.display = 'block';
   } else {
-    historyList.style.display = 'flex';
-    renderHistoryList(history);
-    
-    // ✅ Update title with count
-    if (historyTitle) {
-      historyTitle.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-        History Baca (${showing}${total > showing ? `/${total}` : ''})
-      `;
-    }
-    
-    // ✅ Add/Update toggle button
-    let btnToggle = historyModal.querySelector('#btnToggleHistory');
-    
-    if (!btnToggle && btnCloseHistory) {
-      btnToggle = document.createElement('button');
-      btnToggle.id = 'btnToggleHistory';
-      btnToggle.className = 'btn-toggle-history';
-      btnCloseHistory.parentNode.insertBefore(btnToggle, btnCloseHistory);
-    }
-    
-    // ✅ Update button text based on state
-    if (total > 3 && btnToggle) {
-      btnToggle.style.display = 'block';
-      
-      if (expandAll) {
-        // Show "collapse" button
-        btnToggle.innerHTML = `TAMPILKAN 3 TERAKHIR`;
-        btnToggle.onclick = () => showHistoryModal(false);
-      } else {
-        // Show "expand" button
-        btnToggle.innerHTML = `TAMPILKAN SEMUA (${total})`;
-        btnToggle.onclick = () => showHistoryModal(true);
-      }
-    } else {
-      // Hide toggle if total <= 3
-      if (btnToggle) btnToggle.style.display = 'none';
-    }
+    bookmarkList.style.display = 'flex';
+    renderBookmarkList(bookmarks);
   }
 }
 
 /**
- * ✅ History button click handler
+ * Bookmark button click handler (profile modal)
  */
 document.addEventListener('click', (e) => {
-  if (e.target.id === 'btnHistory' || e.target.closest('#btnHistory')) {
-    dLog('🖱️ [HISTORY] Button clicked');
-    
+  if (e.target.id === 'btnBookmark' || e.target.closest('#btnBookmark')) {
+    dLog('[BOOKMARK] Button clicked');
     const profileModal = document.getElementById('profileModal');
     if (profileModal) profileModal.style.display = 'none';
-    
-    showHistoryModal(false); // Start with 3 items
+    showBookmarkModal();
   }
 });
 
 /**
- * ✅ Close history modal helper function
+ * Close bookmark modal
  */
-function closeHistoryModal() {
-  const historyModal = document.getElementById('historyModal');
-  if (historyModal) {
-    historyModal.style.display = 'none';
-    // ✅ Restore body scroll when modal is closed
+function closeBookmarkModal() {
+  const bookmarkModal = document.getElementById('bookmarkModal');
+  if (bookmarkModal) {
+    bookmarkModal.style.display = 'none';
     document.body.style.overflow = '';
-    dLog('✅ [HISTORY] Modal closed, scroll restored');
+    dLog('[BOOKMARK] Modal closed');
   }
 }
 
-/**
- * ✅ Close history modal
- */
 document.addEventListener('click', (e) => {
-  const historyModal = document.getElementById('historyModal');
-  
-  // Close on overlay click
-  if (e.target.id === 'historyModal') {
-    closeHistoryModal();
-  }
-  
-  // Close on button click
-  if (e.target.id === 'btnCloseHistory') {
-    closeHistoryModal();
-  }
+  if (e.target.id === 'bookmarkModal') closeBookmarkModal();
+  if (e.target.id === 'btnCloseBookmark') closeBookmarkModal();
 });
 
-// ✅ Close history modal on Escape key
+// Close bookmark modal on Escape
 document.addEventListener('keydown', (e) => {
-  const historyModal = document.getElementById('historyModal');
-  if (historyModal && historyModal.style.display === 'flex' && e.key === 'Escape') {
-    closeHistoryModal();
+  const bookmarkModal = document.getElementById('bookmarkModal');
+  if (bookmarkModal && bookmarkModal.style.display === 'flex' && e.key === 'Escape') {
+    closeBookmarkModal();
   }
 });
 

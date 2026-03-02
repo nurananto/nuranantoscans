@@ -3143,11 +3143,11 @@ opacity: 1;
 }
 
 /* ============================================
-   HISTORY MODAL - ADD TO END OF style.css
+   BOOKMARK SYSTEM
    ============================================ */
 
-/* History Button (below countdown) */
-.btn-history {
+/* Bookmark Button (in profile modal) */
+.btn-bookmark {
   width: 100%;
   padding: 14px 20px;
   background: #1877f2;
@@ -3166,13 +3166,13 @@ opacity: 1;
   gap: 8px;
 }
 
-.btn-history:hover {
+.btn-bookmark:hover {
   background: #166fe5;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
-.btn-history:active {
+.btn-bookmark:active {
   transform: translateY(0);
 }
 
@@ -3213,14 +3213,13 @@ opacity: 1;
   transform: none;
 }
 
-/* History Modal */
-/* History Modal - Wider Container */
-#historyModal .login-modal-content {
-  max-width: 600px; /* Increase from 420px */
-  width: 95%; /* Increase from 90% */
+/* Bookmark Modal */
+#bookmarkModal .login-modal-content {
+  max-width: 600px;
+  width: 95%;
 }
 
-.history-content {
+.bookmark-content {
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
@@ -3228,12 +3227,11 @@ opacity: 1;
   overflow: visible;
 }
 
-
-.history-title {
+.bookmark-title {
   font-size: 22px;
   font-weight: 700;
   color: #fff;
-  margin: 0 0 12px 0;
+  margin: 0;
   text-align: center;
   display: flex;
   align-items: center;
@@ -3241,23 +3239,28 @@ opacity: 1;
   gap: 10px;
 }
 
-.history-list {
+.bookmark-subtitle {
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+  margin: 0;
+}
+
+.bookmark-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 500px; /* Increase from 400px */
+  max-height: 500px;
   overflow-y: auto;
   overflow-x: visible;
   padding: 6px 4px 10px 4px;
   margin: -6px -4px -10px -4px;
-  /* Ensure scrollbar doesn't cut off content */
   scrollbar-gutter: stable;
-  /* Smooth Scroll */
   scroll-behavior: smooth;
 }
 
-/* History Card */
-.history-card {
+/* Bookmark Card */
+.bookmark-card {
   display: flex;
   gap: 14px;
   padding: 14px;
@@ -3270,24 +3273,21 @@ opacity: 1;
   position: relative;
   overflow: visible;
   box-sizing: border-box;
-  /* Prevent background bleed */
   isolation: isolate;
 }
 
-.history-card:hover {
-  background: #0a0a0a;
+.bookmark-card:hover {
   border-color: #1877f2;
   transform: translateX(4px);
   box-shadow: 0 0 0 1px #1877f2, 0 2px 8px rgba(24, 119, 242, 0.2);
   z-index: 1;
 }
 
-.history-card:active {
+.bookmark-card:active {
   transform: translateX(0);
 }
 
-/* Cover Image */
-.history-cover {
+.bookmark-cover {
   width: 70px;
   height: 98px;
   object-fit: cover;
@@ -3297,8 +3297,7 @@ opacity: 1;
   display: block;
 }
 
-/* Content */
-.history-info {
+.bookmark-info {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -3306,12 +3305,7 @@ opacity: 1;
   overflow: hidden;
 }
 
-/* Ensure last item has proper spacing */
-.history-list > .history-card:last-child {
-  margin-bottom: 0;
-}
-
-.history-manga-title {
+.bookmark-manga-title {
   font-size: 15px;
   font-weight: 700;
   color: #fff;
@@ -3323,92 +3317,75 @@ opacity: 1;
   line-height: 1.4;
 }
 
-.history-chapter {
-  font-size: 13px;
-  color: #888;
-  font-weight: 600;
+/* Unbookmark button inside card */
+.btn-unbookmark {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: #ef4444;
+  padding: 0;
 }
 
-.history-time {
-  font-size: 12px;
-  color: #666;
-  font-weight: 500;
+.btn-unbookmark:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+  transform: scale(1.1);
+}
+
+.bookmark-list > .bookmark-card:last-child {
+  margin-bottom: 0;
 }
 
 /* Empty State */
-.history-empty {
+.bookmark-empty {
   text-align: center;
   padding: 60px 20px;
   color: #666;
 }
 
-.history-empty svg {
+.bookmark-empty svg {
   width: 64px;
   height: 64px;
   margin: 0 auto 20px;
   opacity: 0.3;
 }
 
-.history-empty p {
+.bookmark-empty p {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 8px;
   color: #888;
 }
 
-.history-empty small {
+.bookmark-empty small {
   font-size: 13px;
   color: #555;
 }
 
 /* Loading State */
-.history-loading {
+.bookmark-loading {
   text-align: center;
   padding: 40px 20px;
   color: #888;
 }
 
-.history-loading .spinner {
+.bookmark-loading .spinner {
   width: 40px;
   height: 40px;
   border-width: 3px;
   margin: 0 auto 12px;
 }
 
-/* Toggle History Button (Show All / Show 3) */
-.btn-toggle-history {
-  width: 100%;
-  padding: 14px 20px;
-  background: #1877f2;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 8px;
-  margin-bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-toggle-history:hover {
-  background: #166fe5;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
-}
-
-.btn-toggle-history:active {
-  transform: translateY(0);
-}
-
 /* Close Button */
-.btn-close-history {
+.btn-close-bookmark {
   width: 100%;
   padding: 14px 20px;
   background: #3a3a3a;
@@ -3424,106 +3401,102 @@ opacity: 1;
   margin-top: 4px;
 }
 
-.btn-close-history:hover {
+.btn-close-bookmark:hover {
   background: #444;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Scrollbar */
-.history-list::-webkit-scrollbar {
+.bookmark-list::-webkit-scrollbar {
   width: 6px;
 }
 
-.history-list::-webkit-scrollbar-track {
+.bookmark-list::-webkit-scrollbar-track {
   background: #0a0a0a;
   border-radius: 3px;
 }
 
-.history-list::-webkit-scrollbar-thumb {
+.bookmark-list::-webkit-scrollbar-thumb {
   background: #3a3a3a;
   border-radius: 3px;
 }
 
-.history-list::-webkit-scrollbar-thumb:hover {
+.bookmark-list::-webkit-scrollbar-thumb:hover {
   background: #4a4a4a;
 }
 
 /* ============================================
-   RESPONSIVE - HISTORY MODAL
+   RESPONSIVE - BOOKMARK
    ============================================ */
 @media (max-width: 767px) {
-  #historyModal .login-modal-content {
+  #bookmarkModal .login-modal-content {
     max-width: 95%;
     width: 95%;
   }
   
-  .history-content {
+  .bookmark-content {
     padding: 28px 24px;
     gap: 14px;
   }
   
-  .history-title {
+  .bookmark-title {
     font-size: 20px;
   }
   
-  .history-cover {
+  .bookmark-cover {
     width: 60px;
     height: 84px;
   }
   
-  .history-manga-title {
+  .bookmark-manga-title {
     font-size: 14px;
   }
   
-  .history-chapter {
-    font-size: 12px;
-  }
-  
-  .btn-history,
-  .btn-close-history {
+  .btn-bookmark,
+  .btn-close-bookmark {
     font-size: 14px;
     padding: 13px 18px;
+  }
+  
+  .bookmark-list {
+    max-height: 400px;
   }
 }
 
 @media (max-width: 480px) {
-  #historyModal .login-modal-content {
+  #bookmarkModal .login-modal-content {
     max-width: 95%;
     width: 95%;
   }
   
-  .history-content {
+  .bookmark-content {
     padding: 24px 20px;
     gap: 12px;
   }
   
-  .history-title {
+  .bookmark-title {
     font-size: 18px;
     gap: 8px;
   }
   
-  .history-cover {
+  .bookmark-cover {
     width: 55px;
     height: 77px;
   }
   
-  .history-manga-title {
+  .bookmark-manga-title {
     font-size: 13px;
   }
   
-  .history-chapter {
-    font-size: 11px;
-  }
-  
-  .history-time {
-    font-size: 11px;
-  }
-  
-  .btn-history,
-  .btn-close-history {
+  .btn-bookmark,
+  .btn-close-bookmark {
     font-size: 13px;
     padding: 12px 16px;
+  }
+  
+  .bookmark-list {
+    max-height: 350px;
   }
 }
 
@@ -3586,29 +3559,6 @@ opacity: 1;
 .footer-text strong {
   color: #fff;
   font-weight: 700;
-}
-
-/* Mobile Responsive - History Modal */
-@media (max-width: 767px) {
-  .btn-toggle-history {
-    font-size: 13px;
-    padding: 13px 18px;
-  }
-  
-  .history-list {
-    max-height: 400px;
-  }
-}
-
-@media (max-width: 480px) {
-  .btn-toggle-history {
-    font-size: 12px;
-    padding: 12px 16px;
-  }
-  
-  .history-list {
-    max-height: 350px;
-  }
 }
 
 /* Responsive Footer */

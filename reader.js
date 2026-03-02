@@ -366,9 +366,6 @@ if (isValidated || isDonatur) {
         
         trackChapterView();
         
-        // ✅ TAMBAHKAN BARIS INI - Track reading history
-        trackReadingHistory();
-        
     if (DEBUG_MODE) dLog('✅ Reader initialized successfully');
         
     } catch (error) {
@@ -1537,77 +1534,6 @@ async function trackChapterView() {
 // ============================================
 // ✅ NEW FUNCTION - Track Reading History
 // ============================================
-/**
- * ✅ Track reading history to API
- * Called when user opens a chapter
- */
-async function trackReadingHistory() {
-    try {
-        const token = localStorage.getItem('authToken');
-        
-        // ✅ If not logged in, skip tracking
-        if (!token) {
-            if (DEBUG_MODE) dLog('⏭️ [HISTORY] Not logged in - skipping');
-            return;
-        }
-        
-        // ✅ Check if already tracked in this session (prevent duplicate writes)
-        const historyKey = `tracked_history_${repoParam}_${currentChapterFolder}`;
-        const alreadyTracked = sessionStorage.getItem(historyKey);
-        
-        if (alreadyTracked) {
-            if (DEBUG_MODE) dLog('⏭️ [HISTORY] Already tracked in this session');
-            return;
-        }
-        
-        if (DEBUG_MODE) dLog('📖 [HISTORY] Tracking reading history...');
-        
-        // ✅ Get manga title
-        const mangaTitle = mangaData?.manga?.title || 'Unknown';
-        
-        // ✅ Get chapter number from folder (remove "ch." prefix)
-        const chapterNumber = currentChapterFolder.replace(/^ch\.?/i, '');
-        
-        // ✅ Parse chapter base (for sorting)
-        const chapterBase = parseFloat(chapterNumber) || 1;
-        
-        if (DEBUG_MODE) {
-    if (DEBUG_MODE) dLog('   Manga:', mangaTitle);
-    if (DEBUG_MODE) dLog('   Chapter ID:', currentChapterFolder);
-    if (DEBUG_MODE) dLog('   Chapter Base:', chapterBase);
-        }
-        
-        const API_URL = 'https://manga-auth-worker.nuranantoadhien.workers.dev';
-        
-        const response = await fetch(`${API_URL}/reading/track`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                mangaId: repoParam,
-                mangaTitle: mangaTitle,
-                chapterId: currentChapterFolder,
-                chapterBase: chapterBase
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // ✅ Mark as tracked in this session
-            sessionStorage.setItem(historyKey, 'true');
-            if (DEBUG_MODE) dLog('✅ [HISTORY] Reading history tracked successfully');
-        } else {
-    if (DEBUG_MODE) console.error('❌ [HISTORY] Failed to track:', data.error);
-        }
-        
-    } catch (error) {
-    if (DEBUG_MODE) console.error('❌ [HISTORY] Error tracking reading history:', error);
-    }
-}
-
 function showLoading() {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
