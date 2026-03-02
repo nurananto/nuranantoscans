@@ -21,7 +21,7 @@
   Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()
   
   # Content Security Policy - Comprehensive protection
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.anthropic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://manga-auth-worker.nuranantoadhien.workers.dev https://manga-code-validator.nuranantoadhien.workers.dev https://decrypt-manifest.nuranantoadhien.workers.dev https://script.google.com https://*.googleusercontent.com https://raw.githubusercontent.com https://images.weserv.nl https://api.anthropic.com; form-action 'self' https://manga-auth-worker.nuranantoadhien.workers.dev; frame-ancestors 'none'; upgrade-insecure-requests; base-uri 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.anthropic.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://challenges.cloudflare.com https://manga-auth-worker.nuranantoadhien.workers.dev https://manga-code-validator.nuranantoadhien.workers.dev https://decrypt-manifest.nuranantoadhien.workers.dev https://script.google.com https://*.googleusercontent.com https://raw.githubusercontent.com https://images.weserv.nl https://api.anthropic.com; form-action 'self' https://manga-auth-worker.nuranantoadhien.workers.dev; frame-src 'self' https://challenges.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests; base-uri 'self'
   
   # Remove server fingerprinting
   X-Powered-By: 
