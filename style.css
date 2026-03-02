@@ -3269,7 +3269,7 @@ opacity: 1;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  align-items: center;
+  align-items: flex-start;
   position: relative;
   overflow: visible;
   box-sizing: border-box;
@@ -3315,6 +3315,17 @@ opacity: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
+}
+
+.bookmark-genres {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Unbookmark button inside card */
@@ -3452,6 +3463,10 @@ opacity: 1;
   .bookmark-manga-title {
     font-size: 14px;
   }
+
+  .bookmark-genres {
+    font-size: 11px;
+  }
   
   .btn-bookmark,
   .btn-close-bookmark {
@@ -3487,6 +3502,10 @@ opacity: 1;
   
   .bookmark-manga-title {
     font-size: 13px;
+  }
+
+  .bookmark-genres {
+    font-size: 10px;
   }
   
   .btn-bookmark,

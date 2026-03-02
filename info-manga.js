@@ -3123,15 +3123,49 @@ async function toggleBookmark() {
 /**
  * Render bookmark list in modal
  */
-function renderBookmarkList(bookmarks) {
+async function renderBookmarkList(bookmarks) {
   const listEl = document.getElementById('bookmarkList');
   if (!bookmarks || bookmarks.length === 0) return;
+
+  // Fetch genre data for all bookmarks in parallel
+  const genreMap = {};
+  try {
+    await Promise.all(bookmarks.map(async (item) => {
+      try {
+        let repoName = item.manga_id;
+        if (typeof MANGA_LIST !== 'undefined') {
+          const entry = MANGA_LIST.find(m => m.id === item.manga_id);
+          if (entry) repoName = entry.repo;
+        }
+
+        const cacheKey = `manga_${repoName}`;
+        const cached = getCachedData(cacheKey, 300000);
+        if (cached) {
+          genreMap[item.manga_id] = cached.manga?.genre || [];
+          return;
+        }
+
+        const url = `https://raw.githubusercontent.com/nurananto/${repoName}/main/manga.json`;
+        const data = await fetchFreshJSON(url);
+        if (data) {
+          setCachedData(cacheKey, data);
+          genreMap[item.manga_id] = data.manga?.genre || [];
+        }
+      } catch (e) {
+        genreMap[item.manga_id] = [];
+      }
+    }));
+  } catch (e) {
+    console.error('[BOOKMARK] Genre fetch error:', e);
+  }
 
   listEl.innerHTML = bookmarks.map(item => {
     const cover = getMangaCover(item.manga_id);
     const safeMangaId = escapeHTML(item.manga_id);
     const safeMangaTitle = escapeHTML(item.manga_title);
     const safeCover = escapeHTML(cover);
+    const genres = genreMap[item.manga_id] || [];
+    const genresText = genres.length > 0 ? genres.join(', ') : '';
 
     return `
       <div class="bookmark-card" data-manga-id="${safeMangaId}" tabindex="0" role="button">
@@ -3142,6 +3176,7 @@ function renderBookmarkList(bookmarks) {
              onerror="this.onerror=null; this.src='assets/Logo 2.png';">
         <div class="bookmark-info">
           <div class="bookmark-manga-title">${safeMangaTitle}</div>
+          ${genresText ? `<div class="bookmark-genres">${escapeHTML(genresText)}</div>` : ''}
         </div>
         <button class="btn-unbookmark" data-manga-id="${safeMangaId}" title="Hapus Bookmark">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -3237,7 +3272,7 @@ async function showBookmarkModal() {
     bookmarkEmpty.style.display = 'block';
   } else {
     bookmarkList.style.display = 'flex';
-    renderBookmarkList(bookmarks);
+    await renderBookmarkList(bookmarks);
   }
 }
 
