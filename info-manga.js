@@ -3021,54 +3021,80 @@ async function removeBookmark(mangaId) {
 }
 
 /**
- * Check if current manga is bookmarked
+ * Check bookmark status and set up bookmark box
+ * - Logged in: show "Bookmark Manga" / "Manga Dibookmark" (clickable)
+ * - Not logged in: show "Dibookmark X orang" (counter only)
  */
 async function checkBookmarkStatus() {
   const token = localStorage.getItem('authToken');
-  const btnBookmarkManga = document.getElementById('btnBookmarkManga');
-  if (!token || !btnBookmarkManga) return;
+  const bookmarkBox = document.getElementById('bookmarkBox');
+  const bookmarkText = document.getElementById('bookmarkText');
+  if (!bookmarkBox || !bookmarkText) return;
 
   const urlParams = new URLSearchParams(window.location.search);
   const mangaId = urlParams.get('repo');
   if (!mangaId) return;
 
-  // Show the button for logged-in users
-  btnBookmarkManga.style.display = 'flex';
+  if (token) {
+    // Logged in: make it clickable
+    bookmarkBox.classList.add('clickable');
+    bookmarkText.textContent = 'Bookmark Manga';
 
-  try {
-    const response = await fetch(`${BOOKMARK_API_URL}/bookmarks/check?mangaId=${encodeURIComponent(mangaId)}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await response.json();
-    if (data.success && data.bookmarked) {
-      btnBookmarkManga.classList.add('bookmarked');
-    } else {
-      btnBookmarkManga.classList.remove('bookmarked');
+    try {
+      const response = await fetch(`${BOOKMARK_API_URL}/bookmarks/check?mangaId=${encodeURIComponent(mangaId)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success && data.bookmarked) {
+        bookmarkBox.classList.add('bookmarked');
+        bookmarkText.textContent = 'Manga Dibookmark';
+      }
+    } catch (error) {
+      console.error('[BOOKMARK] Check status error:', error);
     }
-  } catch (error) {
-    console.error('[BOOKMARK] Check status error:', error);
+  } else {
+    // Not logged in: show counter (read-only)
+    try {
+      const response = await fetch(`${BOOKMARK_API_URL}/bookmarks/count?mangaId=${encodeURIComponent(mangaId)}`);
+      const data = await response.json();
+      if (data.success) {
+        const count = data.count || 0;
+        bookmarkText.textContent = count > 0 ? `Dibookmark ${count} orang` : 'Belum ada bookmark';
+      } else {
+        bookmarkText.textContent = 'Bookmark';
+      }
+    } catch (error) {
+      bookmarkText.textContent = 'Bookmark';
+      console.error('[BOOKMARK] Count error:', error);
+    }
   }
 }
 
 /**
- * Toggle bookmark for current manga (inline button)
+ * Toggle bookmark for current manga
  */
 async function toggleBookmark() {
-  const btnBookmarkManga = document.getElementById('btnBookmarkManga');
-  if (!btnBookmarkManga) return;
+  const bookmarkBox = document.getElementById('bookmarkBox');
+  const bookmarkText = document.getElementById('bookmarkText');
+  if (!bookmarkBox || !bookmarkText) return;
+
+  // Only work for logged-in users
+  if (!bookmarkBox.classList.contains('clickable')) return;
 
   const urlParams = new URLSearchParams(window.location.search);
   const mangaId = urlParams.get('repo');
   if (!mangaId) return;
 
-  const isBookmarked = btnBookmarkManga.classList.contains('bookmarked');
-  btnBookmarkManga.disabled = true;
+  const isBookmarked = bookmarkBox.classList.contains('bookmarked');
+  bookmarkBox.style.pointerEvents = 'none';
+  bookmarkBox.style.opacity = '0.6';
 
   try {
     if (isBookmarked) {
       const result = await removeBookmark(mangaId);
       if (result.success) {
-        btnBookmarkManga.classList.remove('bookmarked');
+        bookmarkBox.classList.remove('bookmarked');
+        bookmarkText.textContent = 'Bookmark Manga';
         if (typeof showToast === 'function') showToast('Bookmark dihapus', 'success');
       } else {
         if (typeof showToast === 'function') showToast(result.error || 'Gagal menghapus bookmark', 'error');
@@ -3078,7 +3104,8 @@ async function toggleBookmark() {
       const mangaTitle = mainTitle ? mainTitle.textContent.trim() : mangaId;
       const result = await addBookmark(mangaId, mangaTitle);
       if (result.success) {
-        btnBookmarkManga.classList.add('bookmarked');
+        bookmarkBox.classList.add('bookmarked');
+        bookmarkText.textContent = 'Manga Dibookmark';
         if (typeof showToast === 'function') showToast('Manga dibookmark!', 'success');
       } else {
         if (typeof showToast === 'function') showToast(result.error || 'Gagal menambah bookmark', 'error');
@@ -3088,7 +3115,8 @@ async function toggleBookmark() {
     console.error('[BOOKMARK] Toggle error:', error);
     if (typeof showToast === 'function') showToast('Terjadi kesalahan', 'error');
   } finally {
-    btnBookmarkManga.disabled = false;
+    bookmarkBox.style.pointerEvents = '';
+    bookmarkBox.style.opacity = '';
   }
 }
 
@@ -3164,12 +3192,14 @@ function renderBookmarkList(bookmarks) {
               listEl.style.display = 'none';
               document.getElementById('bookmarkEmpty').style.display = 'block';
             }
-            // Update inline button state if same manga
+            // Update inline bookmark box state if same manga
             const urlParams = new URLSearchParams(window.location.search);
             const currentMangaId = urlParams.get('repo');
             if (currentMangaId === mangaId) {
-              const btnInline = document.getElementById('btnBookmarkManga');
-              if (btnInline) btnInline.classList.remove('bookmarked');
+              const boxInline = document.getElementById('bookmarkBox');
+              const textInline = document.getElementById('bookmarkText');
+              if (boxInline) boxInline.classList.remove('bookmarked');
+              if (textInline) textInline.textContent = 'Bookmark Manga';
             }
           }, 300);
         }
@@ -3224,10 +3254,10 @@ document.addEventListener('click', (e) => {
 });
 
 /**
- * Inline bookmark button (next to rating)
+ * Inline bookmark box click handler
  */
 document.addEventListener('click', (e) => {
-  if (e.target.id === 'btnBookmarkManga' || e.target.closest('#btnBookmarkManga')) {
+  if (e.target.id === 'bookmarkBox' || e.target.closest('#bookmarkBox')) {
     toggleBookmark();
   }
 });

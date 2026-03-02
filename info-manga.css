@@ -4500,37 +4500,54 @@ nav {
   margin-bottom: 0;
 }
 
-/* Bookmark Button (next to rating, left side) */
-.btn-bookmark-manga {
-  width: 46px;
-  flex-shrink: 0;
-  background: #0a0a0a;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  cursor: pointer;
+/* Bookmark Box (next to rating, equal width) */
+.manga-bookmark-box {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  gap: 8px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px);
   color: rgba(255, 255, 255, 0.5);
-  padding: 0;
+  font-size: clamp(12px, 1.5vw, 14px);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  user-select: none;
 }
 
-.btn-bookmark-manga:hover {
+.manga-bookmark-box.clickable {
+  cursor: pointer;
+}
+
+.manga-bookmark-box.clickable:hover {
   border-color: #1877f2;
   color: #1877f2;
+  background: rgba(24, 119, 242, 0.08);
+}
+
+.manga-bookmark-box.bookmarked {
+  color: #1877f2;
+  border-color: #1877f2;
   background: rgba(24, 119, 242, 0.1);
 }
 
-.btn-bookmark-manga.bookmarked {
-  color: #1877f2;
-  border-color: #1877f2;
-  background: rgba(24, 119, 242, 0.15);
-}
-
-.btn-bookmark-manga.bookmarked .bookmark-icon {
+.manga-bookmark-box.bookmarked .bookmark-box-icon {
   fill: #1877f2;
   stroke: #1877f2;
+}
+
+.bookmark-box-icon {
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+#bookmarkText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Bookmark Button (in profile modal) */
