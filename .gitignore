@@ -23,6 +23,13 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# CI/CD generated artifacts
+cover-check-result.json
+manga-list.txt
+check-covers.js
+updated-repo-list.txt
+package-lock.json
+
 # Temporary files
 tmp/
 temp/
