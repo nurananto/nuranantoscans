@@ -1241,7 +1241,6 @@ function createChapterElement(chapter, allChapters) {
     return div;
 }
 
- */
 function openTrakteer() {
     window.open(TRAKTEER_LINK, '_blank');
 }
