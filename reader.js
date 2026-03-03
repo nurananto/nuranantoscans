@@ -1619,11 +1619,16 @@ function closeChapterListModal() {
 async function trackChapterView() {
     try {
         const viewKey = `viewed_${repoParam}_${currentChapterFolder}`;
-        const hasViewed = sessionStorage.getItem(viewKey);
+        const VIEW_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes, match worker's VIEW_EXPIRY_MINUTES
         
-        if (hasViewed) {
-            if (DEBUG_MODE) dLog('👁️ Already counted in this session');
-            return;
+        // Check localStorage with TTL (persists across tabs/refreshes)
+        const lastViewed = localStorage.getItem(viewKey);
+        if (lastViewed) {
+            const elapsed = Date.now() - parseInt(lastViewed, 10);
+            if (elapsed < VIEW_COOLDOWN_MS) {
+                if (DEBUG_MODE) dLog(`👁️ Already counted (${Math.ceil((VIEW_COOLDOWN_MS - elapsed) / 1000)}s remaining)`);
+                return;
+            }
         }
         
         if (DEBUG_MODE) dLog('📤 Tracking chapter view...');
@@ -1658,6 +1663,13 @@ async function trackChapterView() {
         
         const result = await response.json();
         
+        if (response.status === 429) {
+            // Duplicate view detected by worker — save to localStorage so we don't retry
+            localStorage.setItem(viewKey, String(Date.now()));
+            if (DEBUG_MODE) dLog('ℹ️ View already counted by worker (429), cooldown saved locally');
+            return;
+        }
+        
         if (DEBUG_MODE) {
             console.log('📥 Worker response:', result);
             
@@ -1668,7 +1680,8 @@ async function trackChapterView() {
             }
         }
         
-        sessionStorage.setItem(viewKey, 'true');
+        // Save timestamp to localStorage on success
+        localStorage.setItem(viewKey, String(Date.now()));
         
         if (DEBUG_MODE) dLog('✅ Chapter view tracked successfully (WIB)');
         

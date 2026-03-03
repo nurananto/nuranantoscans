@@ -1259,6 +1259,11 @@ async function incrementPendingChapterViews(repo, chapter) {
         
         const result = await response.json();
         
+        if (response.status === 429) {
+            dLog('ℹ️ Chapter view already counted by worker (429)');
+            return;
+        }
+        
         if (DEBUG_MODE) {
             console.log('📥 Worker response:', result);
             
@@ -1339,17 +1344,21 @@ async function trackPageView() {
         }
         
         const viewKey = `viewed_${repoParam}`;
-        const hasViewed = sessionStorage.getItem(viewKey);
+        const VIEW_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes, match worker's VIEW_EXPIRY_MINUTES
         
-        if (hasViewed) {
-            dLog('📊 Already counted in this session');
-            return;
+        const lastViewed = localStorage.getItem(viewKey);
+        if (lastViewed) {
+            const elapsed = Date.now() - parseInt(lastViewed, 10);
+            if (elapsed < VIEW_COOLDOWN_MS) {
+                dLog(`📊 Already counted (${Math.ceil((VIEW_COOLDOWN_MS - elapsed) / 1000)}s remaining)`);
+                return;
+            }
         }
         
         const githubRepo = window.currentGithubRepo || repoParam;
         await incrementPendingViews(githubRepo);
         
-        sessionStorage.setItem(viewKey, 'true');
+        localStorage.setItem(viewKey, String(Date.now()));
         dLog('✅ View tracked successfully');
         
     } catch (error) {
@@ -1384,6 +1393,11 @@ async function incrementPendingViews(repo) {
         });
         
         const result = await response.json();
+        
+        if (response.status === 429) {
+            dLog('ℹ️ View already counted by worker (429)');
+            return;
+        }
         
         if (DEBUG_MODE) {
             console.log('📥 Worker response:', result);

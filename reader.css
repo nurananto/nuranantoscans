@@ -601,11 +601,6 @@ img {
     .nav-next-btn span {
         display: none;
     }
-    
-    /* Sembunyikan teks Home hanya di bottom navbar */
-    .navbar-bottom .nav-chapter-btn span {
-        display: none;
-    }
 }
 
 /* Reader Container */
