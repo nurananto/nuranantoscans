@@ -1211,14 +1211,15 @@ function initNotificationSystem() {
     dLog('🔔 [NOTIF] Loading initial badge...');
     updateNotificationBadge();
     
-    // Poll for new notifications every 30 seconds
+    // ✅ OPTIMIZED: Poll for new notifications every 5 minutes (was 30 seconds)
+    // 30s was too aggressive - saves ~2,600 requests/day
     setInterval(() => {
         const authToken = localStorage.getItem('authToken');
         if (authToken) {
             dLog('🔔 [NOTIF] Polling for updates...');
             updateNotificationBadge();
         }
-    }, 30000);
+    }, 300000); // 5 minutes
 }
 
 /**

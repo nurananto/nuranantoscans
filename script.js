@@ -2424,9 +2424,9 @@ const codeModal = document.getElementById('codeModal');
         validateAndUpdateExpiredStatus();
     }, 10000); // Check every 10 seconds
     
-    // 🆕 Set up periodic API status check (every 2 minutes) - RECOMMENDED FOR WEBAPP
-    // This ensures donatur status stays fresh even if user doesn't switch tabs
-    const PERIODIC_CHECK_INTERVAL = 120000; // 2 minutes (adjustable: 60000 = 1 min, 300000 = 5 min)
+    // 🆕 Set up periodic API status check (every 10 minutes)
+    // ✅ OPTIMIZED: Was 2 minutes, now 10 minutes - saves requests while keeping status fresh
+    const PERIODIC_CHECK_INTERVAL = 600000; // 10 minutes (was 2 minutes)
     let periodicStatusCheckInterval = null;
     
     function startPeriodicStatusCheck() {

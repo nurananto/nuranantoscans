@@ -4700,61 +4700,27 @@ class InfoMangaRatingComments {
 
     async checkLoginStatus() {
         const token = localStorage.getItem('authToken');
-        // console.log('🔐 ============================================');
-        // console.log('🔐 [LOGIN-CHECK] Checking login status...');
-        // console.log('🔐 [LOGIN-CHECK] Token exists:', !!token);
-        // if (token) {
-        //     console.log('🔐 [LOGIN-CHECK] Token preview:', token.substring(0, 20) + '...');
-        // }
         dLog('[INFO-RATING] Checking login status, token exists:', !!token);
         
         if (!token) {
             this.isLoggedIn = false;
-            // console.log('❌ [LOGIN-CHECK] No token found');
             this.showLoginButton();
             dLog('[INFO-RATING] No token, showing login button');
-            // console.log('🔐 ============================================');
             return;
         }
 
+        // ✅ OPTIMIZED: Use token presence as login indicator instead of API call
+        // This saves ~thousands of /donatur/status requests per day
+        // Token validity will be checked when user actually posts a comment/rating
         try {
-            // console.log('🌐 [LOGIN-CHECK] Fetching donatur status...');
-            const response = await fetch(`${this.API_BASE}/donatur/status`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            // console.log('🌐 [LOGIN-CHECK] Response status:', response.status);
-            dLog('[INFO-RATING] Status check response:', response.status);
-
-            if (response.ok) {
-                const data = await response.json();
-                this.isLoggedIn = true;
-                // console.log('✅ [LOGIN-CHECK] Login successful!');
-                // console.log('✅ [LOGIN-CHECK] User data:', data);
-                // ✅ FIX: Jangan tampilkan rating input di sini
-                // Biarkan loadMangaRating() yang menentukan apakah rating input ditampilkan
-                // this.showRatingInput(); // REMOVED
-                // console.log('🖼️ [LOGIN-CHECK] Calling showCommentInput()...');
-                await this.showCommentInput();  // ✅ Added await
-                // console.log('✅ [LOGIN-CHECK] showCommentInput() complete');
-                dLog('[INFO-RATING] User is logged in, showing comment input only');
-            } else {
-                this.isLoggedIn = false;
-                // console.log('❌ [LOGIN-CHECK] Token invalid (status not ok)');
-                this.showLoginButton();
-                dLog('[INFO-RATING] Token invalid, showing login button');
-            }
+            this.isLoggedIn = true;
+            await this.showCommentInput();
+            dLog('[INFO-RATING] Token found, user is logged in (no API call needed)');
         } catch (error) {
-            console.error('❌ [LOGIN-CHECK] Error during login check:', error);
             console.error('[INFO-RATING] Login check error:', error);
             this.isLoggedIn = false;
             this.showLoginButton();
         }
-        // console.log('🔐 [LOGIN-CHECK] Final isLoggedIn value:', this.isLoggedIn);
-        // console.log('🔐 ============================================');
     }
 
     showLoginButton() {
@@ -4997,17 +4963,49 @@ class InfoMangaRatingComments {
         }
     }
 
+    // ✅ Clear comment cache (call before reload after post/edit/delete)
+    clearCommentCache() {
+        const cacheKey = `comments_${this.mangaId}_info`;
+        sessionStorage.removeItem(cacheKey);
+        sessionStorage.removeItem(`${cacheKey}_time`);
+    }
+
     async loadComments() {
         if (!this.mangaId) return;
 
         try {
+            // ✅ OPTIMIZED: Cache comments for 2 minutes to avoid duplicate requests
+            const cacheKey = `comments_${this.mangaId}_info`;
+            const cacheTimeKey = `${cacheKey}_time`;
+            const cachedTime = sessionStorage.getItem(cacheTimeKey);
+            const COMMENT_CACHE_TTL = 120000; // 2 minutes
+            
+            if (cachedTime && (Date.now() - parseInt(cachedTime)) < COMMENT_CACHE_TTL) {
+                const cachedData = sessionStorage.getItem(cacheKey);
+                if (cachedData) {
+                    dLog('[INFO-COMMENTS] Using cached comments (< 2min old)');
+                    const data = JSON.parse(cachedData);
+                    if (data.success && data.comments && data.comments.length > 0) {
+                        this.displayComments(data.comments);
+                    } else {
+                        this.showNoComments();
+                    }
+                    return;
+                }
+            }
+            
             const response = await fetch(
-                `${this.API_BASE}/comments?mangaId=${this.mangaId}&limit=50&offset=0&_t=${Date.now()}`
+                `${this.API_BASE}/comments?mangaId=${this.mangaId}&limit=50&offset=0`
             );
             const data = await response.json();
 
             dLog('[INFO-COMMENTS] Loaded:', data);
-            // console.log('🖼️ [COMMENTS-DEBUG] First comment avatar_url:', data.comments?.[0]?.avatar_url);
+
+            // ✅ Cache the response
+            try {
+                sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+            } catch (e) { /* sessionStorage full, ignore */ }
 
             if (data.success && data.comments && data.comments.length > 0) {
                 this.displayComments(data.comments);
@@ -5389,6 +5387,7 @@ class InfoMangaRatingComments {
                 textarea.value = '';
                 document.getElementById('commentCharCount').textContent = '0';
                 showToast('Komentar berhasil dikirim!', 'success');
+                this.clearCommentCache();
                 await this.loadComments();
             } else {
                 showToast(data.error || 'Gagal mengirim komentar', 'error');
@@ -5566,6 +5565,7 @@ class InfoMangaRatingComments {
                 if (data.success) {
                     showToast('Balasan berhasil dikirim!', 'success');
                     replyBox.remove();
+                    this.clearCommentCache();
                     await this.loadComments();
                 } else {
                     showToast(data.error || 'Gagal mengirim balasan', 'error');
@@ -5669,6 +5669,7 @@ class InfoMangaRatingComments {
                 const data = await response.json();
                 if (data.success) {
                     showToast('Komentar berhasil diupdate', 'success');
+                    this.clearCommentCache();
                     await this.loadComments();
                 } else {
                     showToast(data.error || 'Gagal mengupdate komentar', 'error');
@@ -5751,6 +5752,7 @@ class InfoMangaRatingComments {
                 const data = await response.json();
                 if (data.success) {
                     showToast(data.message || 'Komentar berhasil dihapus', 'success');
+                    this.clearCommentCache();
                     await this.loadComments();
                 } else {
                     showToast(data.error || 'Gagal menghapus komentar', 'error');

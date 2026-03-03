@@ -1955,25 +1955,13 @@ class ReaderComments {
             return;
         }
 
+        // ✅ OPTIMIZED: Use token presence as login indicator instead of API call
+        // This saves ~thousands of /donatur/status requests per day
+        // Token validity will be checked when user actually posts a comment
         try {
-            const response = await fetch(`${this.API_BASE}/donatur/status`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            dLog('[READER-COMMENTS] Status check response:', response.status);
-
-            if (response.ok) {
-                this.isLoggedIn = true;
-                await this.showCommentInput();  // ✅ Added await
-                dLog('[READER-COMMENTS] User is logged in, showing comment input');
-            } else {
-                this.isLoggedIn = false;
-                this.showLoginButton();
-                dLog('[READER-COMMENTS] Token invalid, showing login button');
-            }
+            this.isLoggedIn = true;
+            await this.showCommentInput();
+            dLog('[READER-COMMENTS] Token found, user is logged in (no API call needed)');
         } catch (error) {
             if (DEBUG_MODE) console.error('[READER-COMMENTS] Login check error:', error);
             this.isLoggedIn = false;
@@ -2078,11 +2066,38 @@ class ReaderComments {
         }
     }
 
+    // ✅ Clear comment cache (call before reload after post/edit/delete)
+    clearCommentCache() {
+        const cacheKey = `comments_${this.repo}_${this.chapterId}`;
+        sessionStorage.removeItem(cacheKey);
+        sessionStorage.removeItem(`${cacheKey}_time`);
+    }
+
     async loadComments() {
         if (!this.chapterId) return;
 
         try {
-            const url = `${this.API_BASE}/comments?mangaId=${this.repo}&chapterId=${this.chapterId}&limit=50&offset=0&_t=${Date.now()}`;
+            // ✅ OPTIMIZED: Cache comments for 2 minutes to avoid duplicate requests
+            const cacheKey = `comments_${this.repo}_${this.chapterId}`;
+            const cacheTimeKey = `${cacheKey}_time`;
+            const cachedTime = sessionStorage.getItem(cacheTimeKey);
+            const COMMENT_CACHE_TTL = 120000; // 2 minutes
+            
+            if (cachedTime && (Date.now() - parseInt(cachedTime)) < COMMENT_CACHE_TTL) {
+                const cachedData = sessionStorage.getItem(cacheKey);
+                if (cachedData) {
+                    dLog('[READER-COMMENTS] Using cached comments (< 2min old)');
+                    const data = JSON.parse(cachedData);
+                    if (data.comments && data.comments.length > 0) {
+                        this.displayComments(data.comments);
+                    } else {
+                        this.showNoComments();
+                    }
+                    return;
+                }
+            }
+            
+            const url = `${this.API_BASE}/comments?mangaId=${this.repo}&chapterId=${this.chapterId}&limit=50&offset=0`;
             
             dLog('[READER-COMMENTS] ========================================');
             dLog('[READER-COMMENTS] Loading comments...');
@@ -2108,6 +2123,12 @@ class ReaderComments {
 
             // Check if comments exist and is an array
             if (data.comments && Array.isArray(data.comments)) {
+                // ✅ Cache the response
+                try {
+                    sessionStorage.setItem(cacheKey, JSON.stringify(data));
+                    sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+                } catch (e) { /* sessionStorage full, ignore */ }
+                
                 if (data.comments.length > 0) {
                     dLog('[READER-COMMENTS] Displaying', data.comments.length, 'comments');
                     this.displayComments(data.comments);
@@ -2140,7 +2161,7 @@ class ReaderComments {
             dLog('[READER-COMMENTS] Trying alternative chapterId:', altChapterId);
             
             try {
-                const url = `${this.API_BASE}/comments?mangaId=${this.repo}&chapterId=${altChapterId}&limit=50&offset=0&_t=${Date.now()}`;
+                const url = `${this.API_BASE}/comments?mangaId=${this.repo}&chapterId=${altChapterId}&limit=50&offset=0`;
                 const response = await fetch(url);
                 
                 if (response.ok) {
@@ -2425,6 +2446,7 @@ class ReaderComments {
                 textarea.value = '';
                 document.getElementById('commentCharCount').textContent = '0';
                 showToast('Komentar berhasil dikirim!', 'success');
+                this.clearCommentCache();
                 await this.loadComments();
             } else {
                 showToast(data.error || 'Gagal mengirim komentar', 'error');
@@ -2577,6 +2599,7 @@ class ReaderComments {
                 if (data.success) {
                     showToast('Balasan berhasil dikirim!', 'success');
                     replyBox.remove();
+                    this.clearCommentCache();
                     await this.loadComments();
                 } else {
                     showToast(data.error || 'Gagal mengirim balasan', 'error');
@@ -2667,6 +2690,7 @@ class ReaderComments {
                 const data = await response.json();
                 if (data.success) {
                     showToast('Komentar berhasil diupdate', 'success');
+                    this.clearCommentCache();
                     await this.loadComments();
                 } else {
                     showToast(data.error || 'Gagal mengupdate komentar', 'error');
@@ -2741,6 +2765,7 @@ class ReaderComments {
                 const data = await response.json();
                 if (data.success) {
                     showToast('Komentar berhasil dihapus', 'success');
+                    this.clearCommentCache();
                     await this.loadComments();
                 } else {
                     showToast(data.error || 'Gagal menghapus komentar', 'error');
