@@ -24,15 +24,29 @@ window.addEventListener('unhandledrejection', function(event) {
 dLog('✅ Error handlers registered');
 
 // ============================================
-// 🔒 TURNSTILE HELPER (anti-bot verification)
+// 🔒 SESSION TOKEN + TURNSTILE (anti-bot)
+// Turnstile hanya 1x per 2 jam, sisanya pakai session token (instant)
 // ============================================
 const TURNSTILE_SITE_KEY = '0x4AAAAAAClGo7oYQZ9NW9J1';
 let turnstileWidgetId = null;
-let turnstileReady = false;
 
-// 🚀 PRE-FETCH: Cache token so it's ready before user clicks chapter
-let prefetchedToken = null;
-let prefetchPromise = null;
+// Session token: stored in localStorage, survives tab close
+function getSessionToken() {
+    try {
+        const token = localStorage.getItem('_st');
+        if (!token) return null;
+        // Quick client-side expiry check (server will re-verify)
+        const parts = token.split('.');
+        if (parts.length !== 2) return null;
+        const expires = parseInt(parts[1]);
+        if (isNaN(expires) || expires < Math.floor(Date.now() / 1000) + 60) return null; // 60s buffer
+        return token;
+    } catch (e) { return null; }
+}
+
+function saveSessionToken(token) {
+    try { if (token) localStorage.setItem('_st', token); } catch (e) {}
+}
 
 // Wait for Turnstile API to load
 function waitForTurnstile(timeout = 5000) {
@@ -46,43 +60,13 @@ function waitForTurnstile(timeout = 5000) {
     });
 }
 
-// Get a fresh Turnstile token
-async function getTurnstileToken() {
-    // 🚀 Use pre-fetched token if available (saves ~500-1000ms)
-    if (prefetchedToken) {
-        const token = prefetchedToken;
-        prefetchedToken = null; // Single use — clear after consuming
-        // Start pre-fetching next token in background
-        prefetchTurnstileToken();
-        return token;
-    }
-    
-    // If pre-fetch is in progress, wait for it
-    if (prefetchPromise) {
-        try {
-            const token = await prefetchPromise;
-            prefetchedToken = null;
-            prefetchPromise = null;
-            // Start pre-fetching next token in background
-            prefetchTurnstileToken();
-            return token;
-        } catch (e) {
-            prefetchPromise = null;
-            // Fall through to render fresh
-        }
-    }
-    
-    return renderTurnstileWidget();
-}
-
-// Render widget and return token via promise
-function renderTurnstileWidget() {
+// Get a fresh Turnstile token (only called when session expired)
+function getTurnstileToken() {
     return new Promise(async (resolve, reject) => {
         try {
             const ready = await waitForTurnstile();
             if (!ready) { reject(new Error('Turnstile not loaded')); return; }
             
-            // Remove old widget if exists
             if (turnstileWidgetId !== null) {
                 try { turnstile.remove(turnstileWidgetId); } catch(e) {}
                 turnstileWidgetId = null;
@@ -104,23 +88,6 @@ function renderTurnstileWidget() {
         }
     });
 }
-
-// 🚀 Pre-fetch: Start getting token in background as soon as page loads
-function prefetchTurnstileToken() {
-    if (prefetchPromise) return; // Already in progress
-    prefetchPromise = renderTurnstileWidget().then(token => {
-        prefetchedToken = token;
-        prefetchPromise = null;
-        return token;
-    }).catch(() => {
-        prefetchPromise = null;
-    });
-}
-
-// 🚀 Start pre-fetch immediately when page loads
-waitForTurnstile(10000).then(ready => {
-    if (ready) prefetchTurnstileToken();
-});
 
 // ============================================
 // CHECK DEPENDENCIES
@@ -957,36 +924,66 @@ async function loadChapterPages() {
             // Call Worker untuk decrypt manifest
             if (DEBUG_MODE) dLog(`🔐 Calling decrypt worker for ${repoOwner}/${repoName}/${currentChapterFolder}`);
             
-            // 🔒 SECURITY: Get Turnstile token before calling decrypt worker
-            let turnstileToken = '';
-            try {
-                turnstileToken = await getTurnstileToken();
-                if (DEBUG_MODE) dLog(`✅ Turnstile token obtained`);
-            } catch (e) {
-                console.error('Turnstile error:', e.message);
-                // Continue anyway - server will reject if required
+            // 🔒 SESSION TOKEN: Try session token first (instant), fallback to Turnstile
+            const requestBody = {
+                repo: `${repoOwner}/${repoName}`,
+                chapter: currentChapterFolder
+            };
+            
+            const sessionToken = getSessionToken();
+            if (sessionToken) {
+                requestBody.sessionToken = sessionToken;
+                if (DEBUG_MODE) dLog(`🔑 Using session token`);
+            } else {
+                // No valid session → get Turnstile token (1x per 2 hours)
+                try {
+                    requestBody.turnstileToken = await getTurnstileToken();
+                    if (DEBUG_MODE) dLog(`✅ Turnstile token obtained (new session)`);
+                } catch (e) {
+                    console.error('Turnstile error:', e.message);
+                }
             }
             
-            const workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
+            let workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    repo: `${repoOwner}/${repoName}`,
-                    chapter: currentChapterFolder,
-                    turnstileToken: turnstileToken
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
             });
-            
-            if (!workerResponse.ok) {
-                throw new Error(`Worker error: ${workerResponse.status}`);
-            }
             
             workerData = await workerResponse.json();
             
+            // If session expired, server returns needsVerification → retry with Turnstile
+            if (!workerData.success && workerData.needsVerification) {
+                if (DEBUG_MODE) dLog(`⏰ Session expired, getting Turnstile token...`);
+                try {
+                    const turnstileToken = await getTurnstileToken();
+                    workerResponse = await fetch('https://decrypt-manifest.nuranantoadhien.workers.dev', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            repo: `${repoOwner}/${repoName}`,
+                            chapter: currentChapterFolder,
+                            turnstileToken: turnstileToken
+                        })
+                    });
+                    workerData = await workerResponse.json();
+                } catch (e) {
+                    throw new Error('Verification failed');
+                }
+            }
+            
+            if (!workerResponse.ok && !workerData.success) {
+                throw new Error(`Worker error: ${workerResponse.status}`);
+            }
+            
             if (!workerData.success || !workerData.pages) {
                 throw new Error('Failed to decrypt manifest');
+            }
+            
+            // 🔑 Save new session token if server issued one
+            if (workerData.sessionToken) {
+                saveSessionToken(workerData.sessionToken);
+                if (DEBUG_MODE) dLog(`🔑 Session token saved (expires in 2 hours)`);
             }
             
             // 🚀 Cache signed URLs for reuse
