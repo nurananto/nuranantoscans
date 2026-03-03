@@ -1023,6 +1023,7 @@ header {
     font-size: clamp(12px, 2vw, 18px);
 }
 
+.author-artist-container {
     display: flex;
     flex-direction: column;
     gap: clamp(8px, 1.5vw, 10px);
