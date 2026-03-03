@@ -3598,6 +3598,85 @@ nav {
   margin-bottom: 0;
 }
 
+/* ============================================
+   MANGADEX RATING BADGE
+   ============================================ */
+.manga-rating-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: clamp(10px, 2vw, 12px) clamp(14px, 2.5vw, 20px);
+  font-weight: 700;
+  font-size: clamp(15px, 1.8vw, 18px);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.rating-star-icon {
+  flex-shrink: 0;
+}
+
+.rating-value {
+  letter-spacing: 0.5px;
+}
+
+/* Gold Rating: 8.51 - 10.00 */
+.manga-rating-box.rating-gold {
+  border-color: rgba(255, 215, 0, 0.5);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, rgba(255, 180, 0, 0.08) 100%);
+  color: #ffd700;
+}
+
+.manga-rating-box.rating-gold .rating-star-icon {
+  color: #ffd700;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))
+          drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+  animation: ratingGoldPulse 2.5s ease-in-out infinite;
+}
+
+.manga-rating-box.rating-gold .rating-value {
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6),
+               0 0 16px rgba(255, 215, 0, 0.3);
+}
+
+@keyframes ratingGoldPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.8))
+            drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 1))
+            drop-shadow(0 0 12px rgba(255, 215, 0, 0.7))
+            drop-shadow(0 0 18px rgba(255, 215, 0, 0.4));
+  }
+}
+
+/* White Rating: 7.01 - 8.50 */
+.manga-rating-box.rating-white {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.manga-rating-box.rating-white .rating-star-icon {
+  color: #ffffff;
+}
+
+/* Red Rating: Below 7.01 */
+.manga-rating-box.rating-red {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.manga-rating-box.rating-red .rating-star-icon {
+  color: #ef4444;
+}
+
 
 /* Bookmark Box (next to rating, equal width) */
 .manga-bookmark-box {

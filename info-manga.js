@@ -460,6 +460,9 @@ async function loadMangaFromRepo() {
                 displayChapters();
                 setupReadFirstButton();
                 
+                // Fetch MangaDex rating (client-side, 24h cache)
+                fetchMangaDexRating();
+                
                 // Update title
                 document.title = `${mangaData.manga.title} - Info`;
                 
@@ -490,6 +493,9 @@ async function loadMangaFromRepo() {
         
         // Setup "Baca dari Awal" button
         setupReadFirstButton();
+        
+        // Fetch MangaDex rating (client-side, 24h cache)
+        fetchMangaDexRating();
         
         // Update page title
         document.title = `${mangaData.manga.title} - Info`;
@@ -683,6 +689,125 @@ function displayMangaInfo() {
     
     // Populate Information Container
     populateInformationContainer(manga, mangaData.chapters);
+}
+
+// ============================================
+// ⭐ MANGADEX RATING SYSTEM (Client-side, 24h cache)
+// ============================================
+
+/**
+ * Extract MangaDex UUID from URL
+ */
+function getMangaDexIdFromUrl(url) {
+    if (!url) return null;
+    const match = url.match(/\/title\/([a-f0-9-]+)/);
+    return match ? match[1] : null;
+}
+
+/**
+ * Fetch and display MangaDex rating with 24h localStorage cache
+ */
+async function fetchMangaDexRating() {
+    const manga = mangaData?.manga;
+    if (!manga) return;
+
+    const mangadexUrl = manga.links?.mangadex;
+    if (!mangadexUrl || mangadexUrl.trim() === '') {
+        dLog('⭐ [RATING] No MangaDex link, hiding rating badge');
+        return;
+    }
+
+    const mangadexId = getMangaDexIdFromUrl(mangadexUrl);
+    if (!mangadexId) {
+        dWarn('⚠️ [RATING] Invalid MangaDex URL format');
+        return;
+    }
+
+    const cacheKey = `mdx_rating_${mangadexId}`;
+    const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+    // Check localStorage cache
+    try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            const { rating, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < CACHE_DURATION) {
+                dLog(`⭐ [RATING] Using cached rating: ${rating}`);
+                displayRatingBadge(rating);
+                return;
+            }
+        }
+    } catch (e) {
+        dWarn('⚠️ [RATING] Cache read error:', e);
+    }
+
+    // Fetch fresh from MangaDex API
+    try {
+        dLog(`⭐ [RATING] Fetching from MangaDex API: ${mangadexId}`);
+        const response = await fetch(`https://api.mangadex.org/statistics/manga/${mangadexId}`);
+        
+        if (!response.ok) {
+            dWarn(`⚠️ [RATING] MangaDex API error: ${response.status}`);
+            return;
+        }
+
+        const data = await response.json();
+        const stats = data.statistics?.[mangadexId];
+        
+        if (!stats?.rating?.bayesian) {
+            dWarn('⚠️ [RATING] No rating data from MangaDex');
+            return;
+        }
+
+        const rating = parseFloat(stats.rating.bayesian.toFixed(2));
+        dLog(`⭐ [RATING] MangaDex rating: ${rating}`);
+
+        // Save to cache
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify({
+                rating,
+                timestamp: Date.now()
+            }));
+        } catch (e) {
+            dWarn('⚠️ [RATING] Cache write error:', e);
+        }
+
+        displayRatingBadge(rating);
+    } catch (error) {
+        console.error('❌ [RATING] Failed to fetch MangaDex rating:', error);
+    }
+}
+
+/**
+ * Display the rating badge with color based on score
+ * - 8.51 - 10.00 : Gold (shining)
+ * - 7.01 - 8.50  : White
+ * - Below 7.01   : Red
+ */
+function displayRatingBadge(rating) {
+    const badge = document.getElementById('mangaRatingBadge');
+    const valueEl = document.getElementById('ratingValue');
+    
+    if (!badge || !valueEl) return;
+
+    // Format rating to 2 decimal places
+    const formatted = rating.toFixed(2);
+    valueEl.textContent = formatted;
+
+    // Remove previous color classes
+    badge.classList.remove('rating-gold', 'rating-white', 'rating-red');
+
+    // Apply color class based on score
+    if (rating >= 8.51) {
+        badge.classList.add('rating-gold');
+    } else if (rating >= 7.01) {
+        badge.classList.add('rating-white');
+    } else {
+        badge.classList.add('rating-red');
+    }
+
+    // Show the badge
+    badge.style.display = 'flex';
 }
 
 /**
