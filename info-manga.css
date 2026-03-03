@@ -3603,6 +3603,7 @@ nav {
    MANGADEX RATING BADGE
    ============================================ */
 .manga-rating-box {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3623,6 +3624,19 @@ nav {
 
 .rating-value {
   letter-spacing: 0.5px;
+}
+
+.rating-separator {
+  opacity: 0.4;
+  font-weight: 400;
+  margin: 0 2px;
+}
+
+.rating-votes {
+  font-weight: 500;
+  font-size: clamp(11px, 1.4vw, 13px);
+  opacity: 0.7;
+  letter-spacing: 0.3px;
 }
 
 /* Gold Rating: 8.51 - 10.00 */
@@ -3699,6 +3713,23 @@ nav {
 
 .manga-bookmark-box.clickable {
   cursor: pointer;
+  border-color: rgba(24, 119, 242, 0.5);
+  color: rgba(24, 119, 242, 0.7);
+  box-shadow: 0 0 8px rgba(24, 119, 242, 0.3),
+              0 0 16px rgba(24, 119, 242, 0.15);
+  animation: bookmarkBluePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes bookmarkBluePulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(24, 119, 242, 0.3),
+                0 0 16px rgba(24, 119, 242, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(24, 119, 242, 0.5),
+                0 0 24px rgba(24, 119, 242, 0.25),
+                0 0 36px rgba(24, 119, 242, 0.1);
+  }
 }
 
 .manga-bookmark-box.clickable:hover {
@@ -3708,14 +3739,29 @@ nav {
 }
 
 .manga-bookmark-box.bookmarked {
-  color: #1877f2;
-  border-color: #1877f2;
-  background: rgba(24, 119, 242, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3),
+              0 0 16px rgba(239, 68, 68, 0.15);
+  animation: bookmarkRedPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes bookmarkRedPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3),
+                0 0 16px rgba(239, 68, 68, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.5),
+                0 0 24px rgba(239, 68, 68, 0.25),
+                0 0 36px rgba(239, 68, 68, 0.1);
+  }
 }
 
 .manga-bookmark-box.bookmarked .bookmark-box-icon {
-  fill: #1877f2;
-  stroke: #1877f2;
+  fill: #ef4444;
+  stroke: #ef4444;
 }
 
 .bookmark-box-icon {

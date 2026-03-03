@@ -730,10 +730,10 @@ async function fetchMangaDexRating() {
     try {
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
-            const { rating, timestamp } = JSON.parse(cached);
+            const { rating, votes, timestamp } = JSON.parse(cached);
             if (Date.now() - timestamp < CACHE_DURATION) {
-                dLog(`⭐ [RATING] Using cached rating: ${rating}`);
-                displayRatingBadge(rating);
+                dLog(`⭐ [RATING] Using cached rating: ${rating} (${votes} votes)`);
+                displayRatingBadge(rating, votes);
                 return;
             }
         }
@@ -760,19 +760,24 @@ async function fetchMangaDexRating() {
         }
 
         const rating = parseFloat(stats.rating.bayesian.toFixed(2));
-        dLog(`⭐ [RATING] MangaDex rating: ${rating}`);
+
+        // Calculate total votes from distribution
+        const distribution = stats.rating.distribution || {};
+        const votes = Object.values(distribution).reduce((sum, count) => sum + count, 0);
+        dLog(`⭐ [RATING] MangaDex rating: ${rating} (${votes} votes)`);
 
         // Save to cache
         try {
             localStorage.setItem(cacheKey, JSON.stringify({
                 rating,
+                votes,
                 timestamp: Date.now()
             }));
         } catch (e) {
             dWarn('⚠️ [RATING] Cache write error:', e);
         }
 
-        displayRatingBadge(rating);
+        displayRatingBadge(rating, votes);
     } catch (error) {
         console.error('❌ [RATING] Failed to fetch MangaDex rating:', error);
     }
@@ -784,15 +789,21 @@ async function fetchMangaDexRating() {
  * - 7.01 - 8.50  : White
  * - Below 7.01   : Red
  */
-function displayRatingBadge(rating) {
+function displayRatingBadge(rating, votes) {
     const badge = document.getElementById('mangaRatingBadge');
     const valueEl = document.getElementById('ratingValue');
+    const votesEl = document.getElementById('ratingVotes');
     
     if (!badge || !valueEl) return;
 
     // Format rating to 2 decimal places
     const formatted = rating.toFixed(2);
     valueEl.textContent = formatted;
+
+    // Display vote count
+    if (votesEl && votes !== undefined) {
+        votesEl.textContent = `${votes} voters`;
+    }
 
     // Remove previous color classes
     badge.classList.remove('rating-gold', 'rating-white', 'rating-red');
@@ -2994,7 +3005,7 @@ async function removeBookmark(mangaId) {
 
 /**
  * Check bookmark status and set up bookmark box
- * - Logged in: show "Bookmark Manga" / "Manga Dibookmark" (clickable)
+ * - Logged in: show "BOOKMARK" / "BOOKMARKED" (clickable)
  * - Not logged in: show "Dibookmark X orang" (counter only)
  */
 async function checkBookmarkStatus() {
@@ -3010,7 +3021,7 @@ async function checkBookmarkStatus() {
   if (token) {
     // Logged in: make it clickable
     bookmarkBox.classList.add('clickable');
-    bookmarkText.textContent = 'Bookmark Manga';
+    bookmarkText.textContent = 'BOOKMARK';
 
     try {
       const response = await fetch(`${BOOKMARK_API_URL}/bookmarks/check?mangaId=${encodeURIComponent(mangaId)}`, {
@@ -3019,7 +3030,7 @@ async function checkBookmarkStatus() {
       const data = await response.json();
       if (data.success && data.bookmarked) {
         bookmarkBox.classList.add('bookmarked');
-        bookmarkText.textContent = 'Manga Dibookmark';
+        bookmarkText.textContent = 'BOOKMARKED';
       }
     } catch (error) {
       console.error('[BOOKMARK] Check status error:', error);
@@ -3066,7 +3077,7 @@ async function toggleBookmark() {
       const result = await removeBookmark(mangaId);
       if (result.success) {
         bookmarkBox.classList.remove('bookmarked');
-        bookmarkText.textContent = 'Bookmark Manga';
+        bookmarkText.textContent = 'BOOKMARK';
         if (typeof showToast === 'function') showToast('Bookmark dihapus', 'success');
       } else {
         if (typeof showToast === 'function') showToast(result.error || 'Gagal menghapus bookmark', 'error');
@@ -3077,7 +3088,7 @@ async function toggleBookmark() {
       const result = await addBookmark(mangaId, mangaTitle);
       if (result.success) {
         bookmarkBox.classList.add('bookmarked');
-        bookmarkText.textContent = 'Manga Dibookmark';
+        bookmarkText.textContent = 'BOOKMARKED';
         if (typeof showToast === 'function') showToast('Manga dibookmark!', 'success');
       } else {
         if (typeof showToast === 'function') showToast(result.error || 'Gagal menambah bookmark', 'error');
@@ -3223,7 +3234,7 @@ async function renderBookmarkList(bookmarks) {
               const boxInline = document.getElementById('bookmarkBox');
               const textInline = document.getElementById('bookmarkText');
               if (boxInline) boxInline.classList.remove('bookmarked');
-              if (textInline) textInline.textContent = 'Bookmark Manga';
+              if (textInline) textInline.textContent = 'BOOKMARK';
             }
           }, 300);
         }
