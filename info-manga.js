@@ -743,8 +743,8 @@ async function fetchMangaDexRating() {
 
     // Fetch fresh from MangaDex API
     try {
-        dLog(`⭐ [RATING] Fetching from MangaDex API: ${mangadexId}`);
-        const response = await fetch(`https://api.mangadex.org/statistics/manga/${mangadexId}`);
+        dLog(`⭐ [RATING] Fetching from MangaDex API via proxy: ${mangadexId}`);
+        const response = await fetch(`https://manga-auth-worker.nuranantoadhien.workers.dev/mangadex-rating/${mangadexId}`);
         
         if (!response.ok) {
             dWarn(`⚠️ [RATING] MangaDex API error: ${response.status}`);
