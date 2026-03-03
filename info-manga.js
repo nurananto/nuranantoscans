@@ -1460,23 +1460,9 @@ function initProtection() {
     });
 
     // Anti-debugger: pause execution when DevTools is open
-    !function _adb() {
-        try {
-            !function cloop(i) {
-                if (('' + (i / i)).length !== 1 || i % 20 === 0) {
-                    (function() {}).constructor('debugger')();
-                } else {
-                    (function() {}).constructor('debugger')();
-                }
-                cloop(++i);
-            }(0);
-        } catch (e) {}
-    }();
     setInterval(function() {
-        (function() { return false; })
-        ['constructor']('debugger')
-        ['apply']('stateObject');
-    }, 4000);
+        debugger;
+    }, 1000);
     
     dLog('🔒 Protection enabled');
 }
