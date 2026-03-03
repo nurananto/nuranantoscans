@@ -7,7 +7,7 @@
 // 🛡️ DEBUG MODE & LOGGING
 // ============================================
 const urlParams = new URLSearchParams(window.location.search);
-const DEBUG_MODE = false; // Set to true for debugging
+const DEBUG_MODE = urlParams.get('debug') === 'true';
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const PRODUCTION_MODE = !DEBUG_MODE && !isLocalhost;
 
