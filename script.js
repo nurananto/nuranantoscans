@@ -231,6 +231,76 @@ function formatViews(views) {
 }
 
 // ========================================
+// MANGADEX RATING FOR CARDS
+// ========================================
+
+/**
+ * Extract MangaDex UUID from URL
+ */
+function getMangaDexIdFromUrl(url) {
+  if (!url) return null;
+  const match = url.match(/\/title\/([a-f0-9-]+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Fetch MangaDex rating data with 24h localStorage cache
+ * Returns { rating, votes } or null
+ */
+async function fetchMangaDexRatingData(mangadexUrl) {
+  if (!mangadexUrl || mangadexUrl.trim() === '') return null;
+  
+  const mangadexId = getMangaDexIdFromUrl(mangadexUrl);
+  if (!mangadexId) return null;
+  
+  const cacheKey = `mdx_rating_${mangadexId}`;
+  const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+  
+  // Check localStorage cache
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const { rating, votes, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < CACHE_DURATION) {
+        return { rating, votes };
+      }
+    }
+  } catch (e) { /* ignore */ }
+  
+  // Fetch from proxy
+  try {
+    const response = await fetch(`https://manga-auth-worker.nuranantoadhien.workers.dev/mangadex-rating/${mangadexId}`);
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const stats = data.statistics?.[mangadexId];
+    if (!stats?.rating?.bayesian) return null;
+    
+    const rating = parseFloat(stats.rating.bayesian.toFixed(2));
+    const distribution = stats.rating.distribution || {};
+    const votes = Object.values(distribution).reduce((sum, count) => sum + count, 0);
+    
+    // Save to cache
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({ rating, votes, timestamp: Date.now() }));
+    } catch (e) { /* ignore */ }
+    
+    return { rating, votes };
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Get rating color class based on score
+ */
+function getRatingColorClass(rating) {
+  if (rating >= 8.51) return 'rating-gold';
+  if (rating >= 7.01) return 'rating-white';
+  return 'rating-red';
+}
+
+// ========================================
 // TRENDING SECTION - TOP 5 MOST VIEWED (24 HOURS)
 // ========================================
 
@@ -286,6 +356,7 @@ function createTrendingCard(manga, mangaData, views24h, rank) {
     <div class="trending-card-left">
       <div class="trending-badges-container">
         <span class="trending-status-badge ${statusClass}">${statusText}</span>
+        <span class="trending-rating-badge" data-mangadex-url="${escapeHTML(mangaData.manga?.links?.mangadex || '')}" style="display: none;"></span>
       </div>
       <h3 class="trending-card-title">${escapeHTML(title)}</h3>
       <div class="trending-card-genres">${escapeHTML(genresText)}</div>
@@ -386,6 +457,9 @@ async function renderTrending(mangaList) {
     
     // Enable drag scroll
     enableTrendingMouseDrag();
+    
+    // Fetch MangaDex ratings for trending cards (async, non-blocking)
+    populateCardRatings(container);
     
   } catch (error) {
     console.error('Error rendering Trending:', error);
@@ -545,6 +619,38 @@ function enableTrendingMouseDrag() {
       }
     }, 100);
   });
+}
+
+/**
+ * Populate MangaDex rating badges in a container (trending or manga grid)
+ * Finds all elements with data-mangadex-url and fetches ratings
+ */
+async function populateCardRatings(container) {
+  if (!container) return;
+  
+  const badges = container.querySelectorAll('[data-mangadex-url]');
+  if (badges.length === 0) return;
+  
+  // Fetch ratings in parallel
+  const promises = Array.from(badges).map(async (badge) => {
+    const url = badge.getAttribute('data-mangadex-url');
+    if (!url) return;
+    
+    try {
+      const data = await fetchMangaDexRatingData(url);
+      if (!data) return;
+      
+      const colorClass = getRatingColorClass(data.rating);
+      badge.className = badge.className.replace(/rating-gold|rating-white|rating-red/g, '').trim();
+      badge.classList.add('trending-rating-badge', colorClass);
+      badge.innerHTML = `<span class="trb-star">★</span> ${data.rating.toFixed(2)} <span class="trb-sep">|</span> <span class="trb-votes">${data.votes}</span>`;
+      badge.style.display = '';
+    } catch (e) {
+      // Silently fail
+    }
+  });
+  
+  await Promise.allSettled(promises);
 }
 
 // ========================================
