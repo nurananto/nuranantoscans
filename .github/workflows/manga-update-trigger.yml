@@ -338,9 +338,10 @@ jobs:
             git push || true
             echo "✅ Covers updated"
             
-            # Wait for GitHub to process the commit before triggering sync
-            echo "⏳ Waiting 5 seconds for GitHub to process commit..."
-            sleep 5
+            # ✅ FIX: Wait longer for GitHub API to reflect the new commit
+            # sync-cover.yml now uses GitHub API (not raw CDN), but still needs processing time
+            echo "⏳ Waiting 15 seconds for GitHub to process commit..."
+            sleep 15
           fi
       
       - name: 📤 Trigger Cover Sync to Updated Manga Repos ONLY
