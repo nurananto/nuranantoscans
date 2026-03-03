@@ -1801,7 +1801,7 @@ function setupEnhancedEventListeners() {
         }, 250);
     });
 
-    // Hide progress bar when comment section is visible (scrolled past manga pages)
+}
 
 // ============================================
 // SCROLL TO TOP BUTTON
