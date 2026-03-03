@@ -33,11 +33,11 @@ Website baca manga terjemahan bahasa Indonesia.
 - [x] Custom domain (`nuranantoscans.my.id`)
 
 ### Backend (Cloudflare Workers)
-- [x] **manga-auth-worker** — registrasi, login, JWT auth, email verification, reset password
-- [x] **profile-worker** — upload avatar, ganti display name (rate limit 1x/30 hari)
-- [x] **r2-proxy** — serve gambar manga dari R2 + headless browser detection
-- [x] **manga-view-counter** — tracking views per manga & per chapter
-- [x] **decrypt-manifest** — decrypt manifest.json untuk reader (server-side)
+- [x] Authentication API — registrasi, login, JWT auth, email verification, reset password
+- [x] Profile API — upload avatar, ganti display name (rate limit 1x/30 hari)
+- [x] Image Proxy — serve gambar manga dari R2 + headless browser detection
+- [x] View Counter — tracking views per manga & per chapter
+- [x] Manifest Decryptor — decrypt manifest.json untuk reader (server-side)
 
 ### Database
 - [x] Cloudflare D1 — user database (auth, profile)
