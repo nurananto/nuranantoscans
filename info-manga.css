@@ -1,4 +1,4 @@
-/* Reset & Base Styles */
+﻿/* Reset & Base Styles */
 * {
     margin: 0;
     padding: 0;
@@ -15,7 +15,7 @@ body {
 }
 
 /* ============================================
-   HEADER - ✅ PERFECTLY ALIGNED dengan index.html
+   HEADER - âœ… PERFECTLY ALIGNED dengan index.html
    ============================================ */
 header {
     max-width: 1400px;
@@ -541,707 +541,6 @@ header {
     overflow: hidden;
 }
 
-/* Comment Container */
-.comment-container {
-    margin: 0 auto 30px;
-    max-width: 1400px;
-    background-color: #0a0a0a;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: clamp(20px, 3vw, 30px);
-}
-
-.comment-header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: clamp(16px, 2.5vw, 20px);
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.comment-heading {
-    font-size: clamp(18px, 2.5vw, 24px);
-    font-weight: 700;
-    color: #ffffff;
-    margin: 0;
-}
-
-.btn-login-comment {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(24, 119, 242, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: #ffffff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-}
-
-.btn-login-comment:hover {
-    background: rgba(24, 119, 242, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-2px);
-}
-
-.login-icon {
-    width: 20px;
-    height: 20px;
-}
-
-/* Comment Input Section */
-.comment-input-section {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 24px;
-}
-
-.comment-input-wrapper {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-}
-
-.comment-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 20%;
-    object-fit: cover;
-    flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(24, 119, 242, 0.3);
-}
-
-.comment-input-content {
-    flex: 1;
-}
-
-.comment-textarea {
-    width: 100%;
-    min-height: 100px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    padding: 12px;
-    color: #ffffff;
-    font-size: 14px;
-    font-family: inherit;
-    resize: vertical;
-    margin-bottom: 12px;
-}
-
-.comment-textarea:focus {
-    outline: none;
-    border-color: rgba(24, 119, 242, 0.5);
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.comment-input-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.comment-char-count,
-.edit-char-count {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.btn-submit-comment {
-    background: linear-gradient(135deg, #1877f2, #166fe5);
-    color: #ffffff;
-    border: none;
-    padding: 6px 13px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    line-height: 1;
-    min-height: 28px;
-    box-sizing: border-box;
-}
-
-.btn-submit-comment:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
-}
-
-/* Comments List */
-.comments-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-/* Reply Box (Inline) */
-.comment-reply-box {
-    background: rgba(24, 119, 242, 0.05);
-    border: 1px solid rgba(24, 119, 242, 0.3);
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 12px;
-    margin-bottom: 16px;
-    margin-left: 40px;
-}
-
-/* Edit Wrapper (Inline) */
-.comment-edit-wrapper {
-    background: rgba(255, 165, 0, 0.05);
-    border: 1px solid rgba(255, 165, 0, 0.3);
-    border-radius: 8px;
-    padding: 12px;
-}
-
-.comment-edit-wrapper .comment-textarea {
-    margin-bottom: 8px;
-}
-
-.comment-edit-wrapper .btn-save-edit,
-.comment-edit-wrapper .btn-cancel-edit {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 4px;
-    padding: 5px 12px;
-    font-size: 12px;
-    border-radius: 4px;
-    min-height: 28px;
-    line-height: 1;
-    width: auto;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    white-space: nowrap;
-}
-
-.comment-edit-wrapper .comment-action-icon {
-    width: 14px;
-    height: 14px;
-}
-
-/* Delete Confirmation (Inline) */
-.comment-delete-confirm {
-    background: rgba(220, 38, 38, 0.05);
-    border: 1px solid rgba(220, 38, 38, 0.3);
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 12px;
-}
-
-.delete-confirm-content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(220, 38, 38, 0.2);
-}
-
-.delete-warning-icon {
-    width: 24px;
-    height: 24px;
-    color: #dc2626;
-    flex-shrink: 0;
-}
-
-.delete-confirm-text {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.delete-confirm-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-.btn-confirm-delete,
-.btn-cancel-delete {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 4px;
-    padding: 5px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: auto;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    min-height: 28px;
-    border: 1px solid;
-}
-
-.btn-confirm-delete {
-    background: rgba(220, 38, 38, 0.1);
-    border-color: rgba(220, 38, 38, 0.4);
-    color: #ef4444;
-}
-
-.btn-confirm-delete:hover {
-    background: rgba(220, 38, 38, 0.2);
-    border-color: rgba(220, 38, 38, 0.6);
-    color: #dc2626;
-}
-
-.btn-cancel-delete {
-    background: transparent;
-    border-color: rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.btn-cancel-delete:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.btn-confirm-delete .comment-action-icon,
-.btn-cancel-delete .comment-action-icon {
-    width: 14px;
-    height: 14px;
-}
-
-.reply-box-header {
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(24, 119, 242, 0.2);
-}
-
-.reply-to-label {
-    color: #1877f2;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.reply-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.comment-item {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Threaded replies - 1 level indent */
-.comment-reply {
-    margin-left: 40px;
-    margin-top: 8px;
-    border-left: 2px solid rgba(24, 119, 242, 0.3);
-}
-
-.comment-top-box {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px 8px 0 0;
-}
-
-.comment-bottom-box {
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.comment-body {
-    flex: 1;
-    min-width: 0;
-}
-
-.comment-header {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex: 1;
-}
-
-.comment-user {
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 13px;
-}
-
-.comment-date {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
-    margin-left: auto;
-}
-
-.comment-content {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 14px;
-    line-height: 1.6;
-    word-wrap: break-word;
-}
-
-.comment-actions {
-    display: flex !important;
-    gap: 12px;
-    margin-top: 0;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-.btn-edit-comment,
-.btn-reply-comment,
-.btn-delete-comment {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 4px;
-    background: transparent;
-    border: none;
-    color: rgba(255, 255, 255, 0.6);
-    padding: 6px 13px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1;
-    cursor: pointer;
-    white-space: nowrap;
-    min-height: 28px;
-    box-sizing: border-box;
-}
-
-.comment-action-icon {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-}
-
-.btn-save-edit,
-.btn-cancel-edit,
-.btn-send-reply,
-.btn-cancel-reply {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 4px;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.8);
-    padding: 5px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: auto;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    min-height: 28px;
-}
-
-.btn-save-edit .comment-action-icon,
-.btn-cancel-edit .comment-action-icon,
-.btn-send-reply .comment-action-icon,
-.btn-cancel-reply .comment-action-icon {
-    width: 14px;
-    height: 14px;
-}
-
-.btn-save-edit,
-.btn-send-reply {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.btn-save-edit:hover,
-.btn-send-reply:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.4);
-    color: #ffffff;
-}
-
-.btn-cancel-edit,
-.btn-cancel-reply {
-    background: transparent;
-    border-color: rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.btn-cancel-edit:hover,
-.btn-cancel-reply:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* Mobile & Tablet - Smaller Button Sizes */
-@media (max-width: 1024px) {
-    .btn-edit-comment,
-    .btn-reply-comment,
-    .btn-delete-comment {
-        padding: 4px 11px;
-        font-size: 11px;
-        gap: 3px;
-        min-height: 24px;
-    }
-    
-    .comment-action-icon {
-        width: 12px;
-        height: 12px;
-    }
-    
-    .comment-actions {
-        gap: 10px;
-    }
-    
-    .btn-save-edit,
-    .btn-cancel-edit,
-    .btn-send-reply,
-    .btn-cancel-reply {
-        padding: 3px 10px;
-        font-size: 11px;
-        gap: 3px;
-        min-height: 24px;
-    }
-    
-    .btn-save-edit .comment-action-icon,
-    .btn-cancel-edit .comment-action-icon,
-    .btn-send-reply .comment-action-icon,
-    .btn-cancel-reply .comment-action-icon {
-        width: 12px;
-        height: 12px;
-    }
-    
-    .btn-submit-comment {
-        padding: 4px 11px;
-        font-size: 11px;
-        min-height: 24px;
-    }
-    
-    .comment-reply-box {
-        padding: 10px;
-        margin-left: 30px;
-        margin-top: 10px;
-        margin-bottom: 14px;
-    }
-    
-    .comment-edit-wrapper {
-        padding: 10px;
-    }
-    
-    .comment-edit-wrapper .btn-save-edit,
-    .comment-edit-wrapper .btn-cancel-edit {
-        padding: 4px 11px;
-        font-size: 11px;
-        min-height: 24px;
-        gap: 3px;
-        width: auto;
-        flex-shrink: 0;
-        box-sizing: border-box;
-        white-space: nowrap;
-    }
-    
-    .comment-edit-wrapper .comment-action-icon {
-        width: 12px;
-        height: 12px;
-    }
-    
-    .comment-delete-confirm {
-        padding: 10px;
-    }
-    
-    .delete-confirm-content {
-        gap: 8px;
-        margin-bottom: 10px;
-        padding-bottom: 8px;
-    }
-    
-    .delete-warning-icon {
-        width: 20px;
-        height: 20px;
-    }
-    
-    .delete-confirm-text {
-        font-size: 12px;
-    }
-    
-    .btn-confirm-delete,
-    .btn-cancel-delete {
-        padding: 4px 11px;
-        font-size: 11px;
-        min-height: 24px;
-        gap: 3px;
-    }
-    
-    .btn-confirm-delete .comment-action-icon,
-    .btn-cancel-delete .comment-action-icon {
-        width: 12px;
-        height: 12px;
-    }
-    
-    .reply-box-header {
-        margin-bottom: 10px;
-        padding-bottom: 6px;
-    }
-    
-    .reply-to-label {
-        font-size: 12px;
-    }
-    
-    .comment-reply {
-        margin-left: 30px;
-    }
-}
-
-@media (max-width: 768px) {
-    .btn-edit-comment,
-    .btn-reply-comment,
-    .btn-delete-comment {
-        padding: 3px 9px;
-        font-size: 10px;
-        gap: 2px;
-        min-height: 22px;
-    }
-    
-    .comment-action-icon {
-        width: 11px;
-        height: 11px;
-    }
-    
-    .comment-actions {
-        gap: 8px;
-    }
-    
-    .comment-top-box {
-        padding: 8px 10px;
-    }
-    
-    .comment-bottom-box {
-        padding: 10px;
-        gap: 6px;
-    }
-    
-    .btn-save-edit,
-    .btn-cancel-edit,
-    .btn-send-reply,
-    .btn-cancel-reply {
-        padding: 2px 8px;
-        font-size: 10px;
-        gap: 2px;
-        min-height: 22px;
-    }
-    
-    .btn-save-edit .comment-action-icon,
-    .btn-cancel-edit .comment-action-icon,
-    .btn-send-reply .comment-action-icon,
-    .btn-cancel-reply .comment-action-icon {
-        width: 11px;
-        height: 11px;
-    }
-    
-    .btn-submit-comment {
-        padding: 3px 9px;
-        font-size: 10px;
-        min-height: 22px;
-    }
-    
-    .comment-reply-box {
-        padding: 8px;
-        margin-left: 20px;
-        margin-top: 8px;
-        margin-bottom: 12px;
-    }
-    
-    .comment-edit-wrapper {
-        padding: 8px;
-    }
-    
-    .comment-edit-wrapper .btn-save-edit,
-    .comment-edit-wrapper .btn-cancel-edit {
-        padding: 2px 8px;
-        font-size: 10px;
-        min-height: 22px;
-        gap: 2px;
-        width: auto;
-        flex-shrink: 0;
-        box-sizing: border-box;
-        white-space: nowrap;
-    }
-    
-    .comment-edit-wrapper .comment-action-icon {
-        width: 11px;
-        height: 11px;
-    }
-    
-    .comment-delete-confirm {
-        padding: 8px;
-    }
-    
-    .delete-confirm-content {
-        gap: 6px;
-        margin-bottom: 8px;
-        padding-bottom: 6px;
-    }
-    
-    .delete-warning-icon {
-        width: 18px;
-        height: 18px;
-    }
-    
-    .delete-confirm-text {
-        font-size: 11px;
-    }
-    
-    .btn-confirm-delete,
-    .btn-cancel-delete {
-        padding: 2px 8px;
-        font-size: 10px;
-        min-height: 22px;
-        gap: 2px;
-    }
-    
-    .btn-confirm-delete .comment-action-icon,
-    .btn-cancel-delete .comment-action-icon {
-        width: 11px;
-        height: 11px;
-    }
-    
-    .reply-box-header {
-        margin-bottom: 8px;
-        padding-bottom: 6px;
-    }
-    
-    .reply-to-label {
-        font-size: 11px;
-    }
-    
-    .comment-reply {
-        margin-left: 20px;
-    }
-}
-
-.comment-placeholder {
-    text-align: center;
-    padding: clamp(30px, 5vw, 50px) clamp(20px, 3vw, 30px);
-}
-
-.comment-placeholder p {
-    font-size: clamp(14px, 2vw, 16px);
-    color: rgba(255, 255, 255, 0.6);
-    font-style: italic;
-}
 
 /* Tab Navigation */
 .tab-navigation {
@@ -1468,10 +767,6 @@ header {
         margin-bottom: 20px;
     }
     
-    .comment-container {
-        display: block !important;
-        margin-bottom: 20px;
-    }
     
     .tab-content {
         padding: 16px;
@@ -1728,120 +1023,6 @@ header {
     font-size: clamp(12px, 2vw, 18px);
 }
 
-/* ==================== MANGA RATING BOX (COMPACT LIKE AUTHOR) ==================== */
-.manga-rating-box {
-    display: flex;
-    align-items: center;
-    gap: clamp(10px, 2vw, 12px);
-    background-color: #0a0a0a;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    padding: clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px);
-    margin-bottom: 0;
-}
-
-.rating-value-compact {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: clamp(13px, 1.75vw, 16px);
-    font-weight: 600;
-    color: #e4e6eb;
-}
-
-.rating-value-compact #mangaRatingScore {
-    color: #ffd700;
-    font-weight: 700;
-}
-
-.rating-star-compact {
-    color: #ffd700;
-    font-size: clamp(16px, 2vw, 18px);
-}
-
-.rating-count-compact {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: clamp(12px, 1.5vw, 14px);
-    font-weight: 400;
-}
-
-/* Rating Input Compact */
-.rating-input-compact {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    padding: clamp(12px, 2vw, 16px);
-    margin-bottom: 0;
-}
-
-.rating-instruction-compact {
-    font-size: clamp(12px, 1.5vw, 14px);
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.rating-stars-input-compact {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.star-input-compact {
-    font-size: clamp(20px, 2.5vw, 24px);
-    color: rgba(255, 255, 255, 0.3);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    user-select: none;
-}
-
-.star-input-compact:hover,
-.star-input-compact.active {
-    color: #ffd700;
-    transform: scale(1.1);
-}
-
-.btn-submit-rating-compact {
-    width: 100%;
-    background: linear-gradient(135deg, #1877f2, #166fe5);
-    color: #ffffff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: clamp(12px, 1.5vw, 14px);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-submit-rating-compact:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
-}
-
-.btn-submit-rating-compact:disabled {
-    background: #2f3336;
-    color: rgba(255, 255, 255, 0.3);
-    cursor: not-allowed;
-    transform: none;
-}
-
-.btn-submit-rating-compact.success {
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: #ffffff;
-    cursor: default;
-    animation: successPulse 0.6s ease;
-}
-
-@keyframes successPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-/* Author & Artist Container */
-.author-artist-container {
     display: flex;
     flex-direction: column;
     gap: clamp(8px, 1.5vw, 10px);
@@ -2261,38 +1442,6 @@ header {
     color: #888888;
 }
 
-/* Chapter Stats: Rating, Comment Count, Views */
-.chapter-stats {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 12px;
-}
-
-.chapter-stat-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: #888888;
-    white-space: nowrap;
-}
-
-.chapter-stat-item svg {
-    flex-shrink: 0;
-}
-
-.chapter-rating .rating-value {
-    color: #ffd700;
-    font-weight: 600;
-}
-
-.chapter-comments .comment-value,
-.chapter-views .view-value {
-    color: #888888;
-}
-
-/* Icon dalam button - Responsive & Aligned */
-.btn-icon {
     width: 20px;
     height: 20px;
     object-fit: contain;
@@ -2365,52 +1514,6 @@ header {
 }
 
 .views-badge,
-.rating-badge {
-    height: 46px;
-    border: none;
-    border-radius: 6px;
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-sizing: border-box;
-    min-width: 140px;
-    width: fit-content;
-    vertical-align: middle;
-}
-
-.views-badge {
-    background-color: #dc143c;
-}
-
-.rating-badge {
-    background-color: #1877f2;
-}
-
-.views-number,
-.views-text,
-.rating-number,
-.rating-text {
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1;
-    color: #ffffff;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    vertical-align: middle;
-}
-
-.star-icon {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-    flex-shrink: 0;
-    display: inline-block;
-    vertical-align: middle;
-    margin: 0;
-}
 
 /* ============================================
    FOOTER STYLES
@@ -2515,7 +1618,7 @@ header {
 
 /* ==================== RESPONSIVE ==================== */
 
-/* ✅ TABLET */
+/* âœ… TABLET */
 @media (min-width: 768px) and (max-width: 1023px) {
     .site-logo {
         height: 50px;
@@ -2536,7 +1639,7 @@ header {
     }
 }
 
-/* ✅ MOBILE - ALIGNED dengan index.html */
+/* âœ… MOBILE - ALIGNED dengan index.html */
 @media (max-width: 768px) {
     body {
         padding-bottom: 110px;
@@ -2698,7 +1801,7 @@ header {
     }
 }
 
-/* ✅ SMALL MOBILE - ALIGNED dengan index.html */
+/* âœ… SMALL MOBILE - ALIGNED dengan index.html */
 @media (max-width: 480px) {
     body {
         padding-bottom: 105px;
@@ -2757,7 +1860,7 @@ header {
 
 .skip-link {
   position: absolute;
-  top: -200px; /* ✅ Benar-benar di luar viewport */
+  top: -200px; /* âœ… Benar-benar di luar viewport */
   left: 50%;
   transform: translateX(-50%);
   background: #1877f2;
@@ -2771,16 +1874,16 @@ header {
   box-shadow: 0 4px 20px rgba(24, 119, 242, 0.6);
   white-space: nowrap;
   
-  /* ✅ CRITICAL: Prevent any interaction when hidden */
+  /* âœ… CRITICAL: Prevent any interaction when hidden */
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
   
-  /* ✅ Smooth animation only for keyboard */
+  /* âœ… Smooth animation only for keyboard */
   transition: top 0.3s ease, opacity 0.2s ease;
 }
 
-/* ✅ ONLY show on keyboard focus (Tab key) */
+/* âœ… ONLY show on keyboard focus (Tab key) */
 .skip-link:focus {
   top: 20px; /* Muncul di atas konten */
   pointer-events: auto;
@@ -2790,7 +1893,7 @@ header {
   outline-offset: 3px;
 }
 
-/* ✅ IMPORTANT: Prevent showing on hover */
+/* âœ… IMPORTANT: Prevent showing on hover */
 .skip-link:hover {
   top: -200px; /* Tetap tersembunyi */
   opacity: 0;
@@ -2801,21 +1904,21 @@ header {
    RESPONSIVE: HIDE on MOBILE/TABLET (Touch Devices)
    ============================================ */
 
-/* ✅ Hide completely on mobile (< 768px) */
+/* âœ… Hide completely on mobile (< 768px) */
 @media (max-width: 767px) {
   .skip-link {
     display: none !important; /* Force hide */
   }
 }
 
-/* ✅ Hide on tablet portrait (768px - 1023px) */
+/* âœ… Hide on tablet portrait (768px - 1023px) */
 @media (min-width: 768px) and (max-width: 1023px) and (hover: none) {
   .skip-link {
     display: none !important; /* Force hide on touch tablets */
   }
 }
 
-/* ✅ Show only on desktop with keyboard (> 1024px) */
+/* âœ… Show only on desktop with keyboard (> 1024px) */
 @media (min-width: 1024px) {
   .skip-link:focus {
     top: 30px; /* Desktop position */
@@ -2828,14 +1931,14 @@ header {
    ALTERNATIVE: Show ONLY when keyboard detected
    ============================================ */
 
-/* ✅ Hide by default for touch devices */
+/* âœ… Hide by default for touch devices */
 @media (hover: none) and (pointer: coarse) {
   .skip-link {
     display: none !important;
   }
 }
 
-/* ✅ Show only for devices with hover capability (mouse/trackpad) */
+/* âœ… Show only for devices with hover capability (mouse/trackpad) */
 @media (hover: hover) and (pointer: fine) {
   .skip-link {
     display: block;
@@ -3482,7 +2585,7 @@ nav {
 }
 
 .strength-hints li::before {
-    content: "•";
+    content: "â€¢";
     position: absolute;
     left: 0;
     color: #666;
@@ -3670,7 +2773,7 @@ nav {
   text-align: center;
 }
 
-/* ✅ STATUS BOX (PEMBACA SETIA / DONATUR SETIA) */
+/* âœ… STATUS BOX (PEMBACA SETIA / DONATUR SETIA) */
 .status-box {
   width: 100%;
   padding: 14px 20px;
@@ -3708,7 +2811,7 @@ nav {
   }
 }
 
-/* ✅ COUNTDOWN BOX (for donatur setia) */
+/* âœ… COUNTDOWN BOX (for donatur setia) */
 .countdown-box {
   width: 100%;
   padding: 12px 18px;
@@ -3729,7 +2832,7 @@ nav {
   font-weight: 700;
 }
 
-/* ✅ ACCESS BOX (FREE ACCESS ONLY / COUNTDOWN) */
+/* âœ… ACCESS BOX (FREE ACCESS ONLY / COUNTDOWN) */
 .access-box {
   width: 100%;
   padding: 14px 18px;
@@ -3760,7 +2863,7 @@ nav {
   font-weight: 700;
 }
 
-/* ✅ UPGRADE BUTTON */
+/* âœ… UPGRADE BUTTON */
 .btn-upgrade-profile {
   width: 100%;
   padding: 14px 20px;
@@ -3798,7 +2901,7 @@ nav {
   transform: translateY(0);
 }
 
-/* ✅ LOGOUT BUTTON */
+/* âœ… LOGOUT BUTTON */
 .btn-logout-profile {
   width: 100%;
   padding: 14px 20px;
@@ -3825,7 +2928,7 @@ nav {
   transform: translateY(0);
 }
 
-/* ✅ RESPONSIVE - PROFILE MODAL */
+/* âœ… RESPONSIVE - PROFILE MODAL */
 @media (max-width: 1023px) and (min-width: 768px) {
   .profile-content {
     padding: 36px 28px;
@@ -4353,7 +3456,7 @@ nav {
 }
 
 .panduan-list li::before {
-  content: "•";
+  content: "â€¢";
   position: absolute;
   left: 8px;
   color: #888;
@@ -4495,10 +3598,6 @@ nav {
   margin-bottom: 0;
 }
 
-.rating-bookmark-row .manga-rating-box {
-  flex: 1;
-  margin-bottom: 0;
-}
 
 /* Bookmark Box (next to rating, equal width) */
 .manga-bookmark-box {
@@ -4917,470 +4016,3 @@ nav {
   }
 }
 
-@media (max-width: 415px) {
-  .comment-header-section {
-    flex-wrap: nowrap;
-    gap: 8px;
-  }
-  
-  .comment-heading {
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-  
-  .btn-login-comment {
-    padding: 8px 12px;
-    font-size: 11px;
-    gap: 6px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  
-  .login-icon {
-    width: 16px;
-    height: 16px;
-  }
-}
-
-/* ============================================
-   NOTIFICATION SYSTEM
-   ============================================ */
-.notification-wrapper {
-    position: relative;
-}
-
-.notification-button {
-    position: relative;
-}
-
-.notification-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 10px;
-    height: 10px;
-    background: #dc2626;
-    border-radius: 50%;
-    border: 2px solid #0a0a0a;
-    animation: notificationPulse 2s ease-in-out infinite;
-}
-
-@keyframes notificationPulse {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
-    }
-    50% {
-        box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
-    }
-}
-
-.notification-dropdown {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-    width: 420px;
-    max-width: 90vw;
-    background: #0a0a0a;
-    border: 1px solid #3a3a3a;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-    z-index: 10001;
-    overflow: hidden;
-}
-
-.notification-header {
-    padding: 16px 20px;
-    background: #0a0a0a;
-    border-bottom: 1px solid #3a3a3a;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.notification-header h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.btn-sync-notif {
-    background: transparent;
-    border: none;
-    color: #1877f2;
-    padding: 6px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-sync-notif:hover {
-    background: rgba(24, 119, 242, 0.1);
-    transform: rotate(180deg);
-}
-
-.btn-sync-notif:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Notification Tabs */
-.notification-tabs {
-    display: flex;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.notification-tab {
-    flex: 1;
-    padding: 12px 16px;
-    background: transparent;
-    border: none;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    border-bottom: 2px solid transparent;
-}
-
-.notification-tab:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.notification-tab.active {
-    color: #1877f2;
-    border-bottom-color: #1877f2;
-    background: rgba(24, 119, 242, 0.1);
-}
-
-.notification-tab svg {
-    stroke: currentColor;
-}
-
-.notification-content {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.notification-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.notification-content::-webkit-scrollbar-track {
-    background: #242526;
-}
-
-.notification-content::-webkit-scrollbar-thumb {
-    background: #3a3a3a;
-    border-radius: 3px;
-}
-
-.notification-content::-webkit-scrollbar-thumb:hover {
-    background: #4a4a4a;
-}
-
-.notification-login-required {
-    padding: 40px 20px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-}
-
-.notification-login-required p {
-    font-size: 15px;
-    font-weight: 600;
-    color: #e4e6eb;
-    margin: 0 0 8px 0;
-}
-
-.notification-login-required small {
-    font-size: 13px;
-    color: #b0b3b8;
-    display: block;
-    margin-bottom: 16px;
-}
-
-.notification-login-buttons {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-    max-width: 300px;
-}
-
-.notification-login-btn {
-    flex: 1;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: none;
-}
-
-.notification-login-btn.primary {
-    background: #1877f2;
-    color: #fff;
-}
-
-.notification-login-btn.primary:hover {
-    background: #166fe5;
-    transform: translateY(-2px);
-}
-
-.notification-login-btn.secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.notification-login-btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-}
-
-.notification-item {
-    padding: 16px 20px;
-    border-bottom: 1px solid #3a3a3a;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background: transparent;
-    position: relative;
-}
-
-.notification-item:hover {
-    background: #242526;
-}
-
-.notification-item:last-child {
-    border-bottom: none;
-}
-
-.notification-item.unread {
-    background: rgba(24, 119, 242, 0.08);
-    border-left: 3px solid #1877f2;
-    padding-left: 17px;
-}
-
-.notification-item.unread:hover {
-    background: rgba(24, 119, 242, 0.12);
-}
-
-.notification-item.unread::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
-    width: 8px;
-    height: 8px;
-    background: #1877f2;
-    border-radius: 50%;
-    box-shadow: 0 0 8px rgba(24, 119, 242, 0.6);
-}
-
-.notification-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.notification-item-manga {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1877f2;
-    margin: 0;
-}
-
-.notification-item-time {
-    font-size: 12px;
-    color: #b0b3b8;
-    flex-shrink: 0;
-}
-
-.notification-item-text {
-    font-size: 13px;
-    color: #e4e6eb;
-    line-height: 1.5;
-    margin: 0;
-}
-
-.notification-item-mention {
-    color: #1877f2;
-    font-weight: 600;
-}
-
-/* Update Item Styling */
-.update-item {
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background 0.2s ease;
-}
-
-.update-item:last-child {
-    border-bottom: none;
-}
-
-.update-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.update-item-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-}
-
-.update-item-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-}
-
-.update-item-icon.success {
-    stroke: #10b981;
-}
-
-.update-item-icon.info {
-    stroke: #3b82f6;
-}
-
-.update-item-icon.warning {
-    stroke: #f59e0b;
-}
-
-.update-item-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-}
-
-.update-item-description {
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.7);
-    line-height: 1.5;
-    padding-left: 28px;
-}
-
-.update-item-time {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 4px;
-    padding-left: 28px;
-}
-
-.notification-empty {
-    padding: 40px 20px;
-    text-align: center;
-    color: #b0b3b8;
-}
-
-.notification-empty svg {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 12px;
-    opacity: 0.5;
-}
-
-.notification-empty p {
-    font-size: 14px;
-    margin: 0;
-}
-
-@media (max-width: 1023px) and (min-width: 768px) {
-    .notification-dropdown {
-        width: 380px;
-    }
-}
-
-@media (max-width: 767px) {
-    .notification-dropdown {
-        width: calc(100vw - 40px);
-        right: -12px;
-        max-height: 70vh;
-    }
-    
-    .notification-header {
-        padding: 14px 16px;
-    }
-    
-    .notification-header h3 {
-        font-size: 15px;
-    }
-    
-    .notification-content {
-        max-height: 350px;
-    }
-}
-
-@media (max-width: 480px) {
-    .notification-dropdown {
-        width: calc(100vw - 24px);
-        right: -8px;
-        max-height: 65vh;
-    }
-    
-    .notification-header {
-        padding: 12px 14px;
-    }
-    
-    .notification-header h3 {
-        font-size: 14px;
-    }
-    
-    .btn-sync-notif {
-        width: 32px;
-        height: 32px;
-    }
-    
-    .notification-content {
-        max-height: 300px;
-    }
-    
-    .notification-item {
-        padding: 12px 14px;
-    }
-    
-    .notification-item-manga {
-        font-size: 13px;
-    }
-    
-    .notification-item-text {
-        font-size: 12px;
-    }
-    
-    .notification-tab {
-        padding: 10px 12px;
-        font-size: 13px;
-    }
-    
-    .update-item {
-        padding: 10px 14px;
-    }
-    
-    .update-item-title {
-        font-size: 13px;
-    }
-    
-    .update-item-description {
-        font-size: 12px;
-    }
-}

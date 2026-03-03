@@ -1,4 +1,4 @@
-.status-badge-updated {
+﻿.status-badge-updated {
   background: linear-gradient(
     135deg,
     rgba(24, 119, 242, 0.85) 0%,
@@ -57,15 +57,15 @@
 body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
-    /* ✅ FIX: Explicit font-size untuk prevent glitch saat hard refresh */
+    /* âœ… FIX: Explicit font-size untuk prevent glitch saat hard refresh */
     font-size: 16px;
     font-family:
         "Rounded Mplus 1c", "M PLUS Rounded 1c", "Varela Round", "Nunito",
         "Comfortaa", "Quicksand", "Segoe UI", sans-serif;
     padding: 1.25rem;
     padding-bottom: 100px;
-    opacity: 1;  /* ← TAMBAH INI */
-    transition: opacity 0.3s ease;  /* ← TAMBAH INI */
+    opacity: 1;  /* â† TAMBAH INI */
+    transition: opacity 0.3s ease;  /* â† TAMBAH INI */
 }
 
 header {
@@ -199,7 +199,7 @@ header {
     display: grid;
     gap: 1.25rem;
     justify-content: center;
-    padding: 0 0; /* ✅ No side padding on desktop */
+    padding: 0 0; /* âœ… No side padding on desktop */
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -246,39 +246,39 @@ header {
     transition:
         transform 0.3s ease,
         box-shadow 0.3s ease,
-        z-index 0s 0.3s; /* ← TAMBAHKAN: delay z-index reset */
+        z-index 0s 0.3s; /* â† TAMBAHKAN: delay z-index reset */
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    z-index: 1; /* ← TAMBAHKAN: default z-index */
-    height: 100%; /* ✅ FIX: Fill grid cell completely */
+    z-index: 1; /* â† TAMBAHKAN: default z-index */
+    height: 100%; /* âœ… FIX: Fill grid cell completely */
 }
 
 /* Manga card cover wrapper */
 .manga-cover-wrapper {
     position: relative;
     width: 100%;
-    max-width: 100%; /* ✅ FIX: Prevent overflow */
-    overflow: hidden; /* ✅ FIX: Clip image yang overflow */
+    max-width: 100%; /* âœ… FIX: Prevent overflow */
+    overflow: hidden; /* âœ… FIX: Clip image yang overflow */
     order: 1;
-    min-width: 0; /* ✅ FIX: Prevent flex shrink issues */
+    min-width: 0; /* âœ… FIX: Prevent flex shrink issues */
 }
 
 /* Manga card image */
 .manga-card img,
 .manga-cover-wrapper img {
     width: 100%;
-    max-width: 100%; /* ✅ FIX: Prevent overflow */
-    height: auto; /* ✅ FIX: Maintain aspect ratio fallback */
+    max-width: 100%; /* âœ… FIX: Prevent overflow */
+    height: auto; /* âœ… FIX: Maintain aspect ratio fallback */
     aspect-ratio: 3/4.2;
     object-fit: cover;
-    object-position: center; /* ✅ FIX: Center image untuk better crop */
+    object-position: center; /* âœ… FIX: Center image untuk better crop */
     border-radius: 0.6rem;
     display: block;
     background-color: var(--bg-card);
     transition: filter 0.3s ease;
     position: relative;
-    /* ✅ FIX: Prevent image scaling issues */
+    /* âœ… FIX: Prevent image scaling issues */
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
     image-rendering: auto;
@@ -291,7 +291,7 @@ header {
     right: clamp(6px, 1.5vw, 10px);
     padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
     border-radius: clamp(4px, 1vw, 6px);
-    /* ✅ FIX: Fallback font-size untuk prevent glitch saat hard refresh */
+    /* âœ… FIX: Fallback font-size untuk prevent glitch saat hard refresh */
     font-size: 11px; /* Fallback untuk browser yang belum support clamp() */
     font-size: clamp(10px, 2vw, 12px); /* Preferred dengan clamp() */
     font-weight: 700;
@@ -308,7 +308,7 @@ header {
     display: flex;
     align-items: center;
     gap: clamp(4px, 1vw, 6px);
-    /* ✅ FIX: Prevent font-size glitch dengan max-width */
+    /* âœ… FIX: Prevent font-size glitch dengan max-width */
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -337,18 +337,18 @@ header {
 
 .type-badge-text {
     line-height: 1;
-    /* ✅ FIX: Prevent text glitch dengan explicit font-size */
+    /* âœ… FIX: Prevent text glitch dengan explicit font-size */
     font-size: inherit;
 }
 
 .manga-card:hover {
     transform: scale(1.03);
     box-shadow: none;
-    z-index: 10; /* ← TAMBAHKAN */
+    z-index: 10; /* â† TAMBAHKAN */
     transition:
         transform 0.3s ease,
         box-shadow 0.3s ease,
-        z-index 0s; /* ← z-index langsung naik tanpa delay */
+        z-index 0s; /* â† z-index langsung naik tanpa delay */
 }
 
 .manga-title {
@@ -365,9 +365,9 @@ header {
     word-wrap: break-word;
     overflow-wrap: break-word;
     padding-top: 0.6rem;
-    /* ✅ FIX: Max height untuk konsistensi (2 baris + padding) */
+    /* âœ… FIX: Max height untuk konsistensi (2 baris + padding) */
     max-height: calc(1em * 1.65 * 2 + 1.8rem);
-    flex-shrink: 0; /* ✅ FIX: Prevent shrinking */
+    flex-shrink: 0; /* âœ… FIX: Prevent shrinking */
 }
 
 .manga-badges-container {
@@ -378,8 +378,8 @@ header {
     background: transparent;
     border-radius: 0;
     gap: 8px;
-    height: 50px; /* ✅ FIX: Fixed height instead of min-height */
-    flex-shrink: 0; /* ✅ FIX: Prevent shrinking */
+    height: 50px; /* âœ… FIX: Fixed height instead of min-height */
+    flex-shrink: 0; /* âœ… FIX: Prevent shrinking */
     order: 2;
 }
 
@@ -462,7 +462,7 @@ header {
     gap: 2.5px;
     border-radius: 0.4rem;
   }
-  /* ✅ FIX: Samakan type-badge dengan status-badge */
+  /* âœ… FIX: Samakan type-badge dengan status-badge */
   .type-badge {
     padding: 2.5px 5px 2.5px 3.5px;
     font-size: 8.5px;
@@ -474,11 +474,11 @@ header {
     height: 10px;
   }
   .type-badge-text {
-    font-size: 8.5px; /* ✅ FIX: Match dengan status-badge (8.5px bukan 0.55rem) */
+    font-size: 8.5px; /* âœ… FIX: Match dengan status-badge (8.5px bukan 0.55rem) */
   }
 }
 
-/* ✅ NEW: Small Tablet (600-767px) - Transisi dari 2 ke 3 kolom */
+/* âœ… NEW: Small Tablet (600-767px) - Transisi dari 2 ke 3 kolom */
 @media (min-width: 601px) and (max-width: 767px) {
   .status-badge {
     padding: 2px 4.5px 2px 3.5px;
@@ -586,7 +586,7 @@ header {
   }
 }
 
-/* ✅ NEW: Desktop XL (≥1400px) - 5 kolom, badge harus lebih kecil */
+/* âœ… NEW: Desktop XL (â‰¥1400px) - 5 kolom, badge harus lebih kecil */
 @media (min-width: 1400px) {
   .status-badge {
     padding: 1.5px 3px 1.5px 2px;
@@ -665,7 +665,7 @@ header {
     }
 }
 
-/* Mobile - Font lebih kecil - ✅ FIXED: Extra padding untuk descender */
+/* Mobile - Font lebih kecil - âœ… FIXED: Extra padding untuk descender */
 @media (max-width: 767px) {
     .manga-title {
         font-size: 0.8rem;
@@ -676,7 +676,7 @@ header {
     }
 }
 
-/* Small Mobile - Font paling kecil - ✅ FIXED: Extra padding untuk descender */
+/* Small Mobile - Font paling kecil - âœ… FIXED: Extra padding untuk descender */
 @media (max-width: 480px) {
     .manga-title {
         font-size: 0.75rem;
@@ -881,7 +881,7 @@ header {
 
 .skip-link {
     position: absolute;
-    top: -200px; /* ← UBAH dari -40px */
+    top: -200px; /* â† UBAH dari -40px */
     left: 50%;
     transform: translateX(-50%);
     background: #1877f2;
@@ -890,16 +890,16 @@ header {
     text-decoration: none;
     z-index: 10000;
     border-radius: 8px;
-    pointer-events: none; /* ← TAMBAHKAN */
-    opacity: 0; /* ← TAMBAHKAN */
-    visibility: hidden; /* ← TAMBAHKAN */
+    pointer-events: none; /* â† TAMBAHKAN */
+    opacity: 0; /* â† TAMBAHKAN */
+    visibility: hidden; /* â† TAMBAHKAN */
 }
 
 .skip-link:focus {
     top: 20px;
-    pointer-events: auto; /* ← TAMBAHKAN */
-    opacity: 1; /* ← TAMBAHKAN */
-    visibility: visible; /* ← TAMBAHKAN */
+    pointer-events: auto; /* â† TAMBAHKAN */
+    opacity: 1; /* â† TAMBAHKAN */
+    visibility: visible; /* â† TAMBAHKAN */
 }
 
 /* Logo link focus state */
@@ -1271,404 +1271,6 @@ input:focus-visible {
     outline-offset: 2px;
 }
 
-/* ============================================
-   NOTIFICATION BUTTON & DROPDOWN
-   ============================================ */
-.notification-wrapper {
-    position: relative;
-}
-
-.notification-button {
-    position: relative;
-}
-
-.notification-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 10px;
-    height: 10px;
-    background: #dc2626;
-    border-radius: 50%;
-    border: 2px solid #0a0a0a;
-    animation: notificationPulse 2s ease-in-out infinite;
-}
-
-@keyframes notificationPulse {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
-    }
-    50% {
-        box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
-    }
-}
-
-.notification-dropdown {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-    width: 420px;
-    max-width: 90vw;
-    background: #0a0a0a;
-    border: 1px solid #3a3a3a;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-    z-index: 10001;
-    overflow: hidden;
-}
-
-.notification-header {
-    padding: 16px 20px;
-    background: #0a0a0a;
-    border-bottom: 1px solid #3a3a3a;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.notification-header h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Sync button in notification header */
-.btn-sync-notif {
-    background: transparent;
-    border: none;
-    color: #1877f2;
-    padding: 6px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-sync-notif:hover {
-    background: rgba(24, 119, 242, 0.1);
-    transform: rotate(180deg);
-}
-
-.btn-sync-notif:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.notification-content {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-/* Limit "Komentar Baru" section to 3 items with scroll */
-.notification-content > div:has(.notification-item-manga) {
-    max-height: none;
-}
-
-.notification-item:nth-of-type(n+4) {
-    max-height: 80px;
-}
-
-/* Container untuk batch notifikasi yang banyak */
-.notification-content:has(.notification-item:nth-of-type(4)) {
-    max-height: 320px;
-}
-
-.notification-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.notification-content::-webkit-scrollbar-track {
-    background: #242526;
-}
-
-.notification-content::-webkit-scrollbar-thumb {
-    background: #3a3a3a;
-    border-radius: 3px;
-}
-
-.notification-content::-webkit-scrollbar-thumb:hover {
-    background: #4a4a4a;
-}
-
-/* Login Required State */
-.notification-login-required {
-    padding: 40px 20px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-}
-
-.notification-login-required p {
-    font-size: 15px;
-    font-weight: 600;
-    color: #e4e6eb;
-    margin: 0 0 8px 0;
-}
-
-.notification-login-required small {
-    font-size: 13px;
-    color: #b0b3b8;
-    display: block;
-    margin-bottom: 16px;
-}
-
-.notification-login-buttons {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-    max-width: 300px;
-}
-
-.notification-login-btn {
-    flex: 1;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: none;
-}
-
-.notification-login-btn.primary {
-    background: #1877f2;
-    color: #fff;
-}
-
-.notification-login-btn.primary:hover {
-    background: #166fe5;
-    transform: translateY(-2px);
-}
-
-.notification-login-btn.secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.notification-login-btn.secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-}
-
-/* Notification Item */
-.notification-item {
-    padding: 16px 20px;
-    border-bottom: 1px solid #3a3a3a;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 8px;
-    background: transparent;
-    position: relative;
-}
-
-.notification-item-content {
-    flex: 1;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.notification-delete-btn {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #b0b3b8;
-    transition: all 0.2s ease;
-    margin-top: 4px;
-}
-
-.notification-delete-btn:hover {
-    background: rgba(220, 38, 38, 0.1);
-    color: #dc2626;
-}
-
-.notification-delete-btn svg {
-    width: 16px;
-    height: 16px;
-}
-
-.notification-item:hover {
-    background: #242526;
-}
-
-.notification-item:last-child {
-    border-bottom: none;
-}
-
-/* Unread notification - more visible */
-.notification-item.unread {
-    background: rgba(24, 119, 242, 0.08);
-    border-left: 3px solid #1877f2;
-    padding-left: 17px; /* 20px - 3px border */
-}
-
-.notification-item.unread:hover {
-    background: rgba(24, 119, 242, 0.12);
-}
-
-/* Add unread indicator dot */
-.notification-item.unread::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
-    width: 8px;
-    height: 8px;
-    background: #1877f2;
-    border-radius: 50%;
-    box-shadow: 0 0 8px rgba(24, 119, 242, 0.6);
-}
-
-.notification-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.notification-item-manga {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1877f2;
-    margin: 0;
-}
-
-.notification-item-time {
-    font-size: 12px;
-    color: #b0b3b8;
-    flex-shrink: 0;
-}
-
-.notification-item-text {
-    font-size: 13px;
-    color: #e4e6eb;
-    line-height: 1.5;
-    margin: 0;
-}
-
-.notification-item-mention {
-    color: #1877f2;
-    font-weight: 600;
-}
-
-.notification-empty {
-    padding: 40px 20px;
-    text-align: center;
-    color: #b0b3b8;
-}
-
-.notification-empty svg {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 12px;
-    opacity: 0.5;
-}
-
-.notification-empty p {
-    font-size: 14px;
-    margin: 0;
-}
-
-/* Tablet Responsive */
-@media (max-width: 1023px) and (min-width: 768px) {
-    .notification-dropdown {
-        width: 380px;
-    }
-}
-
-/* Mobile Responsive */
-@media (max-width: 767px) {
-    .notification-dropdown {
-        width: calc(100vw - 40px);
-        right: -12px;
-        max-height: 70vh;
-    }
-    
-    .notification-header {
-        padding: 14px 16px;
-    }
-    
-    .notification-header h3 {
-        font-size: 15px;
-    }
-    
-    .notification-content {
-        max-height: 350px;
-    }
-}
-
-@media (max-width: 480px) {
-    .notification-dropdown {
-        width: calc(100vw - 24px);
-        right: -8px;
-        max-height: 65vh;
-    }
-    
-    .notification-header {
-        padding: 12px 14px;
-    }
-    
-    .notification-header h3 {
-        font-size: 14px;
-    }
-    
-    .btn-sync-notif {
-        width: 32px;
-        height: 32px;
-    }
-    
-    .notification-content {
-        max-height: 300px;
-    }
-    
-    .notification-item {
-        padding: 12px 14px;
-    }
-    
-    .notification-item-manga {
-        font-size: 13px;
-    }
-    
-    .notification-item-text {
-        font-size: 12px;
-    }
-    
-    .notification-tab {
-        padding: 10px 12px;
-        font-size: 13px;
-    }
-    
-    .update-item {
-        padding: 10px 14px;
-    }
-    
-    .update-item-title {
-        font-size: 13px;
-    }
-    
-    .update-item-description {
-        font-size: 12px;
-    }
-}
 
 /* ============================================
    MOBILE HAMBURGER MENU
@@ -2119,7 +1721,7 @@ nav {
 }
 
 .strength-hints li::before {
-    content: "•";
+    content: "â€¢";
     position: absolute;
     left: 0;
     color: #666;
@@ -2284,7 +1886,7 @@ nav {
   text-align: center;
 }
 
-/* ✅ STATUS BOX (PEMBACA SETIA / DONATUR SETIA) */
+/* âœ… STATUS BOX (PEMBACA SETIA / DONATUR SETIA) */
 .status-box {
   width: 100%;
   padding: 14px 20px;
@@ -2322,7 +1924,7 @@ nav {
   }
 }
 
-/* ✅ COUNTDOWN BOX (for donatur setia) */
+/* âœ… COUNTDOWN BOX (for donatur setia) */
 .countdown-box {
   width: 100%;
   padding: 12px 18px;
@@ -2343,7 +1945,7 @@ nav {
   font-weight: 700;
 }
 
-/* ✅ ACCESS BOX (FREE ACCESS ONLY / COUNTDOWN) */
+/* âœ… ACCESS BOX (FREE ACCESS ONLY / COUNTDOWN) */
 .access-box {
   width: 100%;
   padding: 14px 18px;
@@ -2374,7 +1976,7 @@ opacity: 1;
   font-weight: 700;
 }
 
-/* ✅ UPGRADE BUTTON */
+/* âœ… UPGRADE BUTTON */
 .btn-upgrade-profile {
   width: 100%;
   padding: 14px 20px;
@@ -2412,7 +2014,7 @@ opacity: 1;
   transform: translateY(0);
 }
 
-/* ✅ LOGOUT BUTTON */
+/* âœ… LOGOUT BUTTON */
 .btn-logout-profile {
   width: 100%;
   padding: 14px 20px;
@@ -2439,7 +2041,7 @@ opacity: 1;
   transform: translateY(0);
 }
 
-/* ✅ RESPONSIVE - PROFILE MODAL */
+/* âœ… RESPONSIVE - PROFILE MODAL */
 @media (max-width: 1023px) and (min-width: 768px) {
   .profile-content {
     padding: 36px 28px;
@@ -2864,10 +2466,10 @@ opacity: 1;
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  display: flex; /* ← TAMBAH INI */
-  align-items: center; /* ← TAMBAH INI */
-  justify-content: center; /* ← TAMBAH INI */
-  gap: 6px; /* ← TAMBAH INI */
+  display: flex; /* â† TAMBAH INI */
+  align-items: center; /* â† TAMBAH INI */
+  justify-content: center; /* â† TAMBAH INI */
+  gap: 6px; /* â† TAMBAH INI */
 }
 
 .btn-primary:hover {
@@ -2876,7 +2478,7 @@ opacity: 1;
   box-shadow: 0 6px 20px rgba(24, 119, 242, 0.4);
 }
 
-/* ✅ TAMBAH: Disabled state */
+/* âœ… TAMBAH: Disabled state */
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -2955,7 +2557,7 @@ opacity: 1;
 }
 
 .panduan-list li::before {
-  content: "•";
+  content: "â€¢";
   position: absolute;
   left: 8px;
   color: #888;
