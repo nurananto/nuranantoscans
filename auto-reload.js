@@ -45,17 +45,36 @@
             }
         }
         
-        // 3. Clear localStorage (except version)
+        // 3. Clear localStorage (except version & auth data)
         try {
-            const version = localStorage.getItem(VERSION_KEY);
+            // ✅ Preserve auth & session keys during update
+            const PRESERVE_KEYS = [
+                VERSION_KEY,        // site version
+                'authToken',        // login token
+                'authTokenExpiry',  // token expiry
+                'user',             // user data
+                'userDonaturStatus',// donatur status
+                '_st'               // Turnstile session token
+            ];
+            
+            const preserved = {};
+            PRESERVE_KEYS.forEach(key => {
+                const val = localStorage.getItem(key);
+                if (val !== null) preserved[key] = val;
+            });
+            
             localStorage.clear();
-            localStorage.setItem(VERSION_KEY, version);
-            console.log('🗑️ localStorage cleared');
+            
+            Object.entries(preserved).forEach(([key, val]) => {
+                localStorage.setItem(key, val);
+            });
+            
+            console.log('🗑️ localStorage cleared (auth preserved)');
         } catch (err) {
             console.warn('⚠️ localStorage clear failed:', err);
         }
         
-        // 4. Clear sessionStorage
+        // 4. Clear sessionStorage (no auth data stored here)
         try {
             sessionStorage.clear();
             console.log('🗑️ sessionStorage cleared');
