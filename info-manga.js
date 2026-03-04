@@ -3026,6 +3026,11 @@ async function checkBookmarkStatus() {
   const mangaId = urlParams.get('repo');
   if (!mangaId) return;
 
+  // ✅ Reset state first to prevent stale classes from previous login/logout
+  bookmarkBox.classList.remove('clickable', 'bookmarked');
+  bookmarkBox.style.pointerEvents = '';
+  bookmarkBox.style.opacity = '';
+
   if (token) {
     // Logged in: make it clickable
     bookmarkBox.classList.add('clickable');
