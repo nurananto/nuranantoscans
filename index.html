@@ -493,9 +493,33 @@
                 overflow: visible; /* âœ… FIX: Allow badges to show fully */
             }
 
+            /* âœ… Card border colors based on status */
+            .manga-card-horizontal.card-border-ongoing {
+                border-color: rgba(34, 197, 94, 0.45);
+            }
+            .manga-card-horizontal.card-border-hiatus {
+                border-color: rgba(107, 114, 128, 0.45);
+            }
+            .manga-card-horizontal.card-border-completed {
+                border-color: rgba(220, 38, 38, 0.45);
+            }
+            .manga-card-horizontal.card-border-updated {
+                border-color: rgba(24, 119, 242, 0.5);
+                box-shadow: 0 0 12px rgba(24, 119, 242, 0.15);
+            }
+
             .manga-card-horizontal:hover {
                 background: rgba(255, 255, 255, 0.05);
                 border-color: rgba(24, 119, 242, 0.4);
+                box-shadow: 0 4px 20px rgba(24, 119, 242, 0.15);
+            }
+
+            /* âœ… Hover keeps blue for all status borders */
+            .manga-card-horizontal.card-border-ongoing:hover,
+            .manga-card-horizontal.card-border-hiatus:hover,
+            .manga-card-horizontal.card-border-completed:hover,
+            .manga-card-horizontal.card-border-updated:hover {
+                border-color: rgba(24, 119, 242, 0.5);
                 box-shadow: 0 4px 20px rgba(24, 119, 242, 0.15);
             }
 
@@ -638,6 +662,10 @@
                 border: 2px solid rgba(220, 38, 38, 0.8);
             }
 
+            .manga-card-status-badge.status-updated::before {
+                border: 2px solid rgba(24, 119, 242, 0.8);
+            }
+
             .manga-card-status-badge.status-ongoing {
                 background: linear-gradient(135deg, rgba(34, 197, 94, 0.75) 0%, rgba(22, 163, 74, 0.75) 100%);
                 color: #fff;
@@ -651,6 +679,27 @@
             .manga-card-status-badge.status-completed {
                 background: linear-gradient(135deg, rgba(220, 38, 38, 0.75) 0%, rgba(185, 28, 28, 0.75) 100%);
                 color: #fff;
+            }
+
+            /* ✅ Status Updated badge - blue glow like UP badge */
+            .manga-card-status-badge.status-updated {
+                background: linear-gradient(135deg, #1877f2 0%, #0a5bd6 100%);
+                color: #fff;
+                box-shadow: 0 0 8px rgba(24, 119, 242, 0.6),
+                            0 0 16px rgba(24, 119, 242, 0.4);
+                animation: badge-updated-glow 2s ease-in-out infinite;
+            }
+
+            @keyframes badge-updated-glow {
+                0%, 100% {
+                    box-shadow: 0 0 8px rgba(24, 119, 242, 0.6),
+                                0 0 16px rgba(24, 119, 242, 0.4);
+                }
+                50% {
+                    box-shadow: 0 0 12px rgba(24, 119, 242, 0.8),
+                                0 0 24px rgba(24, 119, 242, 0.6),
+                                0 0 32px rgba(24, 119, 242, 0.4);
+                }
             }
 
             .manga-card-chapters {

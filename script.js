@@ -740,19 +740,29 @@ function createCard(manga, mangaData, index = 0) {
   let statusBadge = '';
   let statusClass = 'status-ongoing';
   let statusText = 'Ongoing';
+  let borderClass = 'card-border-ongoing';
   
   if (mangaStatus === 'HIATUS') {
     statusClass = 'status-hiatus';
     statusText = 'Hiatus';
+    borderClass = 'card-border-hiatus';
   } else if (mangaStatus === 'COMPLETED' || mangaStatus === 'TAMAT' || mangaStatus === 'END') {
     statusClass = 'status-completed';
     statusText = 'Tamat';
+    borderClass = 'card-border-completed';
+  }
+  
+  // ✅ Override badge to "Updated" if manga was recently updated (within 48 hours)
+  if (isRecent) {
+    statusClass = 'status-updated';
+    statusText = '↑ Updated ↑';
+    borderClass = 'card-border-updated';
   }
   
   statusBadge = `<div class="manga-card-status-badge ${statusClass}">${statusText}</div>`;
   
   return `
-    <div class="manga-card-horizontal" data-manga-id="${escapeHTML(manga.id)}">
+    <div class="manga-card-horizontal ${borderClass}" data-manga-id="${escapeHTML(manga.id)}">
       <a href="info-manga.html?repo=${safeRepoId}" class="manga-card-title-link">
         <h3 class="manga-card-title-text">${safeMangaTitle}</h3>
       </a>
