@@ -2392,6 +2392,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     dLog('📝 [LOGOUT] Profile username reset to default');
                 }
                 
+                // ✅ Reset bookmark box to not-logged-in state
+                const bookmarkBox = document.getElementById('bookmarkBox');
+                const bookmarkText = document.getElementById('bookmarkText');
+                if (bookmarkBox) {
+                    bookmarkBox.classList.remove('clickable', 'bookmarked');
+                    bookmarkBox.style.pointerEvents = '';
+                    bookmarkBox.style.opacity = '';
+                }
+                if (bookmarkText) {
+                    bookmarkText.textContent = 'BOOKMARK';
+                }
+                // Re-check bookmark status (will show counter for non-logged-in)
+                if (typeof checkBookmarkStatus === 'function') {
+                    checkBookmarkStatus();
+                }
+
                 // ✅ Dispatch custom event untuk notify rating/comments section
                 window.dispatchEvent(new CustomEvent('userLoggedOut'));
                 dLog('📢 [LOGOUT] Dispatched userLoggedOut event');
@@ -4008,6 +4024,11 @@ checkBookmarkStatus();
                 }));
                 dLog('📢 [LOGIN] Dispatched userLoggedIn event');
                 
+                // ✅ Refresh bookmark status after login
+                if (typeof checkBookmarkStatus === 'function') {
+                    checkBookmarkStatus();
+                }
+
                 // Force refresh status then show modal
                 checkDonaturStatus().then(() => {
                     dLog('✅ [LOGIN] Status refreshed, showing profile modal...');
