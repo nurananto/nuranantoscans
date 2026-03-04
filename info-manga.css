@@ -1448,11 +1448,32 @@ header {
     color: #888888;
 }
 
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
+/* Chapter Stats (view counter) */
+.chapter-stats {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #888888;
+    flex-shrink: 0;
+}
+
+.chapter-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.chapter-stat-item svg {
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
     display: block;
+}
+
+.view-value {
+    line-height: 1;
 }
 
 /* Baca dari Awal Button - Purple gradient */
@@ -3403,6 +3424,25 @@ nav {
   gap: 20px;
   max-height: 80vh;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.panduan-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panduan-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panduan-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.panduan-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .panduan-title {

@@ -689,15 +689,7 @@ function createCard(manga, mangaData, index = 0) {
       // ✅ Badge UP for chapters updated within 48 hours (with glowing)
       const isChapterNew = isChapterRecent(chapter.uploadDate);
       const upBadgeHTML = isChapterNew ? `
-        <div class="manga-chapter-badge-up">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M12 19V5M5 12l7-7 7 7"/>
-          </svg>
-          UP
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M12 19V5M5 12l7-7 7 7"/>
-          </svg>
-        </div>
+        <div class="manga-chapter-badge-up">↑ UP ↑</div>
       ` : '';
       
       const safeChapterText = escapeHTML(`${lockIcon}${chapterText}`);

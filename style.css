@@ -2498,6 +2498,25 @@ opacity: 1;
   gap: 20px;
   max-height: 80vh;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.panduan-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panduan-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panduan-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.panduan-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .panduan-title {

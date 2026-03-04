@@ -1174,15 +1174,7 @@ function createChapterElement(chapter, allChapters) {
     // ✅ BUILD BADGES
     const endBadge = isEndChapter ? '<span class="chapter-end-badge">END</span>' : '';
     const hiatusBadge = isHiatusChapter ? '<span class="chapter-hiatus-badge-modal">HIATUS</span>' : '';
-    const updatedBadge = isRecent ? `<span class="chapter-updated-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M12 19V5M5 12l7-7 7 7"/>
-          </svg>
-          UP
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M12 19V5M5 12l7-7 7 7"/>
-          </svg>
-        </span>` : '';
+    const updatedBadge = isRecent ? `<span class="chapter-updated-badge">↑ UP ↑</span>` : '';
 
     const badges = (endBadge || hiatusBadge || updatedBadge) 
         ? `<div class="badge-container">${endBadge}${hiatusBadge}${updatedBadge}</div>` 
