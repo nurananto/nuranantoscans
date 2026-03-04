@@ -3341,6 +3341,17 @@ document.addEventListener('keydown', (e) => {
 // Check bookmark status on page load
 checkBookmarkStatus();
 
+// ✅ Centralized bookmark refresh on login/logout events
+// This catches ALL login paths (normal, Google, etc.)
+window.addEventListener('userLoggedIn', () => {
+  dLog('🔖 [BOOKMARK] userLoggedIn event → refreshing bookmark status');
+  checkBookmarkStatus();
+});
+window.addEventListener('userLoggedOut', () => {
+  dLog('🔖 [BOOKMARK] userLoggedOut event → refreshing bookmark status');
+  checkBookmarkStatus();
+});
+
     // ✅ STEP 6: Check donatur status immediately on page load (without waiting for profile button click)
     // ✅ Validate cache first
     validateAndUpdateExpiredStatus();
@@ -3768,6 +3779,17 @@ checkBookmarkStatus();
                 // Update notification badge
                 if (window.updateNotificationBadge) {
                     window.updateNotificationBadge();
+                }
+                
+                // ✅ Dispatch userLoggedIn event (same as normal login)
+                window.dispatchEvent(new CustomEvent('userLoggedIn', {
+                    detail: { user: data.user, token: data.token }
+                }));
+                dLog('📢 [GOOGLE] Dispatched userLoggedIn event');
+                
+                // ✅ Refresh bookmark status after Google login
+                if (typeof checkBookmarkStatus === 'function') {
+                    checkBookmarkStatus();
                 }
                 
                 // Close login modal
