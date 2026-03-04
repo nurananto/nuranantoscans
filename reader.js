@@ -1607,7 +1607,7 @@ function closeChapterListModal() {
 async function trackChapterView() {
     try {
         const viewKey = `viewed_${repoParam}_${currentChapterFolder}`;
-        const VIEW_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes, match worker's VIEW_EXPIRY_MINUTES
+        const VIEW_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours, match worker's per-day dedup
         
         // Check localStorage with TTL (persists across tabs/refreshes)
         const lastViewed = localStorage.getItem(viewKey);
