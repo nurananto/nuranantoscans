@@ -20,7 +20,7 @@ MANGA_LIST = [
   {
     id: 'osananajimi',
     title: 'Osananajimi ni Kage de Tsugou no Yoi Otoko Yobawari Sareta Ore wa, Koui wo Risetto Shite Futsuu ni Seishun o Okuritai',
-    cover: 'https://cdn.nuranantoscans.my.id/covers/Osananajimi.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/osananajimi-9dc62bb4-031a-4ef5-aa8b-fee41ec86b83.webp',
     repo: 'Osananajimi',
     type: 'manga'
   },
