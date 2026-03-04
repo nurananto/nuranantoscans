@@ -1721,7 +1721,7 @@ nav {
 }
 
 .strength-hints li::before {
-    content: "â€¢";
+    content: "\2022";
     position: absolute;
     left: 0;
     color: #666;
@@ -2576,7 +2576,7 @@ opacity: 1;
 }
 
 .panduan-list li::before {
-  content: "â€¢";
+  content: "\2022";
   position: absolute;
   left: 8px;
   color: #888;

@@ -2612,7 +2612,7 @@ nav {
 }
 
 .strength-hints li::before {
-    content: "â€¢";
+    content: "\2022";
     position: absolute;
     left: 0;
     color: #666;
@@ -3502,7 +3502,7 @@ nav {
 }
 
 .panduan-list li::before {
-  content: "â€¢";
+  content: "\2022";
   position: absolute;
   left: 8px;
   color: #888;
@@ -3749,7 +3749,7 @@ nav {
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   padding: clamp(10px, 2vw, 12px) clamp(12px, 2.5vw, 16px);
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.85);
   font-size: clamp(12px, 1.5vw, 14px);
   font-weight: 600;
   transition: all 0.3s ease;
@@ -3758,8 +3758,8 @@ nav {
 
 .manga-bookmark-box.clickable {
   cursor: pointer;
-  border-color: rgba(24, 119, 242, 0.5);
-  color: rgba(24, 119, 242, 0.7);
+  border-color: rgba(24, 119, 242, 0.6);
+  color: #4dabf7;
   box-shadow: 0 0 8px rgba(24, 119, 242, 0.3),
               0 0 16px rgba(24, 119, 242, 0.15);
   animation: bookmarkBluePulse 2.5s ease-in-out infinite;
