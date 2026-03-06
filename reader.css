@@ -241,18 +241,39 @@ img {
     display: flex;
     gap: 1rem;
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(24, 119, 242, 0.4);
     border-radius: 12px;
     padding: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+/* GPU-composited glow animation */
+.nav-title-card::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    box-shadow: 0 0 12px rgba(24, 119, 242, 0.4),
+                0 0 24px rgba(24, 119, 242, 0.2);
+    animation: card-glow 2s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+    will-change: opacity;
+}
+
+@keyframes card-glow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
 }
 
 .nav-title-card:hover {
-    border-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(24, 119, 242, 0.6);
     background: rgba(255, 255, 255, 0.03);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.2);
 }
 
 .nav-card-left {
