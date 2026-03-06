@@ -1681,7 +1681,8 @@ async function trackChapterView() {
         if (DEBUG_MODE) dLog('✅ Chapter view tracked successfully (WIB)');
         
     } catch (error) {
-        console.error('❌ Error tracking chapter view:', error);
+        // 429 or network errors are not critical - log as info, not error
+        console.log('ℹ️ View counter skipped:', error.message);
     }
 }
 
