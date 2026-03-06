@@ -3163,9 +3163,11 @@ async function renderBookmarkList(bookmarks) {
 
   listEl.innerHTML = bookmarks.map(item => {
     const cover = getMangaCover(item.manga_id);
+    const cdnUrls = typeof getResponsiveCDN === 'function' ? getResponsiveCDN(cover) : null;
+    const coverSrc = cdnUrls ? cdnUrls.small : cover;
     const safeMangaId = escapeHTML(item.manga_id);
     const safeMangaTitle = escapeHTML(item.manga_title);
-    const safeCover = escapeHTML(cover);
+    const safeCover = escapeHTML(coverSrc);
     const info = mangaInfoMap[item.manga_id] || { genres: [], status: 'ONGOING' };
     const genresText = info.genres.length > 0 ? info.genres.join(', ') : '';
 
@@ -3186,7 +3188,7 @@ async function renderBookmarkList(bookmarks) {
              alt="${safeMangaTitle} cover" 
              class="bookmark-cover"
              loading="lazy"
-             onerror="this.onerror=null; this.src='assets/Logo 2.png';">
+             onerror="if(this.src!=='${escapeHTML(cover)}'){this.src='${escapeHTML(cover)}';this.srcset='';}else{this.onerror=null;this.src='assets/Logo 2.png';}">
         <div class="bookmark-info">
           <span class="bookmark-status-badge ${statusClass}">${statusText}</span>
           <div class="bookmark-manga-title">${safeMangaTitle}</div>
