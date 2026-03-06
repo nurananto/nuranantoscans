@@ -29,9 +29,18 @@
           type="font/woff2" 
           crossorigin>
     
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="fonts.css?v=4b51f1b">
-    <link rel="stylesheet" href="info-manga.css?v=3.4.0">
+    <!-- Inlined fonts.css to eliminate render-blocking request -->
+    <style>
+    @font-face{font-display:swap;font-family:'Roboto';font-style:normal;font-weight:300;src:url('fonts/roboto-v50-latin-300.woff2') format('woff2')}
+    @font-face{font-display:swap;font-family:'Roboto';font-style:normal;font-weight:400;src:url('fonts/roboto-v50-latin-regular.woff2') format('woff2')}
+    @font-face{font-display:swap;font-family:'Roboto';font-style:normal;font-weight:500;src:url('fonts/roboto-v50-latin-500.woff2') format('woff2')}
+    @font-face{font-display:swap;font-family:'Roboto';font-style:normal;font-weight:600;src:url('fonts/roboto-v50-latin-600.woff2') format('woff2')}
+    @font-face{font-display:swap;font-family:'Roboto';font-style:normal;font-weight:700;src:url('fonts/roboto-v50-latin-700.woff2') format('woff2')}
+    </style>
+
+    <!-- Deferred info-manga.css: critical CSS already inlined above -->
+    <link rel="stylesheet" href="info-manga.css?v=3.4.0" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="info-manga.css?v=3.4.0"></noscript>
     
     <!-- Preconnect -->
     <link rel="preconnect" href="https://raw.githubusercontent.com">
@@ -496,7 +505,10 @@
   <header role="banner">
     <div class="header-content">
       <a href="https://www.nuranantoscans.my.id" class="logo-link" aria-label="Nurananto Scanlation Home">
-        <img src="assets/logo.png" alt="Nurananto Scanlation Logo" class="site-logo" width="200" height="60">
+        <picture>
+          <source srcset="assets/logo.webp" type="image/webp">
+          <img src="assets/logo.png" alt="Nurananto Scanlation Logo" class="site-logo" width="200" height="60">
+        </picture>
       </a>
 
       <nav aria-label="Social media links">
@@ -651,7 +663,10 @@
           <!-- External Links -->
           <div class="external-links-info">
             <button class="info-btn" id="btnMangadexInfo" aria-label="View alternative reading link">
-              <img src="assets/mangadex-logo.png" alt="" class="btn-icon" aria-hidden="true">
+              <picture>
+                <source srcset="assets/mangadex-logo.webp" type="image/webp">
+                <img src="assets/mangadex-logo.png" alt="" class="btn-icon" aria-hidden="true">
+              </picture>
               <span>Alternatif Link</span>
             </button>
             <button class="info-btn" id="btnRawInfo" aria-label="View source website">
