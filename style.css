@@ -8,22 +8,26 @@
     0 0 8px 2px #1877f2,
     0 0 16px 4px rgba(24,119,242,0.5),
     0 4px 15px rgba(24, 119, 242, 0.4);
-  animation: updated-glow 1.5s ease-in-out infinite alternate;
+  position: relative;
 }
-
-@keyframes updated-glow {
-  0% {
-    box-shadow:
-      0 0 8px 2px #1877f2,
-      0 0 16px 4px rgba(24,119,242,0.5),
-      0 4px 15px rgba(24, 119, 242, 0.4);
-  }
-  100% {
-    box-shadow:
-      0 0 16px 6px #1877f2,
-      0 0 32px 12px rgba(24,119,242,0.7),
-      0 4px 15px rgba(24, 119, 242, 0.4);
-  }
+/* ✅ GPU-composited glow: animate opacity instead of box-shadow */
+.status-badge-updated::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow:
+    0 0 16px 6px #1877f2,
+    0 0 32px 12px rgba(24,119,242,0.7),
+    0 4px 15px rgba(24, 119, 242, 0.4);
+  animation: glow-pulse 1.5s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: -1;
+  will-change: opacity;
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 /* Updated badge blue style for status-badge-updated */
 .status-badge-updated {
@@ -1912,16 +1916,18 @@ nav {
   border-color: #FFA500;
   color: #000;
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
-  animation: statusGlow 2s ease-in-out infinite;
+  position: relative;
 }
-
-@keyframes statusGlow {
-  0%, 100% {
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
-  }
-  50% {
-    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.7);
-  }
+.status-box.donatur-setia::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.7);
+  animation: glow-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+  will-change: opacity;
 }
 
 /* âœ… COUNTDOWN BOX (for donatur setia) */
@@ -1992,16 +1998,18 @@ opacity: 1;
   letter-spacing: 1px;
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.5);
   margin-top: 8px;
-  animation: upgradeGlow 2s ease-in-out infinite;
+  position: relative;
 }
-
-@keyframes upgradeGlow {
-  0%, 100% {
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.5);
-  }
-  50% {
-    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 255, 255, 0.8);
-  }
+.btn-upgrade-profile::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 255, 255, 0.8);
+  animation: glow-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+  will-change: opacity;
 }
 
 .btn-upgrade-profile:hover {
@@ -2265,12 +2273,7 @@ opacity: 1;
   color: #ffd700;
   text-shadow: 0 0 8px rgba(255, 215, 0, 0.8), 0 0 16px rgba(255, 215, 0, 0.5);
   font-size: 1.1em;
-  animation: arrowGlow 2s ease-in-out infinite;
-}
-
-@keyframes arrowGlow {
-  0%, 100% { text-shadow: 0 0 8px rgba(255, 215, 0, 0.8), 0 0 16px rgba(255, 215, 0, 0.5); }
-  50% { text-shadow: 0 0 12px rgba(255, 215, 0, 1), 0 0 24px rgba(255, 215, 0, 0.7), 0 0 36px rgba(255, 215, 0, 0.4); }
+  /* ✅ Static glow - no animation needed for small decorative arrows */
 }
 
 .benefits-list {
@@ -2354,16 +2357,18 @@ opacity: 1;
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: #fff;
   box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4), 0 0 30px rgba(245, 158, 11, 0.6);
-  animation: glowPulse 2s ease-in-out infinite;
+  position: relative;
 }
-
-@keyframes glowPulse {
-  0%, 100% {
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4), 0 0 30px rgba(245, 158, 11, 0.6);
-  }
-  50% {
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.6), 0 0 40px rgba(245, 158, 11, 0.8), 0 0 60px rgba(245, 158, 11, 0.4);
-  }
+.upgrade-btn-panduan::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.6), 0 0 40px rgba(245, 158, 11, 0.8), 0 0 60px rgba(245, 158, 11, 0.4);
+  animation: glow-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+  will-change: opacity;
 }
 
 .upgrade-btn-panduan:hover {

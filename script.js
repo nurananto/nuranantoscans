@@ -405,9 +405,7 @@ async function renderTrending(mangaList) {
   if (!container) return;
   
   try {
-    // Show loading
-    container.innerHTML = '<p style="text-align: center; color: #888; padding: 2rem;">Memuat trending...</p>';
-    
+    // ✅ Keep skeleton visible while loading (skeleton is in HTML)
     // Fetch all manga data with 24h views
     const mangaWithData = await Promise.all(
       mangaList.map(async (manga) => {
@@ -440,9 +438,6 @@ async function renderTrending(mangaList) {
       })
       .slice(0, 5);
     
-    // Clear container
-    container.innerHTML = '';
-    
     // Render cards with ranking
     const fragment = document.createDocumentFragment();
     trending.forEach((item, index) => {
@@ -450,7 +445,8 @@ async function renderTrending(mangaList) {
       fragment.appendChild(cardWrapper);
     });
     
-    container.appendChild(fragment);
+    // Replace content in single DOM operation to avoid forced reflow
+    container.replaceChildren(fragment);
     
     // Generate pagination dots
     updateTrendingDots(trending.length);
@@ -474,7 +470,7 @@ function updateTrendingDots(totalCards) {
   const dotsContainer = document.getElementById('trendingDots');
   if (!dotsContainer) return;
   
-  dotsContainer.innerHTML = '';
+  const fragment = document.createDocumentFragment();
   
   for (let i = 0; i < totalCards; i++) {
     const dot = document.createElement('div');
@@ -492,8 +488,11 @@ function updateTrendingDots(totalCards) {
       }
     });
     
-    dotsContainer.appendChild(dot);
+    fragment.appendChild(dot);
   }
+  
+  // Replace all dots in single DOM operation
+  dotsContainer.replaceChildren(fragment);
   
   // Listen to scroll to update active dot
   const container = document.getElementById('trendingContainer');
@@ -913,9 +912,8 @@ function renderCurrentPage() {
     createCard(manga, mangaData, startIdx + index)
   ).join("");
   
-  // Replace content
-  mangaGrid.innerHTML = '';
-  mangaGrid.appendChild(pageDiv);
+  // Replace content in single DOM operation to avoid forced reflow
+  mangaGrid.replaceChildren(pageDiv);
   
   // Scroll to top smoothly
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -999,7 +997,7 @@ async function renderMangaList(filteredList, showLoading = true) {
   
   if (showLoading) {
     loadingIndicator.classList.add('show');
-    mangaGrid.innerHTML = '';
+    // ✅ Keep skeleton visible while loading - don't clear mangaGrid here
   }
   
   const mangaWithData = await Promise.all(
@@ -1361,6 +1359,8 @@ document.addEventListener('click', (e) => {
         if (loginModal) {
             loginModal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            // ✅ Lazy load Google Sign-In
+            loadGoogleGsi().then(() => initGoogleSignIn()).catch(e => console.error('❌ Google GSI load failed:', e));
         }
     }
 });
@@ -1810,6 +1810,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 dLog('➡️ [ACTION] Opening login modal');
                 modal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
+                // ✅ Lazy load Google Sign-In when login modal first opens
+                loadGoogleGsi().then(() => initGoogleSignIn()).catch(e => console.error('❌ Google GSI load failed:', e));
             }
             dLog('🖱️ [CLICK] ========================================');
         } catch (error) {
@@ -3210,6 +3212,31 @@ const codeModal = document.getElementById('codeModal');
     }
 
     /**
+     * ✅ Lazy load Google Sign-In library on demand
+     */
+    let googleGsiLoaded = false;
+    let googleGsiLoading = false;
+    function loadGoogleGsi() {
+        return new Promise((resolve, reject) => {
+            if (googleGsiLoaded) return resolve();
+            if (googleGsiLoading) {
+                // Wait for existing load
+                const check = setInterval(() => {
+                    if (googleGsiLoaded) { clearInterval(check); resolve(); }
+                }, 100);
+                return;
+            }
+            googleGsiLoading = true;
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.onload = () => { googleGsiLoaded = true; googleGsiLoading = false; resolve(); };
+            script.onerror = () => { googleGsiLoading = false; reject(new Error('Failed to load Google Sign-In')); };
+            document.head.appendChild(script);
+        });
+    }
+
+    /**
      * Initialize Google Sign-In
      */
     function initGoogleSignIn() {
@@ -3339,9 +3366,9 @@ const codeModal = document.getElementById('codeModal');
         }
     }
 
-    // Initialize Google Sign-In and helper links
-    console.log('🚀 [MAIN] Calling initGoogleSignIn...');
-    initGoogleSignIn();
+    // ✅ Lazy load Google Sign-In when login modal opens
+    // Don't load on page init - save ~150KB initial download
+    console.log('🚀 [MAIN] Google Sign-In will be lazy loaded when login modal opens');
     console.log('🚀 [MAIN] Calling attachHelperLinkHandlers...');
     attachHelperLinkHandlers();
     console.log('🚀 [MAIN] Google OAuth initialization complete');

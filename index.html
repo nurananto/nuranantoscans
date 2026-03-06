@@ -140,6 +140,7 @@
                 max-width: 1400px;
                 margin: 0 auto;
                 padding: 0;
+                position: relative; /* ✅ For absolute loading indicator */
             }
 
             .manga-list-header {
@@ -507,18 +508,24 @@
                 border-color: rgba(24, 119, 242, 0.6);
                 box-shadow: 0 0 10px rgba(24, 119, 242, 0.3),
                             0 0 20px rgba(24, 119, 242, 0.15);
-                animation: card-updated-glow 2s ease-in-out infinite;
+                position: relative;
             }
-
-            @keyframes card-updated-glow {
-                0%, 100% {
-                    box-shadow: 0 0 10px rgba(24, 119, 242, 0.3),
-                                0 0 20px rgba(24, 119, 242, 0.15);
-                }
-                50% {
-                    box-shadow: 0 0 16px rgba(24, 119, 242, 0.5),
-                                0 0 32px rgba(24, 119, 242, 0.25);
-                }
+            /* ✅ GPU-composited glow: animate opacity instead of box-shadow */
+            .manga-card-horizontal.card-border-updated::after {
+                content: '';
+                position: absolute;
+                inset: -2px;
+                border-radius: inherit;
+                box-shadow: 0 0 16px rgba(24, 119, 242, 0.5),
+                            0 0 32px rgba(24, 119, 242, 0.25);
+                animation: glow-pulse 2s ease-in-out infinite;
+                pointer-events: none;
+                z-index: -1;
+                will-change: opacity;
+            }
+            @keyframes glow-pulse {
+                0%, 100% { opacity: 0; }
+                50% { opacity: 1; }
             }
 
             .manga-card-horizontal:hover {
@@ -700,19 +707,20 @@
                 color: #fff;
                 box-shadow: 0 0 8px rgba(24, 119, 242, 0.6),
                             0 0 16px rgba(24, 119, 242, 0.4);
-                animation: badge-updated-glow 2s ease-in-out infinite;
+                position: relative;
             }
-
-            @keyframes badge-updated-glow {
-                0%, 100% {
-                    box-shadow: 0 0 8px rgba(24, 119, 242, 0.6),
-                                0 0 16px rgba(24, 119, 242, 0.4);
-                }
-                50% {
-                    box-shadow: 0 0 12px rgba(24, 119, 242, 0.8),
-                                0 0 24px rgba(24, 119, 242, 0.6),
-                                0 0 32px rgba(24, 119, 242, 0.4);
-                }
+            .manga-card-status-badge.status-updated::after {
+                content: '';
+                position: absolute;
+                inset: -2px;
+                border-radius: inherit;
+                box-shadow: 0 0 12px rgba(24, 119, 242, 0.8),
+                            0 0 24px rgba(24, 119, 242, 0.6),
+                            0 0 32px rgba(24, 119, 242, 0.4);
+                animation: glow-pulse 2s ease-in-out infinite;
+                pointer-events: none;
+                z-index: -1;
+                will-change: opacity;
             }
 
             .manga-card-chapters {
@@ -818,19 +826,20 @@
                 flex-shrink: 0;
                 box-shadow: 0 0 8px rgba(24, 119, 242, 0.6),
                             0 0 16px rgba(24, 119, 242, 0.4);
-                animation: badge-up-glow 2s ease-in-out infinite;
+                position: relative;
             }
-
-            @keyframes badge-up-glow {
-                0%, 100% {
-                    box-shadow: 0 0 8px rgba(24, 119, 242, 0.6),
-                                0 0 16px rgba(24, 119, 242, 0.4);
-                }
-                50% {
-                    box-shadow: 0 0 12px rgba(24, 119, 242, 0.8),
-                                0 0 24px rgba(24, 119, 242, 0.6),
-                                0 0 32px rgba(24, 119, 242, 0.4);
-                }
+            .manga-chapter-badge-up::after {
+                content: '';
+                position: absolute;
+                inset: -1px;
+                border-radius: inherit;
+                box-shadow: 0 0 12px rgba(24, 119, 242, 0.8),
+                            0 0 24px rgba(24, 119, 242, 0.6),
+                            0 0 32px rgba(24, 119, 242, 0.4);
+                animation: glow-pulse 2s ease-in-out infinite;
+                pointer-events: none;
+                z-index: -1;
+                will-change: opacity;
             }
 
             .manga-chapter-badge-up svg {
@@ -912,6 +921,100 @@
 
             .skip-link:focus {
                 top: 0;
+            }
+
+            /* ✅ Skeleton Loader - Prevent CLS */
+            @keyframes skeleton-shimmer {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+            .skeleton-bar {
+                background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+                background-size: 200% 100%;
+                animation: skeleton-shimmer 1.5s ease-in-out infinite;
+                border-radius: 6px;
+            }
+
+            /* Trending skeleton */
+            .skeleton-trending {
+                flex: 0 0 100%;
+                width: 100%;
+                min-width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .skeleton-trending-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0 1rem;
+            }
+            .skeleton-trending-body {
+                display: flex;
+                gap: 1.5rem;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 12px;
+                padding: clamp(1rem, 2vw, 1.5rem);
+            }
+            .skeleton-trending-left {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .skeleton-trending-cover {
+                width: 180px;
+                aspect-ratio: 3/4.2;
+                border-radius: 8px;
+                flex-shrink: 0;
+            }
+            @media (max-width: 768px) { .skeleton-trending-cover { width: 120px; } }
+            @media (max-width: 480px) { .skeleton-trending-cover { width: 100px; } }
+
+            /* Manga card skeleton */
+            .skeleton-manga-card {
+                display: flex;
+                flex-direction: column;
+                border: 3px solid rgba(255,255,255,0.08);
+                border-radius: 12px;
+                padding: 1rem;
+                gap: 0;
+            }
+            .skeleton-manga-title-bar {
+                height: 1.125rem;
+                width: 55%;
+                margin-bottom: 0.75rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            .skeleton-manga-body {
+                display: flex;
+                gap: 1rem;
+                padding-top: 0.75rem;
+            }
+            .skeleton-manga-cover {
+                width: 150px;
+                aspect-ratio: 3/4.2;
+                border-radius: 8px;
+                flex-shrink: 0;
+            }
+            .skeleton-manga-chapters {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .skeleton-chapter-row {
+                height: 2.8rem;
+                border-radius: 12px;
+            }
+            @media (min-width: 1024px) {
+                .skeleton-manga-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1.5rem;
+                }
             }
 
             /* Desktop Besar - No specific adjustments needed for horizontal cards */
@@ -1550,6 +1653,13 @@
     text-align: center;
     padding: 40px 20px;
     display: none;
+    /* ✅ FIX CLS: Overlay on content, don't push layout */
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
 }
 
 .loading-indicator.show {
@@ -2953,7 +3063,7 @@
     height: 20px;
 }
         </style>
-        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <!-- ✅ Google Sign-In: Lazy loaded when login modal opens (see script.js) -->
     </head>
     <body>
         <!-- âœ… Skip to main content link -->
@@ -3002,7 +3112,23 @@
             <section class="trending-section" aria-labelledby="trending-heading">
                 <h2 id="trending-heading" class="trending-section-heading">Bacaan Populer 24 Jam Terakhir</h2>
                 <div class="trending-container" id="trendingContainer">
-                    <!-- Trending content will be added here -->
+                    <!-- ✅ Skeleton placeholder to prevent CLS -->
+                    <div class="skeleton-trending" aria-hidden="true">
+                        <div class="skeleton-trending-header">
+                            <div class="skeleton-bar" style="width:120px;height:1.3rem;"></div>
+                            <div class="skeleton-bar" style="width:80px;height:1rem;"></div>
+                        </div>
+                        <div class="skeleton-trending-body">
+                            <div class="skeleton-trending-left">
+                                <div class="skeleton-bar" style="width:70%;height:0.75rem;"></div>
+                                <div class="skeleton-bar" style="width:90%;height:1.5rem;"></div>
+                                <div class="skeleton-bar" style="width:50%;height:0.7rem;"></div>
+                                <div class="skeleton-bar" style="width:100%;height:0.7rem;margin-top:auto;"></div>
+                                <div class="skeleton-bar" style="width:100%;height:0.7rem;"></div>
+                            </div>
+                            <div class="skeleton-trending-cover skeleton-bar"></div>
+                        </div>
+                    </div>
                 </div>
                 <!-- Trending Pagination Dots -->
                 <div class="trending-dots" id="trendingDots"></div>
@@ -3071,7 +3197,7 @@
                     />
                 </div>
 
-                <!-- Loading indicator -->
+                <!-- Loading indicator (hidden, no layout impact) -->
                 <div
                     id="loadingIndicator"
                     class="loading-indicator"
@@ -3084,7 +3210,13 @@
 
                 <!-- Manga List Container -->
                 <div class="manga-list-container" id="mangaGrid" role="list">
-                    <!-- Manga cards will be rendered here by JavaScript -->
+                    <!-- ✅ Skeleton placeholders to prevent CLS -->
+                    <div class="skeleton-manga-grid" aria-hidden="true">
+                        <div class="skeleton-manga-card"><div class="skeleton-manga-title-bar skeleton-bar"></div><div class="skeleton-manga-body"><div class="skeleton-manga-cover skeleton-bar"></div><div class="skeleton-manga-chapters"><div class="skeleton-chapter-row skeleton-bar"></div><div class="skeleton-chapter-row skeleton-bar"></div><div class="skeleton-chapter-row skeleton-bar"></div></div></div></div>
+                        <div class="skeleton-manga-card"><div class="skeleton-manga-title-bar skeleton-bar"></div><div class="skeleton-manga-body"><div class="skeleton-manga-cover skeleton-bar"></div><div class="skeleton-manga-chapters"><div class="skeleton-chapter-row skeleton-bar"></div><div class="skeleton-chapter-row skeleton-bar"></div><div class="skeleton-chapter-row skeleton-bar"></div></div></div></div>
+                        <div class="skeleton-manga-card"><div class="skeleton-manga-title-bar skeleton-bar"></div><div class="skeleton-manga-body"><div class="skeleton-manga-cover skeleton-bar"></div><div class="skeleton-manga-chapters"><div class="skeleton-chapter-row skeleton-bar"></div><div class="skeleton-chapter-row skeleton-bar"></div><div class="skeleton-chapter-row skeleton-bar"></div></div></div></div>
+                        <div class="skeleton-manga-card"><div class="skeleton-manga-title-bar skeleton-bar"></div><div class="skeleton-manga-body"><div class="skeleton-manga-cover skeleton-bar"></div><div class="skeleton-manga-chapters"><div class="skeleton-chapter-row skeleton-bar"></div><div class="skeleton-chapter-row skeleton-bar"></div><div class="skeleton-chapter-row skeleton-bar"></div></div></div></div>
+                    </div>
                 </div>
 
                 <!-- Pagination Controls -->

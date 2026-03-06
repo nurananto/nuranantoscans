@@ -57,6 +57,14 @@
 /*.html
   Cache-Control: no-cache
 
+# CSS files - Cache with revalidation (versioned via ?v= query string)
+/*.css
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+
+# JS files - Cache with revalidation (versioned via ?v= query string) 
+/*.js
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+
 # Fonts - Long cache
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
