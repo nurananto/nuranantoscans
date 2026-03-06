@@ -491,8 +491,7 @@ jobs:
             git config --local user.name "github-actions[bot]"
             git config --local user.email "github-actions[bot]@users.noreply.github.com"
             
-            rm updated-repo-list.txt
-            git add updated-repo-list.txt
+            git rm -f --ignore-unmatch updated-repo-list.txt
             git commit -m "🧹 Cleanup updated repo list [skip ci]" || echo "No changes to commit"
             git push || echo "Push failed"
             
