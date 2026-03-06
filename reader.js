@@ -1034,16 +1034,18 @@ async function loadChapterPages() {
             
             const img = document.createElement('img');
             img.className = 'reader-page';
-            img.src = signedUrl;
             img.alt = `Page ${pageNum}`;
+            img.setAttribute('data-page', pageNum);
             
+            // Set loading attribute BEFORE src to ensure lazy loading works
             if (pageNum <= 3) {
                 img.loading = 'eager';
+                if (pageNum === 1) img.fetchPriority = 'high';
             } else {
                 img.loading = 'lazy';
             }
             
-            img.setAttribute('data-page', pageNum);
+            img.src = signedUrl;
             
             img.onload = () => {
                 if (DEBUG_MODE) dLog(`✅ Page ${pageNum} loaded successfully`);
@@ -1104,16 +1106,18 @@ function renderPagesFromCache(signedPages) {
         
         const img = document.createElement('img');
         img.className = 'reader-page';
-        img.src = signedUrl;
         img.alt = `Page ${pageNum}`;
+        img.setAttribute('data-page', pageNum);
         
+        // Set loading attribute BEFORE src to ensure lazy loading works
         if (pageNum <= 3) {
             img.loading = 'eager';
+            if (pageNum === 1) img.fetchPriority = 'high';
         } else {
             img.loading = 'lazy';
         }
         
-        img.setAttribute('data-page', pageNum);
+        img.src = signedUrl;
         
         img.onload = () => {
     if (DEBUG_MODE) dLog(`✅ Page ${pageNum} loaded successfully`);
