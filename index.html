@@ -492,6 +492,7 @@
                 transition: all 0.3s ease;
                 position: relative;
                 overflow: visible; /* âœ… FIX: Allow badges to show fully */
+                -webkit-tap-highlight-color: transparent;
             }
 
             /* âœ… Card border colors based on status */
@@ -528,19 +529,22 @@
                 50% { opacity: 1; }
             }
 
-            .manga-card-horizontal:hover {
-                background: rgba(255, 255, 255, 0.05);
-                border-color: rgba(24, 119, 242, 0.5);
-                box-shadow: 0 4px 20px rgba(24, 119, 242, 0.15);
-            }
+            /* ✅ Only apply hover effects on devices with real hover (not mobile tap) */
+            @media (hover: hover) {
+                .manga-card-horizontal:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-color: rgba(24, 119, 242, 0.5);
+                    box-shadow: 0 4px 20px rgba(24, 119, 242, 0.15);
+                }
 
-            /* âœ… Hover keeps blue for all status borders */
-            .manga-card-horizontal.card-border-ongoing:hover,
-            .manga-card-horizontal.card-border-hiatus:hover,
-            .manga-card-horizontal.card-border-completed:hover,
-            .manga-card-horizontal.card-border-updated:hover {
-                border-color: rgba(24, 119, 242, 0.6);
-                box-shadow: 0 4px 20px rgba(24, 119, 242, 0.2);
+                /* Hover keeps blue for all status borders */
+                .manga-card-horizontal.card-border-ongoing:hover,
+                .manga-card-horizontal.card-border-hiatus:hover,
+                .manga-card-horizontal.card-border-completed:hover,
+                .manga-card-horizontal.card-border-updated:hover {
+                    border-color: rgba(24, 119, 242, 0.6);
+                    box-shadow: 0 4px 20px rgba(24, 119, 242, 0.2);
+                }
             }
 
             .manga-card-title-link {
@@ -553,6 +557,8 @@
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                 margin-bottom: 0.75rem;
                 min-height: 1.4rem;
+                -webkit-tap-highlight-color: transparent;
+                outline: none;
             }
 
             .manga-card-title-text {
@@ -748,6 +754,7 @@
                 transition: all 0.3s ease;
                 flex-shrink: 0;
                 background: rgba(255, 255, 255, 0.02);
+                -webkit-tap-highlight-color: transparent;
             }
             
             .manga-chapter-item:first-child {
@@ -758,10 +765,15 @@
                 margin-bottom: 0;
             }
 
-            .manga-chapter-item:hover {
-                background: rgba(255, 255, 255, 0.05);
-                border-color: rgba(24, 119, 242, 0.4);
-                transform: translateX(2px);
+            @media (hover: hover) {
+                .manga-chapter-item:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    border-color: rgba(24, 119, 242, 0.4);
+                    transform: translateX(2px);
+                }
+                .manga-chapter-item:hover .manga-chapter-text {
+                    color: #1877f2;
+                }
             }
 
             .manga-chapter-left {
@@ -780,10 +792,6 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
                 line-height: 1.2;
-            }
-
-            .manga-chapter-item:hover .manga-chapter-text {
-                color: #1877f2;
             }
 
             .manga-chapter-badge {
