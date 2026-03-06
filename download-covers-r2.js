@@ -1,6 +1,12 @@
 /**
- * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v7.6
- * FITUR: Auto-upload ke Cloudflare R2 + Auto-delete old covers
+ * SCRIPT DOWNLOAD COVER MANGA DARI MANGADEX v8.0
+ * FITUR: Auto-upload ke Cloudflare R2 + Multi-Resolution WebP + Auto-delete old covers
+ * 
+ * Update v8.0:
+ * - Generate 3 resolusi cover (sm/md/lg) untuk responsive loading
+ * - Mode --migrate untuk konversi cover lama ke 3 resolusi
+ * - Eliminasi dependency ke images.weserv.nl
+ * - sm: 320px (mobile), md: 480px (tablet), lg: 640px (desktop/retina)
  * 
  * Update v7.6:
  * - Export list of repos that actually have cover updates
@@ -11,6 +17,10 @@
  * - CF_ACCESS_KEY_ID
  * - CF_SECRET_ACCESS_KEY
  * - R2_PUBLIC_DOMAIN
+ *
+ * Usage:
+ *   node download-covers-r2.js          # Normal: check MangaDex for new covers
+ *   node download-covers-r2.js --migrate # Migrate existing single covers to 3 resolutions
  */
 
 const fs = require('fs');
@@ -24,6 +34,18 @@ const { S3Client, PutObjectCommand, HeadObjectCommand, ListObjectsV2Command, Del
 const DELAY_MS = 1500;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 const WEBP_QUALITY = 85;
+
+// CLI flags
+const MIGRATE_MODE = process.argv.includes('--migrate');
+
+// ============================================
+// MULTI-RESOLUTION COVER SIZES
+// ============================================
+const COVER_SIZES = [
+  { suffix: 'sm', width: 320, quality: 85 },   // Mobile (displayed at ~100-160px CSS, 2x = 320px)
+  { suffix: 'md', width: 480, quality: 82 },   // Tablet (displayed at ~180-250px CSS, 2x = 480px)
+  { suffix: 'lg', width: 640, quality: 80 },   // Desktop/Retina (displayed at ~320px CSS, 2x = 640px)
+];
 
 // R2 Configuration
 const R2_CONFIG = {
@@ -281,6 +303,88 @@ async function convertToWebP(inputPath, outputPath) {
   }
 }
 
+/**
+ * Convert to WebP with specific width (for multi-resolution)
+ */
+async function convertToWebPResized(inputPath, outputPath, width, quality) {
+  try {
+    const info = await sharp(inputPath)
+      .resize(width, null, {
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .webp({ quality: quality, effort: 6 })
+      .toFile(outputPath);
+    
+    return info;
+  } catch (error) {
+    throw new Error(`WebP resize failed (${width}px): ${error.message}`);
+  }
+}
+
+/**
+ * Generate R2 keys for all 3 resolutions from a base key
+ * e.g., 'covers/manga-id-hash' → ['covers/manga-id-hash-sm.webp', ...]
+ */
+function getMultiResKeys(baseKey) {
+  return COVER_SIZES.map(size => `${baseKey}-${size.suffix}.webp`);
+}
+
+/**
+ * Check if all 3 resolution variants exist in R2
+ */
+async function checkAllResolutionsExist(baseKey) {
+  const keys = getMultiResKeys(baseKey);
+  const checks = await Promise.all(keys.map(key => checkR2ObjectExists(key)));
+  return checks.every(Boolean);
+}
+
+/**
+ * Upload all 3 resolutions to R2
+ * @param {string} inputPath - Path to original downloaded image (JPG or WebP)
+ * @param {string} baseKey - Base R2 key without extension (e.g., 'covers/manga-id-hash')
+ * @returns {Object} Upload results with sizes
+ */
+async function uploadMultiResolution(inputPath, baseKey) {
+  const results = {};
+  
+  for (const size of COVER_SIZES) {
+    const outputPath = path.join(coversDir, `temp-${size.suffix}.webp`);
+    const r2Key = `${baseKey}-${size.suffix}.webp`;
+    
+    const info = await convertToWebPResized(inputPath, outputPath, size.width, size.quality);
+    console.log(`    [${size.suffix.toUpperCase()}] ${size.width}px → ${info.width}x${info.height} (${(info.size / 1024).toFixed(1)} KB)`);
+    
+    const r2Url = await uploadToR2(outputPath, r2Key);
+    results[size.suffix] = { url: r2Url, size: info.size, width: info.width, height: info.height };
+    
+    // Cleanup temp file
+    if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+  }
+  
+  return results;
+}
+
+/**
+ * Delete all resolution variants + old single file from R2
+ */
+async function deleteOldCovers(mangaId, currentBaseKey) {
+  const existingCovers = await listR2Objects(`covers/${mangaId}-`);
+  let deletedCount = 0;
+  
+  const currentKeys = getMultiResKeys(currentBaseKey);
+  
+  for (const oldCover of existingCovers) {
+    if (!currentKeys.includes(oldCover.Key)) {
+      await deleteR2Object(oldCover.Key);
+      console.log(`    [DELETED] ${oldCover.Key}`);
+      deletedCount++;
+    }
+  }
+  
+  return deletedCount;
+}
+
 async function fetchLatestCover(mangaId) {
   return new Promise((resolve, reject) => {
     const options = {
@@ -424,13 +528,15 @@ async function processAllManga() {
       const latestCover = await fetchLatestCover(mangaId);
 
       const coverHash = latestCover.filename.split('.')[0];
-      const r2Key = `covers/${manga.id}-${coverHash}.webp`;
+      const baseKey = `covers/${manga.id}-${coverHash}`;
       
-      const existsInR2 = await checkR2ObjectExists(r2Key);
+      // Check if all 3 resolutions already exist
+      const allExist = await checkAllResolutionsExist(baseKey);
       
-      if (existsInR2) {
-        console.log(`  [SKIP] Cover sudah ada di R2`);
-        const r2Url = `https://${R2_CONFIG.publicDomain}/${r2Key}`;
+      if (allExist) {
+        console.log(`  [SKIP] All 3 resolutions already in R2`);
+        // Use base URL (frontend derives -sm/-md/-lg)
+        const r2Url = `https://${R2_CONFIG.publicDomain}/${baseKey}.webp`;
         manga.cover = r2Url;
         updatedMangaList.push(manga);
         skipCount++;
@@ -442,37 +548,29 @@ async function processAllManga() {
       const tempJpgPath = path.join(coversDir, `temp-${manga.id}.jpg`);
       await downloadFile(latestCover.url, tempJpgPath);
       
-      console.log('  [CONVERT] Converting to WebP...');
-      const tempWebpPath = path.join(coversDir, `${manga.id}-${coverHash}.webp`);
       const tempJpgSize = fs.statSync(tempJpgPath).size;
-      const info = await convertToWebP(tempJpgPath, tempWebpPath);
-      const webpSize = info.size;
-      const reduction = ((1 - webpSize / tempJpgSize) * 100).toFixed(1);
+      console.log(`  [DOWNLOADED] ${(tempJpgSize / 1024).toFixed(1)} KB`);
       
-      console.log(`  [SUCCESS] WebP created: ${(webpSize / 1024).toFixed(1)} KB (${reduction}% smaller)`);
+      console.log('  [CONVERT] Converting to 3 resolutions...');
+      const uploadResults = await uploadMultiResolution(tempJpgPath, baseKey);
       
+      const totalSize = Object.values(uploadResults).reduce((sum, r) => sum + r.size, 0);
+      const reduction = ((1 - totalSize / tempJpgSize) * 100).toFixed(1);
+      console.log(`  [SUCCESS] 3 resolutions created: ${(totalSize / 1024).toFixed(1)} KB total (${reduction}% smaller than original)`);
+      
+      // Delete old covers (single file + old resolutions)
       console.log('  [CHECK] Checking for old covers in R2...');
-      const existingCovers = await listR2Objects(`covers/${manga.id}-`);
+      const deleted = await deleteOldCovers(manga.id, baseKey);
+      deletedCount += deleted;
       
-      if (existingCovers.length > 0) {
-        console.log(`  [DELETE] Found ${existingCovers.length} old cover(s), deleting...`);
-        for (const oldCover of existingCovers) {
-          if (oldCover.Key !== r2Key) {
-            await deleteR2Object(oldCover.Key);
-            console.log(`  [DELETED] ${oldCover.Key}`);
-            deletedCount++;
-          }
-        }
-      }
-      
-      console.log('  [UPLOAD] Uploading to R2...');
-      const r2Url = await uploadToR2(tempWebpPath, r2Key);
-      console.log(`  [SUCCESS] Uploaded: ${r2Url}`);
       console.log(`  [INFO] MangaDex Upload: ${new Date(latestCover.createdAt).toLocaleDateString()}`);
       
-      fs.unlinkSync(tempJpgPath);
-      fs.unlinkSync(tempWebpPath);
+      // Cleanup temp
+      if (fs.existsSync(tempJpgPath)) fs.unlinkSync(tempJpgPath);
       
+      // Store base URL (without -sm/-md/-lg suffix)
+      // Frontend will derive responsive URLs from this
+      const r2Url = `https://${R2_CONFIG.publicDomain}/${baseKey}.webp`;
       manga.cover = r2Url;
       updatedMangaList.push(manga);
       updatedRepos.add(manga.repo); // Mark repo as updated
@@ -553,9 +651,108 @@ function exportUpdatedRepoList(updatedRepos) {
   return updatedRepos;
 }
 
+// ============================================
+// MIGRATE MODE: Convert existing single covers to 3 resolutions
+// ============================================
+async function migrateExistingCovers() {
+  console.log('\n🔄 ========================================');
+  console.log('🔄 MIGRATION MODE: Converting existing covers to 3 resolutions');
+  console.log('🔄 ========================================\n');
+  
+  let migratedCount = 0;
+  let skipCount = 0;
+  let errorCount = 0;
+  
+  for (let i = 0; i < MANGA_LIST.length; i++) {
+    const manga = MANGA_LIST[i];
+    console.log(`\n[${i + 1}/${MANGA_LIST.length}] ${manga.title}`);
+    console.log(`  Cover: ${manga.cover}`);
+    
+    try {
+      if (!manga.cover || !isR2Url(manga.cover)) {
+        console.log('  [SKIP] Cover is not from R2, skipping...');
+        skipCount++;
+        continue;
+      }
+      
+      // Extract base key from cover URL
+      // e.g., 'https://cdn.../covers/manga-id-hash.webp' → 'covers/manga-id-hash'
+      const urlPath = new URL(manga.cover).pathname;
+      const baseKey = urlPath.replace(/^\//, '').replace('.webp', '');
+      
+      // Check if already migrated (all 3 resolutions exist)
+      const allExist = await checkAllResolutionsExist(baseKey);
+      if (allExist) {
+        console.log('  [SKIP] All 3 resolutions already exist');
+        skipCount++;
+        continue;
+      }
+      
+      // Download existing single cover from R2
+      console.log('  [DOWNLOAD] Downloading existing cover from R2...');
+      const tempPath = path.join(coversDir, `migrate-${manga.id}.webp`);
+      await downloadFile(manga.cover, tempPath);
+      
+      const originalSize = fs.statSync(tempPath).size;
+      console.log(`  [DOWNLOADED] ${(originalSize / 1024).toFixed(1)} KB`);
+      
+      // Generate 3 resolutions from existing cover
+      console.log('  [CONVERT] Generating 3 resolutions...');
+      const uploadResults = await uploadMultiResolution(tempPath, baseKey);
+      
+      const totalSize = Object.values(uploadResults).reduce((sum, r) => sum + r.size, 0);
+      console.log(`  [SUCCESS] 3 resolutions: ${(totalSize / 1024).toFixed(1)} KB total`);
+      
+      // Delete old single file (the one without -sm/-md/-lg suffix)
+      const oldSingleKey = baseKey + '.webp';
+      const oldExists = await checkR2ObjectExists(oldSingleKey);
+      if (oldExists) {
+        await deleteR2Object(oldSingleKey);
+        console.log(`  [DELETED] Old single file: ${oldSingleKey}`);
+      }
+      
+      // Cleanup temp
+      if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+      
+      migratedCount++;
+      console.log('  ✅ Migrated!');
+      
+      // Small delay to avoid rate limiting
+      await delay(500);
+      
+    } catch (error) {
+      console.error(`  [ERROR] ${error.message}`);
+      errorCount++;
+    }
+  }
+  
+  console.log('\n🔄 ========================================');
+  console.log('🔄 MIGRATION RESULTS');
+  console.log('🔄 ========================================');
+  console.log(`  ✅ Migrated: ${migratedCount}`);
+  console.log(`  ⏭️  Skipped:  ${skipCount}`);
+  console.log(`  ❌ Errors:   ${errorCount}`);
+  console.log(`  📊 Total:    ${MANGA_LIST.length}`);
+  console.log('========================================\n');
+  
+  // Cleanup temp folder
+  if (fs.existsSync(coversDir)) {
+    fs.rmSync(coversDir, { recursive: true });
+  }
+  
+  return { migratedCount, skipCount, errorCount };
+}
+
 // Main
 (async () => {
   try {
+    // MIGRATE MODE
+    if (MIGRATE_MODE) {
+      await migrateExistingCovers();
+      return;
+    }
+    
+    // NORMAL MODE
     const { 
       updatedMangaList, 
       updatedRepos, 
@@ -589,7 +786,7 @@ function exportUpdatedRepoList(updatedRepos) {
     if (successCount > 0 || migratedCount > 0) {
       console.log('[COMPLETE] Process finished!');
       if (successCount > 0) {
-        console.log(`  - ${successCount} covers uploaded to R2`);
+        console.log(`  - ${successCount} covers uploaded to R2 (3 resolutions each)`);
       }
       if (migratedCount > 0) {
         console.log(`  - ${migratedCount} cover URLs migrated to R2`);
@@ -606,7 +803,7 @@ function exportUpdatedRepoList(updatedRepos) {
       
       console.log('\n[NEXT STEP] Push to GitHub:');
       console.log('  git add manga-config.js updated-repo-list.txt');
-      console.log('  git commit -m "Auto-update covers (R2)"');
+      console.log('  git commit -m "Auto-update covers (R2 multi-resolution)"');
       console.log('  git push\n');
     } else {
       console.log('[INFO] All covers are already up-to-date in R2!');

@@ -631,7 +631,9 @@ function setupUI() {
                 if (mangaInfo) {
                     dLog('📷 Cover URL:', mangaInfo.cover);
                     if (mangaInfo.cover) {
-                        navCardCoverElement.src = mangaInfo.cover;
+                        // Use small variant for nav card (displayed at small size)
+                        const cdnUrls = getResponsiveCDN(mangaInfo.cover);
+                        navCardCoverElement.src = cdnUrls.small;
                         navCardCoverElement.alt = `Cover ${mangaData.manga.title}`;
                         dLog('✅ Cover image set successfully');
                     } else {
@@ -697,7 +699,8 @@ function setupUI() {
         const repoId2 = urlParams2.get('repo') || urlParams2.get('manga');
         const mangaInfo2 = MANGA_LIST.find(m => m.id === repoId2);
         if (mangaInfo2 && mangaInfo2.cover) {
-            navCardCoverBottomEl.src = mangaInfo2.cover;
+            const cdnUrls2 = getResponsiveCDN(mangaInfo2.cover);
+            navCardCoverBottomEl.src = cdnUrls2.small;
             navCardCoverBottomEl.alt = `Cover ${mangaData.manga.title}`;
         }
     }

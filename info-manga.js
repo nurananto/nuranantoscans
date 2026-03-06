@@ -166,9 +166,9 @@ function clearValidatedChapter(repoName, chapter) {
                     
                     // ✅ Add responsive preload
                     preloadLink.imagesrcset = `
-                        ${cdnUrls.small} 400w,
-                        ${cdnUrls.medium} 600w,
-                        ${cdnUrls.large} 800w
+                        ${cdnUrls.small} 320w,
+                        ${cdnUrls.medium} 480w,
+                        ${cdnUrls.large} 640w
                     `.trim();
                     preloadLink.imagesizes = '(max-width: 768px) 100vw, 320px';
                     
@@ -661,9 +661,9 @@ function displayMangaInfo() {
     
     // Set srcset untuk responsive loading
     coverImg.srcset = `
-        ${cdnUrls.small} 400w,
-        ${cdnUrls.medium} 600w,
-        ${cdnUrls.large} 800w
+        ${cdnUrls.small} 320w,
+        ${cdnUrls.medium} 480w,
+        ${cdnUrls.large} 640w
     `.trim();
     
     // Sizes: mobile full width, desktop 320px

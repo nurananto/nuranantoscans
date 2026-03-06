@@ -366,8 +366,8 @@ function createTrendingCard(manga, mangaData, views24h, rank) {
     <div class="trending-card-right">
       <img 
         src="${escapeHTML(cdnUrls.medium)}" 
-        srcset="${escapeHTML(cdnUrls.small)} 500w, ${escapeHTML(cdnUrls.medium)} 700w"
-        sizes="(max-width: 768px) 200px, 180px"
+        srcset="${escapeHTML(cdnUrls.small)} 320w, ${escapeHTML(cdnUrls.medium)} 480w, ${escapeHTML(cdnUrls.large)} 640w"
+        sizes="(max-width: 480px) 100px, (max-width: 768px) 120px, 180px"
         alt="Cover ${escapeHTML(title)}" 
         class="trending-card-cover"
         loading="eager"
@@ -771,6 +771,8 @@ function createCard(manga, mangaData, index = 0) {
           <a href="info-manga.html?repo=${safeRepoId}" class="manga-card-cover-link">
             <img 
               src="${escapeHTML(cdnUrls.medium)}"
+              srcset="${escapeHTML(cdnUrls.small)} 320w, ${escapeHTML(cdnUrls.medium)} 480w, ${escapeHTML(cdnUrls.large)} 640w"
+              sizes="(max-width: 399px) 95px, (max-width: 480px) 105px, (max-width: 767px) 120px, (max-width: 819px) 160px, (max-width: 1023px) 150px, (max-width: 1399px) 125px, 130px"
               alt="${safeMangaTitle} cover"
               loading="${loadingAttr}"
               ${fetchPriority}

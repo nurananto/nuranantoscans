@@ -133,13 +133,7 @@ self.addEventListener('fetch', (event) => {
             return;
         }
         
-        // ✅ CDN cover images (weserv.nl) - query params ARE the content key
-        if (url.hostname.includes('weserv.nl')) {
-            event.respondWith(handleWeservRequest(request));
-            return;
-        }
-        
-        // ✅ R2 manga images (cdn.nuranantoscans.my.id) - strip token/expires
+        // ✅ R2 CDN cover images & manga images (cdn.nuranantoscans.my.id)
         if (url.hostname.includes('cdn.nuranantoscans.my.id')) {
             event.respondWith(handleR2CDNRequest(request));
             return;
@@ -222,7 +216,8 @@ async function handleGitHubRequest(request) {
     }
 }
 
-// ✅ Weserv.nl handler - CACHE FIRST (full URL as key)
+// ✅ Weserv.nl handler - DEPRECATED (kept for backward compatibility)
+// Cover images now served directly from R2 CDN as multi-resolution WebP
 // weserv.nl URLs: ?url=xxx&w=500&q=90&output=webp
 // Query params define the image variant, so they MUST be part of the cache key.
 async function handleWeservRequest(request) {

@@ -28,14 +28,15 @@ if (PRODUCTION_MODE) {
     dLog('ðŸ”§ Debug mode enabled');
 }
 
-// Filter weserv.nl errors (prevent redeclaration)
-if (!window._weservErrorFiltered) {
+// Filter console errors for cover images (prevent redeclaration)
+if (!window._coverErrorFiltered) {
     const originalError = console.error;
     console.error = function(...args) {
-        if (args[0]?.includes?.('images.weserv.nl')) return;
+        // Filter cover image 404 errors during resolution fallback
+        if (args[0]?.includes?.('cover') && args[0]?.includes?.('404')) return;
         originalError.apply(console, args);
     };
-    window._weservErrorFiltered = true;
+    window._coverErrorFiltered = true;
 }
 
 // ============================================
@@ -407,8 +408,8 @@ function setCachedData(key, data, useSessionStorage = false) {
 // ðŸ–¼ï¸ CDN UTILITIES
 // ============================================
 function getResponsiveCDN(originalUrl) {
-    // âœ… Skip CDN if URL is already from CDN or invalid
-    if (!originalUrl || originalUrl.includes('images.weserv.nl') || originalUrl.startsWith('data:')) {
+    // Skip if URL is invalid or already a data URI
+    if (!originalUrl || originalUrl.startsWith('data:')) {
         return {
             small: originalUrl,
             medium: originalUrl,
@@ -418,31 +419,16 @@ function getResponsiveCDN(originalUrl) {
         };
     }
     
-    // âœ… FIX: Optimized sizes untuk prevent pixelation di tampilan kecil
-    // Small: untuk mobile (2 kolom), Medium: untuk tablet, Large: untuk desktop, XLarge: untuk retina
-    const sizes = { 
-        small: 500,    // Increased dari 400 untuk better quality
-        medium: 700,   // Increased dari 600 untuk better quality
-        large: 900,    // Increased dari 800 untuk better quality
-        xlarge: 1200   // New: untuk retina displays
-    };
-    
-    // âœ… FIX: Properly encode the URL to prevent CORB errors
-    const encodedUrl = encodeURIComponent(originalUrl);
-    
-    // âœ… FIX: Higher quality untuk ukuran kecil (q=90), standard untuk besar (q=85)
-    const buildUrl = (width, quality = 85) => {
-        // Higher quality untuk ukuran kecil untuk prevent pixelation
-        const q = width <= 500 ? 90 : quality;
-        return `https://images.weserv.nl/?url=${encodedUrl}&w=${width}&q=${q}&output=webp&fit=inside`;
-    };
+    // Derive responsive URLs by replacing .webp with -sm/-md/-lg.webp
+    // R2 stores 3 variants: ...-sm.webp (320px), ...-md.webp (480px), ...-lg.webp (640px)
+    const base = originalUrl.replace(/\.webp$/i, '');
     
     return {
-        small: buildUrl(sizes.small, 90),      // q=90 untuk better quality di mobile
-        medium: buildUrl(sizes.medium, 88),    // q=88 untuk tablet
-        large: buildUrl(sizes.large, 85),      // q=85 untuk desktop
-        xlarge: buildUrl(sizes.xlarge, 85),    // q=85 untuk retina
-        original: originalUrl
+        small: base + '-sm.webp',     // 320px - mobile
+        medium: base + '-md.webp',    // 480px - tablet
+        large: base + '-lg.webp',     // 640px - desktop/retina
+        xlarge: base + '-lg.webp',    // Map xlarge to lg (same file)
+        original: originalUrl         // Base URL (fallback)
     };
 }
 
