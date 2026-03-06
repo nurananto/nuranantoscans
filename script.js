@@ -2028,6 +2028,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.updateNotificationBadge();
             }
             
+            // ✅ Refresh manga list to show lock icons
+            if (typeof renderMangaList === 'function' && typeof mangaList !== 'undefined') {
+                renderMangaList(mangaList, false);
+            }
+
             // Clear countdown interval on logout
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);

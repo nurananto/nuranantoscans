@@ -2408,6 +2408,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     checkBookmarkStatus();
                 }
 
+                // ✅ Refresh chapter list to show lock icons
+                if (typeof displayChapters === 'function') {
+                    displayChapters();
+                }
+
                 // ✅ Dispatch custom event untuk notify rating/comments section
                 window.dispatchEvent(new CustomEvent('userLoggedOut'));
                 dLog('📢 [LOGOUT] Dispatched userLoggedOut event');
