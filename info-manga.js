@@ -57,7 +57,7 @@ async function trackLockedChapterView(chapter) {
         
         // Track view
         incrementPendingChapterViews(githubRepo, chapter.folder).catch(err => {
-            console.error('⚠️ Failed to track locked chapter view:', err);
+            console.log('ℹ️ Failed to track locked chapter view:', err.message);
         });
         
         // Show appropriate modal based on type
@@ -66,7 +66,7 @@ async function trackLockedChapterView(chapter) {
         showLockedChapterModal(chapterTitle, chapterFolder);  // ← FIX INI
         
     } catch (error) {
-        console.error('❌ Error tracking locked chapter:', error);
+        console.log('ℹ️ Error tracking locked chapter:', error.message);
         openTrakteer();
     }
 }
@@ -1267,7 +1267,7 @@ async function trackLockedChapterView(chapter) {
         const githubRepo = window.currentGithubRepo || repoParam;
         
         incrementPendingChapterViews(githubRepo, chapter.folder).catch(err => {
-            console.error('⚠️ Failed to track locked chapter view:', err);
+            console.log('ℹ️ Failed to track locked chapter view:', err.message);
         });
         
         const chapterTitle = chapter.title || chapter.folder;
@@ -1275,7 +1275,7 @@ async function trackLockedChapterView(chapter) {
         showLockedChapterModal(chapterTitle, chapterFolder);  // ← PASS 2 PARAMETER
         
     } catch (error) {
-        console.error('❌ Error tracking locked chapter:', error);
+        console.log('ℹ️ Error tracking locked chapter:', error.message);
         openTrakteer();
     }
 }
@@ -1327,7 +1327,7 @@ async function incrementPendingChapterViews(repo, chapter) {
         dLog('✅ Chapter view increment request sent');
         
     } catch (error) {
-        console.error('❌ Error incrementing chapter views:', error);
+        console.log('ℹ️ Chapter view counter skipped:', error.message);
         throw error;
     }
 }
@@ -1412,7 +1412,7 @@ async function trackPageView() {
         dLog('✅ View tracked successfully');
         
     } catch (error) {
-        console.error('❌ Error tracking view:', error);
+        console.log('ℹ️ View tracking skipped:', error.message);
     }
 }
 
@@ -1462,7 +1462,7 @@ async function incrementPendingViews(repo) {
         dLog('✅ View increment request sent');
         
     } catch (error) {
-        console.error('❌ Error incrementing views:', error);
+        console.log('ℹ️ View counter skipped:', error.message);
     }
 }
 
