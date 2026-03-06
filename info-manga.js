@@ -1152,8 +1152,8 @@ function createChapterElement(chapter, allChapters) {
         div.onclick = () => openChapter(chapter);
     }
     
-    // ✅ Icon: 🔒 untuk locked (PEMBACA SETIA), 🔓 untuk unlocked (DONATUR SETIA), atau kosong jika tidak locked
-    const lockIcon = isActuallyLocked ? '🔒 ' : (chapter.locked && isDonatur ? '🔓 ' : '');
+    // ✅ Icon: 🔒 untuk locked (PEMBACA SETIA), kosong untuk DONATUR SETIA atau chapter tidak locked
+    const lockIcon = isActuallyLocked ? '🔒 ' : '';
     const uploadDate = getRelativeTime(chapter.uploadDate);
     const isRecent = isRecentlyUploaded(chapter.uploadDate);
     

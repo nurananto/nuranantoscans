@@ -683,7 +683,7 @@ function createCard(manga, mangaData, index = 0) {
       const chapterNumber = formatChapter(chapter.folder);
       const chapterText = chapterNumber === 'Oneshot' ? 'Oneshot' : 'Ch. ' + chapterNumber;
       const timeText = getRelativeTime(chapter.uploadDate) || '';
-      const lockIcon = chapter.locked ? (isDonaturSetia ? '🔓' : '🔒') : '';
+      const lockIcon = chapter.locked ? (isDonaturSetia ? '' : '🔒') : '';
       
       // ✅ Badge UP for chapters updated within 48 hours (with glowing)
       const isChapterNew = isChapterRecent(chapter.uploadDate);
@@ -2308,6 +2308,11 @@ const codeModal = document.getElementById('codeModal');
                 timestamp: Date.now()
             }));
             dLog('✅ [STATUS-CHECK] DOM updated to PEMBACA SETIA (non-donatur)');
+        }
+        
+        // ✅ Refresh manga list setelah status berubah untuk update lock icons
+        if (typeof renderMangaList === 'function' && typeof mangaList !== 'undefined') {
+            renderMangaList(mangaList, false);
         }
         
         dLog('✅ [STATUS-CHECK] Status check completed successfully');

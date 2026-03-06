@@ -1507,8 +1507,8 @@ async function openChapterListModal() {
             item.classList.add('locked');
         }
         
-        // ✅ Icon: 🔒 untuk locked (PEMBACA SETIA), 🔓 untuk unlocked (DONATUR SETIA), atau kosong jika tidak locked
-        const lockIcon = isActuallyLocked ? '🔒 ' : (chapter.locked && isDonatur ? '🔓 ' : '');
+        // ✅ Icon: 🔒 untuk locked (PEMBACA SETIA), kosong untuk DONATUR SETIA atau chapter tidak locked
+        const lockIcon = isActuallyLocked ? '🔒 ' : '';
         
 // ✅ CEK APAKAH CHAPTER INI ADALAH END CHAPTER (SUPPORT ONESHOT + ANGKA)
 const isEndChapter = mangaData.manga.status === 'END' && 
