@@ -170,6 +170,8 @@ jobs:
       - name: 🖼️ Quick Cover Check
         id: cover_check
         if: steps.check_rebuild.outputs.should_rebuild == 'true'
+        env:
+          R2_PUBLIC_DOMAIN: ${{ secrets.R2_PUBLIC_DOMAIN }}
         run: |
           echo "🖼️ Checking if any manga needs cover update..."
           
@@ -186,6 +188,21 @@ jobs:
           // Read manga list from file (comma-separated)
           const mangaListCsv = fs.readFileSync('manga-list.txt', 'utf8').trim();
           const MANGA_LIST = mangaListCsv.split(',').map(repo => ({ repo: repo.trim() }));
+          
+          // R2 CDN domain for multi-resolution check
+          const R2_CDN = process.env.R2_PUBLIC_DOMAIN || 'cdn.nuranantoscans.my.id';
+          
+          /**
+           * Check if a URL exists (HEAD request, returns true if 200)
+           */
+          async function urlExists(url) {
+            try {
+              const res = await fetch(url, { method: 'HEAD', timeout: 5000 });
+              return res.ok;
+            } catch {
+              return false;
+            }
+          }
           
           async function checkCover(repoName) {
             console.log(`\n🔍 Checking: ${repoName}`);
@@ -233,7 +250,7 @@ jobs:
                 return { repo: repoName, needsUpdate: false, reason: 'No cover on MD' };
               }
               
-              // Step 4: Compare covers
+              // Step 4: Compare covers (hash check)
               const latestFileName = coverData.data[0].attributes.fileName;
               const latestHash = latestFileName.split('.')[0];
               const latestFullUrl = `https://uploads.mangadex.org/covers/${mdId}/${latestFileName}`;
@@ -246,19 +263,40 @@ jobs:
               const hasExactUrl = currentCover === latestFullUrl;
               const hasLatest = hasLatestHash || hasExactUrl;
               
-              if (hasLatest) {
-                console.log(`   ✅ Cover is up-to-date`);
-                return { repo: repoName, needsUpdate: false, reason: 'Already latest' };
-              } else {
-                console.log(`   🔄 Cover needs update!`);
+              if (!hasLatest) {
+                console.log(`   🔄 Cover hash changed - needs update!`);
                 return { 
                   repo: repoName, 
                   needsUpdate: true, 
+                  reason: 'New cover on MangaDex',
                   hash: latestHash,
                   currentCover: currentCover,
                   latestUrl: latestFullUrl
                 };
               }
+              
+              // Step 5: Check if multi-resolution variants exist in R2
+              // Even if hash matches, we need -sm/-md/-lg files
+              const coverBase = currentCover.replace(/\.webp$/i, '');
+              const smUrl = coverBase + '-sm.webp';
+              
+              console.log(`   🔍 Checking multi-resolution: ${smUrl}`);
+              const smExists = await urlExists(smUrl);
+              
+              if (!smExists) {
+                console.log(`   🔄 Multi-resolution variants missing - needs migration!`);
+                return { 
+                  repo: repoName, 
+                  needsUpdate: true,
+                  reason: 'Missing multi-resolution (-sm/-md/-lg)',
+                  hash: latestHash,
+                  currentCover: currentCover,
+                  latestUrl: latestFullUrl
+                };
+              }
+              
+              console.log(`   ✅ Cover is up-to-date (hash + multi-res)`);
+              return { repo: repoName, needsUpdate: false, reason: 'Already latest with multi-res' };
               
             } catch (err) {
               console.log(`   ❌ Error: ${err.message}`);
@@ -280,20 +318,22 @@ jobs:
             
             console.log('\n' + '='.repeat(60));
             const needsUpdate = results.filter(r => r.needsUpdate);
+            const needsMigration = needsUpdate.filter(r => r.reason?.includes('multi-resolution'));
+            const needsNewCover = needsUpdate.filter(r => !r.reason?.includes('multi-resolution'));
+            
             console.log(`\n📊 Cover Check Summary:`);
             console.log(`   Total checked: ${results.length}`);
-            console.log(`   Needs update: ${needsUpdate.length}`);
+            console.log(`   Needs new cover: ${needsNewCover.length}`);
+            console.log(`   Needs multi-res migration: ${needsMigration.length}`);
             console.log(`   Up-to-date: ${results.length - needsUpdate.length}`);
             
             if (needsUpdate.length > 0) {
               console.log(`\n🖼️  Manga requiring cover update:`);
               needsUpdate.forEach(r => {
-                console.log(`   - ${r.repo}`);
-                console.log(`     Current: ${r.currentCover || '(empty)'}`);
-                console.log(`     Latest: ${r.latestUrl}`);
+                console.log(`   - ${r.repo} (${r.reason})`);
               });
             } else {
-              console.log(`\n✅ All covers are up-to-date!`);
+              console.log(`\n✅ All covers are up-to-date with multi-resolution!`);
             }
             
             fs.writeFileSync('cover-check-result.json', JSON.stringify({ 
