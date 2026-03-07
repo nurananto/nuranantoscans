@@ -647,6 +647,8 @@ function displayMangaInfo() {
     dLog('🔍 [TITLE DEBUG] Setting mainTitle to:', manga.title);
     
     mainTitle.textContent = manga.title;
+    mainTitle.classList.remove('skeleton-text');
+    mainTitle.style.width = '';
     subtitle.textContent = manga.alternativeTitle || '';
     
     dLog('✅ [TITLE DEBUG] mainTitle updated! New text:', mainTitle.textContent);
@@ -658,6 +660,9 @@ function displayMangaInfo() {
     // ✅ Update Cover dengan responsive CDN
     const coverImg = document.getElementById('mangaCover');
     const cdnUrls = getResponsiveCDN(manga.cover);
+    
+    // Remove skeleton loading animation
+    coverImg.classList.remove('skeleton-loading');
     
     // Set srcset untuk responsive loading
     coverImg.srcset = `
@@ -676,7 +681,7 @@ function displayMangaInfo() {
     coverImg.setAttribute('data-original', manga.cover);
     
     // ✅ Error handler: Fallback to original URL, then to placeholder if both fail
-    const placeholderCover = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='450'%3E%3Crect width='300' height='450' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='16' font-family='Arial'%3ECover Not Available%3C/text%3E%3C/svg%3E";
+    const placeholderCover = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420'%3E%3Crect width='300' height='420' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='16' font-family='Arial'%3ECover Not Available%3C/text%3E%3C/svg%3E";
     coverImg.onerror = createImageErrorHandler(manga.cover, placeholderCover);
     
     dLog('✅ Cover loaded with CDN optimization');
