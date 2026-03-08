@@ -20,11 +20,11 @@ MANGA_LIST = [
   {
     id: 'ikemenjoshi',
     title: 'Ikemen Joshi Demo Kawaii Heroine ni Naremasu ka?',
-    cover: 'https://img.nuranantoscans.my.id/covers/ikemenjoshi-6beb2e72-2c1b-443f-8348-b6a0a96e7d6a.webp',
+    cover: 'https://cdn.nuranantoscans.my.id/covers/ikemenjoshi-6beb2e72-2c1b-443f-8348-b6a0a96e7d6a.webp',
     repo: 'IkemenJoshi',
     type: 'manga'
   }
- ];
+];
 
 // ============================================
 // HELPER FUNCTIONS
