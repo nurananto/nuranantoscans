@@ -1741,6 +1741,22 @@ img {
     background-size: 1000px 100%;
     animation: shimmer 2s infinite;
 }
+
+/* Skeleton Page Placeholder */
+.skeleton-page {
+    width: 100%;
+    aspect-ratio: 3 / 4.2;
+    max-height: 80vh;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--secondary-bg) 0%, var(--border-color) 50%, var(--secondary-bg) 100%);
+    background-size: 1000px 100%;
+    animation: shimmer 1.8s infinite ease-in-out;
+    transition: opacity 0.3s ease;
+}
+
+.skeleton-page.fade-out {
+    opacity: 0;
+}
 /* ============================================
    CODE INPUT MODAL (for Webtoon Type)
    ============================================ */

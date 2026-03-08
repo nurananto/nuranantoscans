@@ -989,33 +989,53 @@ async function loadChapterPages() {
                 if (DEBUG_MODE) dLog(`🔑 Session token saved (expires in 2 hours)`);
             }
             
+            // 🔒 If server says forceVerification, clear cached session token
+            // (repeat offender — must Turnstile every chapter)
+            if (workerData.forceVerification) {
+                try { localStorage.removeItem('_st'); } catch (e) {}
+            }
+            
             // 🚀 Cache signed URLs for reuse
             try {
-                sessionStorage.setItem(cacheKey, JSON.stringify({
+                const cacheData = {
                     success: workerData.success,
                     pages: workerData.pages,
                     total: workerData.total,
                     expiresIn: workerData.expiresIn,
                     expiresAt: workerData.expiresAt
-                }));
+                };
+                if (workerData.tiling) {
+                    cacheData.tiling = true;
+                    cacheData.grids = workerData.grids;
+                    cacheData.orders = workerData.orders;
+                }
+                sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
             } catch (e) {
                 // sessionStorage full - silently ignore
             }
         }
         
-        const signedPages = workerData.pages;
-        totalPages = signedPages.length;
+        const isTiling = workerData.tiling === true;
+        totalPages = workerData.total || (isTiling ? workerData.pages.length : workerData.pages.length);
         
         // ✅ Log expiry info (only in debug mode)
         if (DEBUG_MODE) {
             const expiresIn = workerData.expiresIn;
-    if (DEBUG_MODE) dLog(`📊 Total pages: ${totalPages}`);
-    if (DEBUG_MODE) dLog(`⏰ Token expires in ${Math.floor(expiresIn / 60)} minutes`);
+            dLog(`📊 Total pages: ${totalPages}${isTiling ? ' (tiling mode)' : ''}`);
+            dLog(`⏰ Token expires in ${Math.floor(expiresIn / 60)} minutes`);
         }
         
         // Clear dan reset container
         readerContainer.innerHTML = '';
         currentPage = 1;
+        
+        // Show skeleton placeholders
+        for (let i = 0; i < totalPages; i++) {
+            const skeleton = document.createElement('div');
+            skeleton.className = 'skeleton-page';
+            skeleton.setAttribute('data-skeleton', i + 1);
+            readerContainer.appendChild(skeleton);
+        }
         
         // ✅ Reset progress bar to 0% at start of loading
         if (progressFill) {
@@ -1023,60 +1043,24 @@ async function loadChapterPages() {
         }
         hasUserScrolled = false; // Reset scroll flag for new chapter
         
-        // Render pages dengan signed URLs
-        signedPages.forEach((signedUrl, index) => {
-            const pageNum = index + 1;
-            
-            // ❌ NO LOG in production
-            if (DEBUG_MODE) {
-    if (DEBUG_MODE) dLog(`🖼️ Page ${pageNum}: ${signedUrl.substring(0, 80)}...`);
-            }
-            
-            const img = document.createElement('img');
-            img.className = 'reader-page';
-            img.alt = `Page ${pageNum}`;
-            img.setAttribute('data-page', pageNum);
-            
-            // Set loading attribute BEFORE src to ensure lazy loading works
-            if (pageNum <= 3) {
-                img.loading = 'eager';
-                if (pageNum === 1) img.fetchPriority = 'high';
-            } else {
-                img.loading = 'lazy';
-            }
-            
-            img.src = signedUrl;
-            
-            img.onload = () => {
-                if (DEBUG_MODE) dLog(`✅ Page ${pageNum} loaded successfully`);
-            };
-            
-            img.onerror = () => {
-                if (DEBUG_MODE) console.error(`❌ Failed to load page ${pageNum}`);
-                
-                const placeholder = document.createElement('div');
-                placeholder.className = 'reader-page-error';
-                placeholder.style.minHeight = '600px';
-                placeholder.style.backgroundColor = 'var(--secondary-bg)';
-                placeholder.style.display = 'flex';
-                placeholder.style.alignItems = 'center';
-                placeholder.style.justifyContent = 'center';
-                placeholder.style.color = 'var(--text-secondary)';
-                placeholder.style.fontSize = '0.9rem';
-                placeholder.textContent = '❌ Failed to load image';
-                placeholder.setAttribute('data-page', pageNum);
-                
-                img.replaceWith(placeholder);
-            };
-            
-            readerContainer.appendChild(img);
-        });
+        if (isTiling) {
+            // 🧩 TILING MODE: Reassemble tiles on canvas
+            renderTiledPages(workerData);
+        } else {
+            // 📄 NORMAL MODE: Render pages as <img>
+            renderNormalPages(workerData.pages);
+        }
         
         // Setup tracking dan thumbnails
         // Initialize progress bar to 0% first
         if (progressFill) progressFill.style.width = '0%';
         setupPageTracking();
-        renderPageThumbnails(signedPages);
+        // For tiling mode, use first tile URL of each page as thumbnail
+        if (isTiling) {
+            renderPageThumbnails(workerData.pages.map(tiles => tiles[0]));
+        } else {
+            renderPageThumbnails(workerData.pages);
+        }
         updateProgressBar();
         
         // Scroll ke saved page jika ada
@@ -1094,6 +1078,172 @@ async function loadChapterPages() {
     if (DEBUG_MODE) console.error('❌ Error loading pages:', error);
         hideLoading();
         alert('Gagal memuat halaman chapter: ' + error.message);
+    }
+}
+
+/**
+ * 📄 NORMAL MODE: Render pages as <img> tags
+ */
+function renderNormalPages(signedPages) {
+    signedPages.forEach((signedUrl, index) => {
+        const pageNum = index + 1;
+        
+        const img = document.createElement('img');
+        img.className = 'reader-page';
+        img.alt = `Page ${pageNum}`;
+        img.setAttribute('data-page', pageNum);
+        
+        if (pageNum <= 3) {
+            img.loading = 'eager';
+            if (pageNum === 1) img.fetchPriority = 'high';
+        } else {
+            img.loading = 'lazy';
+        }
+        
+        img.src = signedUrl;
+        
+        img.onload = () => {
+            if (DEBUG_MODE) dLog(`✅ Page ${pageNum} loaded`);
+        };
+        
+        img.onerror = () => {
+            if (DEBUG_MODE) console.error(`❌ Failed to load page ${pageNum}`);
+            const placeholder = document.createElement('div');
+            placeholder.className = 'reader-page-error';
+            placeholder.style.cssText = 'min-height:600px;background:var(--secondary-bg);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:0.9rem';
+            placeholder.textContent = '❌ Failed to load image';
+            placeholder.setAttribute('data-page', pageNum);
+            img.replaceWith(placeholder);
+        };
+        
+        // Replace skeleton with real image
+        const skeleton = readerContainer.querySelector(`[data-skeleton="${pageNum}"]`);
+        if (skeleton) {
+            skeleton.replaceWith(img);
+        } else {
+            readerContainer.appendChild(img);
+        }
+    });
+}
+
+/**
+ * 🧩 TILING MODE: Reassemble tiles on canvas per page
+ * workerData.pages = [[tile0url, tile1url, ...], ...]
+ * workerData.grids = [[cols, rows], ...]
+ * workerData.orders = [[shuffled indices], ...]
+ * 
+ * order[i] = the tile index at visual position i
+ * Visual positions are laid out row-by-row: pos 0 = top-left, pos 1 = next col, etc.
+ * To reassemble: for each visual position i, draw tile order[i] at position i
+ */
+function renderTiledPages(workerData) {
+    const { pages, grids, orders } = workerData;
+    
+    pages.forEach((tileUrls, pageIndex) => {
+        const pageNum = pageIndex + 1;
+        const [cols, rows] = grids[pageIndex];
+        const order = orders[pageIndex];
+        
+        // Create wrapper div (acts as placeholder until canvas ready)
+        const wrapper = document.createElement('div');
+        wrapper.className = 'reader-page tiled-page';
+        wrapper.setAttribute('data-page', pageNum);
+        wrapper.style.cssText = 'width:100%;min-height:400px;background:var(--secondary-bg);position:relative';
+        
+        const canvas = document.createElement('canvas');
+        canvas.style.cssText = 'width:100%;height:auto;display:block';
+        wrapper.appendChild(canvas);
+        
+        // Replace skeleton with tiled wrapper
+        const skeleton = readerContainer.querySelector(`[data-skeleton="${pageNum}"]`);
+        if (skeleton) {
+            skeleton.replaceWith(wrapper);
+        } else {
+            readerContainer.appendChild(wrapper);
+        }
+        
+        // Load all tiles, then draw on canvas
+        const tileImages = new Array(tileUrls.length);
+        let loadedCount = 0;
+        let hasError = false;
+        
+        tileUrls.forEach((url, tileIdx) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                tileImages[tileIdx] = img;
+                loadedCount++;
+                if (loadedCount === tileUrls.length && !hasError) {
+                    assembleTiles(canvas, tileImages, cols, rows, order);
+                    wrapper.style.minHeight = '';
+                    wrapper.style.background = '';
+                    if (DEBUG_MODE) dLog(`✅ Page ${pageNum} tiles assembled (${cols}x${rows})`);
+                }
+            };
+            img.onerror = () => {
+                if (!hasError) {
+                    hasError = true;
+                    wrapper.style.cssText = 'width:100%;min-height:600px;background:var(--secondary-bg);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:0.9rem';
+                    wrapper.textContent = '❌ Failed to load image';
+                }
+            };
+            // Eager load first 3 pages worth of tiles
+            if (pageNum > 3) {
+                // Lazy load: use IntersectionObserver
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        img.src = url;
+                        observer.disconnect();
+                    }
+                }, { rootMargin: '800px' });
+                observer.observe(wrapper);
+            } else {
+                img.src = url;
+            }
+        });
+    });
+}
+
+/**
+ * 🎨 Draw tiles onto canvas in correct order
+ * order[visualPos] = tileIndex → tile at tileIndex goes to visual position visualPos
+ */
+function assembleTiles(canvas, tileImages, cols, rows, order) {
+    // Calculate tile dimensions from loaded images
+    // All tiles in same row should have same height, same col same width
+    // Use first tile to estimate, then measure each
+    const tileWidths = [];
+    const tileHeights = [];
+    
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const pos = r * cols + c;
+            const tileIdx = order[pos];
+            const img = tileImages[tileIdx];
+            if (c === 0) tileHeights.push(img.naturalHeight);
+            if (r === 0) tileWidths.push(img.naturalWidth);
+        }
+    }
+    
+    const totalWidth = tileWidths.reduce((a, b) => a + b, 0);
+    const totalHeight = tileHeights.reduce((a, b) => a + b, 0);
+    
+    canvas.width = totalWidth;
+    canvas.height = totalHeight;
+    
+    const ctx = canvas.getContext('2d');
+    
+    let y = 0;
+    for (let r = 0; r < rows; r++) {
+        let x = 0;
+        for (let c = 0; c < cols; c++) {
+            const visualPos = r * cols + c;
+            const tileIdx = order[visualPos];
+            const img = tileImages[tileIdx];
+            ctx.drawImage(img, x, y, img.naturalWidth, img.naturalHeight);
+            x += tileWidths[c];
+        }
+        y += tileHeights[r];
     }
 }
 
