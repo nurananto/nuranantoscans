@@ -1933,17 +1933,45 @@ function setupEnhancedEventListeners() {
         }
     });
     
-    // Close tooltip on scroll (webtoon mode)
-    const hideTooltipOnScroll = () => {
+    // ====================================
+    // 📊 PROGRESS BAR: Hidden by default, show on image tap, hide on scroll
+    // ====================================
+    let progressBarHideTimeout = null;
+    
+    // Click/tap on reader images → toggle progress bar
+    const readerContainer = document.querySelector('.reader-container');
+    if (readerContainer) {
+        readerContainer.addEventListener('click', (e) => {
+            // Only trigger on reader page images/canvases, not on buttons or other UI
+            const target = e.target;
+            if (target.closest('.reader-page') || target.classList.contains('reader-page')) {
+                clearTimeout(progressBarHideTimeout);
+                if (navProgressBar.classList.contains('visible')) {
+                    navProgressBar.classList.remove('visible');
+                } else {
+                    navProgressBar.classList.add('visible');
+                }
+            }
+        });
+    }
+    
+    // Hide progress bar on scroll
+    const hideProgressBarOnScroll = () => {
+        if (navProgressBar.classList.contains('visible')) {
+            clearTimeout(progressBarHideTimeout);
+            progressBarHideTimeout = setTimeout(() => {
+                navProgressBar.classList.remove('visible');
+            }, 150);
+        }
+        // Also hide tooltip
         const tooltip = document.querySelector('.page-tooltip');
         if (tooltip) tooltip.classList.remove('visible');
     };
     
-    const readerContainer = document.querySelector('.reader-container');
     if (readerContainer) {
-        readerContainer.addEventListener('scroll', hideTooltipOnScroll, { passive: true });
+        readerContainer.addEventListener('scroll', hideProgressBarOnScroll, { passive: true });
     }
-    window.addEventListener('scroll', hideTooltipOnScroll, { passive: true });
+    window.addEventListener('scroll', hideProgressBarOnScroll, { passive: true });
     
     // Arrow key navigation
     document.addEventListener('keydown', (e) => {
