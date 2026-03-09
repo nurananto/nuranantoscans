@@ -190,7 +190,7 @@ jobs:
           const MANGA_LIST = mangaListCsv.split(',').map(repo => ({ repo: repo.trim() }));
           
           // R2 CDN domain for multi-resolution check
-          const R2_CDN = process.env.R2_PUBLIC_DOMAIN || 'cdn.nuranantoscans.my.id';
+          const R2_CDN = process.env.R2_PUBLIC_DOMAIN || 'img.nuranantoscans.my.id';
           
           /**
            * Check if a URL exists (HEAD request, returns true if 200)

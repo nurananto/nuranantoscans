@@ -84,7 +84,7 @@ if (missingEnv.length > 0) {
   console.error('  export CF_ACCOUNT_ID=your_account_id');
   console.error('  export CF_ACCESS_KEY_ID=your_access_key');
   console.error('  export CF_SECRET_ACCESS_KEY=your_secret_key');
-  console.error('  export R2_PUBLIC_DOMAIN=cdn.nuranantoscans.my.id');
+  console.error('  export R2_PUBLIC_DOMAIN=img.nuranantoscans.my.id');
   process.exit(1);
 }
 

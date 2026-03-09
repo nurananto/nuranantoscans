@@ -933,6 +933,12 @@ async function loadChapterPages() {
                 chapter: currentChapterFolder
             };
             
+            // 🔒 LOCKED CHAPTER: Send auth token for server-side donatur verification
+            const authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                requestBody.authToken = authToken;
+            }
+            
             const sessionToken = getSessionToken();
             if (sessionToken) {
                 requestBody.sessionToken = sessionToken;
@@ -966,7 +972,8 @@ async function loadChapterPages() {
                         body: JSON.stringify({
                             repo: `${repoOwner}/${repoName}`,
                             chapter: currentChapterFolder,
-                            turnstileToken: turnstileToken
+                            turnstileToken: turnstileToken,
+                            authToken: authToken || undefined
                         })
                     });
                     workerData = await workerResponse.json();
@@ -976,6 +983,13 @@ async function loadChapterPages() {
             }
             
             if (!workerResponse.ok && !workerData.success) {
+                // 🔒 Server-side locked chapter enforcement
+                if (workerData.locked) {
+                    if (DEBUG_MODE) dLog('🔒 Server rejected: chapter locked, user not donatur');
+                    showLockedChapterModal(currentChapterFolder, currentChapterFolder);
+                    hideLoading();
+                    return;
+                }
                 throw new Error(`Worker error: ${workerResponse.status}`);
             }
             
@@ -1175,6 +1189,7 @@ function renderTiledPages(workerData) {
                 loadedCount++;
                 if (loadedCount === tileUrls.length && !hasError) {
                     assembleTiles(canvas, tileImages, cols, rows, order);
+                    applyWatermark(canvas, workerData.viewerIp);
                     wrapper.style.minHeight = '';
                     wrapper.style.background = '';
                     if (DEBUG_MODE) dLog(`✅ Page ${pageNum} tiles assembled (${cols}x${rows})`);
@@ -1202,6 +1217,33 @@ function renderTiledPages(workerData) {
             }
         });
     });
+}
+
+/**
+ * 🔒 WATERMARK: Draw repeating diagonal IP watermark on canvas
+ * Baked into pixel — screenshot/save pasti kena watermark
+ */
+function applyWatermark(canvas, viewerIp) {
+    if (!viewerIp) return;
+    const ctx = canvas.getContext('2d');
+    const text = `Dibaca oleh: ${viewerIp}`;
+    
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = '#000000';
+    
+    // Diagonal repeated watermark — tidak bisa di-crop
+    ctx.rotate(-25 * Math.PI / 180);
+    const textWidth = ctx.measureText(text).width + 100;
+    const textHeight = 70;
+    
+    for (let y = -canvas.height; y < canvas.height * 2; y += textHeight) {
+        for (let x = -canvas.width; x < canvas.width * 2; x += textWidth) {
+            ctx.fillText(text, x, y);
+        }
+    }
+    ctx.restore();
 }
 
 /**

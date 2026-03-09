@@ -133,8 +133,8 @@ self.addEventListener('fetch', (event) => {
             return;
         }
         
-        // ✅ R2 CDN cover images & manga images (cdn.nuranantoscans.my.id)
-        if (url.hostname.includes('cdn.nuranantoscans.my.id')) {
+        // ✅ R2 CDN cover images & manga images (img.nuranantoscans.my.id)
+        if (url.hostname.includes('img.nuranantoscans.my.id')) {
             event.respondWith(handleR2CDNRequest(request));
             return;
         }
